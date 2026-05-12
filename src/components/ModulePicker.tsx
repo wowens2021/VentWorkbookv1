@@ -1,113 +1,221 @@
 import React, { useMemo } from 'react';
-import { BookOpen, Check, Lock, Activity, ChevronRight } from 'lucide-react';
+import { Play, RotateCcw, Check } from 'lucide-react';
 import { MODULES } from '../modules';
-import { loadProgress } from '../persistence/progress';
-import type { ModuleConfig, Track } from '../shell/types';
+import { loadProgress, listAllProgress } from '../persistence/progress';
+import type { ModuleConfig, Track, ProgressRecord } from '../shell/types';
 
 interface Props {
   onPickModule: (mod: ModuleConfig) => void;
-  onOpenPlayground: () => void;
 }
 
-const trackOrder: Track[] = ['Foundations', 'Physiology', 'Modes', 'Strategy', 'Weaning', 'Synthesis'];
+type Difficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
-const trackColor: Record<Track, string> = {
-  Foundations: 'sky',
-  Physiology: 'emerald',
-  Modes: 'violet',
-  Strategy: 'amber',
-  Weaning: 'rose',
-  Synthesis: 'indigo',
+const trackToDifficulty: Record<Track, Difficulty> = {
+  Foundations: 'BEGINNER',
+  Physiology: 'BEGINNER',
+  Modes: 'INTERMEDIATE',
+  Strategy: 'ADVANCED',
+  Weaning: 'ADVANCED',
+  Synthesis: 'ADVANCED',
 };
 
-const ModuleCard: React.FC<{ mod: ModuleConfig; onClick: () => void }> = ({ mod, onClick }) => {
-  const progress = loadProgress(mod.id);
-  const status =
-    progress?.quiz_submitted_at ? 'complete' :
-    progress?.objective_satisfied_at ? 'objective-met' :
-    progress?.primer_completed_at ? 'in-progress' :
-    progress?.started_at ? 'started' : 'new';
-  const color = trackColor[mod.track];
-
-  return (
-    <button
-      onClick={onClick}
-      className={`group flex items-center gap-3 p-4 bg-white border border-zinc-200 hover:border-${color}-400 hover:bg-zinc-100 rounded-xl text-left transition w-full`}
-    >
-      <div className={`w-10 h-10 shrink-0 rounded-lg bg-${color}-100 border border-${color}-300 flex items-center justify-center font-black text-${color}-700 text-sm`}>
-        {mod.id}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <h3 className="font-bold text-zinc-900 text-sm leading-tight">{mod.title}</h3>
-          {status === 'complete' && <Check size={13} className="text-emerald-600 shrink-0" />}
-        </div>
-        <p className="text-[11px] text-zinc-500 truncate">{mod.visible_learning_objectives[0]}</p>
-        <div className="flex items-center gap-3 mt-1 text-[10px] text-zinc-400">
-          <span>{mod.estimated_minutes} min</span>
-          {progress?.quiz_score !== undefined && <span className="text-emerald-600">Quiz: {progress.quiz_score}/{mod.summative_quiz.length}</span>}
-          {progress?.primer_score !== undefined && status !== 'complete' && <span className="text-sky-600">Primer: {progress.primer_score}/3</span>}
-        </div>
-      </div>
-      <ChevronRight size={16} className="text-zinc-400 group-hover:text-zinc-700 shrink-0" />
-    </button>
-  );
+const difficultyClasses: Record<Difficulty, string> = {
+  BEGINNER: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  INTERMEDIATE: 'bg-blue-100 text-blue-800 border-blue-200',
+  ADVANCED: 'bg-rose-100 text-rose-800 border-rose-200',
 };
 
-const ModulePicker: React.FC<Props> = ({ onPickModule, onOpenPlayground }) => {
-  const byTrack = useMemo(() => {
-    const m = new Map<Track, ModuleConfig[]>();
-    MODULES.forEach(mod => {
-      if (!m.has(mod.track)) m.set(mod.track, []);
-      m.get(mod.track)!.push(mod);
-    });
-    return m;
+type Status = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+
+function statusOf(p: ProgressRecord | null): Status {
+  if (!p) return 'NOT_STARTED';
+  if (p.quiz_submitted_at) return 'COMPLETED';
+  if (p.primer_completed_at || p.started_at) return 'IN_PROGRESS';
+  return 'NOT_STARTED';
+}
+
+const statusClasses: Record<Status, string> = {
+  NOT_STARTED: 'bg-stone-100 text-stone-600 border-stone-200',
+  IN_PROGRESS: 'bg-amber-100 text-amber-800 border-amber-200',
+  COMPLETED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+};
+
+const statusLabel: Record<Status, string> = {
+  NOT_STARTED: 'NOT STARTED',
+  IN_PROGRESS: 'IN PROGRESS',
+  COMPLETED: 'COMPLETED',
+};
+
+function percent(p: ProgressRecord | null): number {
+  if (!p) return 0;
+  if (p.quiz_submitted_at) return 100;
+  if (p.objective_satisfied_at) return 80;
+  if (p.task_started_at) return 60;
+  if (p.exploration_started_at) return 40;
+  if (p.reading_completed_at) return 30;
+  if (p.primer_completed_at) return 20;
+  return 5;
+}
+
+const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
+  const overallStats = useMemo(() => {
+    const all = listAllProgress();
+    const completed = all.filter(p => !!p.quiz_submitted_at).length;
+    const objectivesMet = all.filter(p => !!p.objective_satisfied_at).length;
+    return {
+      total: MODULES.length,
+      completed,
+      objectivesMet,
+      avgPercent: MODULES.length === 0
+        ? 0
+        : Math.round(
+            MODULES.reduce((s, m) => s + percent(loadProgress(m.id)), 0) / MODULES.length,
+          ),
+    };
   }, []);
 
   return (
-    <div className="min-h-screen bg-stone-100 text-zinc-900 font-sans p-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-full bg-brand-cream">
+      <div className="max-w-7xl mx-auto px-6 py-10">
+
         {/* Header */}
-        <header className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-zinc-900 mb-1">
-              The Ventilator Workbook
-            </h1>
-            <p className="text-sm text-zinc-500">
-              19 modules · TVB companion · self-paced
-            </p>
+        <div className="mb-8">
+          <h1 className="font-display text-4xl md:text-5xl font-bold text-stone-900 mb-2">
+            Clinical Simulations
+          </h1>
+          <p className="text-[15px] text-stone-600 max-w-2xl">
+            Work through evidence-based ventilator simulations. Each module includes a primer,
+            free exploration, a clinical task, and a knowledge check.
+          </p>
+        </div>
+
+        {/* Summary card */}
+        <div className="bg-white border border-stone-200 rounded-2xl px-6 py-5 mb-8 flex flex-col md:flex-row items-start md:items-center gap-4 shadow-sm">
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-4xl font-semibold text-brand-olive leading-none">
+              {overallStats.completed}/{overallStats.total}
+            </span>
+            <span className="text-[13px] text-stone-500">Modules completed</span>
           </div>
-          <button
-            onClick={onOpenPlayground}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-300 hover:border-sky-500 hover:bg-zinc-100 rounded-lg text-sm font-bold text-zinc-700 hover:text-white transition"
-          >
-            <Activity size={14} /> Open free-play sim
-          </button>
-        </header>
+          <div className="hidden md:block w-px h-10 bg-stone-200 mx-3" />
+          <div className="text-[13px] text-stone-700">
+            {overallStats.objectivesMet} objective{overallStats.objectivesMet === 1 ? '' : 's'} mastered
+          </div>
+          <div className="md:ml-auto flex-1 md:flex-none md:w-[280px]">
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+              <span>Overall progress</span>
+              <span>{overallStats.avgPercent}%</span>
+            </div>
+            <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-brand-olive transition-all"
+                style={{ width: `${overallStats.avgPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
 
-        {/* Track sections */}
-        {trackOrder.map(track => {
-          const mods = byTrack.get(track) ?? [];
-          if (mods.length === 0) return null;
-          const color = trackColor[track];
-          return (
-            <section key={track} className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <BookOpen size={14} className={`text-${color}-400`} />
-                <h2 className={`text-[11px] font-black uppercase tracking-widest text-${color}-700`}>{track}</h2>
-                <div className={`flex-1 border-t border-${color}-900/40`} />
-                <span className="text-[10px] text-zinc-400">{mods.length} module{mods.length === 1 ? '' : 's'}</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {mods.map(mod => (
-                  <ModuleCard key={mod.id} mod={mod} onClick={() => onPickModule(mod)} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+        {/* Module grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {MODULES.map(mod => {
+            const prog = loadProgress(mod.id);
+            const status = statusOf(prog);
+            const difficulty = trackToDifficulty[mod.track];
+            const pct = percent(prog);
+            return (
+              <article
+                key={mod.id}
+                className={`bg-white border rounded-2xl p-5 flex flex-col shadow-sm hover:shadow transition relative ${
+                  status === 'IN_PROGRESS' ? 'border-amber-300' : 'border-stone-200 hover:border-brand-olive'
+                }`}
+              >
+                {/* Yellow ribbon for in-progress */}
+                {status === 'IN_PROGRESS' && (
+                  <div className="absolute top-0 left-5 right-5 h-1 bg-amber-400 rounded-b" />
+                )}
 
-        <footer className="text-[10px] text-zinc-700 mt-12 text-center">
+                {/* Status + difficulty pills */}
+                <div className="flex items-center gap-1.5 mb-3 pr-14">
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${statusClasses[status]}`}>
+                    {statusLabel[status]}
+                  </span>
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${difficultyClasses[difficulty]}`}>
+                    {difficulty}
+                  </span>
+                </div>
+
+                {/* Module label + title */}
+                <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-0.5">
+                  Module {mod.number} · {mod.track}
+                </div>
+                <h3 className="font-display text-xl font-semibold text-stone-900 leading-snug mb-3 pr-14">
+                  {mod.title}
+                </h3>
+
+                {/* Topics covered */}
+                <p className="text-[13px] text-stone-600 leading-relaxed mb-3">
+                  <span className="font-bold text-stone-800">Topics covered: </span>
+                  {mod.visible_learning_objectives.join('; ')}.
+                </p>
+
+                {/* Objective bullets */}
+                <ul className="space-y-1 mb-4 text-[12px] text-stone-700">
+                  {mod.visible_learning_objectives.slice(0, 3).map((o, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <span className={`mt-0.5 w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center ${status === 'COMPLETED' ? 'bg-emerald-500' : 'border border-stone-300 bg-white'}`}>
+                        {status === 'COMPLETED' && <Check size={9} className="text-white" strokeWidth={3.5} />}
+                      </span>
+                      <span className="leading-snug">{o}</span>
+                    </li>
+                  ))}
+                  {mod.visible_learning_objectives.length > 3 && (
+                    <li className="text-stone-400 text-[11.5px] pl-5">
+                      +{mod.visible_learning_objectives.length - 3} more
+                    </li>
+                  )}
+                </ul>
+
+                {/* Progress ring (in-progress only) */}
+                {status === 'IN_PROGRESS' && (
+                  <div className="absolute top-4 right-4">
+                    <div className="relative w-12 h-12">
+                      <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
+                        <circle cx="24" cy="24" r="20" stroke="#e7e5e4" strokeWidth="3" fill="none" />
+                        <circle
+                          cx="24" cy="24" r="20"
+                          stroke="#d97706" strokeWidth="3" fill="none"
+                          strokeDasharray={`${2 * Math.PI * 20}`}
+                          strokeDashoffset={`${2 * Math.PI * 20 * (1 - pct / 100)}`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-stone-800">
+                        {pct}%
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* CTA */}
+                <button
+                  onClick={() => onPickModule(mod)}
+                  className={`mt-auto w-full px-4 py-2.5 rounded-full text-[13px] font-bold flex items-center justify-center gap-1.5 transition ${
+                    status === 'IN_PROGRESS'
+                      ? 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
+                      : status === 'COMPLETED'
+                        ? 'bg-white text-brand-olive border border-brand-olive hover:bg-stone-50'
+                        : 'bg-brand-olive text-white hover:bg-brand-olive-hover'
+                  }`}
+                >
+                  {status === 'IN_PROGRESS' ? <RotateCcw size={13} /> : <Play size={12} fill="currentColor" />}
+                  {status === 'IN_PROGRESS' ? 'Resume' : status === 'COMPLETED' ? 'Review' : 'Start case'}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+
+        <footer className="text-[11px] text-stone-400 mt-12 text-center">
           Progress is stored locally in your browser. Clear browser data to reset.
         </footer>
       </div>

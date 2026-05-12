@@ -23,7 +23,7 @@ const GateButton: React.FC<Props> = ({ enabled, pulse, onClick, label = 'Continu
   return (
     <button
       onClick={onClick}
-      className={`w-full mt-6 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-900/50 ${
+      className={`w-full mt-6 px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-900/50 ${
         pulse ? 'animate-pulse' : ''
       }`}
     >

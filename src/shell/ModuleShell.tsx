@@ -286,13 +286,13 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
         <div className="h-full flex flex-col px-5 py-3 overflow-y-auto">
           <div className="mb-3 pb-3 border-b border-zinc-200">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[10px] font-black uppercase tracking-widest text-sky-700 bg-sky-50 px-2 py-0.5 rounded">{module.track}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-brand-olive bg-stone-50 px-2 py-0.5 rounded">{module.track}</span>
               <span className="text-[10px] font-mono text-zinc-500">{module.id}</span>
               <span className="text-[10px] text-zinc-400 flex items-center gap-1">
                 <Clock size={11} /> {module.estimated_minutes} min
               </span>
             </div>
-            <h1 className="text-xl font-black text-zinc-900 leading-tight tracking-tight">{module.title}</h1>
+            <h1 className="font-display text-2xl font-semibold text-zinc-900 leading-tight tracking-tight">{module.title}</h1>
             <div className="mt-2">
               <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 flex items-center gap-1">
                 <Target size={11} /> Objectives
@@ -309,7 +309,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
           </div>
           <button
             onClick={advanceFromRead}
-            className="mt-4 w-full px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm"
+            className="mt-4 w-full px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover text-white text-sm font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm"
           >
             I'm ready — let me try it <ChevronRight size={14} />
           </button>
@@ -378,7 +378,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
             {onNext && (
               <button
                 onClick={onNext}
-                className="mt-3 w-full px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold rounded-lg transition"
+                className="mt-3 w-full px-4 py-2 bg-brand-olive hover:bg-brand-olive-hover text-white text-sm font-bold rounded-lg transition"
               >
                 Next module →
               </button>
@@ -399,19 +399,22 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
   ) : null;
 
   return (
-    <div className="flex flex-col h-screen bg-stone-100 text-zinc-900 font-sans overflow-hidden select-none">
-      {/* Top nav */}
-      <div className="flex items-center justify-between bg-white px-4 py-2 border-b border-zinc-200">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-[12px] font-bold text-zinc-500 hover:text-zinc-900">
-          <ArrowLeft size={14} /> Back to modules
+    <div className="flex flex-col h-screen bg-brand-cream text-zinc-900 font-sans overflow-hidden select-none">
+      {/* Top nav — olive brand strip */}
+      <div className="flex items-center justify-between bg-brand-olive text-white px-5 py-2.5 shrink-0">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white transition"
+        >
+          <ArrowLeft size={14} /> Back to simulations
         </button>
-        <div className="flex items-center gap-2 text-[11px]">
-          <BookOpen size={13} className="text-sky-600" />
-          <span className="font-bold text-zinc-900">{module.id}</span>
-          <span className="text-zinc-400">·</span>
-          <span className="text-zinc-500">{module.title}</span>
+        <div className="flex items-center gap-2 text-[12px]">
+          <BookOpen size={13} className="text-white/70" />
+          <span className="font-bold text-white">{module.id}</span>
+          <span className="text-white/40">·</span>
+          <span className="font-display text-[15px] italic text-white/95">{module.title}</span>
         </div>
-        <div className="w-[120px]" /> {/* spacer for symmetry */}
+        <div className="w-[160px]" /> {/* spacer for symmetry */}
       </div>
 
       {/* Phase badge — always visible (§1.2) */}

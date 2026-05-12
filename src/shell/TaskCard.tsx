@@ -45,7 +45,7 @@ const TaskCard: React.FC<Props> = ({
 
         <button
           onClick={onContinueToDebrief}
-          className="mt-2 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-sm font-bold transition shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500"
+          className="mt-2 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover text-white rounded-lg text-sm font-bold transition shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500"
         >
           Continue to debrief <ChevronRight size={14} />
         </button>
@@ -94,7 +94,7 @@ const TaskCard: React.FC<Props> = ({
         </button>
         <button
           onClick={onReset}
-          className="ml-auto flex items-center gap-1.5 px-3 py-2 bg-white border border-zinc-300 hover:bg-zinc-50 rounded-lg text-[12px] font-bold text-zinc-700 transition"
+          className="ml-auto flex items-center gap-1.5 px-3 py-2 bg-white border border-zinc-300 hover:bg-stone-50 rounded-lg text-[12px] font-bold text-zinc-700 transition"
         >
           <RotateCcw size={13} /> Reset to start
         </button>

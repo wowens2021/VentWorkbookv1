@@ -9,7 +9,7 @@ interface Props {
 const ReviewCard: React.FC<Props> = ({ keyPoints, onReopenReplay }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="mt-4 border border-zinc-200 rounded-lg bg-zinc-50">
+    <div className="mt-4 border border-zinc-200 rounded-lg bg-stone-50">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white transition"

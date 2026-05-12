@@ -1,1 +1,44 @@
 @import "tailwindcss";
+
+/*
+ * Brand tokens — cream/sage editorial scheme matching The Ventilator App v1.
+ * Tailwind v4 reads these as design-token utilities (bg-brand-olive, etc.).
+ */
+@theme {
+  /* Olive nav + primary CTA */
+  --color-brand-olive: #3d4e2a;
+  --color-brand-olive-hover: #4d6037;
+  --color-brand-olive-deep: #2e3b1f;
+
+  /* Cream page background */
+  --color-brand-cream: #f5f0e6;
+  --color-brand-cream-2: #efe9dc;
+
+  /* Warm card surfaces */
+  --color-brand-paper: #fbf8f2;
+
+  /* Accent — for ratings, "Featured" tag */
+  --color-brand-gold: #c8932e;
+
+  /* Difficulty pills */
+  --color-pill-beginner: #6b9b3a;
+  --color-pill-intermediate: #2563eb;
+  --color-pill-advanced: #c43a4a;
+
+  /* Font families */
+  --font-display: "Playfair Display", "Georgia", "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html, body {
+  font-family: var(--font-sans);
+  background: var(--color-brand-cream);
+  color: #1a1a1a;
+}
+
+/* Editorial serif heading helper */
+.font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "kern", "liga", "calt";
+  letter-spacing: -0.01em;
+}

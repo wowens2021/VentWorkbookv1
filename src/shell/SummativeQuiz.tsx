@@ -43,7 +43,7 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
                 const showResult = submitted;
                 const stateClass = !showResult
                   ? sel
-                    ? 'bg-sky-100 border-sky-500 text-sky-800'
+                    ? 'bg-sky-100 border-brand-olive text-sky-800'
                     : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-100'
                   : opt.is_correct
                     ? 'bg-emerald-50 border-emerald-600 text-emerald-800'
@@ -68,7 +68,7 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
               })}
             </div>
             {submitted && q.explanation && (
-              <div className="mt-2 px-3 py-2 bg-zinc-50 border border-zinc-200 rounded text-[11.5px] text-zinc-700 leading-relaxed">
+              <div className="mt-2 px-3 py-2 bg-stone-50 border border-zinc-200 rounded text-[11.5px] text-zinc-700 leading-relaxed">
                 <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mr-1.5">Why:</span>
                 {q.explanation}
               </div>
@@ -81,7 +81,7 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
         <button
           disabled={!allAnswered}
           onClick={() => { setSubmitted(true); onSubmit(score); }}
-          className="mt-6 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-100 disabled:text-zinc-400 text-white text-sm font-bold rounded-lg transition"
+          className="mt-6 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:bg-zinc-100 disabled:text-zinc-400 text-white text-sm font-bold rounded-lg transition"
         >
           Submit
         </button>

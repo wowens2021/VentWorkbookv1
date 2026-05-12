@@ -35,7 +35,7 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
         <p className="text-sm text-zinc-500 mb-8 max-w-md">First-attempt score: <span className="font-bold text-emerald-700">{score} / {questions.length}</span></p>
         <button
           onClick={() => onComplete(score, answerLog)}
-          className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg shadow-lg transition"
+          className="px-6 py-3 bg-brand-olive hover:bg-brand-olive-hover text-white text-sm font-bold rounded-lg shadow-lg transition"
         >
           Enter the simulator <ChevronRight size={16} className="inline ml-1" />
         </button>
@@ -80,7 +80,7 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
                 firstAttempts[qq.id] !== undefined && i < idx
                   ? 'bg-emerald-500'
                   : i === idx
-                    ? 'bg-sky-500'
+                    ? 'bg-stone-500'
                     : 'bg-zinc-200'
               }`}
             />
@@ -88,7 +88,7 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
         </div>
       </div>
 
-      <h3 className="text-lg font-bold text-zinc-900 mb-5 leading-snug">{q.prompt}</h3>
+      <h3 className="font-display text-xl font-semibold text-zinc-900 mb-5 leading-snug">{q.prompt}</h3>
 
       <div className="flex flex-col gap-2 mb-5">
         {q.options.map((opt, i) => {
@@ -96,8 +96,8 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
           const showResult = submitted;
           const stateClass = !showResult
             ? isSel
-              ? 'bg-sky-50 border-sky-500 text-sky-900'
-              : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300'
+              ? 'bg-stone-50 border-brand-olive text-sky-900'
+              : 'bg-white border-zinc-200 text-zinc-700 hover:bg-stone-50 hover:border-zinc-300'
             : opt.is_correct
               ? 'bg-emerald-50 border-emerald-500 text-emerald-900'
               : isSel
@@ -120,7 +120,7 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
       </div>
 
       {submitted && (
-        <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-4 mb-5 space-y-2.5">
+        <div className="bg-stone-50 border border-zinc-200 rounded-lg p-4 mb-5 space-y-2.5">
           <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">Explanations</span>
           {q.options.map((opt, i) => (
             <div key={i} className="text-[13px] leading-relaxed">
@@ -144,7 +144,7 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
             <button
               disabled={selected === null}
               onClick={submit}
-              className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 disabled:bg-zinc-200 disabled:text-zinc-400 text-white text-sm font-bold rounded-lg transition"
+              className="px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:bg-zinc-200 disabled:text-zinc-400 text-white text-sm font-bold rounded-lg transition"
             >
               Submit
             </button>
@@ -160,7 +160,7 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
           {submitted && lastWasCorrect && (
             <button
               onClick={advance}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg transition"
+              className="px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-hover text-white text-sm font-bold rounded-lg transition"
             >
               {isLast ? 'Continue' : 'Next'} <ChevronRight size={14} className="inline ml-1" />
             </button>
