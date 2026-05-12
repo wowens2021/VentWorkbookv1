@@ -80,16 +80,16 @@ const MetricBox = ({ label, value, color }: { label: string; value: any; color: 
 );
 
 const NumericCard = ({ label, value, unit, color, sub = null }: any) => (
-  <div className="bg-white rounded-lg border border-zinc-200 p-1.5 flex flex-col justify-between shadow-md">
+  <div className="bg-white rounded-md border border-zinc-200 px-1.5 py-1 flex flex-col justify-between shadow-sm">
     <div className="flex justify-between leading-none">
       <span className="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">{label}</span>
       {sub && <span className="text-[8px] font-bold text-zinc-400">{sub}</span>}
     </div>
     <div className="flex items-baseline gap-1">
-      <span className={`text-2xl font-mono font-black tracking-tighter ${color}`}>
+      <span className={`text-lg font-mono font-black tracking-tighter leading-none ${color}`}>
         {typeof value === 'number' ? value.toFixed(0) : value}
       </span>
-      <span className="text-[9px] text-zinc-500 uppercase font-black">{unit}</span>
+      <span className="text-[8px] text-zinc-500 uppercase font-black">{unit}</span>
     </div>
   </div>
 );
@@ -116,28 +116,28 @@ const ControlBox = ({ label, value, unit, min, max, step, onChange, forceDecimal
   };
 
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
-      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider text-center mb-1">{label}</span>
-      <div className="flex items-center bg-zinc-100 border border-zinc-300 rounded-xl p-1 shadow-inner hover:border-sky-300 transition-all">
+    <div className={`flex flex-col gap-0.5 ${className}`}>
+      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider text-center">{label}</span>
+      <div className="flex items-center bg-zinc-100 border border-zinc-300 rounded-lg p-0.5 shadow-inner hover:border-sky-300 transition-all">
         <div className="flex-1 text-center px-1">
-          <div className="text-xl font-mono font-extrabold leading-none tracking-tight text-zinc-900">
+          <div className="text-base font-mono font-extrabold leading-none tracking-tight text-zinc-900">
             {forceDecimal ? Number(value).toFixed(1) : value}
           </div>
-          <div className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-wider leading-none mt-1">{unit}</div>
+          <div className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider leading-none mt-0.5">{unit}</div>
         </div>
         <div className="flex flex-col gap-0.5">
           <button
             aria-label="Increase"
             onMouseDown={() => startRepeat(step)} onMouseUp={stopRepeat} onMouseLeave={stopRepeat}
             onTouchStart={() => startRepeat(step)} onTouchEnd={stopRepeat}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white hover:bg-zinc-200 text-zinc-500 active:scale-95"
-          ><Plus size={14} strokeWidth={2} /></button>
+            className="w-6 h-5 flex items-center justify-center rounded bg-white hover:bg-zinc-200 text-zinc-500 active:scale-95"
+          ><Plus size={11} strokeWidth={2.5} /></button>
           <button
             aria-label="Decrease"
             onMouseDown={() => startRepeat(-step)} onMouseUp={stopRepeat} onMouseLeave={stopRepeat}
             onTouchStart={() => startRepeat(-step)} onTouchEnd={stopRepeat}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white hover:bg-zinc-200 text-zinc-500 active:scale-95"
-          ><Minus size={14} strokeWidth={2} /></button>
+            className="w-6 h-5 flex items-center justify-center rounded bg-white hover:bg-zinc-200 text-zinc-500 active:scale-95"
+          ><Minus size={11} strokeWidth={2.5} /></button>
         </div>
       </div>
     </div>
@@ -829,22 +829,53 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     }
   }, [isFrozen]);
 
-  // ── Waveform bounds (auto-scale) ──
+  // ── Waveform bounds (stable axes with hysteresis) ──
+  // Axes anchor on sensible minimum ranges so a single big breath doesn't
+  // rescale the whole panel — making it look as if "nothing changed" when
+  // the next peak is in fact higher. We snap up only in coarse steps and
+  // never shrink during a session, so peak-to-peak differences are visible.
+  const pressureCeilRef = useRef(40);
+  const flowAbsCeilRef = useRef(60);
+  const volumeCeilRef = useRef(700);
+
   const pressureBounds = useMemo(() => {
-    if (dataPoints.length === 0) return { min: 0, max: 40 };
-    return { min: 0, max: Math.ceil(Math.max(...dataPoints.map(d => d.pressure), 30) + 5) };
+    if (dataPoints.length === 0) return { min: 0, max: pressureCeilRef.current };
+    const peak = Math.max(...dataPoints.map(d => d.pressure));
+    if (peak + 4 > pressureCeilRef.current) {
+      // Step up in coarse increments: 40 → 60 → 80 → 100
+      pressureCeilRef.current = Math.ceil((peak + 8) / 20) * 20;
+    }
+    return { min: 0, max: pressureCeilRef.current };
   }, [dataPoints]);
 
   const flowBounds = useMemo(() => {
-    if (dataPoints.length === 0) return { min: -60, max: 60 };
+    if (dataPoints.length === 0) return { min: -flowAbsCeilRef.current, max: flowAbsCeilRef.current };
     const vals = dataPoints.map(d => d.flow);
-    return { min: Math.floor(Math.min(...vals, -40) - 5), max: Math.ceil(Math.max(...vals, 40) + 5) };
+    const maxAbs = Math.max(Math.abs(Math.min(...vals)), Math.max(...vals));
+    if (maxAbs + 5 > flowAbsCeilRef.current) {
+      flowAbsCeilRef.current = Math.ceil((maxAbs + 10) / 30) * 30; // 60 → 90 → 120
+    }
+    return { min: -flowAbsCeilRef.current, max: flowAbsCeilRef.current };
   }, [dataPoints]);
 
   const volumeBounds = useMemo(() => {
-    if (dataPoints.length === 0) return { min: 0, max: 600 };
-    return { min: 0, max: Math.max(600, Math.max(...dataPoints.map(d => d.volume)) + 50) };
+    if (dataPoints.length === 0) return { min: 0, max: volumeCeilRef.current };
+    const peak = Math.max(...dataPoints.map(d => d.volume));
+    if (peak + 50 > volumeCeilRef.current) {
+      volumeCeilRef.current = Math.ceil((peak + 100) / 200) * 200; // 700 → 900 → 1100
+    }
+    return { min: 0, max: volumeCeilRef.current };
   }, [dataPoints]);
+
+  // Reset axes when the preset/module changes (via reset_to_preset).
+  useEffect(() => {
+    if (!harness) return;
+    return harness.onReset(() => {
+      pressureCeilRef.current = 40;
+      flowAbsCeilRef.current = 60;
+      volumeCeilRef.current = 700;
+    });
+  }, [harness]);
 
   const pressurePaths = useMemo(() => generateSegmentedPaths(dataPoints, 'pressure', pressureBounds, '#3b82f6'), [dataPoints, pressureBounds]);
   const flowPaths = useMemo(() => generateSegmentedPaths(dataPoints, 'flow', flowBounds, '#3b82f6'), [dataPoints, flowBounds]);
@@ -853,7 +884,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   // ── Render ──
   return (
     <div
-      className="flex flex-col h-screen bg-zinc-50 text-zinc-900 font-sans p-4 overflow-hidden select-none"
+      className="flex flex-col h-full bg-stone-100 text-zinc-900 font-sans overflow-hidden select-none"
       onMouseMove={e => {
         if (isDragging && isFrozen && waveformContainerRef.current) {
           const rect = waveformContainerRef.current.getBoundingClientRect();
@@ -957,7 +988,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       {/* Main grid — left 6 cols: measured values + smaller waveforms + controls | right 6 cols: workbook */}
       <div
         ref={waveformContainerRef}
-        className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 mt-2 overflow-hidden min-h-0"
+        className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2 overflow-hidden min-h-0"
         onMouseDown={e => { if (isFrozen) { setIsDragging(true); handleWaveformInteraction(e); } }}
       >
         {/* ── Left column: measured values strip → waveforms → vent controls ── */}

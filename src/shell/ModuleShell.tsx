@@ -194,24 +194,24 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
 
     // 'content' or 'review' phase
     return (
-      <div className="h-full flex flex-col px-6 py-5 overflow-y-auto">
-        {/* Module header */}
-        <div className="mb-5 pb-4 border-b border-zinc-200">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[11px] font-black uppercase tracking-widest text-sky-700 bg-sky-50 px-2 py-0.5 rounded">{module.track}</span>
-            <span className="text-[11px] font-mono text-zinc-500">{module.id}</span>
-            <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-              <Clock size={12} /> {module.estimated_minutes} min
+      <div className="h-full flex flex-col px-5 py-3 overflow-y-auto">
+        {/* Module header — compact */}
+        <div className="mb-3 pb-3 border-b border-zinc-200">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[10px] font-black uppercase tracking-widest text-sky-700 bg-sky-50 px-2 py-0.5 rounded">{module.track}</span>
+            <span className="text-[10px] font-mono text-zinc-500">{module.id}</span>
+            <span className="text-[10px] text-zinc-400 flex items-center gap-1">
+              <Clock size={11} /> {module.estimated_minutes} min
             </span>
           </div>
-          <h1 className="text-2xl font-black text-zinc-900 leading-tight tracking-tight">{module.title}</h1>
-          <div className="mt-3">
-            <div className="text-[11px] font-black uppercase tracking-widest text-zinc-500 mb-1.5 flex items-center gap-1">
-              <Target size={12} /> Objectives
+          <h1 className="text-xl font-black text-zinc-900 leading-tight tracking-tight">{module.title}</h1>
+          <div className="mt-2">
+            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 flex items-center gap-1">
+              <Target size={11} /> Objectives
             </div>
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {module.visible_learning_objectives.map((o, i) => (
-                <li key={i} className="text-[14px] text-zinc-700 leading-snug">• {o}</li>
+                <li key={i} className="text-[13px] text-zinc-700 leading-snug">• {o}</li>
               ))}
             </ul>
           </div>
@@ -269,7 +269,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
 
   // ── Top bar (replaces the sim's own header) ──
   return (
-    <div className="flex flex-col h-screen bg-zinc-50 text-zinc-900 font-sans overflow-hidden select-none">
+    <div className="flex flex-col h-screen bg-stone-100 text-zinc-900 font-sans overflow-hidden select-none">
       <div className="flex items-center justify-between bg-white px-4 py-2 border-b border-zinc-200">
         <button onClick={onBack} className="flex items-center gap-1.5 text-[12px] font-bold text-zinc-500 hover:text-zinc-900">
           <ArrowLeft size={14} /> Back to modules
@@ -287,7 +287,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
           {phase === 'review' && 'Review'}
         </div>
       </div>
-      <div className="flex-1 p-3 overflow-hidden">
+      <div className="flex-1 p-2 overflow-hidden min-h-0">
         <PlaygroundSim
           harness={harness}
           initialPreset={module.scenario.preset}
