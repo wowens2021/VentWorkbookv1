@@ -17,7 +17,12 @@ export interface KCQuestion {
   reference: string;
 }
 
-export const KC_QUESTIONS: KCQuestion[] = [
+/**
+ * Original "book bank" — the 30 questions imported from The Ventilator App
+ * test bank. Kept as its own array so it stays distinct from the
+ * module-derived items at the bottom of this file.
+ */
+const KC_BANK_BOOK: KCQuestion[] = [
   // ── Group 1: Novice ────────────────────────────────────────────────
   { id: 1, difficulty: 'Novice',
     text: "Which of the following best describes the primary therapeutic benefit of a mechanical ventilator?",
@@ -414,6 +419,56 @@ export const KC_QUESTIONS: KCQuestion[] = [
     reference: "The Ventilator Book, Chapter 30",
   },
 ];
+
+// ─── Module-derived bank ───────────────────────────────────────────────────
+// Every module M1..M19 carries 5 summative_quiz items used in the per-module
+// debrief. We fold those into the cross-module Knowledge Check pool so the
+// rotation buffer doesn't burn through the original 30 too fast.
+
+import { MODULES } from '../modules';
+import type { ModuleConfig, Track } from '../shell/types';
+
+const trackToTier: Record<Track, KCDifficulty> = {
+  Foundations: 'Novice',
+  Physiology: 'Novice',
+  Modes: 'Intermediate',
+  Strategy: 'Advanced',
+  Weaning: 'Advanced',
+  Synthesis: 'Advanced',
+};
+
+/** Convert one module's summative quiz into Knowledge-Check items. */
+function moduleQuestionsToKC(mod: ModuleConfig): KCQuestion[] {
+  return mod.summative_quiz.map((q, idx) => {
+    const correctIdx = q.options.findIndex(o => o.is_correct);
+    const correctOpt = correctIdx >= 0 ? q.options[correctIdx] : undefined;
+    const rationale = q.explanation ?? correctOpt?.explanation ?? 'See the module debrief for the full explanation.';
+    return {
+      // IDs like 1101..1105 for M1, 1201..1205 for M2, ..., 1901..1905 for M19.
+      // 1000+ keeps these clearly separate from the book bank's 1..30.
+      id: 1000 + mod.number * 100 + (idx + 1),
+      text: q.prompt,
+      options: q.options.map(o => o.label),
+      correctAnswer: correctIdx >= 0 ? correctIdx : 0,
+      rationale,
+      difficulty: trackToTier[mod.track],
+      tags: [
+        mod.id.toLowerCase(),                         // e.g. "m4"
+        `track:${mod.track.toLowerCase()}`,           // e.g. "track:physiology"
+        'source:module',
+      ],
+      reference: `${mod.id}: ${mod.title}`,
+    };
+  });
+}
+
+const KC_BANK_MODULE: KCQuestion[] = MODULES.flatMap(moduleQuestionsToKC);
+
+/**
+ * Combined Knowledge-Check pool: original book bank + every module's
+ * summative quiz. The selection engine sees one flat array.
+ */
+export const KC_QUESTIONS: KCQuestion[] = [...KC_BANK_BOOK, ...KC_BANK_MODULE];
 
 export const KC_BY_DIFFICULTY: Record<KCDifficulty, KCQuestion[]> = {
   Novice: KC_QUESTIONS.filter(q => q.difficulty === 'Novice'),
