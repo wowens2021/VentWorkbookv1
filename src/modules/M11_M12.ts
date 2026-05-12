@@ -213,6 +213,24 @@ export const M11: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'This module is **recognition-based** — you won\'t be adjusting controls. The simulator will cycle through five different dyssynchrony patterns, and your job is to name them. The sim is currently showing a normal patient on PSV as a reference.',
+    unlocked_controls_description: [],
+    readouts_description: [
+      { name: 'Pressure and flow waveforms (the normal pattern)', description: 'smooth triggering, decelerating inspiratory flow, expiratory flow returning to zero, each breath matching the next.' },
+    ],
+    suggestions: [
+      'Pay attention to the *normal* pattern so you have something to compare against.',
+      'When the task starts, the patterns will look "off" in different ways — your reading covers all five.',
+    ],
+  },
+  user_facing_task: "You'll see five short clips of a ventilated patient, each with a different patient-ventilator interaction problem. After each clip, name what you're seeing. Then there's a final round: the same five in random order, no labels — try to nail each one on the first guess.",
+  success_criteria_display: [
+    'Correctly identify each of the five dyssynchrony patterns (two attempts each; missed ones come back at the end).',
+    'Then identify all five again in the randomized final round on the first attempt.',
+  ],
+  task_framing_style: 'C',
+
   key_points: [
     'Five named dyssynchronies: ineffective triggering, double-triggering, flow starvation, premature cycling, delayed cycling.',
     'Trigger problems vs cycle problems — two timing dimensions.',
@@ -360,6 +378,29 @@ export const M12: ModuleConfig = {
       explanation: 'Daily SBTs > gradual SIMV weaning in trials. SIMV one tool, not the default.',
     },
   ],
+
+  explore_card: {
+    patient_context: 'Spontaneously breathing patient on SIMV with a mandatory rate of 12 and pressure support of 8 on the spontaneous breaths. The patient also takes their own breaths between the mandatory ones.',
+    unlocked_controls_description: [
+      { name: 'Respiratory rate (mandatory rate)', description: 'how many guaranteed breaths the vent delivers per minute. Range 4–40.' },
+    ],
+    readouts_description: [
+      { name: 'Set rate vs measured rate', description: 'the gap is how many spontaneous breaths the patient is taking on their own.' },
+      { name: 'Vte (mandatory vs spontaneous)', description: 'mandatory breaths are fixed-volume; spontaneous breaths vary with patient effort.' },
+      { name: 'Minute ventilation (VE)', description: 'total air-per-minute. Does this stay stable when the mandatory rate falls?' },
+    ],
+    suggestions: [
+      'Look at the pressure waveform — mandatory breaths look one way (larger), spontaneous breaths look different (smaller, with the trigger dip visible).',
+      'Lower mandatory rate from 12 to 8. Watch what the measured rate does. Does the patient compensate?',
+      'Drop it further to 4. Does minute ventilation hold up, or does it fall? What does that tell you about the patient\'s spontaneous drive?',
+    ],
+  },
+  user_facing_task: "You're going to do a small weaning maneuver. Lower the mandatory rate to allow the patient to take over more of the work. After you make the change, you'll identify what happened.",
+  success_criteria_display: [
+    'Reduce the mandatory rate to about 4–6 breaths per minute.',
+    'Identify how the breath mix changed.',
+  ],
+  task_framing_style: 'A',
 
   key_points: [
     'SIMV mixes mandatory + spontaneous breaths.',

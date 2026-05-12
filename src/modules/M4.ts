@@ -160,6 +160,30 @@ export const M4: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'Passive patient on volume control. You have two sliders — one for compliance, one for resistance — so you can produce each pattern cleanly.',
+    unlocked_controls_description: [
+      { name: 'Compliance', description: 'how easily the lungs stretch. Range 15–80 mL/cmH2O. Lower this to simulate ARDS, pulmonary edema, or pneumothorax.' },
+      { name: 'Resistance', description: 'how hard it is to push gas through airways. Range 5–40 cmH2O/L/s. Raise this to simulate bronchospasm, mucus plug, or a kinked tube.' },
+    ],
+    readouts_description: [
+      { name: 'Peak pressure, plateau pressure, and Driving Pressure (peak − plateau)', description: 'the gap is the resistive component.' },
+    ],
+    suggestions: [
+      'Start by lowering compliance from 50 to 25. What do peak and plateau do?',
+      'Reset, then raise resistance from 10 to 25. What does the gap do?',
+      'Try extreme values to see how dramatic the difference can be.',
+      'Important: a compliance change moves both peak and plateau together. A resistance change widens the gap (peak moves more than plateau).',
+    ],
+  },
+  user_facing_task: "You'll make two changes to the simulator to confirm the central diagnostic move of this module: telling a compliance problem from a resistance problem. First, you'll change compliance and answer what you saw. Then you'll change resistance and answer what you saw.",
+  success_criteria_display: [
+    'Reduce compliance by at least 30% and identify what happens to the peak-plateau gap.',
+    'Then raise resistance by at least 50% and identify what happens to the peak-plateau gap.',
+    'Sim resets between the two changes so each one is a clean experiment.',
+  ],
+  task_framing_style: 'A',
+
   key_points: [
     'Peak rises with both compliance and resistance problems.',
     'Plateau rises only with compliance changes.',

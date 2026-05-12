@@ -160,6 +160,30 @@ export const M9: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'Passive patient on PRVC with a tidal volume target of 450 mL. The ventilator chooses its own pressure each breath to hit that target.',
+    unlocked_controls_description: [
+      { name: 'Compliance', description: 'the patient\'s lung compliance. Range 15–80 mL/cmH2O. Adjustable here so you can see how PRVC reacts.' },
+    ],
+    readouts_description: [
+      { name: 'Set Vt vs delivered Vt (Vte)', description: 'does the vent hit the target?' },
+      { name: 'Peak pressure', description: 'the pressure PRVC chose for the last breath. This is the key adaptive readout.' },
+      { name: 'Driving pressure', description: 'how much pressure above PEEP was needed for this breath.' },
+    ],
+    suggestions: [
+      'At baseline, observe that delivered volume tracks the target closely. The vent picked a pressure that works.',
+      'Drop compliance by 40%. Don\'t change anything else. Watch the peak pressure over the next several breaths. What is PRVC doing on its own?',
+      'The lesson: PRVC adjusts pressure breath-by-breath to keep volume on target.',
+    ],
+  },
+  user_facing_task: "You'll simulate a sudden drop in this patient's lung compliance and observe how PRVC responds *on its own*. Don't touch anything else — just the compliance control. Then identify what the ventilator did over the next several breaths.",
+  success_criteria_display: [
+    'Reduce compliance by at least 40%.',
+    'Wait several breaths and watch the pressure trend.',
+    'Identify what the ventilator did in response.',
+  ],
+  task_framing_style: 'A',
+
   key_points: [
     'PRVC: volume target, pressure variable; algorithm adapts breath-to-breath.',
     'Adjustment happens over several breaths, not instantly.',
@@ -326,6 +350,31 @@ export const M10: ModuleConfig = {
       explanation: 'COPD has prolonged time constants. At 25%, breath continues past patient\'s neural inspiratory end. Raising cycle-off ends breath earlier.',
     },
   ],
+
+  explore_card: {
+    patient_context: 'Spontaneously breathing patient on PSV. The patient is taking breaths on their own; the vent is just adding support.',
+    unlocked_controls_description: [
+      { name: 'Pressure support (PS)', description: 'how much pressure assist the vent adds when the patient triggers. Range 0–60 cmH2O.' },
+      { name: 'End-Inspiratory %', description: 'cycle-off threshold — the % of peak flow at which the breath terminates. Range 5–50%.' },
+    ],
+    readouts_description: [
+      { name: 'Delivered tidal volume (Vte)', description: 'depends on patient effort + pressure support.' },
+      { name: 'Measured rate (Actual RR)', description: 'how many breaths the patient is actually triggering.' },
+      { name: 'Pressure and flow waveforms', description: 'note the small negative deflection before each breath (the trigger).' },
+    ],
+    suggestions: [
+      'Raise pressure support from 10 to 15. What happens to tidal volume?',
+      'Try lowering cycle-off from 25 → 10. Patients with long time constants (COPD) need this to avoid delayed cycling.',
+      'The two dials are independent: pressure support sizes each breath; cycle-off controls how each breath ends.',
+    ],
+  },
+  user_facing_task: "This patient is breathing spontaneously on PSV. You'll make two adjustments to confirm how the PSV controls behave. First, raise the pressure support to 15 and identify the effect. Then change the cycle-off threshold and identify the effect on breath duration.",
+  success_criteria_display: [
+    'Set pressure support to about 15 cmH2O and identify what happened to tidal volume.',
+    'Then change the End-Insp % control and identify the effect.',
+    'Sim resets between the two.',
+  ],
+  task_framing_style: 'A',
 
   key_points: [
     'PSV = patient triggers, vent supports, flow-cycled termination.',

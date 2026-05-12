@@ -136,6 +136,34 @@ export const M15: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'Severe ARDS, just intubated in the ED. Predicted body weight 70 kg. Current settings (Vt 560 mL, rate 18, PEEP 10, FiO2 0.60) were chosen on a routine post-intubation order set. **They are not lung-protective.** That\'s the problem you\'re about to address.',
+    unlocked_controls_description: [
+      { name: 'Tidal volume', description: 'range 200–800 mL.' },
+      { name: 'Respiratory rate', description: 'range 4–40.' },
+    ],
+    readouts_description: [
+      { name: 'Vt/PBW', description: 'computed live as Vt ÷ 70 kg. This is the target metric for lung-protective ventilation.' },
+      { name: 'Plateau pressure', description: 'what the alveoli are actually seeing each breath.' },
+      { name: 'Driving pressure', description: 'plateau minus PEEP. A separate index of lung injury risk.' },
+      { name: 'Minute ventilation (VE)', description: 'total air per minute. Reducing tidal volume will drop this unless you compensate with rate.' },
+    ],
+    suggestions: [
+      'Look at the live Vt/PBW readout. What does it say right now? Compare it to what you read about as the lung-protective target.',
+      'Try reducing tidal volume. Watch the per-kg readout drop. Watch the plateau and driving pressure drop too.',
+      'If minute ventilation falls too far, what other control can you adjust to bring it back?',
+      'When you\'re comfortable with the relationship between these knobs, hit Start the task.',
+    ],
+  },
+  user_facing_task: "You're admitting this ARDS patient to the ICU. They were intubated in the ED on routine settings, and your senior wants the ventilator set to lung-protective parameters for this patient before transport off the unit. Make the necessary changes.",
+  success_criteria_display: [
+    'Tidal volume should be at or below 6 mL/kg of predicted body weight.',
+    'Plateau pressure should stay at or below 30 cmH2O.',
+    'Driving pressure should stay at or below 15 cmH2O.',
+    'All three should hold for several breaths in a row.',
+  ],
+  task_framing_style: 'B',
+
   key_points: [
     '6 mL/kg PBW starting Vt.',
     'Plateau ≤ 30. Driving pressure ≤ 15.',
@@ -275,6 +303,33 @@ export const M16: ModuleConfig = {
       explanation: 'Reduce patient drive and asynchrony. Fewer attempted breaths = more Te per cycle.',
     },
   ],
+
+  explore_card: {
+    patient_context: 'Severe asthma exacerbation, intubated for respiratory failure. Compliance is normal but resistance is markedly elevated. Current settings (rate 22, I-time 1.0, tidal volume 400) were chosen for a routine patient — they\'re not appropriate for this one. Look at the flow waveform: this patient is trapping air. Auto-PEEP is the central problem.',
+    unlocked_controls_description: [
+      { name: 'Respiratory rate', description: 'range 4–40. The single most powerful lever for resolving trapping.' },
+      { name: 'I-time', description: 'range 0.3–3.0 sec. A shorter I-time leaves more time for expiration.' },
+      { name: 'Tidal volume', description: 'range 200–800. Smaller breaths take less time to exhale.' },
+    ],
+    readouts_description: [
+      { name: 'Flow waveform (expiratory limb)', description: 'does it return to zero before the next breath?' },
+      { name: 'Auto-PEEP', description: 'the trapped pressure. Currently elevated.' },
+      { name: 'Total PEEP', description: 'set PEEP + auto-PEEP.' },
+    ],
+    suggestions: [
+      'The first move with auto-PEEP is almost always the same. Look at the rate.',
+      'Try dropping rate from 22 to 14. Watch the flow waveform and the auto-PEEP readout.',
+      'Try shortening I-time so expiratory time lengthens. What changes?',
+      'These two levers (rate and I-time) often combine; you don\'t have to do everything with one knob.',
+    ],
+  },
+  user_facing_task: "This severe asthma patient is trapping air on the current settings. Adjust the ventilator until exhalation completes between breaths and the auto-PEEP resolves. Some hypercapnia is expected and acceptable.",
+  success_criteria_display: [
+    'Expiratory flow should return to zero between breaths.',
+    'Measured auto-PEEP should be below 2.',
+    'Hold this for several breaths in a row.',
+  ],
+  task_framing_style: 'B',
 
   key_points: [
     'Obstruction = resistance + long Te.',

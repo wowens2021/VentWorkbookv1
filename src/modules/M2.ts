@@ -135,6 +135,26 @@ export const M2: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'Same passive patient as M1. This is a vocabulary module — you\'re still in "learn to read" mode.',
+    unlocked_controls_description: [],
+    readouts_description: [
+      { name: 'Set values (operator inputs)', description: 'set Vt, set rate, PEEP, FiO2, I:E ratio.' },
+      { name: 'Measured values (what the patient is doing)', description: 'delivered Vt, measured rate, minute ventilation, peak pressure, plateau pressure.' },
+    ],
+    suggestions: [
+      'Find the eight terms from the reading on the actual display. They\'re arranged differently than the table.',
+      'Notice which values are "set" (operator-controlled) and which are "measured" (consequences). Some look almost the same name.',
+      'Make a mental note of where each lives on the display before the task starts.',
+    ],
+  },
+  user_facing_task: "Your senior runs you through a vocabulary check on the ventilator. They'll name eight values; for each, you click on the matching reading on the display.",
+  success_criteria_display: [
+    'Correctly match each term to its display element.',
+    'You have two attempts per term before the answer is revealed.',
+  ],
+  task_framing_style: 'C',
+
   key_points: [
     'Eight core terms: Vt, VE, PEEP, FiO2, PIP, Pplat, I:E, RR.',
     'Set values = operator input. Measured values = what the system is doing.',

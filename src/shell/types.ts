@@ -140,6 +140,27 @@ export interface HintConfig {
 // ── Module configuration ──
 export type Track = 'Foundations' | 'Physiology' | 'Modes' | 'Strategy' | 'Weaning' | 'Synthesis';
 
+// ── Explore card (Phase 3 content) ──
+export interface ExploreCardConfig {
+  /** One paragraph of clinical context shown at the top of the card. */
+  patient_context?: string;
+  /** Each unlocked control with a short description of what it does. */
+  unlocked_controls_description: { name: string; description: string }[];
+  /** Each readout the learner should watch with a brief description. */
+  readouts_description: { name: string; description: string }[];
+  /** Two to four specific things to try without pressure. */
+  suggestions: string[];
+}
+
+/**
+ * §1.6 — three styles of task framing:
+ *  - A: direct (foundations; name the controls to change)
+ *  - B: clinical (advanced; name the targets, not the controls)
+ *  - C: recognition (recognition-only modules; interrogative)
+ */
+export type TaskFramingStyle = 'A' | 'B' | 'C';
+
+// ── Module configuration ──
 export interface ModuleConfig {
   id: string; // e.g. 'M1'
   number: number;
@@ -155,20 +176,44 @@ export interface ModuleConfig {
   hint_ladder: HintConfig;
   summative_quiz: QuizQuestion[]; // 5
   key_points: string[];
+
+  // ── v2 additions (§1.4 phase model, §1.6 task framing) ──
+  /** Phase 3 — explore card content. */
+  explore_card?: ExploreCardConfig;
+  /** Phase 4 — second-person clinical framing shown on the task card. */
+  user_facing_task?: string;
+  /** Phase 4 — plain-language bullets under the task framing. */
+  success_criteria_display?: string[];
+  /** Phase 4 — A/B/C framing style. Determines tone but not behavior. */
+  task_framing_style?: TaskFramingStyle;
 }
 
-// ── Persistence record ──
+// ── Persistence record (v2 — richer per-phase telemetry per §1.9) ──
 export interface ProgressRecord {
   learner_id: string;
   module_id: string;
   started_at: string;
+  // Phase 1
   primer_completed_at?: string;
   primer_score?: number;
   primer_answers?: { question_id: string; selected_label: string; is_correct: boolean }[];
+  // Phase 2
+  reading_completed_at?: string;
+  // Phase 3
+  exploration_started_at?: string;
+  exploration_duration_sec?: number;
+  exploration_control_changes?: number;
+  // Phase 4
+  task_started_at?: string;
   objective_satisfied_at?: string;
+  time_to_objective_sec?: number;
   hint_tiers_triggered: number;
-  quiz_submitted_at?: string;
-  quiz_score?: number;
+  task_control_changes?: number;
+  reset_to_start_clicks?: number;
   replay_snapshot_ref?: string;
   attempts_per_recognition?: Record<string, number>;
+  // Phase 5
+  quiz_submitted_at?: string;
+  quiz_score?: number;
+  quiz_answers?: { question_id: string; selected_label: string; is_correct: boolean }[];
 }

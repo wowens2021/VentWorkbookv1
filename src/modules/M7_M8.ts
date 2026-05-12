@@ -161,6 +161,32 @@ export const M7: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'Passive patient with normal lung mechanics, on volume control. You\'re learning the dials of VC.',
+    unlocked_controls_description: [
+      { name: 'Tidal volume', description: 'the volume per breath the ventilator will deliver no matter what. Range 200–800 mL.' },
+      { name: 'I-time / inspiratory flow', description: 'how fast the ventilator delivers the breath. Shorter I-time = faster flow.' },
+    ],
+    readouts_description: [
+      { name: 'Peak pressure', description: 'the pressure the vent had to produce.' },
+      { name: 'Plateau pressure', description: 'the alveolar pressure once flow stopped.' },
+      { name: 'Three waveforms: pressure, flow, and volume over time', description: 'flow is flat-square in VC — that\'s the signature.' },
+    ],
+    suggestions: [
+      'Notice the flow waveform: it\'s a flat square shape — constant flow throughout the breath. That\'s the VC signature.',
+      'Watch the pressure waveform: it ramps up gradually as volume accumulates.',
+      'Try increasing tidal volume by 50%. Watch peak rise. Does the flow shape stay the same?',
+      'Try shortening I-time (= higher flow). The breath gets delivered faster — what does that do to peak pressure?',
+    ],
+  },
+  user_facing_task: "You'll make two adjustments to confirm how volume control behaves. First, set the tidal volume to 600 mL and identify what changed. Then shorten the inspiratory time by about a third (raising flow) and identify what changed.",
+  success_criteria_display: [
+    'Set tidal volume to 600 mL (±20) and answer what happened to the pressure waveform.',
+    'Then shorten I-time substantially and answer what happened to inspiratory time and peak pressure.',
+    'Sim resets between the two changes.',
+  ],
+  task_framing_style: 'A',
+
   key_points: [
     'VC: volume guaranteed; pressure is dependent.',
     'Square flow waveform; ramped pressure curve.',
@@ -329,6 +355,32 @@ export const M8: ModuleConfig = {
       explanation: 'Longer Ti lets lungs equilibrate with set pressure → modest Vt increase. Mean Paw rises clearly. M14 lever.',
     },
   ],
+
+  explore_card: {
+    patient_context: 'Passive patient on pressure control. The vent is set to deliver each breath at a fixed inspiratory pressure of 15 above PEEP.',
+    unlocked_controls_description: [
+      { name: 'Inspiratory pressure (Pinsp)', description: 'the target pressure for each breath. Range 1–60 cmH2O above PEEP.' },
+      { name: 'Compliance', description: 'how easily the lungs stretch. Range 15–80 mL/cmH2O. Adjustable here so you can see how PC reacts to compliance changes.' },
+    ],
+    readouts_description: [
+      { name: 'Peak pressure', description: 'should equal Pinsp + PEEP since PC holds pressure constant.' },
+      { name: 'Tidal volume delivered (Vte)', description: 'this is the dependent variable in PC. It\'s what *changes* when mechanics change.' },
+      { name: 'Three waveforms: pressure, flow, volume', description: 'note the decelerating flow shape.' },
+    ],
+    suggestions: [
+      'Look at the flow waveform — decelerating, not square. That\'s the PC signature, opposite of VC.',
+      'Try raising inspiratory pressure by 5. Watch the volume rise.',
+      'Now reset, then *lower* compliance by half (simulating worsening lung disease). Pressure waveform doesn\'t change much — but what does the delivered tidal volume do?',
+      'This is the inverse of VC: pressure is the fixed knob, volume is what gives way.',
+    ],
+  },
+  user_facing_task: "You'll make two adjustments that show how pressure control behaves. First, raise the inspiratory pressure and identify what happens to the delivered tidal volume. Then simulate worsening lung compliance and identify what happens to volume and pressure.",
+  success_criteria_display: [
+    'Increase inspiratory pressure by at least 30% and identify the effect on tidal volume.',
+    'Reduce compliance by at least 30% and identify what happens to pressure and volume.',
+    'Sim resets between the two.',
+  ],
+  task_framing_style: 'A',
 
   key_points: [
     'PC: pressure guaranteed; volume dependent.',

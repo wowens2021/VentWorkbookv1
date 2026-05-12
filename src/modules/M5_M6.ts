@@ -149,6 +149,31 @@ export const M5: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'A model patient whose shunt fraction and dead-space fraction you can dial independently. The point is to see *different* gas-exchange signatures for each.',
+    unlocked_controls_description: [
+      { name: 'Compliance (proxy for shunt severity)', description: 'lower compliance approximates ARDS-style shunt physiology in this sim.' },
+      { name: 'FiO2', description: 'inspired oxygen concentration. 21–100%.' },
+      { name: 'PEEP', description: 'end-expiratory pressure. Recruits collapsed alveoli (reduces shunt).' },
+    ],
+    readouts_description: [
+      { name: 'SpO2', description: 'the oxygenation signal.' },
+      { name: 'ETCO2 vs PaCO2', description: 'how much the end-tidal underestimates the arterial PaCO2. A widening gradient is the dead-space fingerprint.' },
+      { name: 'PaO2', description: 'arterial oxygen tension.' },
+    ],
+    suggestions: [
+      'Drop compliance into the ARDS range. Notice SpO2 fall.',
+      'Push FiO2 up and watch how much (or how little) SpO2 recovers — that\'s the difference between V/Q mismatch and true shunt.',
+      'The point: shunt and dead space have *different gas-exchange signatures*. One affects oxygenation. The other affects CO2 elimination.',
+    ],
+  },
+  user_facing_task: "You'll demonstrate the gas-exchange signature of shunt vs dead space. Raise FiO2 substantially and observe whether oxygenation improves — that's the V/Q vs shunt distinction.",
+  success_criteria_display: [
+    'Push FiO2 to 80% or higher.',
+    'Identify whether the response indicates V/Q mismatch (FiO2-responsive) or pure shunt (resistant).',
+  ],
+  task_framing_style: 'A',
+
   key_points: [
     'Shunt → oxygenation problem (FiO2-resistant in pure form).',
     'Dead space → ventilation problem (ETCO2 falls, PaCO2 rises).',
@@ -300,6 +325,30 @@ export const M6: ModuleConfig = {
       explanation: 'Disconnect, watch chest deflate, reconnect with reduced rate and longer expiratory time. Known emergency maneuver in severe asthma.',
     },
   ],
+
+  explore_card: {
+    patient_context: 'This patient has narrowed airways (COPD-like). Compliance is normal; resistance is elevated. Exhalation takes longer than normal.',
+    unlocked_controls_description: [
+      { name: 'Respiratory rate', description: 'breaths per minute. Range 8–32. Higher rate = less expiratory time per breath.' },
+      { name: 'I-time', description: 'ratio of inspiratory to expiratory time is implicit. A shorter I-time gives the lungs more time to empty.' },
+    ],
+    readouts_description: [
+      { name: 'Flow waveform — expiratory limb', description: 'does it return to zero before the next breath starts?' },
+      { name: 'Auto-PEEP', description: 'the trapped pressure in the alveoli at end-expiration.' },
+      { name: 'Total PEEP', description: 'set PEEP + auto-PEEP.' },
+    ],
+    suggestions: [
+      'Crank the rate up to 24. Watch the flow waveform — does expiration finish?',
+      'At a high rate, try shortening I-time vs lengthening it. What changes?',
+      'The goal of exploration: get a feel for *creating* and *resolving* the trapping pattern.',
+    ],
+  },
+  user_facing_task: "Your task has two parts. First, push the ventilator settings until this patient is trapping air, then identify what you're seeing. Second, resolve the trapping by adjusting the settings until exhalation completes between breaths again.",
+  success_criteria_display: [
+    "Stage 1: get the patient into a trapping pattern (auto-PEEP rises above 2 cmH2O).",
+    "Stage 2: bring the patient back to a normal pattern (auto-PEEP < 1, sustained for several breaths).",
+  ],
+  task_framing_style: 'A',
 
   key_points: [
     'Auto-PEEP = trapped end-expiratory pressure from incomplete exhalation.',

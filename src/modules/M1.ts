@@ -137,6 +137,31 @@ export const M1: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'You\'re being introduced to a passive patient on volume control. Your job in this module is to learn to *read* the ventilator before you learn to change it.',
+    unlocked_controls_description: [],
+    readouts_description: [
+      { name: 'Peak pressure', description: 'the highest pressure during each breath. Labeled Ppeak or PIP.' },
+      { name: 'Plateau pressure', description: 'the pressure after a brief inspiratory hold. Labeled Pplat.' },
+      { name: 'Tidal volume', description: 'volume of each breath in mL. Labeled Vt or Vte.' },
+      { name: 'PEEP', description: 'the pressure remaining at end-expiration.' },
+      { name: 'Set rate', description: 'the rate the operator chose.' },
+    ],
+    suggestions: [
+      'Look at where each number sits on the display. Notice that peak is always higher than plateau, which is always higher than PEEP.',
+      'Watch the Airway Pressure waveform on the right. Identify which line corresponds to peak, plateau, and PEEP.',
+      'Hover over any number to see its full label.',
+    ],
+  },
+  user_facing_task: "You're being introduced to a new ventilator display. Your senior asks you to point out four key values on the screen as a check of your orientation.",
+  success_criteria_display: [
+    'Click the peak pressure reading when asked.',
+    'Click the tidal volume reading when asked.',
+    'Click the PEEP reading when asked.',
+    'Click the set rate reading when asked.',
+  ],
+  task_framing_style: 'C',
+
   key_points: [
     'The four indications: oxygenation failure, ventilation failure, airway protection, work of breathing.',
     'Match the indication to the deficit — don\'t intubate "to be safe" without a specific reason.',

@@ -144,6 +144,30 @@ export const M13: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'ARDS patient with reduced lung compliance. Current PEEP is 5. Your senior wants to find a "best PEEP" for this patient.',
+    unlocked_controls_description: [
+      { name: 'PEEP', description: 'adjustable in 1 cmH2O steps from 0 to 24.' },
+    ],
+    readouts_description: [
+      { name: 'Driving pressure (plateau − PEEP)', description: 'should be at its lowest at the same PEEP that maximizes compliance. This is the critical readout for this module.' },
+      { name: 'Plateau pressure', description: 'should stay below 30 for safety.' },
+      { name: 'SpO2', description: 'the clinical oxygenation signal.' },
+    ],
+    suggestions: [
+      'Move PEEP up one or two steps. Wait several breaths for plateau and driving pressure to stabilize.',
+      'Move up another step. Repeat. The driving-pressure values will form a curve.',
+      'You\'re looking for the PEEP where driving pressure is *lowest*. Below that, alveoli are collapsing. Above that, you\'re overdistending.',
+      'When you\'re ready, hit Start the task.',
+    ],
+  },
+  user_facing_task: "Your senior wants you to find the best PEEP for this ARDS patient. Walk through the PEEP range in steps, allowing the lungs time to respond at each level, and then tell them which PEEP value produced the most compliant lung.",
+  success_criteria_display: [
+    'Sample compliance at several different PEEP values across the available range.',
+    'Identify which PEEP produced the highest compliance (lowest driving pressure).',
+  ],
+  task_framing_style: 'B',
+
   key_points: [
     'PEEP recruits collapsed alveoli.',
     'Decremental titration finds the compliance peak.',
@@ -292,6 +316,32 @@ export const M14: ModuleConfig = {
       explanation: 'Long Ti at expense of expiratory time → gas trapping.',
     },
   ],
+
+  explore_card: {
+    patient_context: 'Passive patient on pressure control. You\'re learning how the oxygenation levers actually work — specifically, that **mean airway pressure** is the value that drives oxygenation, not peak.',
+    unlocked_controls_description: [
+      { name: 'I-time (inspiratory time)', description: 'how long each breath holds its pressure. Range 0.3–3.0 seconds.' },
+      { name: 'PEEP', description: 'range 0–24 cmH2O.' },
+      { name: 'FiO2', description: 'range 21–100%.' },
+    ],
+    readouts_description: [
+      { name: 'Peak pressure', description: 'the maximum during each breath.' },
+      { name: 'SpO2', description: 'the clinical oxygenation signal.' },
+      { name: 'PaO2', description: 'arterial oxygen tension.' },
+    ],
+    suggestions: [
+      'Try increasing PEEP by 4. Both peak and mean rise together — straightforward.',
+      'Reset. Try *only* lengthening I-time from 1.0 to 1.5 seconds. Watch the waveform carefully. The peak doesn\'t change, but each breath spends more time pressurized.',
+      'That\'s the clinical trick of M14: longer inspiratory time raises mean airway pressure without raising peak. It\'s a way to oxygenate without barotrauma.',
+      'FiO2 changes the inspired oxygen but doesn\'t move the pressure waveform at all. Independent lever.',
+    ],
+  },
+  user_facing_task: "Your senior wants to know whether you understand the relationship between inspiratory time and mean airway pressure. Increase the inspiratory time meaningfully — without changing anything else — and then describe what happened to peak pressure and mean airway pressure.",
+  success_criteria_display: [
+    'Increase inspiratory time by at least 50% from the starting value.',
+    'Identify what happened to peak pressure and mean airway pressure.',
+  ],
+  task_framing_style: 'A',
 
   key_points: [
     'Mean airway pressure drives oxygenation.',

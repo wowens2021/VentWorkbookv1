@@ -162,6 +162,33 @@ export const M3: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'Passive patient on volume control. Three sliders are unlocked; each maps to one term in the equation of motion.',
+    unlocked_controls_description: [
+      { name: 'Compliance', description: 'how easily the lungs stretch. Lower = stiffer lungs. Range 15–80 mL/cmH2O.' },
+      { name: 'Resistance', description: 'how hard it is to push gas through airways. Higher = more obstruction. Range 5–40 cmH2O/L/s.' },
+      { name: 'I-time / inspiratory flow', description: 'shorter I-time = faster flow. Range 0.3–3.0 sec.' },
+    ],
+    readouts_description: [
+      { name: 'Peak pressure and plateau pressure', description: 'the difference between these (the "gap") is the heart of the equation.' },
+      { name: 'Peak − Plateau', description: 'shown live as Driving Pressure for convenience.' },
+    ],
+    suggestions: [
+      'Cut compliance in half. Watch both peak and plateau move together.',
+      'Restore compliance, then double resistance. Watch peak rise while plateau stays the same.',
+      'Restore resistance, then shorten I-time (= raise flow). Watch what happens to peak.',
+      'You can use "Reset to start" between experiments to keep your bearings.',
+    ],
+  },
+  user_facing_task: "You're going to show your senior that you understand the three pieces of the equation of motion. Make three separate changes to the simulator — one to compliance, one to resistance, and one to inspiratory flow — and answer a short question after each.",
+  success_criteria_display: [
+    'Change resistance and identify what happens to the peak-plateau gap.',
+    'Change compliance and identify what happens to peak and plateau.',
+    'Change inspiratory flow and identify what happens to peak pressure.',
+    "You can do them in any order. Use 'Reset to start' between changes if it helps.",
+  ],
+  task_framing_style: 'A',
+
   key_points: [
     'P = (V/C) + (F × R) + PEEP.',
     'Elastic component = volume / compliance → drives plateau pressure.',

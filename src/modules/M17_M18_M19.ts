@@ -157,6 +157,32 @@ export const M17: ModuleConfig = {
     },
   ],
 
+  explore_card: {
+    patient_context: 'Post-op patient on full ventilator support for 48 hours. Hemodynamically stable, off vasopressors, FiO2 already weaned to 0.40, PEEP 8. Mental status intact. **This patient is a candidate for a spontaneous breathing trial today.**',
+    unlocked_controls_description: [
+      { name: 'Mode', description: 'toggle between VCV (full support) and PSV (spontaneous, minimal support).' },
+      { name: 'Pressure support', description: 'range 0–60 cmH2O (only meaningful when mode is PSV).' },
+    ],
+    readouts_description: [
+      { name: 'Measured rate (Actual RR)', description: 'currently locked to set rate because VCV is mandatory.' },
+      { name: 'Tidal volume delivered (Vte)', description: 'set value while on VCV; patient-driven once on PSV.' },
+      { name: 'RSBI', description: '*only computed when the patient is breathing spontaneously*. Threshold to remember: under 105 is favorable.' },
+      { name: 'SpO2 and VE', description: 'clinical safety readouts during the trial.' },
+    ],
+    suggestions: [
+      'Try switching mode to PSV. Notice the RSBI readout becomes active.',
+      'Drop pressure support to 8 (this approximates a standard SBT). The patient is now doing most of the work.',
+      'Watch for 30 simulated breaths. The RSBI will stabilize — that number tells you whether weaning is likely to succeed.',
+    ],
+  },
+  user_facing_task: "You're rounding on this patient and the team wants you to start a spontaneous breathing trial. Move the ventilator to SBT settings, watch the patient for 30 breaths, and then tell your senior what the result predicts.",
+  success_criteria_display: [
+    'Switch to PSV with pressure support of 8 or less.',
+    'Wait for the RSBI readout to stabilize.',
+    'Identify what the stabilized RSBI value predicts for this patient.',
+  ],
+  task_framing_style: 'B',
+
   key_points: [
     'RSBI < 105 favors weaning success.',
     'SBTs are 30–120 min on minimal support.',
@@ -308,6 +334,32 @@ export const M18: ModuleConfig = {
       explanation: 'Standard indication. Benefits: comfort, reduced sedation, easier weaning, less laryngeal injury.',
     },
   ],
+
+  explore_card: {
+    patient_context: '67-year-old admitted with pneumonia 6 days ago. Has been weaning over the last 48 hours. Today\'s SBT was completed. The right panel shows nine extubation-readiness data points for this patient. Your job will be to integrate them.',
+    unlocked_controls_description: [],
+    readouts_description: [
+      { name: 'RSBI 88', description: 'favorable (below 105 threshold).' },
+      { name: 'Cuff leak 240 mL', description: 'favorable (above 110 threshold).' },
+      { name: 'Cough strength: weak', description: 'unfavorable.' },
+      { name: 'Secretions burden: moderate', description: 'borderline.' },
+      { name: 'Mental status: follows commands', description: 'favorable.' },
+      { name: 'P/F 280', description: 'favorable (above 200).' },
+      { name: 'Hemodynamics: off pressors 24h', description: 'favorable.' },
+      { name: 'Pneumonia: improving but not resolved', description: 'borderline.' },
+      { name: 'Days on vent: 6', description: 'neutral.' },
+    ],
+    suggestions: [
+      'Identify which numbers clearly favor extubation, which clearly don\'t, and which are in the middle.',
+      'Don\'t try to decide yet. The task will ask you to formally make the call.',
+    ],
+  },
+  user_facing_task: "You're presenting this patient to the team. Walk through each of the nine readiness data points, then recommend what the team should do.",
+  success_criteria_display: [
+    'Recognize the favorable and unfavorable factors.',
+    'Recommend the appropriate next step for this patient.',
+  ],
+  task_framing_style: 'C',
 
   key_points: [
     'Extubation is multifactorial.',
@@ -510,6 +562,27 @@ export const M19: ModuleConfig = {
       explanation: 'Bag-and-go-look. Removes vent/circuit from differential. Hand-bagging assesses resistance. Often diagnoses in seconds.',
     },
   ],
+
+  explore_card: {
+    patient_context: 'This is the **bedside rapid-response** module. You won\'t be adjusting the ventilator. Instead, you\'ll be called to four different deteriorating patients, one at a time. The vent will alarm, the waveforms will change, and you\'ll be asked what\'s going on. The sim is currently showing a normal, stable patient as your baseline.',
+    unlocked_controls_description: [],
+    readouts_description: [
+      { name: 'Baseline pressures', description: 'peak around 28, plateau around 22 (small gap — resistive component is small).' },
+      { name: 'Vte and VE', description: 'tidal volume delivered ≈ tidal volume returned.' },
+      { name: 'No alarms', description: 'normal patient — every case starts here and then diverges.' },
+    ],
+    suggestions: [
+      'Memorize what "normal" looks like on these readouts — every case starts here and then diverges.',
+      'Mentally rehearse the four DOPE categories: Displacement, Obstruction, Pneumothorax, Equipment. Each has a different signature.',
+      'When you\'re comfortable, start the task. The cases will move quickly.',
+    ],
+  },
+  user_facing_task: "You're paged to four ventilated patients in succession, each acutely deteriorating. For each one, the alarms and waveforms tell you which DOPE category is in play. Name the cause for each. Then there's a final round: all four again in random order, no labels, single try each.",
+  success_criteria_display: [
+    'Correctly identify each of the four DOPE patterns (two attempts each).',
+    'Then identify all four again in the final round on the first attempt.',
+  ],
+  task_framing_style: 'C',
 
   key_points: [
     'DOPE = Displacement, Obstruction, Pneumothorax, Equipment.',

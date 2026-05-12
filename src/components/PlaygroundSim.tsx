@@ -7,6 +7,15 @@ import { DEFAULT_PATIENT, DEFAULT_SETTINGS, P_ATM, P_H2O, R_QUOTIENT, HUFNER_NUM
 import type { ScenarioHarness } from '../harness/ScenarioHarness';
 import type { ControlName, SimPreset } from '../shell/types';
 
+/**
+ * Per-phase sim interactivity mode (§1.4 / Plan v2 §4):
+ *   - locked:        dimmed overlay, no live waveforms render (Phase 1).
+ *   - live-disabled: sim animates, controls visible-but-disabled with lock icons (Phase 2).
+ *   - live:          fully interactive (Phase 3, Phase 4 — default).
+ *   - live-frozen:   sim animates, all controls disabled (Phase 5).
+ */
+export type SimInteractivity = 'locked' | 'live-disabled' | 'live' | 'live-frozen';
+
 interface PlaygroundSimProps {
   /** Optional harness — if provided, the sim emits events into it. */
   harness?: ScenarioHarness;
@@ -20,6 +29,8 @@ interface PlaygroundSimProps {
   inlinePromptOverlay?: React.ReactNode;
   /** Hide the header (when embedded inside a shell that has its own header). */
   hideHeader?: boolean;
+  /** Per-phase interactivity. Default 'live'. */
+  simInteractivity?: SimInteractivity;
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
@@ -202,11 +213,21 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   workbookContent,
   inlinePromptOverlay,
   hideHeader,
+  simInteractivity = 'live',
 }) => {
+  /**
+   * Per-phase global override: in 'live-disabled' and 'live-frozen' EVERY
+   * control is locked regardless of the scenario's unlocked_controls list.
+   * In 'locked' the overlay also covers the waveforms.
+   */
+  const allControlsGloballyLocked =
+    simInteractivity === 'live-disabled' || simInteractivity === 'live-frozen' || simInteractivity === 'locked';
+
   const isLocked = useCallback((control: ControlName) => {
+    if (allControlsGloballyLocked) return true;
     if (!unlockedControls) return false;
     return !unlockedControls.includes(control);
-  }, [unlockedControls]);
+  }, [unlockedControls, allControlsGloballyLocked]);
 
   // ── State (seeded from initialPreset if provided) ──
   const [mode, setMode] = useState(initialPreset?.mode ?? 'PRVC');
@@ -1024,6 +1045,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
             {inlinePromptOverlay && (
               <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/80 backdrop-blur-sm p-4">
                 {inlinePromptOverlay}
+              </div>
+            )}
+            {/* Phase 1 — locked preview overlay */}
+            {simInteractivity === 'locked' && (
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-zinc-200/70 backdrop-blur-sm">
+                <div className="bg-white border border-zinc-300 rounded-xl px-5 py-3 shadow-lg flex items-center gap-2.5">
+                  <Lock size={16} className="text-zinc-500" />
+                  <span className="text-[13px] font-semibold text-zinc-700">
+                    Sim unlocks after the primer
+                  </span>
+                </div>
               </div>
             )}
           </div>
