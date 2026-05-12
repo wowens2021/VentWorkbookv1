@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { Star, Users, ShieldCheck, Play, ArrowRight, Target, Trophy, Clock, BookOpen } from 'lucide-react';
+import { Play, ArrowRight, Trophy, BookOpen } from 'lucide-react';
 import { MODULES } from '../modules';
 import { listAllProgress, loadProgress } from '../persistence/progress';
-import type { ModuleConfig } from '../shell/types';
+import type { ModuleConfig, ProgressRecord } from '../shell/types';
 
 interface Props {
   onBrowseModules: () => void;
@@ -23,20 +23,22 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
     };
   }, []);
 
-  // Continue-where-left-off: most recently touched, not yet quiz-submitted
-  const continueModule = useMemo(() => {
+  /**
+   * Every module that has been started but not finished — sorted by recency
+   * so the most active sits at the top. Modules that have never been opened
+   * are intentionally excluded (the Simulations page is the place for those).
+   */
+  const inProgressModules = useMemo(() => {
     const all = listAllProgress();
-    const inProgress = all
+    const items = all
       .filter(p => !p.quiz_submitted_at)
-      .filter(p => !!p.primer_completed_at)
-      .sort((a, b) => {
-        const ta = new Date(a.task_started_at ?? a.exploration_started_at ?? a.reading_completed_at ?? a.primer_completed_at ?? a.started_at).getTime();
-        const tb = new Date(b.task_started_at ?? b.exploration_started_at ?? b.reading_completed_at ?? b.primer_completed_at ?? b.started_at).getTime();
-        return tb - ta;
-      });
-    if (inProgress.length === 0) return null;
-    const mod = MODULES.find(m => m.id === inProgress[0].module_id);
-    return mod ? { mod, progress: inProgress[0] } : null;
+      .map(p => {
+        const mod = MODULES.find(m => m.id === p.module_id);
+        return mod ? { mod, progress: p } : null;
+      })
+      .filter((x): x is { mod: ModuleConfig; progress: ProgressRecord } => x !== null)
+      .sort((a, b) => recencyMs(b.progress) - recencyMs(a.progress));
+    return items;
   }, []);
 
   return (
@@ -44,7 +46,7 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
       <div className="max-w-7xl mx-auto px-6 py-10">
 
         {/* Hero */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
           <div className="lg:col-span-7">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-stone-200 rounded-full text-[11px] font-bold uppercase tracking-widest text-brand-olive mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-olive" /> Welcome back, Dr.
@@ -52,30 +54,10 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
             <h1 className="font-display text-5xl md:text-6xl font-bold text-stone-900 leading-[1.05] tracking-tight mb-5">
               Master mechanical<br />ventilation <span className="italic font-medium text-stone-700">— at your pace.</span>
             </h1>
-            <p className="text-[17px] text-stone-700 leading-relaxed mb-6 max-w-xl">
+            <p className="text-[17px] text-stone-700 leading-relaxed mb-7 max-w-xl">
               Evidence-based ICU simulations built from <em>The Ventilator Book</em>.
               Adjust settings, interpret live waveforms, manage scenarios — without risk to patients.
             </p>
-
-            <div className="flex items-center gap-5 mb-7 text-[13px] text-stone-600">
-              <div className="flex items-center gap-1.5">
-                <div className="flex">
-                  {[1,2,3,4,5].map(i => (
-                    <Star key={i} size={14} className="text-brand-gold" fill="currentColor" />
-                  ))}
-                </div>
-                <span className="font-bold text-stone-800">4.9</span>
-                <span className="text-stone-500">(823 reviews)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Users size={14} className="text-stone-500" />
-                <span>12,400+ learners</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck size={14} className="text-stone-500" />
-                <span>Built by ICU physicians</span>
-              </div>
-            </div>
 
             <div className="flex items-center gap-3">
               <button
@@ -93,7 +75,7 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
             </div>
           </div>
 
-          {/* Right column: a quiet illustration block (skipping featured card per scope answer) */}
+          {/* Right column: workbook overview */}
           <div className="lg:col-span-5 hidden lg:flex">
             <div className="w-full bg-white border border-stone-200 rounded-2xl p-7 shadow-sm flex flex-col">
               <div className="flex items-center gap-2 mb-3">
@@ -126,27 +108,37 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-          <StatCard icon={Target} value={String(stats.totalModules)} label="Clinical modules" />
-          <StatCard icon={Trophy} value={`${stats.objectivesMet}/${stats.totalModules}`} label="Objectives mastered" />
-          <StatCard icon={Clock} value={String(stats.completed)} label="Modules completed" />
-        </div>
+        {/* Consolidated progress strip */}
+        <ProgressStrip
+          modulesCompleted={stats.completed}
+          modulesTotal={stats.totalModules}
+          objectivesMet={stats.objectivesMet}
+        />
 
-        {/* Continue where you left off */}
-        {continueModule && (
-          <section className="mb-4">
+        {/* In-progress modules — every non-completed module that's been touched */}
+        {inProgressModules.length > 0 && (
+          <section className="mt-10">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-2xl font-semibold text-stone-900">Continue where you left off</h2>
-              <button onClick={onBrowseModules} className="text-[13px] font-bold text-brand-olive hover:text-brand-olive-deep">
+              <h2 className="font-display text-2xl font-semibold text-stone-900">
+                Continue where you left off
+              </h2>
+              <button
+                onClick={onBrowseModules}
+                className="text-[13px] font-bold text-brand-olive hover:text-brand-olive-deep"
+              >
                 View all →
               </button>
             </div>
-            <ContinueCard
-              mod={continueModule.mod}
-              percent={percentFromProgress(continueModule.progress)}
-              onClick={() => onOpenModule(continueModule.mod)}
-            />
+            <div className="space-y-2.5">
+              {inProgressModules.map(({ mod, progress }) => (
+                <ContinueRow
+                  key={mod.id}
+                  mod={mod}
+                  percent={percentFromProgress(progress)}
+                  onClick={() => onOpenModule(mod)}
+                />
+              ))}
+            </div>
           </section>
         )}
 
@@ -157,42 +149,87 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
 
 // ── Sub-components ──
 
-const StatCard: React.FC<{ icon: any; value: string; label: string }> = ({ icon: Icon, value, label }) => (
-  <div className="bg-white border border-stone-200 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
-    <div className="w-11 h-11 rounded-xl bg-brand-cream-2 flex items-center justify-center">
-      <Icon size={18} className="text-brand-olive" />
+/** Single horizontal strip combining "modules completed" + "objectives mastered". */
+const ProgressStrip: React.FC<{ modulesCompleted: number; modulesTotal: number; objectivesMet: number }> = ({
+  modulesCompleted, modulesTotal, objectivesMet,
+}) => {
+  const pct = modulesTotal === 0 ? 0 : Math.round((modulesCompleted / modulesTotal) * 100);
+  return (
+    <div className="bg-white border border-stone-200 rounded-2xl px-6 py-5 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-5">
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl bg-brand-cream-2 flex items-center justify-center">
+          <Trophy size={18} className="text-brand-olive" />
+        </div>
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-0.5">
+            Your progress
+          </div>
+          <div className="flex items-baseline gap-3">
+            <span className="font-display text-2xl font-semibold text-stone-900 leading-none">
+              {modulesCompleted}<span className="text-stone-400">/{modulesTotal}</span>
+            </span>
+            <span className="text-[12px] text-stone-500">modules completed</span>
+            <span className="text-stone-300">·</span>
+            <span className="font-display text-2xl font-semibold text-stone-900 leading-none">
+              {objectivesMet}
+            </span>
+            <span className="text-[12px] text-stone-500">objectives mastered</span>
+          </div>
+        </div>
+      </div>
+      <div className="md:ml-auto w-full md:w-72">
+        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+          <span>Overall</span>
+          <span>{pct}%</span>
+        </div>
+        <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+          <div className="h-full bg-brand-olive transition-all" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
     </div>
-    <div>
-      <div className="font-display text-3xl font-semibold text-stone-900 leading-none">{value}</div>
-      <div className="text-[12px] text-stone-500 mt-1">{label}</div>
-    </div>
-  </div>
-);
+  );
+};
 
-const ContinueCard: React.FC<{ mod: ModuleConfig; percent: number; onClick: () => void }> = ({ mod, percent, onClick }) => (
+const ContinueRow: React.FC<{ mod: ModuleConfig; percent: number; onClick: () => void }> = ({
+  mod, percent, onClick,
+}) => (
   <button
     onClick={onClick}
-    className="w-full text-left bg-white border border-stone-200 hover:border-brand-olive rounded-2xl p-6 shadow-sm hover:shadow transition flex items-center gap-5"
+    className="w-full text-left bg-white border border-stone-200 hover:border-brand-olive rounded-xl px-5 py-3.5 shadow-sm hover:shadow transition flex items-center gap-4"
   >
-    <div className="flex-1">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] font-black uppercase tracking-widest text-amber-700 bg-amber-100 px-2 py-0.5 rounded">In progress</span>
-        <span className="text-[11px] text-stone-500 font-mono">{mod.id}</span>
-        <span className="text-[11px] text-stone-400">·</span>
-        <span className="text-[11px] text-stone-500">{mod.track}</span>
+    <div className="flex items-center gap-2 shrink-0 w-32">
+      <span className="text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+        In progress
+      </span>
+    </div>
+    <div className="shrink-0 text-[11px] font-mono text-stone-500 w-12">{mod.id}</div>
+    <div className="flex-1 min-w-0">
+      <h3 className="font-display text-base font-semibold text-stone-900 leading-tight truncate">
+        {mod.title}
+      </h3>
+      <p className="text-[11.5px] text-stone-500 truncate">{mod.track}</p>
+    </div>
+    <div className="shrink-0 flex items-center gap-1.5 w-24">
+      <div className="h-1.5 flex-1 bg-stone-100 rounded-full overflow-hidden">
+        <div className="h-full bg-amber-500" style={{ width: `${percent}%` }} />
       </div>
-      <h3 className="font-display text-2xl font-semibold text-stone-900 leading-tight mb-1">{mod.title}</h3>
-      <p className="text-[13px] text-stone-600">{mod.visible_learning_objectives[0]}</p>
+      <span className="text-[11px] font-bold text-stone-700">{percent}%</span>
     </div>
-    <div className="flex flex-col items-end">
-      <div className="font-display text-2xl font-semibold text-brand-olive">{percent}%</div>
-      <div className="text-[10px] text-stone-500 uppercase tracking-widest">progress</div>
-    </div>
-    <ArrowRight size={20} className="text-stone-400" />
+    <ArrowRight size={16} className="text-stone-400 shrink-0" />
   </button>
 );
 
-function percentFromProgress(p: any): number {
+function recencyMs(p: ProgressRecord): number {
+  return new Date(
+    p.task_started_at
+      ?? p.exploration_started_at
+      ?? p.reading_completed_at
+      ?? p.primer_completed_at
+      ?? p.started_at,
+  ).getTime();
+}
+
+function percentFromProgress(p: ProgressRecord): number {
   if (p.quiz_submitted_at) return 100;
   if (p.objective_satisfied_at) return 80;
   if (p.task_started_at) return 60;
@@ -201,5 +238,8 @@ function percentFromProgress(p: any): number {
   if (p.primer_completed_at) return 20;
   return 5;
 }
+
+// Silence the unused-warning for loadProgress (kept for future per-card details).
+void loadProgress;
 
 export default Landing;

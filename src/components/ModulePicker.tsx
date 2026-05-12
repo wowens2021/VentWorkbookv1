@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Play, RotateCcw, Check } from 'lucide-react';
+import { Play, RotateCcw, Check, ArrowRight } from 'lucide-react';
 import { MODULES } from '../modules';
 import { loadProgress, listAllProgress } from '../persistence/progress';
 import type { ModuleConfig, Track, ProgressRecord } from '../shell/types';
@@ -79,7 +79,7 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
       <div className="max-w-7xl mx-auto px-6 py-10">
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="font-display text-4xl md:text-5xl font-bold text-stone-900 mb-2">
             Clinical Simulations
           </h1>
@@ -89,34 +89,31 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
           </p>
         </div>
 
-        {/* Summary card */}
-        <div className="bg-white border border-stone-200 rounded-2xl px-6 py-5 mb-8 flex flex-col md:flex-row items-start md:items-center gap-4 shadow-sm">
+        {/* Compact summary strip */}
+        <div className="bg-white border border-stone-200 rounded-xl px-5 py-3.5 mb-6 flex flex-col md:flex-row items-start md:items-center gap-4 shadow-sm">
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-4xl font-semibold text-brand-olive leading-none">
+            <span className="font-display text-2xl font-semibold text-brand-olive leading-none">
               {overallStats.completed}/{overallStats.total}
             </span>
-            <span className="text-[13px] text-stone-500">Modules completed</span>
+            <span className="text-[12px] text-stone-500">modules completed</span>
           </div>
-          <div className="hidden md:block w-px h-10 bg-stone-200 mx-3" />
-          <div className="text-[13px] text-stone-700">
+          <div className="hidden md:block w-px h-7 bg-stone-200" />
+          <div className="text-[12px] text-stone-700">
             {overallStats.objectivesMet} objective{overallStats.objectivesMet === 1 ? '' : 's'} mastered
           </div>
-          <div className="md:ml-auto flex-1 md:flex-none md:w-[280px]">
-            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
-              <span>Overall progress</span>
+          <div className="md:ml-auto flex-1 md:flex-none md:w-[240px]">
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1">
+              <span>Overall</span>
               <span>{overallStats.avgPercent}%</span>
             </div>
-            <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-brand-olive transition-all"
-                style={{ width: `${overallStats.avgPercent}%` }}
-              />
+            <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+              <div className="h-full bg-brand-olive transition-all" style={{ width: `${overallStats.avgPercent}%` }} />
             </div>
           </div>
         </div>
 
-        {/* Module grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Horizontal row list */}
+        <div className="space-y-2.5">
           {MODULES.map(mod => {
             const prog = loadProgress(mod.id);
             const status = statusOf(prog);
@@ -125,81 +122,61 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
             return (
               <article
                 key={mod.id}
-                className={`bg-white border rounded-2xl p-5 flex flex-col shadow-sm hover:shadow transition relative ${
+                className={`bg-white border rounded-xl px-5 py-3.5 shadow-sm hover:shadow transition flex items-center gap-4 ${
                   status === 'IN_PROGRESS' ? 'border-amber-300' : 'border-stone-200 hover:border-brand-olive'
                 }`}
               >
-                {/* Yellow ribbon for in-progress */}
-                {status === 'IN_PROGRESS' && (
-                  <div className="absolute top-0 left-5 right-5 h-1 bg-amber-400 rounded-b" />
-                )}
-
-                {/* Status + difficulty pills */}
-                <div className="flex items-center gap-1.5 mb-3 pr-14">
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${statusClasses[status]}`}>
+                {/* Pills column (fixed width) */}
+                <div className="flex flex-col gap-1 shrink-0 w-[120px]">
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border text-center ${statusClasses[status]}`}>
                     {statusLabel[status]}
                   </span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${difficultyClasses[difficulty]}`}>
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border text-center ${difficultyClasses[difficulty]}`}>
                     {difficulty}
                   </span>
                 </div>
 
-                {/* Module label + title */}
-                <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-0.5">
-                  Module {mod.number} · {mod.track}
+                {/* Module id + track */}
+                <div className="shrink-0 w-[120px] hidden md:block">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400">
+                    Module {mod.number}
+                  </div>
+                  <div className="text-[11px] text-stone-500">{mod.track}</div>
                 </div>
-                <h3 className="font-display text-xl font-semibold text-stone-900 leading-snug mb-3 pr-14">
-                  {mod.title}
-                </h3>
 
-                {/* Topics covered */}
-                <p className="text-[13px] text-stone-600 leading-relaxed mb-3">
-                  <span className="font-bold text-stone-800">Topics covered: </span>
-                  {mod.visible_learning_objectives.join('; ')}.
-                </p>
+                {/* Title + topics */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-display text-lg font-semibold text-stone-900 leading-snug mb-0.5 truncate">
+                    {mod.title}
+                  </h3>
+                  <p className="text-[12px] text-stone-600 leading-snug line-clamp-1">
+                    {mod.visible_learning_objectives.join('; ')}.
+                  </p>
+                </div>
 
-                {/* Objective bullets */}
-                <ul className="space-y-1 mb-4 text-[12px] text-stone-700">
-                  {mod.visible_learning_objectives.slice(0, 3).map((o, i) => (
-                    <li key={i} className="flex items-start gap-1.5">
-                      <span className={`mt-0.5 w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center ${status === 'COMPLETED' ? 'bg-emerald-500' : 'border border-stone-300 bg-white'}`}>
-                        {status === 'COMPLETED' && <Check size={9} className="text-white" strokeWidth={3.5} />}
-                      </span>
-                      <span className="leading-snug">{o}</span>
-                    </li>
-                  ))}
-                  {mod.visible_learning_objectives.length > 3 && (
-                    <li className="text-stone-400 text-[11.5px] pl-5">
-                      +{mod.visible_learning_objectives.length - 3} more
-                    </li>
-                  )}
-                </ul>
-
-                {/* Progress ring (in-progress only) */}
+                {/* Progress (in-progress only) */}
                 {status === 'IN_PROGRESS' && (
-                  <div className="absolute top-4 right-4">
-                    <div className="relative w-12 h-12">
-                      <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
-                        <circle cx="24" cy="24" r="20" stroke="#e7e5e4" strokeWidth="3" fill="none" />
-                        <circle
-                          cx="24" cy="24" r="20"
-                          stroke="#d97706" strokeWidth="3" fill="none"
-                          strokeDasharray={`${2 * Math.PI * 20}`}
-                          strokeDashoffset={`${2 * Math.PI * 20 * (1 - pct / 100)}`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-stone-800">
-                        {pct}%
-                      </span>
+                  <div className="hidden md:flex flex-col items-end shrink-0 w-[80px]">
+                    <span className="font-display text-base font-semibold text-amber-700 leading-none">{pct}%</span>
+                    <div className="mt-1.5 h-1 w-16 bg-stone-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
+                )}
+                {status === 'COMPLETED' && (
+                  <div className="hidden md:flex items-center gap-1 shrink-0 w-[80px] justify-end">
+                    <Check size={14} className="text-emerald-600" />
+                    <span className="text-[11px] font-bold text-emerald-700">100%</span>
+                  </div>
+                )}
+                {status === 'NOT_STARTED' && (
+                  <div className="hidden md:block shrink-0 w-[80px]" />
                 )}
 
                 {/* CTA */}
                 <button
                   onClick={() => onPickModule(mod)}
-                  className={`mt-auto w-full px-4 py-2.5 rounded-full text-[13px] font-bold flex items-center justify-center gap-1.5 transition ${
+                  className={`shrink-0 px-4 py-2 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition w-[110px] ${
                     status === 'IN_PROGRESS'
                       ? 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
                       : status === 'COMPLETED'
@@ -207,8 +184,8 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                         : 'bg-brand-olive text-white hover:bg-brand-olive-hover'
                   }`}
                 >
-                  {status === 'IN_PROGRESS' ? <RotateCcw size={13} /> : <Play size={12} fill="currentColor" />}
-                  {status === 'IN_PROGRESS' ? 'Resume' : status === 'COMPLETED' ? 'Review' : 'Start case'}
+                  {status === 'IN_PROGRESS' ? <RotateCcw size={12} /> : status === 'COMPLETED' ? <ArrowRight size={12} /> : <Play size={11} fill="currentColor" />}
+                  {status === 'IN_PROGRESS' ? 'Resume' : status === 'COMPLETED' ? 'Review' : 'Start'}
                 </button>
               </article>
             );
