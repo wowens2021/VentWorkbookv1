@@ -14,13 +14,18 @@ const PHASE_LABEL: Record<Phase, string> = {
 
 interface Props {
   phase: Phase;
+  /** Set of phases that have been completed at least once — clickable for back-nav. */
+  completedPhases?: Set<Phase>;
+  /** When provided, clicking a past/completed phase calls this. */
+  onJumpToPhase?: (p: Phase) => void;
 }
 
 /**
  * Sticky strip above both columns. Always visible so the learner always
  * knows where they are in the five-phase sequence (§1.2 / §1.4).
+ * Completed phases are clickable (back-navigation).
  */
-const PhaseBadge: React.FC<Props> = ({ phase }) => {
+const PhaseBadge: React.FC<Props> = ({ phase, completedPhases, onJumpToPhase }) => {
   const currentIdx = PHASE_ORDER.indexOf(phase);
   return (
     <div className="bg-white border-b border-zinc-200 px-4 py-2 flex items-center gap-1.5 shrink-0">
@@ -31,22 +36,43 @@ const PhaseBadge: React.FC<Props> = ({ phase }) => {
         {PHASE_ORDER.map((p, i) => {
           const isPast = i < currentIdx;
           const isCurrent = i === currentIdx;
+          const isCompleted = completedPhases?.has(p) ?? isPast;
+          const canJump = isCompleted && !isCurrent && !!onJumpToPhase;
+          const dotState = isPast || isCompleted
+            ? 'bg-emerald-500'
+            : isCurrent
+              ? 'bg-sky-500 ring-2 ring-sky-200'
+              : 'bg-zinc-200';
+
+          const dot = (
+            <div
+              className={`h-2.5 w-2.5 rounded-full flex items-center justify-center transition ${dotState} ${
+                canJump ? 'cursor-pointer hover:ring-2 hover:ring-emerald-300' : ''
+              }`}
+              title={canJump ? `Return to ${PHASE_LABEL[p]}` : PHASE_LABEL[p]}
+            >
+              {(isPast || isCompleted) && !isCurrent && <Check size={8} className="text-white" strokeWidth={4} />}
+            </div>
+          );
+
           return (
             <div key={p} className="flex items-center gap-1">
-              <div
-                className={`h-2 w-2 rounded-full flex items-center justify-center transition ${
-                  isPast
-                    ? 'bg-emerald-500'
-                    : isCurrent
-                      ? 'bg-sky-500 ring-2 ring-sky-200'
-                      : 'bg-zinc-200'
-                }`}
-                title={PHASE_LABEL[p]}
-              >
-                {isPast && <Check size={7} className="text-white" strokeWidth={4} />}
-              </div>
+              {canJump ? (
+                <button
+                  onClick={() => onJumpToPhase!(p)}
+                  className="flex items-center gap-1 group"
+                  aria-label={`Return to ${PHASE_LABEL[p]}`}
+                >
+                  {dot}
+                  <span className="text-[10px] font-semibold text-emerald-700 hidden group-hover:inline">
+                    {PHASE_LABEL[p]}
+                  </span>
+                </button>
+              ) : (
+                dot
+              )}
               {i < PHASE_ORDER.length - 1 && (
-                <div className={`h-px w-4 ${isPast ? 'bg-emerald-300' : 'bg-zinc-200'}`} />
+                <div className={`h-px w-4 ${isPast || isCompleted ? 'bg-emerald-300' : 'bg-zinc-200'}`} />
               )}
             </div>
           );

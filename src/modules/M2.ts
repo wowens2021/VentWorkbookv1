@@ -1,4 +1,23 @@
-import type { ModuleConfig } from '../shell/types';
+import type { ModuleConfig, TrackerConfig } from '../shell/types';
+
+/** Concise helper to build a single recognition tracker. */
+function mcq(
+  prompt_id: string,
+  question: string,
+  opts: [label: string, is_correct: boolean, explanation: string][],
+  max_attempts = 2,
+): TrackerConfig {
+  return {
+    kind: 'recognition',
+    prompt: {
+      prompt_id,
+      trigger: { kind: 'on_load' },
+      question,
+      options: opts.map(([label, is_correct, explanation]) => ({ label, is_correct, explanation })),
+      max_attempts,
+    },
+  };
+}
 
 export const M2: ModuleConfig = {
   id: 'M2',
@@ -56,13 +75,61 @@ export const M2: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
-  // Observation module — recognition is folded into the primer. The hidden
-  // objective satisfies on the first completed breath; the learner is free to
-  // explore the terminology in the Measured Values strip without overlays.
+  // Eight vocabulary recognition tasks — any order. Each prompt asks the
+  // learner to pick the correct definition from a small option set.
   hidden_objective: {
-    kind: 'outcome',
-    readouts: { vte: { operator: '>', value: 0 } },
-    sustain_breaths: 1,
+    kind: 'compound',
+    sequence: 'any_order',
+    children: [
+      mcq('M2-vt', 'Which reading shows **tidal volume (Vt)** — volume of one breath?', [
+        ['Vte / Vt in mL (typical adult 350–600)', true, 'Tidal volume is per-breath volume in mL.'],
+        ['VE in L/min', false, 'VE is per-minute volume, not per-breath.'],
+        ['RR in breaths/min', false, 'RR is a frequency, not a volume.'],
+        ['PIP in cmH2O', false, 'PIP is a pressure.'],
+      ]),
+      mcq('M2-ve', 'Which reading shows **minute ventilation (VE)** — total volume per minute?', [
+        ['VE in L/min', true, 'VE = Vt × RR, in L/min. Typical adult 6–10.'],
+        ['Vte in mL', false, 'Vte is per-breath, not per-minute.'],
+        ['Actual RR', false, 'RR is a frequency.'],
+        ['Total PEEP', false, 'PEEP is a pressure.'],
+      ]),
+      mcq('M2-peep', 'Which reading shows **PEEP** — the end-expiratory floor pressure?', [
+        ['The PEEP control value (cmH2O)', true, 'PEEP sets the floor pressure at end-expiration.'],
+        ['PIP', false, 'PIP is the peak, not the floor.'],
+        ['Pplat', false, 'Pplat is mid-inspiratory.'],
+        ['DP', false, 'Driving pressure = Pplat − PEEP.'],
+      ]),
+      mcq('M2-fio2', 'Which reading shows **FiO2** — the inspired oxygen fraction?', [
+        ['The FiO2 control (typically 21–100%)', true, 'FiO2 is the fraction of inspired oxygen.'],
+        ['SpO2', false, 'SpO2 is what the patient saturates at — a measured value, not an inspired setting.'],
+        ['PEEP', false, 'PEEP is a pressure.'],
+        ['VE', false, 'VE is minute ventilation.'],
+      ]),
+      mcq('M2-pip', 'Which reading shows **peak inspiratory pressure (PIP)** — the highest pressure during a breath?', [
+        ['PIP (top of the Airway Pressure waveform)', true, 'PIP is the maximum during inspiration.'],
+        ['Pplat', false, 'Pplat is lower than peak — resistive component is removed during the hold.'],
+        ['PEEP', false, 'PEEP is the floor.'],
+        ['DP', false, 'Driving pressure ≠ peak pressure.'],
+      ]),
+      mcq('M2-pplat', 'Which reading shows **plateau pressure (Pplat)** — the alveolar pressure during an inspiratory hold?', [
+        ['Pplat (after an inspiratory hold)', true, 'Pplat is alveolar pressure with flow stopped, revealed by holding inspiration.'],
+        ['PIP', false, 'PIP includes the resistive component; Pplat does not.'],
+        ['PEEP', false, 'PEEP is the end-expiratory baseline.'],
+        ['VE', false, 'VE is a volume, not a pressure.'],
+      ]),
+      mcq('M2-ie', 'Which reading shows the **I:E ratio** — inspiratory time vs expiratory time?', [
+        ['I:E (e.g. 1:2)', true, 'I:E expresses inspiratory time relative to expiratory time within one breath cycle.'],
+        ['RR', false, 'RR is a frequency, not a ratio.'],
+        ['Vt/PBW', false, 'Vt/PBW is volume per kg of predicted body weight.'],
+        ['DP', false, 'Driving pressure is unrelated to timing.'],
+      ]),
+      mcq('M2-rr', 'Which reading shows the **set respiratory rate (RR)** — what the operator dialed in?', [
+        ['The Rate control in the ventilator settings', true, 'The Rate setting is operator-chosen. The Actual RR (Measured Values) may exceed it if the patient triggers.'],
+        ['Actual RR (Measured Values)', false, 'Actual RR is the measured result, not the operator setting.'],
+        ['Vte', false, 'Vte is a volume.'],
+        ['SpO2', false, 'SpO2 is oxygen saturation.'],
+      ]),
+    ],
   },
 
   content_blocks: [

@@ -46,6 +46,24 @@ export function persistProgress(partial: Partial<ProgressRecord> & { module_id: 
   return merged;
 }
 
+/**
+ * Wipe a single module's progress (used by the "Restart module" button).
+ * Also clears any replay snapshots referenced by the deleted record.
+ */
+export function clearProgress(module_id: string) {
+  const learner_id = getLearnerId();
+  try {
+    const raw = localStorage.getItem(key(learner_id, module_id));
+    if (raw) {
+      const rec = JSON.parse(raw) as ProgressRecord;
+      if (rec.replay_snapshot_ref) {
+        try { localStorage.removeItem(`vp:snap:${rec.replay_snapshot_ref}`); } catch {}
+      }
+    }
+    localStorage.removeItem(key(learner_id, module_id));
+  } catch {}
+}
+
 export function listAllProgress(): ProgressRecord[] {
   const learner_id = getLearnerId();
   const records: ProgressRecord[] = [];

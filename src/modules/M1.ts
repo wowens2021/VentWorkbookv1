@@ -56,14 +56,74 @@ export const M1: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Observation module — recognition is folded into the primer (which must be
-  // answered correctly to unlock the sim). The hidden objective satisfies on
-  // the first completed breath so the learner can free-explore and advance
-  // when ready.
+  // Four recognition tasks — identify each of the core display readings.
+  // Each prompt is multiple-choice (clickable display regions aren't yet a
+  // sim affordance), and they must be answered in sequence.
   hidden_objective: {
-    kind: 'outcome',
-    readouts: { vte: { operator: '>', value: 0 } },
-    sustain_breaths: 1,
+    kind: 'compound',
+    sequence: 'strict',
+    children: [
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M1-peak',
+          trigger: { kind: 'on_load' },
+          question: 'On the ventilator display you\'re looking at, which reading shows the **peak airway pressure (PIP)** — the highest pressure during each breath?',
+          options: [
+            { label: 'The PIP value in the Measured Values strip (the top of the pressure waveform)', is_correct: true, explanation: 'PIP is the maximum pressure during inspiration. On this display it\'s the value labeled PIP and the peak of the Airway Pressure waveform.' },
+            { label: 'The Vte value', is_correct: false, explanation: 'Vte is expired tidal volume (mL), not pressure.' },
+            { label: 'The PEEP value', is_correct: false, explanation: 'PEEP is the floor pressure at end-expiration, not the peak.' },
+            { label: 'The VE value', is_correct: false, explanation: 'VE is minute ventilation (L/min), not a pressure.' },
+          ],
+          max_attempts: 2,
+        },
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M1-vt',
+          trigger: { kind: 'on_load' },
+          question: 'Which reading shows the **tidal volume** — the volume of one breath?',
+          options: [
+            { label: 'Vte (expired tidal volume, in mL)', is_correct: true, explanation: 'Vte is the volume the patient exhales each breath. Vt or Vte is the standard label.' },
+            { label: 'VE (minute ventilation)', is_correct: false, explanation: 'VE is volume per minute (Vt × RR), not per breath.' },
+            { label: 'PIP', is_correct: false, explanation: 'PIP is a pressure, not a volume.' },
+            { label: 'Pplat', is_correct: false, explanation: 'Pplat is plateau pressure (cmH2O), not volume.' },
+          ],
+          max_attempts: 2,
+        },
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M1-peep',
+          trigger: { kind: 'on_load' },
+          question: 'Which reading shows the **PEEP** — the floor pressure at end-expiration?',
+          options: [
+            { label: 'The PEEP control value (typically 5 here) — the baseline of the Airway Pressure waveform', is_correct: true, explanation: 'PEEP sits at the bottom of the pressure waveform between breaths. Typical adult range 5–15 cmH2O.' },
+            { label: 'PIP', is_correct: false, explanation: 'PIP is the peak, not the floor.' },
+            { label: 'Pplat', is_correct: false, explanation: 'Pplat is mid-inspiratory plateau, not the floor.' },
+            { label: 'RR', is_correct: false, explanation: 'RR is the rate (breaths per minute).' },
+          ],
+          max_attempts: 2,
+        },
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M1-rate',
+          trigger: { kind: 'on_load' },
+          question: 'Which reading shows the **set respiratory rate** — the rate the operator chose?',
+          options: [
+            { label: 'The Rate control under the ventilator settings (currently 12 BPM)', is_correct: true, explanation: 'The Rate setting (in the controls row) is what the operator dialed in. The Actual RR readout (in Measured Values) may differ if the patient is triggering.' },
+            { label: 'The Vt control', is_correct: false, explanation: 'Vt is tidal volume, not rate.' },
+            { label: 'The PEEP control', is_correct: false, explanation: 'PEEP is a pressure setting.' },
+            { label: 'The FiO2 control', is_correct: false, explanation: 'FiO2 is the inspired oxygen fraction.' },
+          ],
+          max_attempts: 2,
+        },
+      },
+    ],
   },
 
   content_blocks: [

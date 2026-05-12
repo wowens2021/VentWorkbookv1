@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BookOpen, Target, Clock, ChevronRight } from 'lucide-react';
+import { ArrowLeft, BookOpen, Target, Clock, ChevronRight, Trophy, Home, RotateCcw } from 'lucide-react';
 import type { ModuleConfig, InlinePromptConfig, ExploreCardConfig } from './types';
 import PrimerQuiz from './PrimerQuiz';
 import ContentBlocks from './ContentBlocks';
@@ -13,12 +13,54 @@ import TaskCard from './TaskCard';
 import PlaygroundSim, { type SimInteractivity } from '../components/PlaygroundSim';
 import { ScenarioHarness } from '../harness/ScenarioHarness';
 import { buildTracker, type Tracker } from '../trackers';
-import { persistProgress, loadProgress } from '../persistence/progress';
+import { persistProgress, loadProgress, clearProgress } from '../persistence/progress';
 
 interface Props {
   module: ModuleConfig;
   onBack: () => void;
   onNext?: () => void;
+  /** Optional explicit "go home" handler. Falls back to onBack if absent. */
+  onHome?: () => void;
+}
+
+/**
+ * Composite performance score (0–100). Weighting:
+ *   - Primer first-attempt:   30% (primer_score / 3 × 30)
+ *   - Summative quiz:         50% (quiz_score / 5 × 50)
+ *   - Hint-usage bonus:       up to +10 (no hints) / +5 (tier 1 only) / 0 otherwise
+ *   - Reset-usage bonus:      up to +10 (zero resets) / +5 (one) / 0 otherwise
+ */
+function computeTotalScore(rec: {
+  primer_score?: number;
+  primer_total?: number;
+  quiz_score?: number;
+  quiz_total?: number;
+  hint_tiers_triggered?: number;
+  reset_to_start_clicks?: number;
+}): { percent: number; letter: 'A' | 'B' | 'C' | 'D' | 'F'; breakdown: Record<string, number> } {
+  const primerPts = rec.primer_total && rec.primer_score !== undefined
+    ? Math.round((rec.primer_score / rec.primer_total) * 30)
+    : 0;
+  const quizPts = rec.quiz_total && rec.quiz_score !== undefined
+    ? Math.round((rec.quiz_score / rec.quiz_total) * 50)
+    : 0;
+  const hintBonus = (rec.hint_tiers_triggered ?? 0) === 0 ? 10
+    : (rec.hint_tiers_triggered ?? 0) === 1 ? 5
+    : 0;
+  const resetBonus = (rec.reset_to_start_clicks ?? 0) === 0 ? 10
+    : (rec.reset_to_start_clicks ?? 0) === 1 ? 5
+    : 0;
+  const percent = Math.max(0, Math.min(100, primerPts + quizPts + hintBonus + resetBonus));
+  const letter: 'A' | 'B' | 'C' | 'D' | 'F' =
+    percent >= 90 ? 'A' :
+    percent >= 80 ? 'B' :
+    percent >= 70 ? 'C' :
+    percent >= 60 ? 'D' : 'F';
+  return {
+    percent,
+    letter,
+    breakdown: { primerPts, quizPts, hintBonus, resetBonus },
+  };
 }
 
 /**
@@ -46,7 +88,7 @@ function deriveExploreCard(module: ModuleConfig): ExploreCardConfig {
   };
 }
 
-const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
+const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
   // ── Resume from prior progress ──
   const prior = useMemo(() => loadProgress(module.id), [module.id]);
 
@@ -70,6 +112,36 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
   const [phase, setPhase] = useState<Phase>(initialPhase);
   const [objectiveSatisfied, setObjectiveSatisfied] = useState(!!prior?.objective_satisfied_at);
   const [quizSubmitted, setQuizSubmitted] = useState(!!prior?.quiz_submitted_at);
+
+  // ── Completed-phase tracking (for back-navigation) ──
+  // A phase is "completed" once the learner has advanced past it OR satisfied
+  // its terminal condition. Computed from the persisted record so resume works.
+  const completedPhases = useMemo(() => {
+    const set = new Set<Phase>();
+    if (prior?.primer_completed_at) set.add('primer');
+    if (prior?.reading_completed_at) set.add('read');
+    if (prior?.task_started_at) set.add('explore'); // started Phase 4 ⇒ Phase 3 was completed
+    if (prior?.objective_satisfied_at) set.add('try-it');
+    if (prior?.quiz_submitted_at) set.add('debrief');
+    // Plus anything the in-session phase has already passed.
+    const passed: Phase[] = ['primer', 'read', 'explore', 'try-it', 'debrief'];
+    const idx = passed.indexOf(phase);
+    for (let i = 0; i < idx; i++) set.add(passed[i]);
+    if (objectiveSatisfied) set.add('try-it');
+    if (quizSubmitted) set.add('debrief');
+    return set;
+  }, [prior, phase, objectiveSatisfied, quizSubmitted]);
+
+  /**
+   * Jump back to a previously completed phase. The objective state for try-it
+   * is preserved (objectiveSatisfied stays true on return), so going back to
+   * "read" and forward again doesn't require redoing the task.
+   */
+  const jumpToPhase = (target: Phase) => {
+    if (!completedPhases.has(target) || target === phase) return;
+    setPhase(target);
+    setLastInteractMs(Date.now());
+  };
 
   // ── Harness + tracker ──
   const harnessRef = useRef<ScenarioHarness | null>(null);
@@ -258,19 +330,56 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
   };
 
   const advanceFromDebrief = (score: number, answers: any[]) => {
+    // Compute the composite total score and persist alongside the quiz result.
+    const merged = {
+      primer_score: prior?.primer_score,
+      primer_total: module.primer_questions.length,
+      quiz_score: score,
+      quiz_total: module.summative_quiz.length,
+      hint_tiers_triggered: prior?.hint_tiers_triggered ?? 0,
+      reset_to_start_clicks: prior?.reset_to_start_clicks ?? resetClicksRef.current,
+    };
+    const total = computeTotalScore(merged);
     persistProgress({
       module_id: module.id,
       quiz_submitted_at: new Date().toISOString(),
       quiz_score: score,
       quiz_answers: answers,
+      total_score_percent: total.percent,
+      total_score_letter: total.letter,
     });
     setQuizSubmitted(true);
   };
 
+  /**
+   * Wipe this module's progress and reset all in-session state so the learner
+   * starts from Phase 1 again. Used by the "Restart module" debrief button.
+   */
+  const handleRestart = () => {
+    clearProgress(module.id);
+    // Reset in-session state
+    setObjectiveSatisfied(false);
+    setQuizSubmitted(false);
+    setActivePrompt(null);
+    setHintTiersTriggered(0);
+    exploreControlChangesRef.current = 0;
+    taskControlChangesRef.current = 0;
+    resetClicksRef.current = 0;
+    exploreStartedAtRef.current = null;
+    taskStartedAtRef.current = null;
+    harness.resetToPreset();
+    setPhase('primer');
+    // Re-seed started_at so the dashboard sees a fresh attempt
+    persistProgress({ module_id: module.id, started_at: new Date().toISOString() });
+  };
+
   // ── Per-phase sim interactivity ──
+  // When revisiting an already-completed phase via back-nav, the sim opens up
+  // (no need to re-lock controls) — the learner is in review mode.
+  const isReviewing = completedPhases.has(phase) && phase !== 'debrief' && quizSubmitted;
   const simInteractivity: SimInteractivity =
     phase === 'primer' ? 'locked'
-    : phase === 'read' ? 'live-disabled'
+    : phase === 'read' ? (isReviewing ? 'live' : 'live-disabled')
     : phase === 'try-it' ? 'live'
     : phase === 'debrief' ? 'live-frozen'
     : 'live'; // explore
@@ -363,28 +472,89 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
             onSubmit={(score) => {
               const answers = module.summative_quiz.map(q => ({
                 question_id: q.id,
-                selected_label: '', // SummativeQuiz doesn't yet expose answers; placeholder
+                selected_label: '', // not yet exposed
                 is_correct: false,
               }));
               advanceFromDebrief(score, answers);
             }}
           />
-        ) : (
-          <div className="h-full flex flex-col px-5 py-4 overflow-y-auto">
-            <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-3 mb-4">
-              <span className="text-[13px] font-bold text-emerald-800">Module complete.</span>
+        ) : (() => {
+          // Pull the latest persisted record so the score is consistent with
+          // what's stored (rather than relying on stale closures).
+          const rec = loadProgress(module.id);
+          const total = rec?.total_score_percent !== undefined
+            ? { percent: rec.total_score_percent, letter: rec.total_score_letter ?? 'F' }
+            : computeTotalScore({
+                primer_score: rec?.primer_score,
+                primer_total: module.primer_questions.length,
+                quiz_score: rec?.quiz_score,
+                quiz_total: module.summative_quiz.length,
+                hint_tiers_triggered: rec?.hint_tiers_triggered,
+                reset_to_start_clicks: rec?.reset_to_start_clicks,
+              });
+          const letterColor =
+            total.letter === 'A' ? 'text-emerald-600' :
+            total.letter === 'B' ? 'text-emerald-500' :
+            total.letter === 'C' ? 'text-amber-600' :
+            total.letter === 'D' ? 'text-amber-700' : 'text-rose-600';
+          return (
+            <div className="h-full flex flex-col px-5 py-5 overflow-y-auto">
+              {/* Banner */}
+              <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-4 mb-5 flex items-center gap-3">
+                <Trophy size={20} className="text-emerald-700 shrink-0" />
+                <div>
+                  <div className="text-[14px] font-bold text-emerald-900 leading-tight">Module complete</div>
+                  <div className="text-[12px] text-emerald-700">{module.title}</div>
+                </div>
+              </div>
+
+              {/* Total score card */}
+              <div className="bg-white border border-stone-200 rounded-xl p-5 mb-5">
+                <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Your total score</div>
+                <div className="flex items-baseline gap-3 mb-3">
+                  <span className={`font-display text-5xl font-semibold ${letterColor} leading-none`}>{total.letter}</span>
+                  <span className="font-display text-3xl font-semibold text-stone-900 leading-none">{total.percent}%</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11.5px]">
+                  <ScoreRow label="Primer" value={`${rec?.primer_score ?? 0} / ${module.primer_questions.length}`} />
+                  <ScoreRow label="Knowledge check" value={`${rec?.quiz_score ?? 0} / ${module.summative_quiz.length}`} />
+                  <ScoreRow label="Hint tiers used" value={String(rec?.hint_tiers_triggered ?? 0)} />
+                  <ScoreRow label="Resets" value={String(rec?.reset_to_start_clicks ?? 0)} />
+                </div>
+                {rec?.time_to_objective_sec !== undefined && (
+                  <div className="mt-3 pt-3 border-t border-stone-100 text-[11px] text-stone-500">
+                    Task completed in {rec.time_to_objective_sec}s
+                  </div>
+                )}
+              </div>
+
+              <ReviewCard keyPoints={module.key_points} />
+
+              {/* Three actions */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-5">
+                <button
+                  onClick={handleRestart}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-stone-300 hover:bg-stone-50 rounded-lg text-[13px] font-bold text-stone-700 transition"
+                >
+                  <RotateCcw size={14} /> Restart module
+                </button>
+                <button
+                  onClick={() => (onHome ?? onBack)()}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-stone-300 hover:bg-stone-50 rounded-lg text-[13px] font-bold text-stone-700 transition"
+                >
+                  <Home size={14} /> Return home
+                </button>
+                <button
+                  onClick={onNext}
+                  disabled={!onNext}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:bg-stone-200 disabled:text-stone-400 text-white rounded-lg text-[13px] font-bold transition"
+                >
+                  Next module <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
-            <ReviewCard keyPoints={module.key_points} />
-            {onNext && (
-              <button
-                onClick={onNext}
-                className="mt-3 w-full px-4 py-2 bg-brand-olive hover:bg-brand-olive-hover text-white text-sm font-bold rounded-lg transition"
-              >
-                Next module →
-              </button>
-            )}
-          </div>
-        )}
+          );
+        })()}
       </div>
     );
   }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs]);
@@ -417,8 +587,8 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
         <div className="w-[160px]" /> {/* spacer for symmetry */}
       </div>
 
-      {/* Phase badge — always visible (§1.2) */}
-      <PhaseBadge phase={phase} />
+      {/* Phase badge — clickable for completed phases (back-nav) */}
+      <PhaseBadge phase={phase} completedPhases={completedPhases} onJumpToPhase={jumpToPhase} />
 
       {/* Two-column body */}
       <div className="flex-1 p-2 overflow-hidden min-h-0">
@@ -435,5 +605,12 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
     </div>
   );
 };
+
+const ScoreRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="flex items-center justify-between px-2.5 py-1.5 bg-stone-50 border border-stone-100 rounded">
+    <span className="text-zinc-500">{label}</span>
+    <span className="font-mono font-bold text-zinc-900">{value}</span>
+  </div>
+);
 
 export default ModuleShell;

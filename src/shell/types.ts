@@ -216,4 +216,10 @@ export interface ProgressRecord {
   quiz_submitted_at?: string;
   quiz_score?: number;
   quiz_answers?: { question_id: string; selected_label: string; is_correct: boolean }[];
+
+  // ── Composite performance score (computed at module completion) ──
+  /** Weighted 0–100 score: primer 30% + summative 50% + hint/reset bonuses. */
+  total_score_percent?: number;
+  /** A–F letter grade derived from total_score_percent. */
+  total_score_letter?: 'A' | 'B' | 'C' | 'D' | 'F';
 }
