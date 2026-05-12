@@ -66,11 +66,11 @@ export const M3: ModuleConfig = {
         control: 'resistance',
         condition: { type: 'delta_pct', direction: 'increase', min_pct: 50 },
         require_acknowledgment: {
-          question: 'What happened to the peak-to-plateau gap?',
+          question: 'You raised resistance. What happened to the peak-to-plateau gap?',
           options: [
-            { label: 'Widened', is_correct: true },
-            { label: 'Narrowed', is_correct: false },
-            { label: 'Unchanged', is_correct: false },
+            { label: 'Widened', is_correct: true, explanation: 'Resistance only contributes pressure while gas is flowing. Peak (during flow) rises; plateau (after the pause, with flow = 0) is unchanged. The gap widens by exactly the resistive contribution.' },
+            { label: 'Narrowed', is_correct: false, explanation: 'Narrowing would mean plateau caught up to peak — that\'s a compliance pattern, not resistance.' },
+            { label: 'Unchanged', is_correct: false, explanation: 'The resistive pressure only shows during flow, so increasing resistance must change peak relative to plateau.' },
           ],
         },
       },
@@ -79,12 +79,27 @@ export const M3: ModuleConfig = {
         control: 'compliance',
         condition: { type: 'delta_pct', direction: 'decrease', min_pct: 30 },
         require_acknowledgment: {
-          question: 'What happened to peak and plateau?',
+          question: 'You decreased compliance. What happened to peak and plateau?',
           options: [
-            { label: 'Both rose together', is_correct: true },
-            { label: 'Only peak rose', is_correct: false },
-            { label: 'Only plateau rose', is_correct: false },
-            { label: 'Both fell', is_correct: false },
+            { label: 'Both rose together', is_correct: true, explanation: 'Reducing compliance raises the elastic component (V/C), which lifts both peak and plateau by the same amount. The gap stays constant because resistance didn\'t change.' },
+            { label: 'Only peak rose', is_correct: false, explanation: 'That\'s the resistance pattern. A pure compliance change carries both peak and plateau upward together.' },
+            { label: 'Only plateau rose', is_correct: false, explanation: 'Impossible — peak always includes everything that builds plateau, plus the resistive component on top.' },
+            { label: 'Both fell', is_correct: false, explanation: 'Stiffer lungs need more pressure for the same volume, not less.' },
+          ],
+        },
+      },
+      {
+        // Third piece: inspiratory flow. Our sim exposes I-time (inverse of flow).
+        // Decreasing I-time at fixed Vt raises peak flow → larger resistive component.
+        kind: 'manipulation',
+        control: 'iTime',
+        condition: { type: 'delta_pct', direction: 'decrease', min_pct: 30 },
+        require_acknowledgment: {
+          question: 'You shortened I-time (which raises inspiratory flow). What happened to the peak pressure?',
+          options: [
+            { label: 'Rose — the resistive component scales with flow', is_correct: true, explanation: 'P = (V/C) + (F × R) + PEEP. Higher flow at the same resistance means a larger resistive contribution, lifting peak. Plateau is unaffected because it\'s measured after flow stops.' },
+            { label: 'Fell because the breath was delivered faster', is_correct: false, explanation: '"Faster = easier" intuition fails for resistive airways. Faster delivery raises peak.' },
+            { label: 'Unchanged', is_correct: false, explanation: 'Watch the peak number when you change I-time — it moves.' },
           ],
         },
       },

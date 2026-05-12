@@ -61,11 +61,22 @@ export const M17: ModuleConfig = {
     sequence: 'strict',
     children: [
       {
+        // Step 1: switch to PSV (spontaneous mode).
         kind: 'manipulation',
         control: 'mode',
         condition: { type: 'equals', value: 'PSV' },
       },
       {
+        // Step 2: drop pressure support to SBT level (≤ 8). Per the v2 plan,
+        // this is what defines a "standard SBT" — minimal support, patient does
+        // most of the work.
+        kind: 'manipulation',
+        control: 'psLevel',
+        condition: { type: 'absolute', operator: '<=', value: 8 },
+      },
+      {
+        // Step 3: wait for RSBI to stabilize below 105 (favorable predictor).
+        // The sim now emits rsbi on each sim_tick — it's RR / Vt(L).
         kind: 'outcome',
         readouts: { rsbi: { operator: '<', value: 105 } },
         sustain_breaths: 5,
@@ -77,10 +88,10 @@ export const M17: ModuleConfig = {
           trigger: { kind: 'on_load' },
           question: 'The RSBI has stabilized below 105. What does this predict?',
           options: [
-            { label: 'Likely successful extubation', is_correct: true },
-            { label: 'Likely failed extubation', is_correct: false },
-            { label: 'Need more sedation', is_correct: false },
-            { label: 'Need higher PEEP', is_correct: false },
+            { label: 'Likely successful extubation', is_correct: true, explanation: 'RSBI under 105 in the Yang–Tobin study had high sensitivity for successful extubation. It\'s one piece of the picture — cough strength, mental status, and secretion management also matter.' },
+            { label: 'Likely failed extubation', is_correct: false, explanation: 'Above 105 predicts failure; below predicts success.' },
+            { label: 'Need more sedation', is_correct: false, explanation: 'A favorable RSBI in a patient breathing comfortably is exactly the opposite signal.' },
+            { label: 'Need higher PEEP', is_correct: false, explanation: 'PEEP titration is about oxygenation/recruitment, not RSBI interpretation.' },
           ],
           max_attempts: 2,
         },

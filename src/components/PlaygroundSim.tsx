@@ -476,6 +476,9 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         totalPeep: metrics.totalPeep,
         autoPeep: autoPeep > 0.1 ? autoPeep : 0,
         actualRate: metrics.actualRate,
+        // RSBI = RR / Vt(L). Only meaningful when patient is breathing
+        // spontaneously and Vt is non-trivial.
+        rsbi: metrics.vte > 50 ? Math.round(metrics.actualRate / (metrics.vte / 1000)) : 0,
         ph: parseFloat(abg.ph),
         paco2: abg.paco2,
         pao2: abg.pao2,

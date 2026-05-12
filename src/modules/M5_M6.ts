@@ -56,24 +56,42 @@ export const M5: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Approximation: use FiO2 manipulation as proxy for "increase FiO2 to address V/Q",
-  // pairing with the dead-space concept via PEEP change. Sim caveat — true shunt
-  // fraction control is a future preset extension.
+  // Two complementary tasks demonstrating shunt-vs-dead-space signatures with
+  // the controls we actually have. Strict sequence so each is a clean
+  // experiment; reset between so prior changes don't carry over.
   hidden_objective: {
     kind: 'compound',
-    sequence: 'any_order',
+    sequence: 'strict',
+    reset_between: true,
     children: [
       {
+        // Part A: shunt signature — drop compliance (proxy for collapsed alveoli).
+        // SpO2 should fall. ETCO2/PaCO2 should be largely unchanged.
+        kind: 'manipulation',
+        control: 'compliance',
+        condition: { type: 'delta_pct', direction: 'decrease', min_pct: 40 },
+        require_acknowledgment: {
+          question: 'You worsened the patient\'s lung disease (lower compliance — a shunt-like state). Which readout changed most?',
+          options: [
+            { label: 'SpO2 fell — oxygenation suffered', is_correct: true, explanation: 'Shunt = blood passing through unventilated alveoli. SpO2 falls; CO2 elimination is largely preserved. That\'s the oxygenation signature of shunt.' },
+            { label: 'End-tidal CO2 fell', is_correct: false, explanation: 'A falling end-tidal CO2 with a widening ETCO2-PaCO2 gradient is the dead-space pattern, not shunt.' },
+            { label: 'Both changed equally', is_correct: false, explanation: 'Shunt and dead space have distinct signatures. Shunt → SpO2 falls. Dead space → ETCO2 gradient widens.' },
+            { label: 'Nothing changed', is_correct: false, explanation: 'Look at the SpO2 readout — it tracks oxygenation.' },
+          ],
+        },
+      },
+      {
+        // Part B: V/Q-mismatch responsiveness — raise FiO2 high. SpO2 climbs back.
         kind: 'manipulation',
         control: 'fiO2',
         condition: { type: 'absolute', operator: '>=', value: 80 },
         require_acknowledgment: {
-          question: 'You pushed FiO2 to 80+%. What does substantial improvement in SpO2 at this FiO2 suggest?',
+          question: 'You pushed FiO2 to ≥80% on the same struggling patient. What does the SpO2 response tell you?',
           options: [
-            { label: 'V/Q mismatch (FiO2-responsive)', is_correct: true },
-            { label: 'Pure shunt (FiO2 should fix it)', is_correct: false },
-            { label: 'Dead space (FiO2 should fix it)', is_correct: false },
-            { label: 'Hypoventilation only', is_correct: false },
+            { label: 'It improved substantially — V/Q mismatch is FiO2-responsive', is_correct: true, explanation: 'V/Q mismatch (low but nonzero ventilation to alveoli) responds well to higher FiO2 — the gas reaches the alveoli, just inefficiently, and raising the concentration overcomes it.' },
+            { label: 'It barely moved — this must be pure anatomic shunt', is_correct: false, explanation: 'In this preset compliance loss creates V/Q mismatch rather than absolute shunt, so FiO2 should help. Pure anatomic shunt would be unresponsive.' },
+            { label: 'PaCO2 changed instead', is_correct: false, explanation: 'PaCO2 reflects ventilation, not oxygenation. FiO2 is an oxygenation lever.' },
+            { label: 'Nothing changed', is_correct: false, explanation: 'Watch the SpO2 number as you push FiO2 up.' },
           ],
         },
       },

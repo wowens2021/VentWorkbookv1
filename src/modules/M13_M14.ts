@@ -56,22 +56,43 @@ export const M13: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Approximation: track that the learner has experienced multiple PEEP values
-  // (delta_pct increases over baseline). A richer implementation would record
-  // compliance per PEEP and ask which was highest.
+  // Three-stage titration: walk PEEP up in two steps (forcing the learner to
+  // explore a range rather than slamming to one value), then a recognition
+  // that consolidates the concept. We can't yet model PEEP-induced recruitment
+  // in the sim, so the "best PEEP" reasoning is delivered via the recognition.
   hidden_objective: {
-    kind: 'manipulation',
-    control: 'peep',
-    condition: { type: 'absolute', operator: '>=', value: 12 },
-    require_acknowledgment: {
-      question: 'You explored higher PEEP. As PEEP rises in ARDS, compliance typically:',
-      options: [
-        { label: 'Rises to a peak, then falls as alveoli overdistend', is_correct: true },
-        { label: 'Always rises with PEEP', is_correct: false },
-        { label: 'Always falls', is_correct: false },
-        { label: 'Stays constant', is_correct: false },
-      ],
-    },
+    kind: 'compound',
+    sequence: 'strict',
+    children: [
+      {
+        // Stage 1: raise PEEP into the moderate zone (≥ 8) and hold briefly.
+        kind: 'outcome',
+        readouts: { peep: { operator: '>=', value: 8 } },
+        sustain_breaths: 2,
+      },
+      {
+        // Stage 2: continue raising into the higher zone (≥ 12). Reaching this
+        // only after Stage 1 forces a stepwise approach.
+        kind: 'outcome',
+        readouts: { peep: { operator: '>=', value: 12 } },
+        sustain_breaths: 2,
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M13-summary',
+          trigger: { kind: 'on_load' },
+          question: 'You\'ve walked PEEP up through a range. In a real decremental titration, which PEEP would you call "best"?',
+          options: [
+            { label: 'The PEEP where lung compliance was highest (driving pressure lowest)', is_correct: true, explanation: 'Best PEEP = compliance peak = driving-pressure trough. Below it, alveoli collapse. Above it, healthy alveoli overdistend.' },
+            { label: 'The highest PEEP you tried — more is always better', is_correct: false, explanation: 'Above the compliance peak, you\'re overdistending healthy alveoli and impairing venous return.' },
+            { label: 'The lowest PEEP that produced any SpO2 improvement', is_correct: false, explanation: 'That ignores hemodynamics and overdistension. The compliance-peak rule is more protective.' },
+            { label: 'PEEP doesn\'t need to be titrated — pick the protocol default', is_correct: false, explanation: 'ARDSnet tables are a starting point, but per-patient titration via compliance/driving pressure is now standard of care.' },
+          ],
+          max_attempts: 2,
+        },
+      },
+    ],
   },
 
   content_blocks: [

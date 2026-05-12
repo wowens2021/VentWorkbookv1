@@ -49,7 +49,10 @@ export const M15: ModuleConfig = {
     preset: {
       mode: 'VCV',
       settings: { tidalVolume: 560, respiratoryRate: 18, peep: 10, fiO2: 60, iTime: 1.0 },
-      patient: { compliance: 25, resistance: 12, spontaneousRate: 0, gender: 'M', heightInches: 70 },
+      // Moderate ARDS compliance. Tuned so that achieving Vt 6 mL/kg PBW (= 420
+      // mL for 70 kg) reliably drops driving pressure into the ≤15 zone:
+      // DP = 420/32 ≈ 13.1, plateau = 23.1, both pass.
+      patient: { compliance: 32, resistance: 12, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
     unlocked_controls: ['tidalVolume', 'respiratoryRate'],
     visible_readouts: ['pip', 'plat', 'drivingPressure', 'vte', 'mve'],
