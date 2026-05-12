@@ -67,12 +67,32 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
                 );
               })}
             </div>
-            {submitted && q.explanation && (
-              <div className="mt-2 px-3 py-2 bg-stone-50 border border-zinc-200 rounded text-[11.5px] text-zinc-700 leading-relaxed">
-                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mr-1.5">Why:</span>
-                {q.explanation}
-              </div>
-            )}
+            {submitted && answers[qi] !== null && (() => {
+              const selectedOpt = q.options[answers[qi] as number];
+              const isCorrect = selectedOpt.is_correct;
+              // Prefer the chosen option's own explanation when authored;
+              // otherwise fall back to the question-level explanation.
+              const text = selectedOpt.explanation ?? q.explanation;
+              if (!text) return null;
+              return (
+                <div
+                  className={`mt-2 px-3 py-2 border rounded text-[12px] leading-relaxed ${
+                    isCorrect
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                      : 'bg-rose-50 border-rose-200 text-rose-900'
+                  }`}
+                >
+                  <span
+                    className={`text-[9px] font-black uppercase tracking-widest mr-1.5 ${
+                      isCorrect ? 'text-emerald-800' : 'text-rose-800'
+                    }`}
+                  >
+                    {isCorrect ? 'Why this is right:' : 'Why this is not it:'}
+                  </span>
+                  {text}
+                </div>
+              );
+            })()}
           </div>
         ))}
       </div>

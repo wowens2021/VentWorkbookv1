@@ -119,24 +119,35 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
         })}
       </div>
 
-      {submitted && (
-        <div className="bg-stone-50 border border-zinc-200 rounded-lg p-4 mb-5 space-y-2.5">
-          <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">Explanations</span>
-          {q.options.map((opt, i) => (
-            <div key={i} className="text-[13px] leading-relaxed">
-              <span className={`font-black ${opt.is_correct ? 'text-emerald-700' : 'text-zinc-500'}`}>
-                {String.fromCharCode(65 + i)}.
-              </span>{' '}
-              <span className="text-zinc-700">{opt.explanation ?? (opt.is_correct ? 'Correct.' : 'Incorrect.')}</span>
+      {submitted && selected !== null && (() => {
+        const opt = q.options[selected];
+        const isCorrect = opt.is_correct;
+        return (
+          <div
+            className={`border rounded-lg p-4 mb-5 ${
+              isCorrect
+                ? 'bg-emerald-50 border-emerald-200'
+                : 'bg-rose-50 border-rose-200'
+            }`}
+          >
+            <span
+              className={`text-[11px] font-black uppercase tracking-widest mb-1.5 block ${
+                isCorrect ? 'text-emerald-800' : 'text-rose-800'
+              }`}
+            >
+              {isCorrect ? 'Why this is right' : 'Why this is not it'}
+            </span>
+            <div className="text-[13px] text-zinc-800 leading-relaxed">
+              {opt.explanation ?? (isCorrect ? 'Correct.' : 'Incorrect.')}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        );
+      })()}
 
       <div className="mt-auto flex items-center justify-between gap-3">
         {submitted && !lastWasCorrect && (
           <span className="text-[12px] font-bold text-rose-600">
-            Not quite — review the explanations and try again.
+            Not quite — review the explanation and try again.
           </span>
         )}
         <div className="ml-auto flex gap-2">
