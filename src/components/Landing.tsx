@@ -52,7 +52,7 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
               <span className="w-1.5 h-1.5 rounded-full bg-brand-olive" /> Welcome back, Dr.
             </div>
             <h1 className="font-display text-5xl md:text-6xl font-bold text-stone-900 leading-[1.05] tracking-tight mb-5">
-              Master mechanical<br />ventilation <span className="italic font-medium text-stone-700">— at your pace.</span>
+              Master mechanical<br />ventilation <span className="font-medium text-stone-600">— at your pace.</span>
             </h1>
             <p className="text-[17px] text-stone-700 leading-relaxed mb-7 max-w-xl">
               Evidence-based ICU simulations built from <em>The Ventilator Book</em>.

@@ -582,7 +582,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
           <BookOpen size={13} className="text-white/70" />
           <span className="font-bold text-white">{module.id}</span>
           <span className="text-white/40">·</span>
-          <span className="font-display text-[15px] italic text-white/95">{module.title}</span>
+          <span className="text-[14px] font-semibold text-white/95">{module.title}</span>
         </div>
         <div className="w-[160px]" /> {/* spacer for symmetry */}
       </div>

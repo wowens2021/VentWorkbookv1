@@ -25,20 +25,26 @@
   --color-pill-intermediate: #2563eb;
   --color-pill-advanced: #c43a4a;
 
-  /* Font families */
-  --font-display: "Playfair Display", "Georgia", "Times New Roman", serif;
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Font families — modern sans-serif throughout (Khan Academy / Coursera style). */
+  --font-display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans:    "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 html, body {
   font-family: var(--font-sans);
   background: var(--color-brand-cream);
   color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Editorial serif heading helper */
+/*
+ * Heading helper — same family as body, but tighter tracking and the
+ * salt/ss01 feature for crisper headline rendering. Keep the class so
+ * existing component code doesn't need to change.
+ */
 .font-display {
   font-family: var(--font-display);
-  font-feature-settings: "kern", "liga", "calt";
-  letter-spacing: -0.01em;
+  font-feature-settings: "kern", "liga", "calt", "ss01";
+  letter-spacing: -0.018em;
 }
