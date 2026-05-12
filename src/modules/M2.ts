@@ -56,41 +56,13 @@ export const M2: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
+  // Observation module — recognition is folded into the primer. The hidden
+  // objective satisfies on the first completed breath; the learner is free to
+  // explore the terminology in the Measured Values strip without overlays.
   hidden_objective: {
-    kind: 'compound',
-    sequence: 'any_order',
-    children: [
-      {
-        kind: 'recognition',
-        prompt: {
-          prompt_id: 'M2-vt',
-          trigger: { kind: 'on_load' },
-          question: 'Which reading represents the **tidal volume** (volume delivered per breath)?',
-          options: [
-            { label: 'Vte (expired tidal volume)', is_correct: true },
-            { label: 'VE (minute ventilation)', is_correct: false },
-            { label: 'PIP', is_correct: false },
-            { label: 'I:E ratio', is_correct: false },
-          ],
-          max_attempts: 2,
-        },
-      },
-      {
-        kind: 'recognition',
-        prompt: {
-          prompt_id: 'M2-mv',
-          trigger: { kind: 'on_load' },
-          question: 'Which reading represents **minute ventilation** (volume per minute)?',
-          options: [
-            { label: 'VE', is_correct: true },
-            { label: 'Vte', is_correct: false },
-            { label: 'RR', is_correct: false },
-            { label: 'Pplat', is_correct: false },
-          ],
-          max_attempts: 2,
-        },
-      },
-    ],
+    kind: 'outcome',
+    readouts: { vte: { operator: '>', value: 0 } },
+    sustain_breaths: 1,
   },
 
   content_blocks: [

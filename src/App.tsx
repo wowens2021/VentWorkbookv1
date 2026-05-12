@@ -19,7 +19,7 @@ const App: React.FC = () => {
         <PlaygroundSim />
         <button
           onClick={() => setView({ kind: 'picker' })}
-          className="fixed top-3 left-3 z-[500] px-3 py-1.5 bg-zinc-900 border border-zinc-700 hover:border-sky-500 rounded text-[11px] font-bold text-zinc-300 hover:text-white transition shadow-lg"
+          className="fixed top-3 left-3 z-[500] px-3 py-1.5 bg-white border border-zinc-300 hover:border-sky-500 rounded text-[11px] font-bold text-zinc-700 hover:text-white transition shadow-lg"
         >
           ← Back to modules
         </button>

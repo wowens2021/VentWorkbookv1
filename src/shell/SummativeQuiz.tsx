@@ -24,7 +24,7 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
           Knowledge check · {questions.length} questions
         </span>
         {submitted && (
-          <span className="text-sm font-mono font-black text-emerald-400">
+          <span className="text-sm font-mono font-black text-emerald-600">
             {score} / {questions.length}
           </span>
         )}
@@ -33,7 +33,7 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
       <div className="space-y-6">
         {questions.map((q, qi) => (
           <div key={q.id}>
-            <h3 className="text-sm font-bold text-zinc-100 mb-3 leading-snug">
+            <h3 className="text-sm font-bold text-zinc-900 mb-3 leading-snug">
               <span className="text-zinc-500 font-mono mr-2">{qi + 1}.</span>
               {q.prompt}
             </h3>
@@ -43,13 +43,13 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
                 const showResult = submitted;
                 const stateClass = !showResult
                   ? sel
-                    ? 'bg-sky-900/40 border-sky-500 text-sky-100'
-                    : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800'
+                    ? 'bg-sky-100 border-sky-500 text-sky-800'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-100'
                   : opt.is_correct
-                    ? 'bg-emerald-900/30 border-emerald-600 text-emerald-100'
+                    ? 'bg-emerald-50 border-emerald-600 text-emerald-800'
                     : sel
-                      ? 'bg-rose-900/30 border-rose-600 text-rose-100'
-                      : 'bg-zinc-900 border-zinc-800 text-zinc-500';
+                      ? 'bg-rose-50 border-rose-600 text-rose-700'
+                      : 'bg-white border-zinc-200 text-zinc-500';
                 return (
                   <button
                     key={oi}
@@ -61,14 +61,14 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
                   >
                     <span className="font-black text-[11px] pt-0.5">{String.fromCharCode(65 + oi)}.</span>
                     <span className="flex-1">{opt.label}</span>
-                    {showResult && opt.is_correct && <CheckCircle2 size={14} className="text-emerald-400 mt-0.5" />}
-                    {showResult && !opt.is_correct && sel && <XCircle size={14} className="text-rose-400 mt-0.5" />}
+                    {showResult && opt.is_correct && <CheckCircle2 size={14} className="text-emerald-600 mt-0.5" />}
+                    {showResult && !opt.is_correct && sel && <XCircle size={14} className="text-rose-600 mt-0.5" />}
                   </button>
                 );
               })}
             </div>
             {submitted && q.explanation && (
-              <div className="mt-2 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded text-[11.5px] text-zinc-300 leading-relaxed">
+              <div className="mt-2 px-3 py-2 bg-zinc-50 border border-zinc-200 rounded text-[11.5px] text-zinc-700 leading-relaxed">
                 <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mr-1.5">Why:</span>
                 {q.explanation}
               </div>
@@ -81,12 +81,12 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
         <button
           disabled={!allAnswered}
           onClick={() => { setSubmitted(true); onSubmit(score); }}
-          className="mt-6 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white text-sm font-bold rounded-lg transition"
+          className="mt-6 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-100 disabled:text-zinc-400 text-white text-sm font-bold rounded-lg transition"
         >
           Submit
         </button>
       ) : (
-        <div className="mt-6 px-4 py-3 bg-emerald-900/20 border border-emerald-800 rounded-lg text-emerald-200 text-sm">
+        <div className="mt-6 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm">
           Submitted. Review your answers above, then check the key points below.
         </div>
       )}

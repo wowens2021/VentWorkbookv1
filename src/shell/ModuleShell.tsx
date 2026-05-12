@@ -126,13 +126,33 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
     });
   };
 
+  const [showMePulse, setShowMePulse] = useState(false);
+  // Suppress unused-warning until we wire the visual pulse to a control.
+  void showMePulse;
+
   const onShowMe = () => {
     const demo = module.hint_ladder.tier3?.demonstration;
-    if (!demo) return;
-    harness.emit({ type: 'demonstration_played', control: demo.control, timestamp: Date.now() });
-    // brief value pulse then reset
-    harness.emit({ type: 'control_changed', control: demo.control, old_value: harness.baseline_controls[demo.control], new_value: demo.target_value, timestamp: Date.now() });
-    setTimeout(() => harness.resetToPreset(), 2000);
+    if (demo) {
+      // Play the configured demonstration, then reset.
+      harness.emit({ type: 'demonstration_played', control: demo.control, timestamp: Date.now() });
+      harness.emit({
+        type: 'control_changed',
+        control: demo.control,
+        old_value: harness.baseline_controls[demo.control],
+        new_value: demo.target_value,
+        timestamp: Date.now(),
+      });
+      setTimeout(() => harness.resetToPreset(), 2000);
+      return;
+    }
+    // No demonstration configured — surface a transient pointer hint instead.
+    // Picks the first unlocked control as the suggested target.
+    const target = module.scenario.unlocked_controls[0];
+    if (target) {
+      harness.emit({ type: 'demonstration_played', control: target, timestamp: Date.now() });
+    }
+    setShowMePulse(true);
+    setTimeout(() => setShowMePulse(false), 2500);
   };
 
   // ── Workbook content based on phase ──
@@ -174,24 +194,24 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
 
     // 'content' or 'review' phase
     return (
-      <div className="h-full flex flex-col px-5 py-4 overflow-y-auto">
+      <div className="h-full flex flex-col px-6 py-5 overflow-y-auto">
         {/* Module header */}
-        <div className="mb-4 pb-3 border-b border-zinc-800">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[9px] font-black uppercase tracking-widest text-sky-400 bg-sky-900/30 px-1.5 py-0.5 rounded">{module.track}</span>
-            <span className="text-[10px] font-mono text-zinc-500">{module.id}</span>
-            <span className="text-[10px] text-zinc-600 flex items-center gap-1">
-              <Clock size={10} /> {module.estimated_minutes} min
+        <div className="mb-5 pb-4 border-b border-zinc-200">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[11px] font-black uppercase tracking-widest text-sky-700 bg-sky-50 px-2 py-0.5 rounded">{module.track}</span>
+            <span className="text-[11px] font-mono text-zinc-500">{module.id}</span>
+            <span className="text-[11px] text-zinc-400 flex items-center gap-1">
+              <Clock size={12} /> {module.estimated_minutes} min
             </span>
           </div>
-          <h1 className="text-lg font-black text-zinc-100 leading-tight">{module.title}</h1>
-          <div className="mt-2">
-            <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1 flex items-center gap-1">
-              <Target size={10} /> Objectives
+          <h1 className="text-2xl font-black text-zinc-900 leading-tight tracking-tight">{module.title}</h1>
+          <div className="mt-3">
+            <div className="text-[11px] font-black uppercase tracking-widest text-zinc-500 mb-1.5 flex items-center gap-1">
+              <Target size={12} /> Objectives
             </div>
-            <ul className="space-y-0.5">
+            <ul className="space-y-1">
               {module.visible_learning_objectives.map((o, i) => (
-                <li key={i} className="text-[11.5px] text-zinc-300 leading-snug">• {o}</li>
+                <li key={i} className="text-[14px] text-zinc-700 leading-snug">• {o}</li>
               ))}
             </ul>
           </div>
@@ -249,16 +269,16 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext }) => {
 
   // ── Top bar (replaces the sim's own header) ──
   return (
-    <div className="flex flex-col h-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden select-none">
-      <div className="flex items-center justify-between bg-zinc-900 px-4 py-2 border-b border-zinc-800">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-400 hover:text-white">
+    <div className="flex flex-col h-screen bg-zinc-50 text-zinc-900 font-sans overflow-hidden select-none">
+      <div className="flex items-center justify-between bg-white px-4 py-2 border-b border-zinc-200">
+        <button onClick={onBack} className="flex items-center gap-1.5 text-[12px] font-bold text-zinc-500 hover:text-zinc-900">
           <ArrowLeft size={14} /> Back to modules
         </button>
         <div className="flex items-center gap-2 text-[11px]">
-          <BookOpen size={13} className="text-sky-400" />
-          <span className="font-bold text-zinc-200">{module.id}</span>
-          <span className="text-zinc-600">·</span>
-          <span className="text-zinc-400">{module.title}</span>
+          <BookOpen size={13} className="text-sky-600" />
+          <span className="font-bold text-zinc-900">{module.id}</span>
+          <span className="text-zinc-400">·</span>
+          <span className="text-zinc-500">{module.title}</span>
         </div>
         <div className="text-[10px] text-zinc-500">
           {phase === 'primer' && 'Primer'}

@@ -18,8 +18,8 @@ const AlertContainer: React.FC<AlertContainerProps> = ({ alerts }) => {
           key={alert.id}
           className={`p-3 rounded-lg text-[11px] font-bold shadow-lg border ${
             alert.type === 'positive'
-              ? 'bg-emerald-900/90 text-emerald-100 border-emerald-700'
-              : 'bg-rose-900/90 text-rose-100 border-rose-700'
+              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+              : 'bg-rose-100 text-rose-700 border-rose-300'
           }`}
         >
           {alert.message}

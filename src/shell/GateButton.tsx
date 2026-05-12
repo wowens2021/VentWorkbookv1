@@ -14,7 +14,7 @@ const GateButton: React.FC<Props> = ({ enabled, pulse, onClick, label = 'Continu
       <button
         disabled
         title="Keep exploring the simulator."
-        className="w-full mt-6 px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-600 text-sm font-bold flex items-center justify-center gap-2 cursor-not-allowed"
+        className="w-full mt-6 px-4 py-2.5 bg-white border border-zinc-200 rounded-lg text-zinc-400 text-sm font-bold flex items-center justify-center gap-2 cursor-not-allowed"
       >
         <Lock size={14} /> {label}
       </button>

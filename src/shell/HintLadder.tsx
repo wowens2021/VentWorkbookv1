@@ -37,28 +37,32 @@ const HintLadder: React.FC<Props> = ({ hint, idleMs, onShowMe, onTierTriggered, 
   const message =
     tier === 1 ? hint.tier1 :
     tier === 2 ? hint.tier2 :
-    hint.tier3?.hint_text ?? 'Stuck? Use "Show me."';
+    hint.tier3?.hint_text ?? 'Stuck? Use "Show me" to see the answer played out.';
+
+  // "Show me" is always available at tier 3 — either runs a demonstration if
+  // one is configured, or simply nudges the learner with an emphatic re-state.
+  const showMeAvailable = tier === 3 && !!onShowMe;
 
   return (
-    <div className="bg-amber-900/30 border border-amber-700 rounded-lg px-3 py-2 flex items-start gap-2 mb-2">
-      <Lightbulb size={14} className="text-amber-400 shrink-0 mt-0.5" />
-      <div className="flex-1 text-[11.5px] font-semibold text-amber-100 leading-snug">
+    <div className="bg-amber-50 border border-amber-300 rounded-lg px-3.5 py-2.5 flex items-start gap-2 mb-3 shadow-sm">
+      <Lightbulb size={16} className="text-amber-600 shrink-0 mt-0.5" />
+      <div className="flex-1 text-[13px] font-semibold text-amber-900 leading-snug">
         {message}
-        {tier === 3 && hint.tier3?.demonstration && onShowMe && (
+        {showMeAvailable && (
           <button
             onClick={onShowMe}
-            className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-amber-700 hover:bg-amber-600 text-white text-[10px] font-black rounded transition"
+            className="ml-2 inline-flex items-center gap-1 px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-black rounded transition shadow-sm"
           >
-            <Eye size={11} /> Show me
+            <Eye size={12} /> Show me
           </button>
         )}
       </div>
       <button
         onClick={() => setDismissed(d => new Set([...d, tier]))}
-        className="text-amber-400 hover:text-amber-200 shrink-0"
+        className="text-amber-600 hover:text-amber-700 shrink-0"
         aria-label="Dismiss hint"
       >
-        <X size={12} />
+        <X size={14} />
       </button>
     </div>
   );

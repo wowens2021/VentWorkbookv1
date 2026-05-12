@@ -32,25 +32,25 @@ const RecognitionPrompt: React.FC<Props> = ({ prompt, onResponse, onDismiss }) =
   };
 
   return (
-    <div className="bg-zinc-900 border border-sky-700 rounded-xl shadow-2xl p-4 max-w-md w-full">
+    <div className="bg-white border border-sky-300 rounded-xl shadow-2xl p-4 max-w-md w-full">
       <div className="flex items-center gap-2 mb-3">
-        <HelpCircle size={14} className="text-sky-400" />
-        <span className="text-[10px] font-black uppercase tracking-widest text-sky-300">Quick check</span>
+        <HelpCircle size={14} className="text-sky-600" />
+        <span className="text-[10px] font-black uppercase tracking-widest text-sky-700">Quick check</span>
       </div>
-      <p className="text-sm font-bold text-zinc-100 mb-3 leading-snug">{prompt.question}</p>
+      <p className="text-sm font-bold text-zinc-900 mb-3 leading-snug">{prompt.question}</p>
       <div className="space-y-1.5">
         {prompt.options.map((opt, i) => {
           const isSel = selected === i;
           const show = submitted;
           const cls = !show
             ? isSel
-              ? 'bg-sky-900/40 border-sky-500 text-sky-100'
-              : 'bg-zinc-950 border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+              ? 'bg-sky-100 border-sky-500 text-sky-800'
+              : 'bg-zinc-50 border-zinc-300 text-zinc-700 hover:bg-zinc-100'
             : opt.is_correct
-              ? 'bg-emerald-900/30 border-emerald-600 text-emerald-100'
+              ? 'bg-emerald-50 border-emerald-600 text-emerald-800'
               : isSel
-                ? 'bg-rose-900/30 border-rose-600 text-rose-100'
-                : 'bg-zinc-950 border-zinc-800 text-zinc-500';
+                ? 'bg-rose-50 border-rose-600 text-rose-700'
+                : 'bg-zinc-50 border-zinc-200 text-zinc-500';
           return (
             <button
               key={i}
@@ -60,26 +60,26 @@ const RecognitionPrompt: React.FC<Props> = ({ prompt, onResponse, onDismiss }) =
             >
               <span className="font-black text-[10px] pt-0.5">{String.fromCharCode(65 + i)}.</span>
               <span className="flex-1">{opt.label}</span>
-              {show && opt.is_correct && <CheckCircle2 size={12} className="text-emerald-400 mt-0.5" />}
-              {show && !opt.is_correct && isSel && <XCircle size={12} className="text-rose-400 mt-0.5" />}
+              {show && opt.is_correct && <CheckCircle2 size={12} className="text-emerald-600 mt-0.5" />}
+              {show && !opt.is_correct && isSel && <XCircle size={12} className="text-rose-600 mt-0.5" />}
             </button>
           );
         })}
       </div>
       <div className="flex items-center justify-between mt-3">
         {attempts > 0 && !revealed && (
-          <span className="text-[10px] text-amber-400">Try again ({maxAttempts - attempts} left)</span>
+          <span className="text-[10px] text-amber-600">Try again ({maxAttempts - attempts} left)</span>
         )}
         {revealed && <span className="text-[10px] text-zinc-500">Correct answer revealed.</span>}
         <div className="ml-auto flex gap-2">
           {onDismiss && submitted && (
-            <button onClick={onDismiss} className="text-[11px] text-zinc-400 hover:text-zinc-200">Close</button>
+            <button onClick={onDismiss} className="text-[11px] text-zinc-500 hover:text-zinc-900">Close</button>
           )}
           {!submitted && (
             <button
               onClick={submit}
               disabled={selected === null}
-              className="px-3 py-1 bg-sky-600 hover:bg-sky-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white text-[11px] font-bold rounded transition"
+              className="px-3 py-1 bg-sky-600 hover:bg-sky-500 disabled:bg-zinc-100 disabled:text-zinc-400 text-white text-[11px] font-bold rounded transition"
             >
               Submit
             </button>

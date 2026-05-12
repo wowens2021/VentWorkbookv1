@@ -56,24 +56,14 @@ export const M1: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // The plan calls for four click-the-region recognition tasks. We approximate
-  // with a single recognition tracker because the sim doesn't yet support
-  // clickable display elements. This gates the gate appropriately while the
-  // richer interaction is built.
+  // Observation module — recognition is folded into the primer (which must be
+  // answered correctly to unlock the sim). The hidden objective satisfies on
+  // the first completed breath so the learner can free-explore and advance
+  // when ready.
   hidden_objective: {
-    kind: 'recognition',
-    prompt: {
-      prompt_id: 'M1-readouts',
-      trigger: { kind: 'on_load' },
-      question: 'Looking at the ventilator display, which reading is the peak airway pressure (PIP)?',
-      options: [
-        { label: 'The highest value on the Airway Pressure waveform (in cmH2O)', is_correct: true },
-        { label: 'The tidal volume readout (Vte)', is_correct: false },
-        { label: 'The minute ventilation (VE)', is_correct: false },
-        { label: 'The set respiratory rate', is_correct: false },
-      ],
-      max_attempts: 2,
-    },
+    kind: 'outcome',
+    readouts: { vte: { operator: '>', value: 0 } },
+    sustain_breaths: 1,
   },
 
   content_blocks: [

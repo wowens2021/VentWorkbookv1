@@ -73,23 +73,23 @@ const generateSegmentedPaths = (
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 const MetricBox = ({ label, value, color }: { label: string; value: any; color: string }) => (
-  <div className="bg-slate-950/50 rounded-lg p-1.5 border border-slate-800 flex flex-col items-center">
-    <span className="text-[7px] font-bold text-slate-500 uppercase leading-none mb-1">{label}</span>
+  <div className="bg-zinc-50 rounded-lg p-1.5 border border-zinc-200 flex flex-col items-center">
+    <span className="text-[7px] font-bold text-zinc-500 uppercase leading-none mb-1">{label}</span>
     <span className={`text-sm font-mono font-black ${color}`}>{value}</span>
   </div>
 );
 
 const NumericCard = ({ label, value, unit, color, sub = null }: any) => (
-  <div className="bg-slate-900 rounded-lg border border-slate-800 p-1.5 flex flex-col justify-between shadow-md">
+  <div className="bg-white rounded-lg border border-zinc-200 p-1.5 flex flex-col justify-between shadow-md">
     <div className="flex justify-between leading-none">
-      <span className="text-[9px] font-black uppercase text-slate-500 tracking-tighter">{label}</span>
-      {sub && <span className="text-[8px] font-bold text-slate-600">{sub}</span>}
+      <span className="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">{label}</span>
+      {sub && <span className="text-[8px] font-bold text-zinc-400">{sub}</span>}
     </div>
     <div className="flex items-baseline gap-1">
       <span className={`text-2xl font-mono font-black tracking-tighter ${color}`}>
         {typeof value === 'number' ? value.toFixed(0) : value}
       </span>
-      <span className="text-[9px] text-slate-500 uppercase font-black">{unit}</span>
+      <span className="text-[9px] text-zinc-500 uppercase font-black">{unit}</span>
     </div>
   </div>
 );
@@ -117,26 +117,26 @@ const ControlBox = ({ label, value, unit, min, max, step, onChange, forceDecimal
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-1">{label}</span>
-      <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl p-1 shadow-inner hover:border-sky-500/50 transition-all">
+      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider text-center mb-1">{label}</span>
+      <div className="flex items-center bg-zinc-100 border border-zinc-300 rounded-xl p-1 shadow-inner hover:border-sky-300 transition-all">
         <div className="flex-1 text-center px-1">
-          <div className="text-xl font-mono font-extrabold leading-none tracking-tight text-white">
+          <div className="text-xl font-mono font-extrabold leading-none tracking-tight text-zinc-900">
             {forceDecimal ? Number(value).toFixed(1) : value}
           </div>
-          <div className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider leading-none mt-1">{unit}</div>
+          <div className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-wider leading-none mt-1">{unit}</div>
         </div>
         <div className="flex flex-col gap-0.5">
           <button
             aria-label="Increase"
             onMouseDown={() => startRepeat(step)} onMouseUp={stopRepeat} onMouseLeave={stopRepeat}
             onTouchStart={() => startRepeat(step)} onTouchEnd={stopRepeat}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-400 active:scale-95"
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white hover:bg-zinc-200 text-zinc-500 active:scale-95"
           ><Plus size={14} strokeWidth={2} /></button>
           <button
             aria-label="Decrease"
             onMouseDown={() => startRepeat(-step)} onMouseUp={stopRepeat} onMouseLeave={stopRepeat}
             onTouchStart={() => startRepeat(-step)} onTouchEnd={stopRepeat}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-400 active:scale-95"
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white hover:bg-zinc-200 text-zinc-500 active:scale-95"
           ><Minus size={14} strokeWidth={2} /></button>
         </div>
       </div>
@@ -158,16 +158,16 @@ const WaveformPanel = React.memo(({
   const cursorY = 120 - (((cursorValue - min) / (max - min)) * 120);
   const zeroY = 120 - (((0 - min) / (max - min)) * 120);
   return (
-    <div className="bg-slate-900/90 rounded-xl border border-slate-800 p-2 flex-1 relative min-h-0 overflow-hidden shadow-inner">
-      <div className="absolute left-0 top-3 bottom-3 w-10 flex flex-col justify-between items-end pr-1.5 border-r border-slate-800/50 z-20 pointer-events-none">
+    <div className="bg-white rounded-xl border border-zinc-200 p-2 flex-1 relative min-h-0 overflow-hidden shadow-inner">
+      <div className="absolute left-0 top-3 bottom-3 w-10 flex flex-col justify-between items-end pr-1.5 border-r border-zinc-200 z-20 pointer-events-none">
         {[max, (max + min) / 2, min].map((v, i) => (
-          <div key={i} className="text-[8px] font-mono text-slate-300 font-black">{Math.round(v)}</div>
+          <div key={i} className="text-[8px] font-mono text-zinc-700 font-black">{Math.round(v)}</div>
         ))}
       </div>
       <div className="flex justify-between items-start relative z-30 pl-10">
         <div className="flex flex-col leading-none">
-          <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter">{title}</span>
-          <span className="text-[9px] font-bold text-slate-400">{unit}</span>
+          <span className="text-[10px] font-black text-zinc-700 uppercase tracking-tighter">{title}</span>
+          <span className="text-[9px] font-bold text-zinc-500">{unit}</span>
         </div>
       </div>
       <svg className="absolute inset-0 w-full h-full pt-3 pl-10 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 450 120">
@@ -180,11 +180,11 @@ const WaveformPanel = React.memo(({
         )}
         {isFrozen && cursorIndex !== null && !isNaN(cursorIndex) && (
           <g>
-            <line x1={cursorIndex} y1="0" x2={cursorIndex} y2="120" stroke="white" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" vectorEffect="non-scaling-stroke" />
-            <circle cx={cursorIndex} cy={cursorY} r="3" fill="white" vectorEffect="non-scaling-stroke" />
+            <line x1={cursorIndex} y1="0" x2={cursorIndex} y2="120" stroke="#0f172a" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" vectorEffect="non-scaling-stroke" />
+            <circle cx={cursorIndex} cy={cursorY} r="3" fill="#0f172a" vectorEffect="non-scaling-stroke" />
             <g transform={`translate(${cursorIndex + (cursorIndex > 400 ? -50 : 10)}, ${cursorY > 100 ? 100 : cursorY < 20 ? 20 : cursorY})`}>
-              <rect width="40" height="15" rx="3" fill="rgba(15,23,42,0.9)" stroke="#475569" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
-              <text x="20" y="11" textAnchor="middle" fill="white" className="text-[10px] font-mono">{Math.round(Number(cursorValue))}</text>
+              <rect width="40" height="15" rx="3" fill="rgba(255,255,255,0.95)" stroke="#475569" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+              <text x="20" y="11" textAnchor="middle" fill="#0f172a" className="text-[10px] font-mono">{Math.round(Number(cursorValue))}</text>
             </g>
           </g>
         )}
@@ -853,7 +853,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   // ── Render ──
   return (
     <div
-      className="flex flex-col h-screen bg-zinc-950 text-zinc-100 font-sans p-4 overflow-hidden select-none"
+      className="flex flex-col h-screen bg-zinc-50 text-zinc-900 font-sans p-4 overflow-hidden select-none"
       onMouseMove={e => {
         if (isDragging && isFrozen && waveformContainerRef.current) {
           const rect = waveformContainerRef.current.getBoundingClientRect();
@@ -869,46 +869,46 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
 
       {/* Header (hidden when embedded in shell) */}
       {!hideHeader && (
-      <div className="flex justify-between items-center bg-zinc-900 p-2 rounded-t-lg border-b border-zinc-800 shadow-xl">
+      <div className="flex justify-between items-center bg-white p-2 rounded-t-lg border-b border-zinc-200 shadow-xl">
         <h1 className="text-lg font-bold tracking-tight text-white uppercase ml-1">
           Ventilator Playground
-          <span className="text-sky-400 ml-3 border-l border-zinc-700 pl-3 font-mono text-[10px] tracking-widest">FREE PLAY</span>
+          <span className="text-sky-600 ml-3 border-l border-zinc-300 pl-3 font-mono text-[10px] tracking-widest">FREE PLAY</span>
         </h1>
         <div className="flex items-center gap-3">
           {/* Patient Settings */}
           <div className="relative">
             <button
               onClick={() => setShowPatientSettings(v => !v)}
-              className="flex items-center gap-2 px-2.5 py-1 bg-zinc-800 border border-zinc-700 rounded text-[10px] font-bold text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all"
+              className="flex items-center gap-2 px-2.5 py-1 bg-zinc-100 border border-zinc-300 rounded text-[10px] font-bold text-zinc-700 hover:text-zinc-900 hover:bg-zinc-200 transition-all"
             >
               <User size={14} /> PATIENT SETTINGS
             </button>
             {showPatientSettings && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl z-50 p-4 flex flex-col gap-4">
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2"><User size={16} className="text-rose-500" /> Patient Settings</h3>
-                  <button onClick={() => setShowPatientSettings(false)} className="text-zinc-500 hover:text-white"><X size={16} /></button>
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-zinc-300 rounded-xl shadow-2xl z-50 p-4 flex flex-col gap-4">
+                <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2"><User size={16} className="text-rose-600" /> Patient Settings</h3>
+                  <button onClick={() => setShowPatientSettings(false)} className="text-zinc-500 hover:text-zinc-900"><X size={16} /></button>
                 </div>
 
                 {/* Height + Gender + PBW */}
-                <div className="flex items-center gap-4 bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+                <div className="flex items-center gap-4 bg-zinc-50 p-3 rounded-lg border border-zinc-200">
                   <div className="flex-1 flex flex-col gap-1">
                     <span className="text-[10px] text-zinc-500 uppercase font-black tracking-wider">Height</span>
-                    <div className="flex items-center bg-zinc-900 border border-zinc-700 rounded overflow-hidden h-8">
-                      <input type="number" value={String(displayHeight)} onChange={e => handleHeightInput(e.target.value)} className="w-full bg-transparent p-1 text-sm font-mono font-bold text-rose-400 focus:outline-none text-right" />
-                      <button onClick={() => setHeightUnit(u => u === 'in' ? 'cm' : 'in')} className="bg-zinc-800 px-2 h-full text-[10px] font-black text-zinc-300 uppercase border-l border-zinc-700">{heightUnit}</button>
+                    <div className="flex items-center bg-white border border-zinc-300 rounded overflow-hidden h-8">
+                      <input type="number" value={String(displayHeight)} onChange={e => handleHeightInput(e.target.value)} className="w-full bg-transparent p-1 text-sm font-mono font-bold text-rose-600 focus:outline-none text-right" />
+                      <button onClick={() => setHeightUnit(u => u === 'in' ? 'cm' : 'in')} className="bg-zinc-100 px-2 h-full text-[10px] font-black text-zinc-700 uppercase border-l border-zinc-300">{heightUnit}</button>
                     </div>
                   </div>
                   <div className="flex-1 flex flex-col gap-1">
                     <span className="text-[10px] text-zinc-500 uppercase font-black tracking-wider">Gender</span>
                     <div className="flex gap-1 h-8">
-                      <button onClick={() => handlePatientChange('gender', 'M')} className={`flex-1 flex items-center justify-center font-black rounded border transition-all text-[10px] ${patient.gender === 'M' ? 'bg-[#4CBB17] border-[#4CBB17] text-white' : 'bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg-zinc-700'}`}>M</button>
-                      <button onClick={() => handlePatientChange('gender', 'F')} className={`flex-1 flex items-center justify-center font-black rounded border transition-all text-[10px] ${patient.gender === 'F' ? 'bg-pink-600 border-pink-400 text-white' : 'bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg-zinc-700'}`}>F</button>
+                      <button onClick={() => handlePatientChange('gender', 'M')} className={`flex-1 flex items-center justify-center font-black rounded border transition-all text-[10px] ${patient.gender === 'M' ? 'bg-[#4CBB17] border-[#4CBB17] text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-500 hover:bg-zinc-200'}`}>M</button>
+                      <button onClick={() => handlePatientChange('gender', 'F')} className={`flex-1 flex items-center justify-center font-black rounded border transition-all text-[10px] ${patient.gender === 'F' ? 'bg-pink-600 border-pink-400 text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-500 hover:bg-zinc-200'}`}>F</button>
                     </div>
                   </div>
-                  <div className="flex flex-col items-center justify-center pl-4 border-l border-zinc-800">
+                  <div className="flex flex-col items-center justify-center pl-4 border-l border-zinc-200">
                     <span className="text-[10px] text-zinc-500 uppercase font-black tracking-wider">PBW</span>
-                    <div className="text-emerald-400 text-xl font-mono font-black">{demographics.pbw.toFixed(1)}<span className="text-[10px] ml-1 text-zinc-500 uppercase">kg</span></div>
+                    <div className="text-emerald-600 text-xl font-mono font-black">{demographics.pbw.toFixed(1)}<span className="text-[10px] ml-1 text-zinc-500 uppercase">kg</span></div>
                   </div>
                 </div>
 
@@ -917,7 +917,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                   <span className="text-[10px] text-zinc-500 uppercase font-black tracking-wider">Compliance (mL/cmH₂O)</span>
                   <div className="grid grid-cols-3 gap-2">
                     {[{ label: 'Normal (80)', val: 80, cls: 'emerald' }, { label: 'Reduced (50)', val: 50, cls: 'yellow' }, { label: 'Severe (10)', val: 10, cls: 'rose' }].map(({ label, val, cls }) => (
-                      <button key={val} onClick={() => handlePatientChange('compliance', val)} className={`py-2 px-1 rounded border text-[10px] font-bold transition-all ${patient.compliance === val ? `bg-${cls}-900/50 border-${cls}-500 text-${cls}-400` : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:bg-zinc-800'}`}>{label}</button>
+                      <button key={val} onClick={() => handlePatientChange('compliance', val)} className={`py-2 px-1 rounded border text-[10px] font-bold transition-all ${patient.compliance === val ? `bg-${cls}-900/50 border-${cls}-500 text-${cls}-400` : 'bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100'}`}>{label}</button>
                     ))}
                   </div>
                 </div>
@@ -927,16 +927,16 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                   <span className="text-[10px] text-zinc-500 uppercase font-black tracking-wider">Resistance (cmH₂O/L/s)</span>
                   <div className="grid grid-cols-3 gap-2">
                     {[{ label: 'Normal (10)', val: 10, cls: 'emerald' }, { label: 'Elevated (25)', val: 25, cls: 'yellow' }, { label: 'Severe (50)', val: 50, cls: 'rose' }].map(({ label, val, cls }) => (
-                      <button key={val} onClick={() => handlePatientChange('resistance', val)} className={`py-2 px-1 rounded border text-[10px] font-bold transition-all ${patient.resistance === val ? `bg-${cls}-900/50 border-${cls}-500 text-${cls}-400` : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:bg-zinc-800'}`}>{label}</button>
+                      <button key={val} onClick={() => handlePatientChange('resistance', val)} className={`py-2 px-1 rounded border text-[10px] font-bold transition-all ${patient.resistance === val ? `bg-${cls}-900/50 border-${cls}-500 text-${cls}-400` : 'bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100'}`}>{label}</button>
                     ))}
                   </div>
                 </div>
 
                 {/* Spontaneous rate */}
-                <div className="flex flex-col gap-2 bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+                <div className="flex flex-col gap-2 bg-zinc-50 p-3 rounded-lg border border-zinc-200">
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] text-zinc-500 uppercase font-black tracking-wider">Spontaneous Rate</span>
-                    <span className="text-yellow-400 font-mono font-bold">{patient.spontaneousRate} bpm</span>
+                    <span className="text-amber-600 font-mono font-bold">{patient.spontaneousRate} bpm</span>
                   </div>
                   <input type="range" min={0} max={30} value={patient.spontaneousRate} onChange={e => handlePatientChange('spontaneousRate', parseInt(e.target.value))} className="w-full accent-yellow-500" />
                 </div>
@@ -946,7 +946,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
 
           <button
             onClick={() => setIsFrozen(v => !v)}
-            className={`flex items-center gap-2 px-2.5 py-1 border rounded text-[10px] font-bold transition-all ${isFrozen ? 'bg-sky-600 border-sky-400 text-white' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-700'}`}
+            className={`flex items-center gap-2 px-2.5 py-1 border rounded text-[10px] font-bold transition-all ${isFrozen ? 'bg-sky-600 border-sky-400 text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-700 hover:text-zinc-900 hover:bg-zinc-200'}`}
           >
             {isFrozen ? <Play size={14} /> : <Pause size={14} />} {isFrozen ? 'RESUME' : 'FREEZE'}
           </button>
@@ -954,33 +954,55 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       </div>
       )}
 
-      {/* Main grid — left 7 cols: waveforms + controls | right 5 cols: data strip + workbook */}
+      {/* Main grid — left 6 cols: measured values + smaller waveforms + controls | right 6 cols: workbook */}
       <div
         ref={waveformContainerRef}
         className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 mt-2 overflow-hidden min-h-0"
         onMouseDown={e => { if (isFrozen) { setIsDragging(true); handleWaveformInteraction(e); } }}
       >
-        {/* ── Left column: waveforms + vent controls ── */}
-        <div className="lg:col-span-7 flex flex-col gap-2 min-h-0 cursor-crosshair">
-          {/* Waveforms — slightly compact gap */}
-          <div className="flex-1 flex flex-col gap-2 overflow-hidden relative">
+        {/* ── Left column: measured values strip → waveforms → vent controls ── */}
+        <div className="lg:col-span-6 flex flex-col gap-2 min-h-0 cursor-crosshair">
+
+          {/* Measured values strip — moved to TOP */}
+          <div className="bg-white rounded-xl border border-emerald-200 p-2 shadow-sm shrink-0">
+            <div className="flex items-center gap-1 mb-1.5 text-emerald-600 px-1">
+              <Activity size={11} />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Measured Values</span>
+            </div>
+            <div className="grid grid-cols-6 gap-1">
+              <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" />
+              <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" />
+              <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" />
+              <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} />
+              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color={metrics.drivingPressure > 15 ? 'text-rose-600' : 'text-violet-600'} />
+              <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" />
+              <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} />
+              <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-600" />
+              <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" />
+              <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" />
+              <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-600' : rsbiValue > 80 ? 'text-amber-600' : 'text-emerald-600'} />
+            </div>
+          </div>
+
+          {/* Waveforms — slightly compact gap, smaller relative height */}
+          <div className="flex-1 flex flex-col gap-1.5 overflow-hidden relative min-h-0">
             <WaveformPanel title="Airway Pressure" dataKey="pressure" unit="cmH2O" segmentedPaths={pressurePaths} bounds={pressureBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} isHoldActive={!!activeHoldType} showZeroLine isFrozen={isFrozen} />
             <WaveformPanel title="Flow Rate" dataKey="flow" unit="L/min" segmentedPaths={flowPaths} bounds={flowBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} showZeroLine isFrozen={isFrozen} />
             <WaveformPanel title="Volume" dataKey="volume" unit="mL" segmentedPaths={volumePaths} bounds={volumeBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} showZeroLine isFrozen={isFrozen} />
             {/* Inline recognition prompt overlay */}
             {inlinePromptOverlay && (
-              <div className="absolute inset-0 z-40 flex items-center justify-center bg-zinc-950/70 backdrop-blur-sm p-4">
+              <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/80 backdrop-blur-sm p-4">
                 {inlinePromptOverlay}
               </div>
             )}
           </div>
 
           {/* Ventilator controls — tightened padding */}
-          <div className="bg-zinc-900 shrink-0 rounded-xl border border-zinc-800 p-2 shadow-2xl">
+          <div className="bg-white shrink-0 rounded-xl border border-zinc-200 p-2 shadow-2xl">
             {/* Mode + hold buttons */}
-            <div className="flex items-center gap-2 mb-2 bg-zinc-950 p-1 rounded-lg border border-zinc-800">
+            <div className="flex items-center gap-2 mb-2 bg-zinc-50 p-1 rounded-lg border border-zinc-200">
               <div className="flex items-center gap-1">
-                {isLocked('mode') && <Lock size={10} className="text-zinc-600 ml-1" />}
+                {isLocked('mode') && <Lock size={10} className="text-zinc-400 ml-1" />}
                 {['VCV', 'PCV', 'PRVC', 'SIMV/PS', 'PSV'].map(m => (
                   <button
                     key={m}
@@ -988,15 +1010,15 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                     disabled={isLocked('mode')}
                     title={isLocked('mode') ? 'This control is locked for this module.' : ''}
                     className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
-                      isLocked('mode') ? 'text-zinc-600 cursor-not-allowed' :
-                      mode === m ? 'bg-sky-600 text-white shadow-md' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
-                    } ${mode === m && isLocked('mode') ? 'bg-zinc-800' : ''}`}
+                      isLocked('mode') ? 'text-zinc-400 cursor-not-allowed' :
+                      mode === m ? 'bg-sky-600 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+                    } ${mode === m && isLocked('mode') ? 'bg-zinc-100' : ''}`}
                   >{m}</button>
                 ))}
               </div>
               <div className="flex items-center gap-1 ml-auto">
-                <button onClick={() => { pendingInspRef.current = true; }} disabled={isLocked('inspiratory_pause')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all border ${isLocked('inspiratory_pause') ? 'bg-zinc-800 border-zinc-700 text-zinc-600 cursor-not-allowed' : activeHoldType === 'INSP' ? 'bg-sky-600 border-sky-500 text-white shadow-md animate-pulse' : 'bg-sky-200 border-sky-300 text-sky-900 hover:bg-sky-300'}`}>INSP HOLD</button>
-                <button onClick={() => { pendingExpRef.current = true; }} disabled={isLocked('expiratory_pause')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all border ${isLocked('expiratory_pause') ? 'bg-zinc-800 border-zinc-700 text-zinc-600 cursor-not-allowed' : activeHoldType === 'EXP' ? 'bg-amber-600 border-amber-500 text-white shadow-md animate-pulse' : 'bg-amber-200 border-amber-300 text-amber-900 hover:bg-amber-300'}`}>EXP HOLD</button>
+                <button onClick={() => { pendingInspRef.current = true; }} disabled={isLocked('inspiratory_pause')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all border ${isLocked('inspiratory_pause') ? 'bg-zinc-100 border-zinc-300 text-zinc-400 cursor-not-allowed' : activeHoldType === 'INSP' ? 'bg-sky-600 border-sky-500 text-white shadow-md animate-pulse' : 'bg-sky-200 border-sky-300 text-sky-900 hover:bg-sky-300'}`}>INSP HOLD</button>
+                <button onClick={() => { pendingExpRef.current = true; }} disabled={isLocked('expiratory_pause')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all border ${isLocked('expiratory_pause') ? 'bg-zinc-100 border-zinc-300 text-zinc-400 cursor-not-allowed' : activeHoldType === 'EXP' ? 'bg-amber-600 border-amber-500 text-white shadow-md animate-pulse' : 'bg-amber-200 border-amber-300 text-amber-900 hover:bg-amber-300'}`}>EXP HOLD</button>
               </div>
             </div>
 
@@ -1017,39 +1039,18 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           </div>
         </div>
 
-        {/* ── Right column: measured values + hints + workbook ── */}
-        <div className="lg:col-span-5 flex flex-col gap-2 min-h-0">
-
-          {/* Measured values strip */}
-          <div className="bg-zinc-900 rounded-xl border border-emerald-500/20 p-1.5 shadow-xl shrink-0">
-            <div className="flex items-center gap-1 mb-1 text-emerald-400 px-1">
-              <Activity size={11} />
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Measured Values</span>
-            </div>
-            <div className="grid grid-cols-6 gap-1">
-              <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-white" />
-              <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-200" />
-              <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-400" />
-              <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-500 animate-pulse' : 'text-emerald-300'} />
-              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color={metrics.drivingPressure > 15 ? 'text-rose-500' : 'text-violet-400'} />
-              <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-400" />
-              <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-yellow-400' : 'text-sky-400'} />
-              <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-500" />
-              <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-400" />
-              <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-400" />
-              <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-500' : rsbiValue > 80 ? 'text-yellow-400' : 'text-emerald-400'} />
-            </div>
-          </div>
+        {/* ── Right column: workbook (primary content) + small hints strip ── */}
+        <div className="lg:col-span-6 flex flex-col gap-2 min-h-0">
 
           {/* Hints — compact, only shows when alerts are active */}
           {alerts.length > 0 && (
-            <div className="bg-zinc-900 rounded-xl border border-zinc-700 p-2 shrink-0 max-h-28 overflow-y-auto">
+            <div className="bg-white rounded-xl border border-amber-200 p-2.5 shrink-0 max-h-32 overflow-y-auto shadow-sm">
               <div className="flex items-center gap-1.5 mb-1.5">
-                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Hints</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">Hints</span>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {alerts.map(alert => (
-                  <div key={alert.id} className={`px-2 py-1.5 rounded-lg text-[10px] font-semibold leading-snug ${alert.type === 'positive' ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-800' : 'bg-amber-900/40 text-amber-200 border border-amber-800'}`}>
+                  <div key={alert.id} className={`px-2.5 py-2 rounded-lg text-[12px] font-semibold leading-snug ${alert.type === 'positive' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
                     {alert.message}
                   </div>
                 ))}
@@ -1058,10 +1059,10 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           )}
 
           {/* Workbook — primary content area, fills remaining space */}
-          <div className="bg-zinc-900 rounded-xl border border-zinc-800 flex-1 flex flex-col overflow-hidden min-h-0">
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-800 shrink-0">
-              <BookOpen size={13} className="text-sky-400" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Workbook</span>
+          <div className="bg-white rounded-xl border border-zinc-200 flex-1 flex flex-col overflow-hidden min-h-0 shadow-sm">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 shrink-0">
+              <BookOpen size={14} className="text-sky-600" />
+              <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">Workbook</span>
             </div>
             <div className="flex-1 overflow-hidden min-h-0">
               {workbookContent ?? (
