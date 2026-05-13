@@ -5,7 +5,6 @@ import PrimerQuiz from './PrimerQuiz';
 import CheckYourselfPage from './CheckYourselfPage';
 import IntroBriefing from './IntroBriefing';
 import ReadPane from './ReadPane';
-import PhaseHeroBanner from './PhaseHeroBanner';
 import TrackProgressStrip from './TrackProgressStrip';
 import { trackTone } from './trackColors';
 import { successPhrase, wrongPhrase, continueCTA } from './microcopy';
@@ -288,17 +287,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     return () => clearTimeout(id);
   }, [stepToast]);
 
-  // ── Phase transition hero banner (D2) ──
-  // 1.5 s "Phase N — Name" overlay. Triggered only on forward advances
-  // (call `flashHero(target)` inside each advanceFrom* helper), not on
-  // back-nav review jumps or on initial mount.
-  const [heroPhase, setHeroPhase] = useState<Phase | null>(null);
-  useEffect(() => {
-    if (!heroPhase) return;
-    const id = setTimeout(() => setHeroPhase(null), 1500);
-    return () => clearTimeout(id);
-  }, [heroPhase]);
-  const flashHero = (target: Phase) => setHeroPhase(target);
+  // (Phase hero banner removed — was too intrusive. The slide-in
+  // animation on workbookContent already conveys motion. The
+  // PhaseBadge in the top strip still tracks position in the
+  // 5-phase sequence.)
+  const flashHero = (_target: Phase) => { /* no-op, kept so call sites compile */ };
 
   // ── Engagement counters (per §1.9) ──
   const exploreStartedAtRef = useRef<number | null>(null);
@@ -1357,9 +1350,6 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
 
       {/* Two-column body */}
       <div className="flex-1 p-2 overflow-hidden min-h-0 relative">
-        {/* D2: short-lived hero banner announcing the new phase. */}
-        {heroPhase && <PhaseHeroBanner phase={heroPhase} />}
-
         <PlaygroundSim
           harness={harness}
           initialPreset={module.scenario.preset}
