@@ -281,12 +281,24 @@ export class CompoundTracker implements Tracker {
   start(ctx: TrackerContext, onSatisfied: () => void) {
     this.ctx = ctx;
     this.onSatisfied = onSatisfied;
-    if (this.cfg.sequence === 'strict') {
-      // Only start the first child
+    // Compound recognitions are ALWAYS serialized — only one prompt can be
+    // active at a time (the harness has a single activePrompt slot, and the
+    // sim's click-target set is the active prompt's targets only). For
+    // all-recognition compounds, "any_order" therefore means the same UX as
+    // "strict": present prompts top-down in declaration order, advance to
+    // the next on each correct answer. For mixed compounds (manipulation +
+    // outcome + recognition), any_order keeps the parallel-start behaviour
+    // because the non-recognition children fire from patient state, not
+    // from a presented prompt.
+    if (this.cfg.sequence === 'strict' || this.allRecognition()) {
       this.children[0].start(ctx, () => this.onChildSatisfied(0));
     } else {
       this.children.forEach((c, i) => c.start(ctx, () => this.onChildSatisfied(i)));
     }
+  }
+
+  private allRecognition(): boolean {
+    return this.children.every(c => c instanceof RecognitionTracker);
   }
   stop() {
     this.children.forEach(c => c.stop());
@@ -297,7 +309,7 @@ export class CompoundTracker implements Tracker {
 
   handle(ev: HarnessEvent) {
     if (this.satisfied) return;
-    if (this.cfg.sequence === 'strict') {
+    if (this.cfg.sequence === 'strict' || this.allRecognition()) {
       this.children[this.currentIdx]?.handle(ev);
     } else {
       this.children.forEach((c, i) => {
@@ -331,10 +343,16 @@ export class CompoundTracker implements Tracker {
       return;
     }
 
-    if (this.cfg.sequence === 'strict') {
-      this.currentIdx = idx + 1;
-      if (this.currentIdx < this.children.length && this.ctx) {
-        this.children[this.currentIdx].start(this.ctx, () => this.onChildSatisfied(this.currentIdx));
+    // Advance to the next un-satisfied child for any compound that
+    // serializes prompts (strict OR all-recognition any_order). We
+    // search forward for the next pending slot so completed children
+    // don't get re-presented if any_order completion lands out of
+    // declaration order in the future.
+    if (this.cfg.sequence === 'strict' || this.allRecognition()) {
+      const nextIdx = this.childSatisfied.findIndex(s => !s);
+      if (nextIdx >= 0 && this.ctx) {
+        this.currentIdx = nextIdx;
+        this.children[nextIdx].start(this.ctx, () => this.onChildSatisfied(nextIdx));
       }
     }
   }

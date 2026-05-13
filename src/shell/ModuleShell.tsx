@@ -781,6 +781,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
               progress={childStates.length > 0 ? childStates : undefined}
               onRedo={onRedoTask}
               outcomeProgress={outcomeProgress}
+              activeDirection={activePrompt?.question}
             />
           </div>
         </div>

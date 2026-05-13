@@ -25,6 +25,13 @@ interface Props {
    * their adjustments ARE working, even before satisfaction fires.
    */
   outcomeProgress?: { current: number; target: number; label?: string } | null;
+  /**
+   * The currently-active recognition prompt question, surfaced as a
+   * "Direction" line directly above the success criteria. Mirrors the
+   * blue banner that appears over the sim so the learner sees the same
+   * instruction in both places. Omitted when no prompt is active.
+   */
+  activeDirection?: string;
 }
 
 /**
@@ -43,6 +50,7 @@ const TaskCard: React.FC<Props> = ({
   progress,
   onRedo,
   outcomeProgress,
+  activeDirection,
 }) => {
   if (objectiveSatisfied) {
     return (
@@ -96,6 +104,17 @@ const TaskCard: React.FC<Props> = ({
       <p className="text-[15px] text-zinc-900 leading-relaxed mb-4 font-medium">
         {userFacingTask}
       </p>
+
+      {activeDirection && (
+        <section className="mb-4 rounded-lg border border-sky-300 bg-sky-50 px-3 py-2.5">
+          <span className="text-[11px] font-black uppercase tracking-widest text-sky-700 block mb-1">
+            Direction
+          </span>
+          <p className="text-[14px] font-semibold text-sky-900 leading-snug">
+            {activeDirection}
+          </p>
+        </section>
+      )}
 
       {successCriteria.length > 0 && (
         <section className="mb-4">
