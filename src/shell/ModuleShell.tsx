@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BookOpen, Target, Clock, ChevronRight, Trophy, Home, RotateCcw, Check, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, ChevronRight, Trophy, Home, RotateCcw, Check, X } from 'lucide-react';
 import type { ModuleConfig, InlinePromptConfig, ExploreCardConfig } from './types';
 import PrimerQuiz from './PrimerQuiz';
 import CheckYourselfPage from './CheckYourselfPage';
@@ -1184,25 +1184,10 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
       }))
     : undefined;
 
-  // Compact question banner above the Measured Values strip — never blocks
-  // the readings themselves. The banner header adapts to whether the correct
-  // answer is a measured-value reading or a settable control so the wording
-  // matches what the learner is being asked to click.
-  const correctTargetKind = activePrompt?.click_targets?.find(t => t.is_correct)?.element.kind;
-  const bannerLabel = correctTargetKind === 'control' ? 'Click the control' : 'Click the reading';
-  const recognitionBanner = isClickTargetMode ? (
-    <div className="bg-sky-50 border border-sky-300 rounded-xl px-4 py-3 shadow-sm">
-      <div className="flex items-center gap-2 mb-1">
-        <Target size={14} className="text-sky-600" />
-        <span className="text-[10px] font-black uppercase tracking-widest text-sky-700">
-          {bannerLabel}
-        </span>
-      </div>
-      <p className="text-[14px] font-semibold text-zinc-900 leading-snug">
-        {activePrompt!.question}
-      </p>
-    </div>
-  ) : null;
+  // The sim-side "CLICK THE READING / CONTROL" banner used to live above the
+  // Measured Values strip. It was duplicated by the workbook-side "DIRECTION"
+  // panel on the TaskCard, so we keep only the workbook one.
+  const recognitionBanner = null;
 
   // Click-feedback modal — sits ABOVE the waveform area only (the readings
   // and the workbook stay visible underneath / above). Shows whatever the
