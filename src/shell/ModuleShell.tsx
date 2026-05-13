@@ -161,6 +161,13 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
 
   // ── Inline recognition prompts ──
   const [activePrompt, setActivePrompt] = useState<InlinePromptConfig | null>(null);
+  // Click-target feedback state — populated when a learner clicks a tile on
+  // the sim in click-target recognition mode, OR when the "Show me" hint
+  // auto-answers a recognition prompt. Declared here so `onShowMe` and
+  // `respondToPrompt` (below) can both write into it.
+  const [clickFeedback, setClickFeedback] = useState<{
+    label: string; isCorrect: boolean; explanation?: string;
+  } | null>(null);
 
   // ── Hint ladder idle tracking (Phase 4 only) ──
   const [lastInteractMs, setLastInteractMs] = useState(Date.now());
@@ -304,6 +311,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
   };
 
   const onShowMe = () => {
+    // 1) Manipulation-tier demo (a specific control flick + reset).
     const demo = module.hint_ladder.tier3?.demonstration;
     if (demo) {
       harness.emit({ type: 'demonstration_played', control: demo.control, timestamp: Date.now() });
@@ -319,6 +327,45 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       harness.resetToPreset();
       return;
     }
+
+    // 2) Recognition prompt currently active — auto-answer with the correct
+    //    label so the learner who is stuck can still advance. For click-target
+    //    prompts (e.g. M1), the green flash lands on the correct tile too.
+    if (activePrompt) {
+      const correctClick = activePrompt.click_targets?.find(t => t.is_correct);
+      if (correctClick) {
+        setClickFeedback({
+          label: correctClick.label,
+          isCorrect: true,
+          explanation: correctClick.explanation,
+        });
+        harness.emit({
+          type: 'recognition_response',
+          prompt_id: activePrompt.prompt_id,
+          selected_label: correctClick.label,
+          is_correct: true,
+          timestamp: Date.now(),
+        });
+        // Mirror respondToPrompt's auto-clear so the next prompt loads
+        // cleanly when the compound tracker advances.
+        setTimeout(() => setActivePrompt(null), 800);
+        return;
+      }
+      const correctOpt = activePrompt.options.find(o => o.is_correct);
+      if (correctOpt) {
+        harness.emit({
+          type: 'recognition_response',
+          prompt_id: activePrompt.prompt_id,
+          selected_label: correctOpt.label,
+          is_correct: true,
+          timestamp: Date.now(),
+        });
+        setTimeout(() => setActivePrompt(null), 800);
+        return;
+      }
+    }
+
+    // 3) Fallback: just emit a demonstration on the first unlocked control.
     const target = module.scenario.unlocked_controls[0];
     if (target) harness.emit({ type: 'demonstration_played', control: target, timestamp: Date.now() });
   };
@@ -658,9 +705,6 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
 
   // ── Click-target mode (recognition by clicking a reading/control) ──
   const isClickTargetMode = !!activePrompt?.click_targets && activePrompt.click_targets.length > 0;
-  const [clickFeedback, setClickFeedback] = useState<{
-    label: string; isCorrect: boolean; explanation?: string;
-  } | null>(null);
   // Reset feedback whenever a new prompt loads.
   useEffect(() => {
     setClickFeedback(null);
