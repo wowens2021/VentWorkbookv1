@@ -73,7 +73,7 @@ const App: React.FC = () => {
         )}
         {view.kind === 'playground' && (
           <div className="h-[calc(100vh-64px)]">
-            <PlaygroundSim />
+            <PlaygroundSim playgroundMode />
           </div>
         )}
       </main>

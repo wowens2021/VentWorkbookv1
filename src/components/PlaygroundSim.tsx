@@ -31,6 +31,12 @@ interface PlaygroundSimProps {
   hideHeader?: boolean;
   /** Per-phase interactivity. Default 'live'. */
   simInteractivity?: SimInteractivity;
+  /**
+   * Free-play mode: hides the workbook panel and shows a learning-optimised
+   * right column instead (live ABG, quick reference, exploration tips).
+   * The default false is what every embedded-in-shell instance uses.
+   */
+  playgroundMode?: boolean;
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
@@ -214,6 +220,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   inlinePromptOverlay,
   hideHeader,
   simInteractivity = 'live',
+  playgroundMode = false,
 }) => {
   /**
    * Per-phase global override: in 'live-disabled' and 'live-frozen' EVERY
@@ -1016,15 +1023,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         onMouseDown={e => { if (isFrozen) { setIsDragging(true); handleWaveformInteraction(e); } }}
       >
         {/* ── Left column: measured values strip → waveforms → vent controls ── */}
-        <div className="lg:col-span-6 flex flex-col gap-2 min-h-0 cursor-crosshair">
+        <div className={`${playgroundMode ? 'lg:col-span-12' : 'lg:col-span-6'} flex flex-col gap-2 min-h-0 cursor-crosshair`}>
 
-          {/* Measured values strip — moved to TOP */}
+          {/* Measured values strip — moved to TOP.
+              Playground mode lays the 11 cards out in a single horizontal row
+              (full available width); module mode keeps the 6-column wrap. */}
           <div className="bg-white rounded-xl border border-emerald-200 p-2 shadow-sm shrink-0">
             <div className="flex items-center gap-1 mb-1.5 text-emerald-600 px-1">
               <Activity size={11} />
               <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Measured Values</span>
             </div>
-            <div className="grid grid-cols-6 gap-1">
+            <div className={`grid gap-1 ${playgroundMode ? 'grid-cols-11' : 'grid-cols-6'}`}>
               <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" />
               <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" />
               <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" />
@@ -1089,7 +1098,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
             </div>
 
             {/* Knobs */}
-            <div className="flex flex-row flex-wrap justify-center gap-1.5 px-1 items-center">
+            <div className={`flex flex-row flex-wrap justify-center px-1 items-center ${playgroundMode ? 'gap-3' : 'gap-1.5'}`}>
               {mode !== 'PSV' && <ControlBox className="w-[90px]" label="Rate" value={settings.respiratoryRate} unit="bpm" min={4} max={40} step={1} onChange={(v: number) => handleSettingChange('respiratoryRate', v)} />}
               {mode === 'PCV'
                 ? <ControlBox className="w-[90px]" label="Pinsp" value={settings.pInsp} unit="cmH2O" min={1} max={60} step={1} onChange={(v: number) => handleSettingChange('pInsp', v)} />
@@ -1097,15 +1106,16 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                   ? <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} />
                   : <ControlBox className="w-[90px]" label="Vt" value={settings.tidalVolume} unit="mL" min={200} max={1000} step={10} onChange={(v: number) => handleSettingChange('tidalVolume', v)} />}
               {mode !== 'PSV' && <ControlBox className="w-[90px]" label="I-time" value={settings.iTime} unit="sec" min={0.3} max={3.0} step={0.1} onChange={(v: number) => handleSettingChange('iTime', v)} forceDecimal />}
-              <ControlBox className="w-[90px]" label="PEEP" value={settings.peep} unit="cmH2O" min={0} max={24} step={1} onChange={(v: number) => handleSettingChange('peep', v)} />
-              <ControlBox className="w-[90px]" label="FiO2" value={settings.fiO2} unit="%" min={21} max={100} step={5} onChange={(v: number) => handleSettingChange('fiO2', v)} />
+              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="PEEP" value={settings.peep} unit="cmH2O" min={0} max={24} step={1} onChange={(v: number) => handleSettingChange('peep', v)} />
+              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="FiO2" value={settings.fiO2} unit="%" min={21} max={100} step={5} onChange={(v: number) => handleSettingChange('fiO2', v)} />
               {mode === 'SIMV/PS' && <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} />}
               {(mode === 'PSV' || mode === 'SIMV/PS') && <ControlBox className="w-[90px]" label="End-Insp %" value={settings.endInspiratoryPercent} unit="%" min={0} max={50} step={1} onChange={(v: number) => handleSettingChange('endInspiratoryPercent', v)} />}
             </div>
           </div>
         </div>
 
-        {/* ── Right column: workbook (primary content) + small hints strip ── */}
+        {/* ── Right column: workbook + hints. Hidden entirely in playground mode. ── */}
+        {!playgroundMode && (
         <div className="lg:col-span-6 flex flex-col gap-2 min-h-0">
 
           {/* Hints — compact, only shows when alerts are active */}
@@ -1124,22 +1134,25 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
             </div>
           )}
 
-          {/* Workbook — primary content area, fills remaining space */}
-          <div className="bg-white rounded-xl border border-zinc-200 flex-1 flex flex-col overflow-hidden min-h-0 shadow-sm">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 shrink-0">
-              <BookOpen size={14} className="text-sky-600" />
-              <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">Workbook</span>
+          {/* Workbook — only renders for modules. Playground hides it entirely. */}
+          {!playgroundMode && (
+            <div className="bg-white rounded-xl border border-zinc-200 flex-1 flex flex-col overflow-hidden min-h-0 shadow-sm">
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 shrink-0">
+                <BookOpen size={14} className="text-sky-600" />
+                <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">Workbook</span>
+              </div>
+              <div className="flex-1 overflow-hidden min-h-0">
+                {workbookContent ?? (
+                  <div className="h-full flex items-center justify-center text-zinc-700 text-[11px] font-semibold tracking-wide p-4">
+                    MODULE CONTENT GOES HERE
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex-1 overflow-hidden min-h-0">
-              {workbookContent ?? (
-                <div className="h-full flex items-center justify-center text-zinc-700 text-[11px] font-semibold tracking-wide p-4">
-                  MODULE CONTENT GOES HERE
-                </div>
-              )}
-            </div>
-          </div>
+          )}
 
         </div>
+        )}
       </div>
     </div>
   );
