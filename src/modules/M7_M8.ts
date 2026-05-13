@@ -1,409 +1,448 @@
 import type { ModuleConfig } from '../shell/types';
 
+/**
+ * M7 — Volume Control Ventilation
+ * Track: Modes · Archetype: outcome (Style B, target-state) · 18 min
+ * Anchor chapters: VB Ch. 9, Ch. 8
+ *
+ * Specced verbatim against docs/MODULE_SPECS_v3.md §M7.
+ */
 export const M7: ModuleConfig = {
   id: 'M7',
   number: 7,
-  title: 'Volume Control',
+  title: 'Volume Control Ventilation',
   track: 'Modes',
-  estimated_minutes: 12,
+  estimated_minutes: 18,
   briefing: {
     tagline: 'Volume is fixed. Pressure is the message about the patient.',
-    overview: "Volume control is the mode you set when you want to know exactly what the patient is getting per breath. You pick the tidal volume, you pick the flow, the machine delivers it no matter what. The trade-off is that pressure becomes the dependent variable. If the lungs get stiffer or the airways narrower, the pressure will climb to make the volume happen anyway. That's a feature, not a bug, but it's why high-pressure alarms in VC need a real look.",
+    overview:
+      "Volume control is the mode you set when you want to know exactly what the patient is getting per breath. You pick the tidal volume, you pick the flow, the machine delivers it no matter what. The trade-off is that pressure becomes the dependent variable. If the lungs get stiffer or the airways narrower, the pressure will climb to make the volume happen anyway. That's a feature, not a bug, but it's why high-pressure alarms in VC need a real look.",
     what_youll_do: [
       'In VC, you control volume and flow. The vent controls pressure to make it work.',
       'The flow waveform is square. The pressure waveform ramps up.',
       'A high-pressure alarm in VC is a message about the patient, not a setting to override.',
     ],
   },
+
   visible_learning_objectives: [
-    'Identify the characteristic VC waveform pattern.',
-    'Predict how Vt and inspiratory flow changes affect the pressure waveform.',
+    'Distinguish what VCV guarantees (Vt, MVe) from what it does not (PIP, Pplat).',
+    'Predict the direction of change in PIP when compliance falls at a fixed Vt.',
+    'Set lung-protective VCV from scratch: Vt 6 mL/kg PBW, plat ≤30, driving pressure ≤15.',
+    'State why VCV is the default mode for the shocked or unreliable-drive patient.',
   ],
 
   primer_questions: [
     {
       id: 'M7-P1',
-      prompt: 'In volume control, which is the dependent variable?',
+      prompt: 'On VCV, what does the ventilator guarantee?',
       options: [
-        { label: 'Tidal volume', is_correct: false, explanation: 'Vt is what you set — the defining feature of VC.' },
-        { label: 'Inspiratory flow rate', is_correct: false, explanation: 'Also operator-set.' },
-        { label: 'Pressure', is_correct: true, explanation: 'In VC, the vent does whatever pressure is required to deliver set volume at set flow. Compliance drops or resistance rises → pressure rises.' },
-        { label: 'PEEP', is_correct: false, explanation: 'Operator-set; constant within a breath.' },
+        { label: 'The peak airway pressure.', is_correct: false, explanation: 'PIP is determined by flow, resistance, compliance, and Vt; the vent makes whatever pressure it needs.' },
+        { label: 'The plateau pressure.', is_correct: false, explanation: "Plat is determined by Vt/compliance + PEEP; the vent doesn't set it." },
+        { label: 'The tidal volume.', is_correct: true, explanation: 'Book Ch. 9. The vent opens its valve at a set flow until the set Vt has been delivered. The pressure is whatever it takes.' },
+        { label: 'The respiratory rate, but not the volume.', is_correct: false, explanation: "It guarantees both rate and Vt; that's the whole point of A/C." },
       ],
     },
     {
       id: 'M7-P2',
-      prompt: 'In VC, the pressure-time waveform typically looks like:',
+      prompt: 'A VCV patient has compliance fall from 40 to 25 overnight at a fixed Vt of 500. The most likely change in plateau pressure is:',
       options: [
-        { label: 'A square (rectangular) shape', is_correct: false, explanation: "That's PC, not VC. Opposite waveform shapes." },
-        { label: 'A ramped (rising) shape peaking at end-inspiration', is_correct: true, explanation: 'In VC, flow is constant (square flow) but pressure rises through inspiration as volume accumulates. Peak at end-inspiration.' },
-        { label: 'A decelerating curve from a high initial pressure', is_correct: false, explanation: "That's the flow pattern in PC." },
-        { label: 'Flat line at set inspiratory pressure', is_correct: false, explanation: 'Pressure changes during the breath.' },
+        { label: 'Plat falls — the lungs got softer.', is_correct: false, explanation: 'Lower compliance is stiffer, not softer.' },
+        { label: 'Plat rises — to deliver the same Vt into stiffer lungs takes more alveolar pressure.', is_correct: true, explanation: 'Plat = Vt/C + PEEP, so plat goes from 17.5 to 25. The warning sign of evolving ARDS in a VCV patient.' },
+        { label: 'Plat is unchanged — only PIP rises.', is_correct: false, explanation: 'That would be true only if the resistance changed. Compliance change directly drives plat.' },
+        { label: 'The vent will reduce Vt to compensate.', is_correct: false, explanation: 'VCV does no such thing — dual-control modes do.' },
       ],
     },
     {
       id: 'M7-P3',
-      prompt: 'High peak pressure alarm on VC. First response:',
+      prompt: 'Which patient is the textbook indication for VCV (volume A/C)?',
       options: [
-        { label: 'Increase Vt to overcome the resistance', is_correct: false, explanation: 'Would raise peak further. The alarm is a signal to investigate, not a target to override.' },
-        { label: 'Check the patient, the tubing, and review the peak-plateau gap', is_correct: true, explanation: 'High peak can be from patient (bronchospasm, secretions, pneumothorax) or equipment (kink, water). M4 framework is the diagnostic.' },
-        { label: 'Switch to pressure control', is_correct: false, explanation: "Doesn't fix the underlying problem; PC may mask falling volume." },
-        { label: 'Increase PEEP', is_correct: false, explanation: 'Raises both peak and plateau without addressing the cause.' },
+        { label: 'A 70-kg post-arrest patient in shock on norepinephrine.', is_correct: true, explanation: 'Owens, Commandment VIII. The shocked patient needs guaranteed minute ventilation and reliable Vt; A/C does the work of breathing while you resuscitate.' },
+        { label: 'A spontaneously breathing CHF patient with mild hypoxia.', is_correct: false, explanation: 'This patient may not need intubation at all; if intubated, dual-control or PSV is more comfortable.' },
+        { label: 'A 28-year-old status asthmaticus with severe bronchospasm.', is_correct: false, explanation: 'VCV is the right mode for severe bronchospasm (Ch. 15), but here VCV is to control I:E ratio and prevent stacking, not "do all the work." A is the cleaner indication.' },
+        { label: 'A 50-year-old extubation candidate.', is_correct: false, explanation: 'PSV is the right answer here.' },
       ],
     },
   ],
 
   scenario: {
-    preset_id: 'passive_baseline_vc',
+    preset_id: 'M7_vcv_baseline',
     preset: {
+      // Sepsis-pattern patient. Vt 500 = 7 mL/kg for 73-kg PBW —
+      // deliberately a touch high so the learner has an obvious lever
+      // to move (down to 6 mL/kg ≈ 430 mL).
+      // PIN: compliance 40, heightInches 70, gender M — DO NOT CHANGE.
+      // 6 mL/kg = 438 mL; tracker accepts 410–450. Compliance 40 puts
+      // plat ~16 at Vt 430.
       mode: 'VCV',
-      settings: { tidalVolume: 400, respiratoryRate: 12, peep: 5, fiO2: 40, iTime: 1.0 },
-      patient: { compliance: 60, resistance: 10, spontaneousRate: 0 },
+      settings: { tidalVolume: 500, respiratoryRate: 14, peep: 5, fiO2: 40, iTime: 1.0 },
+      patient: { compliance: 40, resistance: 12, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
-    unlocked_controls: ['tidalVolume', 'iTime'],
-    visible_readouts: ['pip', 'plat', 'vte'],
+    unlocked_controls: ['tidalVolume', 'respiratoryRate', 'peep', 'fiO2', 'iTime'],
+    visible_readouts: ['pip', 'plat', 'drivingPressure', 'vte', 'mve'],
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
+  // Target-state outcome: Vt 410–450 (6 mL/kg PBW ±5%), plat ≤30,
+  // driving pressure ≤15, sustained 5 breaths. The learner should
+  // *land* there and *hold* it, not flick the dial through 430 on the
+  // way to 350.
   hidden_objective: {
-    kind: 'compound',
-    sequence: 'strict',
-    reset_between: true,
-    children: [
-      {
-        kind: 'manipulation',
-        control: 'tidalVolume',
-        condition: { type: 'range', min: 580, max: 620 },
-        require_acknowledgment: {
-          question: 'You set Vt to ~600. What changed on the pressure waveform?',
-          options: [
-            { label: 'Peak rose; flow shape unchanged (still square)', is_correct: true },
-            { label: 'Flow shape changed', is_correct: false },
-            { label: 'Nothing changed', is_correct: false },
-            { label: 'Only inspiratory time changed', is_correct: false },
-          ],
-        },
-      },
-      {
-        kind: 'manipulation',
-        control: 'iTime',
-        condition: { type: 'delta_pct', direction: 'decrease', min_pct: 30 },
-        require_acknowledgment: {
-          question: 'You shortened inspiratory time (i.e., raised flow). What happened?',
-          options: [
-            { label: 'Inspiratory time shortened and peak rose', is_correct: true },
-            { label: 'Both fell', is_correct: false },
-            { label: 'Inspiratory time lengthened', is_correct: false },
-            { label: 'Only peak changed', is_correct: false },
-          ],
-        },
-      },
-    ],
+    kind: 'outcome',
+    readouts: {
+      vte: { operator: '<=', value: 450 },
+      plat: { operator: '<=', value: 30 },
+      drivingPressure: { operator: '<=', value: 15 },
+    },
+    sustain_breaths: 5,
   },
 
   content_blocks: [
-    { kind: 'prose', markdown: '**Volume control = volume is guaranteed; pressure is the price.** Flow is constant (square); pressure rises through the breath as elastic builds up. Peak occurs at end-inspiration.' },
-    { kind: 'callout', tone: 'tip', markdown: 'Higher flow → shorter inspiratory time → higher peak (resistive component scales with flow). The trade-off: faster delivery but more airway pressure.' },
+    {
+      kind: 'prose',
+      markdown:
+        "**A/C is the workhorse.** The vent delivers a preset number of breaths per minute; if the patient triggers above the set rate, he gets a *full* breath, not a partial one. That's what \"assist-control\" means — the patient can assist, but the control is the floor. VCV is the simpler flavor: you set rate and Vt, the vent gives the Vt at a constant flow until it's delivered, and then exhalation begins.",
+    },
+    {
+      kind: 'callout',
+      tone: 'info',
+      markdown: "In VCV, the tidal volume is your variable. The pressure is whatever it needs to be. That's the deal.",
+    },
+    {
+      kind: 'predict_observe',
+      awaits_control: 'tidalVolume',
+      predict:
+        "You're at Vt 500 right now. Move it to 430 (6 mL/kg). What happens to plat and driving pressure?",
+      observe:
+        "Plat falls by about 2; driving pressure falls by the same amount. Vt is the lever — for this patient's compliance, the lung-protective range comes free once you lower the order.",
+    },
+    {
+      kind: 'callout',
+      tone: 'warn',
+      markdown:
+        '**Plat ≤30 and driving pressure ≤15** are not soft suggestions. ARMA 2000 showed 6 mL/kg PBW reduced ARDS mortality by 9%. Amato 2015 showed driving pressure was independently linked to survival.',
+    },
   ],
 
   hint_ladder: {
-    tier1: 'Adjust the tidal volume and watch the pressure curve.',
-    tier2: 'Try setting Vt to about 600 mL. Then shorten I-time (which raises flow).',
-    tier3: { hint_text: 'Use "Show me".', demonstration: { control: 'tidalVolume', target_value: 600 } },
+    tier1: "You're at 7 mL/kg. The book asks for 6.",
+    tier2: 'For this patient, 6 mL/kg PBW is ~430 mL. Move Vt down toward 430 and watch the plat and driving pressure update.',
+    tier3: { hint_text: 'Use "Show me" to move Vt to 430 and confirm the chip locks green.', demonstration: { control: 'tidalVolume', target_value: 430 } },
   },
 
   summative_quiz: [
     {
       id: 'M7-Q1',
-      prompt: 'On VC, the flow-time waveform during inspiration is:',
+      prompt: 'A 65-year-old male, 175 cm tall, is intubated for ARDS. The first Vt you should select is approximately:',
       options: [
-        { label: 'Decelerating from high initial peak', is_correct: false },
-        { label: 'Constant square pattern', is_correct: true },
-        { label: 'Sinusoidal', is_correct: false },
-        { label: 'Variable per breath', is_correct: false },
+        { label: '350 mL', is_correct: false, explanation: "That's below 5 mL/kg; defensible only if plat is high, but not the first choice." },
+        { label: '430 mL', is_correct: true, explanation: 'PBW ~72 kg, 6 mL/kg = 432. ARDSnet starting target.' },
+        { label: '600 mL', is_correct: false, explanation: "That's 8.3 mL/kg — too high for ARDS." },
+        { label: '800 mL', is_correct: false, explanation: 'Pre-ARMA dosing, abandoned 25 years ago.' },
       ],
-      explanation: 'VC delivers set flow throughout inspiration. Square flow means pressure rises through inspiration. Decelerating flow is PC.',
     },
     {
       id: 'M7-Q2',
-      prompt: 'Vt 500 mL, flow 60 L/min → Ti 0.5 s. Increase flow to 90 L/min:',
+      prompt: 'On VCV, peak pressure (PIP) rises sharply while plateau pressure is unchanged. The most likely cause is:',
       options: [
-        { label: '0.5 s (unchanged)', is_correct: false },
-        { label: '0.33 s', is_correct: true },
-        { label: '0.75 s', is_correct: false },
-        { label: '1.0 s', is_correct: false },
+        { label: 'Worsening ARDS', is_correct: false, explanation: 'That raises plat too.' },
+        { label: 'Increased airway resistance — mucus plug, kinked tube, bronchospasm', is_correct: true, explanation: 'Book Ch. 2. The PIP-plat gap *is* the resistance signal.' },
+        { label: 'A pneumothorax', is_correct: false, explanation: 'Pneumo raises both.' },
+        { label: 'Pulmonary edema', is_correct: false, explanation: 'Raises both.' },
       ],
-      explanation: 'Ti = Vt / flow. 500 / 1500 = 0.33 s. Useful in obstructive disease to lengthen expiratory time.',
     },
     {
       id: 'M7-Q3',
-      prompt: 'High peak alarm. Plateau unchanged. First action:',
+      prompt: 'A patient on VCV with Vt 500 mL has a plateau pressure of 34 and a driving pressure of 22. The single most important next move is:',
       options: [
-        { label: 'Reduce Vt', is_correct: false },
-        { label: 'Suction airway, check tube position, assess bronchospasm', is_correct: true },
-        { label: 'Increase PEEP', is_correct: false },
-        { label: 'Switch to PC', is_correct: false },
+        { label: 'Sedate more deeply', is_correct: false, explanation: "Doesn't address the lung problem." },
+        { label: 'Increase PEEP', is_correct: false, explanation: 'That can raise plat further.' },
+        { label: 'Reduce the tidal volume', is_correct: true, explanation: 'Book Ch. 8, Amato 2015. DP >15 is the survival-relevant lever.' },
+        { label: 'Switch to PCV', is_correct: false, explanation: 'Tempting but does nothing physiologic — same lungs, same compliance.' },
       ],
-      explanation: 'Peak rise with unchanged plateau = resistance problem. Look for cause.',
     },
     {
       id: 'M7-Q4',
-      prompt: 'Increasing Vt from 400 to 600 with flow/rate constant will:',
+      prompt: 'The advantage of VCV over PCV is:',
       options: [
-        { label: 'Raise peak and Ti', is_correct: true },
-        { label: 'Raise peak but Ti unchanged', is_correct: false },
-        { label: 'Lower peak', is_correct: false },
-        { label: 'No effect', is_correct: false },
+        { label: 'Lower peak airway pressures', is_correct: false, explanation: 'PCV typically has lower PIP.' },
+        { label: 'Guaranteed minute ventilation, regardless of changes in compliance', is_correct: true, explanation: 'Book Ch. 9. The shocked patient with evolving lung injury needs a guaranteed Vt.' },
+        { label: 'Greater patient comfort with constant flow', is_correct: false, explanation: "Constant flow is generally less comfortable; that's a PCV advantage." },
+        { label: 'No volutrauma risk', is_correct: false, explanation: 'VCV can absolutely cause volutrauma if Vt is set too high.' },
       ],
-      explanation: 'More volume → more elastic pressure (peak up). Ti = Vt/flow — more volume at constant flow takes more time.',
     },
     {
       id: 'M7-Q5',
-      prompt: 'Main clinical drawback of VC:',
+      prompt: "Owens's Eleventh Commandment regarding the choice of mode for the shocked patient is:",
       options: [
-        { label: 'Vt is unpredictable', is_correct: false },
-        { label: 'Pressure can rise dangerously high when mechanics worsen', is_correct: true },
-        { label: 'Cannot be used in spontaneous patients', is_correct: false },
-        { label: 'No guaranteed minute ventilation', is_correct: false },
+        { label: 'PSV — least work for the patient', is_correct: false, explanation: 'PSV is a recovery mode.' },
+        { label: 'SIMV — best of both worlds', is_correct: false, explanation: 'SIMV in the shocked patient risks high WOB.' },
+        { label: 'A/C — the shocked patient should not fatigue', is_correct: true, explanation: "Commandment VIII. Don't let the shocked patient do the work of breathing while you're resuscitating him." },
+        { label: 'APRV — best oxygenation', is_correct: false, explanation: 'Not the first-line mode for shock.' },
       ],
-      explanation: 'Guaranteed volume is also the risk. If compliance drops or resistance rises, pressure rises to deliver the set volume.',
     },
   ],
 
   explore_card: {
-    patient_context: 'Passive patient with normal lung mechanics, on volume control. You\'re learning the dials of VC.',
+    patient_context: '70 kg male, post-laparotomy for perforated diverticulitis. Septic, intubated for refractory hypoxemia. Compliance 40 (sepsis pattern).',
     unlocked_controls_description: [
-      { name: 'Tidal volume', description: 'the volume per breath the ventilator will deliver no matter what. Range 200–800 mL.' },
-      { name: 'I-time / inspiratory flow', description: 'how fast the ventilator delivers the breath. Shorter I-time = faster flow.' },
+      { name: 'Vt · 350–600', description: 'the volume you order each breath.' },
+      { name: 'Rate · 8–30', description: 'minimum rate.' },
+      { name: 'PEEP · 0–15', description: 'end-expiratory floor.' },
+      { name: 'FiO2 · 30–80%', description: 'inspired oxygen.' },
+      { name: 'I-time · 0.6–1.5', description: 'length of each inspiration.' },
     ],
     readouts_description: [
-      { name: 'Peak pressure', description: 'the pressure the vent had to produce.' },
-      { name: 'Plateau pressure', description: 'the alveolar pressure once flow stopped.' },
-      { name: 'Three waveforms: pressure, flow, and volume over time', description: 'flow is flat-square in VC — that\'s the signature.' },
+      { name: 'Plat, driving pressure, PIP, MVe', description: 'the four numbers to land in the safe zone.' },
     ],
     suggestions: [
-      'Notice the flow waveform: it\'s a flat square shape — constant flow throughout the breath. That\'s the VC signature.',
-      'Watch the pressure waveform: it ramps up gradually as volume accumulates.',
-      'Try increasing tidal volume by 50%. Watch peak rise. Does the flow shape stay the same?',
-      'Try shortening I-time (= higher flow). The breath gets delivered faster — what does that do to peak pressure?',
+      'Push Vt to 600. Watch plat and driving pressure climb past safety.',
+      'Pull Vt to 350. Plat falls but is the MVe still adequate?',
+      'Raise rate from 14 to 22 at Vt 500. MVe scales linearly.',
+      'Drop PEEP from 5 to 0. Plat falls; driving pressure unchanged.',
     ],
   },
-  user_facing_task: "You'll make two adjustments to confirm how volume control behaves. First, set the tidal volume to 600 mL and identify what changed. Then shorten the inspiratory time by about a third (raising flow) and identify what changed.",
+
+  user_facing_task:
+    "Set lung-protective VCV. This is the standard A/C ventilation that gets every fresh ARDS patient and every intubated trauma. Your Vt is currently 500. The patient is 5'10\", and his compliance is moderately reduced. Adjust the Vt down to the lung-protective range and confirm that plat and driving pressure are in range. Hold the new state for 5 breaths.",
   success_criteria_display: [
-    'Set tidal volume to 600 mL (±20) and answer what happened to the pressure waveform.',
-    'Then shorten I-time substantially and answer what happened to inspiratory time and peak pressure.',
-    'Sim resets between the two changes.',
+    'Tidal volume 410–450 mL (6 mL/kg ±5% for this patient).',
+    'Plateau pressure ≤ 30 cmH2O.',
+    'Driving pressure ≤ 15 cmH2O.',
+    'Sustained for 5 consecutive breaths.',
   ],
-  task_framing_style: 'A',
+  task_framing_style: 'B',
 
   key_points: [
-    'VC: volume guaranteed; pressure is dependent.',
-    'Square flow waveform; ramped pressure curve.',
-    'Increasing Vt raises peak (more elastic). Increasing flow shortens Ti and also raises peak (more resistive).',
-    'High peak alarm in VC: investigate using the peak-plateau framework from M4.',
+    'VCV guarantees Vt; the pressure is whatever it has to be. Watch plat and driving pressure.',
+    'Lung-protective VCV: 6 mL/kg PBW, plat ≤30, driving pressure ≤15.',
+    'A rising plat at a fixed Vt means compliance is falling — assume worsening lung injury until proven otherwise.',
+    'A rising PIP with unchanged plat means resistance is rising — think mucus, kink, or bronchospasm.',
+    'The shocked patient and the unreliable-drive patient belong on A/C.',
   ],
 };
 
+/**
+ * M8 — Pressure Control Ventilation
+ * Track: Modes · Archetype: outcome (Style B with predict-observe) · 18 min
+ * Anchor chapters: VB Ch. 9, Ch. 8
+ *
+ * Specced verbatim against docs/MODULE_SPECS_v3.md §M8.
+ */
 export const M8: ModuleConfig = {
   id: 'M8',
   number: 8,
-  title: 'Pressure Control',
+  title: 'Pressure Control Ventilation',
   track: 'Modes',
-  estimated_minutes: 12,
+  estimated_minutes: 18,
   briefing: {
     tagline: 'Pressure is fixed. Volume is what gives way.',
-    overview: "Pressure control flips the relationship. You pick the pressure, the machine holds it, and tidal volume is whatever the lungs accept at that pressure. This is gentler on stiff or heterogeneous lungs because you can't accidentally over-inflate them. The price is that volume drifts when mechanics change, so you have to watch the delivered tidal volume the same way you'd watch peak pressure in VC.",
+    overview:
+      "Pressure control flips the relationship. You pick the pressure, the machine holds it, and tidal volume is whatever the lungs accept at that pressure. This is gentler on stiff or heterogeneous lungs because you can't accidentally over-inflate them. The price is that volume drifts when mechanics change, so you have to watch the delivered tidal volume the same way you'd watch peak pressure in VC.",
     what_youll_do: [
       'In PC, you control pressure. Volume is what gives way.',
       'The flow waveform decelerates as the lungs fill. That shape is the PC fingerprint.',
       'A sudden drop in delivered tidal volume on PC is the signal that compliance got worse.',
     ],
   },
+
   visible_learning_objectives: [
-    'Identify the characteristic PC waveform pattern.',
-    'Recognize that in PC, tidal volume is the dependent variable.',
+    'Distinguish what PCV guarantees (PINSP, I-time) from what it does not (Vt, MVe).',
+    'Predict the direction of change in Vt when compliance changes at a fixed PINSP.',
+    "Distinguish PINSP from driving pressure (PINSP includes resistance; DP = plat − PEEP).",
+    'Set lung-protective PCV: PINSP titrated to Vt 6 mL/kg PBW, total peak ≤30–35.',
   ],
 
   primer_questions: [
     {
       id: 'M8-P1',
-      prompt: 'Patient on PC at Pinsp 18 → Vt 500. Compliance worsens. Delivered Vt will:',
+      prompt: 'On PCV, what does the ventilator guarantee?',
       options: [
-        { label: 'Stay at 500 (vent adjusts pressure)', is_correct: false, explanation: 'That\'s PRVC, not pure PC.' },
-        { label: 'Decrease', is_correct: true, explanation: 'In PC, pressure is fixed; volume varies. Stiffer lungs accept less volume at the same pressure. The silent danger of PC.' },
-        { label: 'Increase as lungs stiffen', is_correct: false, explanation: 'Stiffer lungs need more pressure for same volume — at fixed pressure, less volume goes in.' },
-        { label: 'Unchanged unless operator changes settings', is_correct: false, explanation: 'Volume WILL change without operator action.' },
+        { label: 'The tidal volume.', is_correct: false, explanation: 'Vt is the dependent variable, set by compliance and resistance.' },
+        { label: 'The inspiratory pressure and the I-time.', is_correct: true, explanation: 'Book Ch. 9. The vent rises to PINSP, holds for I-time, drops back to PEEP.' },
+        { label: 'The plateau pressure.', is_correct: false, explanation: "Plat depends on whether inspiratory flow reaches zero; in most PCV settings it doesn't." },
+        { label: 'The driving pressure.', is_correct: false, explanation: 'DP requires a measured plat, which is not what you set in PCV.' },
       ],
     },
     {
       id: 'M8-P2',
-      prompt: 'In PC, the flow-time waveform shows:',
+      prompt: "A PCV patient's compliance improves overnight from 25 to 50 at a fixed PINSP. The most likely change is:",
       options: [
-        { label: 'Square pattern with constant flow', is_correct: false, explanation: "That's VC." },
-        { label: 'Decelerating pattern, tapering as lungs fill', is_correct: true, explanation: 'Vent pressurizes circuit quickly → burst of high initial flow. As alveolar pressure rises and gradient narrows, flow decelerates. Visual fingerprint of PC.' },
-        { label: 'Flat line at zero', is_correct: false, explanation: 'Gas has to move for a breath.' },
-        { label: 'Rising flow throughout inspiration', is_correct: false, explanation: 'Not a normal pattern.' },
+        { label: 'Vt is unchanged; only PIP rises.', is_correct: false, explanation: "PIP doesn't rise in PCV — it's *fixed*." },
+        { label: 'Vt approximately doubles.', is_correct: true, explanation: 'Book Ch. 9. Vt ≈ PINSP × C. This is why PCV needs daily attention — improving lungs lead to higher Vt unless you titrate down.' },
+        { label: 'Vt halves.', is_correct: false, explanation: 'Direction is reversed.' },
+        { label: 'The ventilator reduces PINSP to compensate.', is_correct: false, explanation: 'Dual-control modes do this. PCV does not.' },
       ],
     },
     {
       id: 'M8-P3',
-      prompt: 'PC preferable when:',
+      prompt: 'Which statement about PINSP versus driving pressure is correct?',
       options: [
-        { label: 'Fixed MV critical (e.g., elevated ICP)', is_correct: false, explanation: 'VC is more reliable for guaranteed MV.' },
-        { label: 'Limit peak alveolar pressures in heterogeneous lungs', is_correct: true, explanation: 'PC caps pressure by design. In ARDS, fixing pressure limits over-distention of open alveoli.' },
-        { label: 'Fully paralyzed with stable mechanics', is_correct: false, explanation: 'Either mode works fine when mechanics are stable.' },
-        { label: 'Stable post-op routine support', is_correct: false, explanation: 'VC predictability matches stable state.' },
+        { label: 'PINSP and driving pressure are the same thing.', is_correct: false, explanation: 'Common error.' },
+        { label: 'PINSP is the pressure rise above PEEP; driving pressure is plat minus PEEP, and requires a measurement.', is_correct: true, explanation: "Book Ch. 9. PINSP includes the resistance-overcoming pressure; DP doesn't." },
+        { label: 'PINSP is always higher than driving pressure.', is_correct: false, explanation: 'Mostly true, but not the cleanest answer — equality holds only when end-inspiratory flow has reached zero.' },
+        { label: 'Driving pressure cannot be measured in PCV.', is_correct: false, explanation: 'Common myth; an inspiratory hold gives you plat in PCV just as in VCV.' },
       ],
     },
   ],
 
   scenario: {
-    preset_id: 'passive_baseline_pc',
+    preset_id: 'M8_pcv_baseline',
     preset: {
+      // Moderate ARDS, on PCV by clinician choice. PINSP 18 + PEEP 8
+      // gives total peak ~26 (under 30). At C=35, delivered Vt ≈ 430.
+      // PIN: compliance 35 — DO NOT CHANGE.
       mode: 'PCV',
-      settings: { pInsp: 15, respiratoryRate: 12, peep: 5, fiO2: 40, iTime: 1.0 },
-      patient: { compliance: 50, resistance: 10, spontaneousRate: 0 },
+      settings: { pInsp: 18, respiratoryRate: 14, peep: 8, fiO2: 50, iTime: 1.0 },
+      patient: { compliance: 35, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
-    unlocked_controls: ['pInsp', 'compliance'],
-    visible_readouts: ['pip', 'vte', 'mve'],
+    unlocked_controls: ['pInsp', 'respiratoryRate', 'peep', 'fiO2', 'iTime', 'compliance'],
+    visible_readouts: ['pip', 'plat', 'drivingPressure', 'vte', 'mve'],
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
   hidden_objective: {
-    kind: 'compound',
-    sequence: 'strict',
-    reset_between: true,
-    children: [
-      {
-        kind: 'manipulation',
-        control: 'pInsp',
-        condition: { type: 'delta_pct', direction: 'increase', min_pct: 30 },
-        require_acknowledgment: {
-          question: 'You raised Pinsp 30%+. What happened to delivered Vt?',
-          options: [
-            { label: 'Increased', is_correct: true },
-            { label: 'Decreased', is_correct: false },
-            { label: 'Unchanged', is_correct: false },
-          ],
-        },
-      },
-      {
-        kind: 'manipulation',
-        control: 'compliance',
-        condition: { type: 'delta_pct', direction: 'decrease', min_pct: 30 },
-        require_acknowledgment: {
-          question: 'You decreased compliance. What happened to pressure waveform and delivered Vt?',
-          options: [
-            { label: 'Pressure unchanged, volume dropped', is_correct: true },
-            { label: 'Pressure rose, volume unchanged', is_correct: false },
-            { label: 'Both fell', is_correct: false },
-            { label: 'Both rose', is_correct: false },
-          ],
-        },
-      },
-    ],
+    kind: 'outcome',
+    readouts: {
+      vte: { operator: '<=', value: 470 },
+      pip: { operator: '<=', value: 30 },
+      drivingPressure: { operator: '<=', value: 15 },
+    },
+    sustain_breaths: 5,
   },
 
   content_blocks: [
-    { kind: 'prose', markdown: '**Pressure control = pressure is guaranteed; volume is the price.** Compare with M4 part A (compliance ↓ in VC = pressure ↑). Here it\'s the inverse: compliance ↓ in PC = volume ↓, pressure unchanged.' },
-    { kind: 'callout', tone: 'warn', markdown: 'PC has no rising-pressure alarm to warn you when mechanics worsen. **Watch the delivered tidal volume** — that\'s where the change shows up.' },
-    { kind: 'figure', caption: 'PC: square pressure (set), decelerating flow (dependent), variable volume.', ascii: 'Pressure: |‾‾‾‾‾‾| (square)\nFlow:    /╲       (decelerating)\nVolume:  ╱⌒       (curves up, varies)' },
+    {
+      kind: 'prose',
+      markdown:
+        "**PCV reverses VCV's deal.** You set the *pressure* you want; the vent goes up to it, holds it, then releases. The tidal volume is whatever the patient's lungs and airway resistance permit. The waveform is decelerating — flow is high at the start and tapers off as the lungs fill, which most patients find more comfortable than VCV's square top.",
+    },
+    {
+      kind: 'callout',
+      tone: 'info',
+      markdown: 'PINSP is the rise above PEEP. If PINSP is 18 and PEEP is 8, total peak airway pressure is 26.',
+    },
+    {
+      kind: 'predict_observe',
+      awaits_control: 'compliance',
+      predict: "You'll drop compliance from 35 to 18. What happens to Vt?",
+      observe:
+        "Vt falls roughly in proportion. This is the failure mode of PCV in worsening ARDS — the patient gets less and less ventilation as he gets sicker, and you won't see a PIP alarm fire.",
+    },
+    {
+      kind: 'callout',
+      tone: 'warn',
+      markdown:
+        "In PCV, the **low-Vt alarm is your friend**. If the patient's compliance falls, Vt collapses silently. The PIP alarm will never fire — you set the pressure, the vent obeys.",
+    },
+    {
+      kind: 'formative',
+      question: 'In PCV, you cannot measure plateau pressure. True or false?',
+      options: [
+        { label: 'True — PCV has no plateau', is_correct: false },
+        { label: 'False — an inspiratory hold gives you Pplat in PCV just as in VCV', is_correct: true },
+        { label: 'True — only PIP is meaningful in PCV', is_correct: false },
+        { label: 'False — but only if compliance is normal', is_correct: false },
+      ],
+      answer:
+        'Book Ch. 9. An inspiratory hold equilibrates pressures throughout the airway tree, just as in VCV. You absolutely can — and should — measure plat in PCV. Common myth.',
+    },
   ],
 
   hint_ladder: {
-    tier1: 'Adjust Pinsp and watch the delivered Vt.',
-    tier2: 'After exploring Pinsp, drop compliance. Compare to M4 — what\'s different?',
-    tier3: { hint_text: 'Use "Show me".', demonstration: { control: 'pInsp', target_value: 22 } },
+    tier1: 'At PINSP 18 and C=35, Vt is in the right range. Have you held it for 5 breaths?',
+    tier2: "If the chip won't lock green, check driving pressure. It's plat − PEEP. With this PINSP, you should be at ~12. If you're over 15, lower PINSP.",
+    tier3: { hint_text: 'Use "Show me" to move PINSP to 17 and verify the chip is green.', demonstration: { control: 'pInsp', target_value: 17 } },
   },
 
   summative_quiz: [
     {
       id: 'M8-Q1',
-      prompt: 'On PC, flow-time waveform is:',
+      prompt: 'A patient is on PCV with PINSP 20, PEEP 10, I-time 1.0. Compliance is 25 mL/cmH2O. The expected Vt is approximately:',
       options: [
-        { label: 'Square constant', is_correct: false },
-        { label: 'Decelerating: high initial flow tapering', is_correct: true },
-        { label: 'Sinusoidal', is_correct: false },
-        { label: 'Flat near zero', is_correct: false },
+        { label: '200 mL', is_correct: false, explanation: 'Too low — PINSP 20 × C 25 ≈ 500.' },
+        { label: '500 mL', is_correct: true, explanation: 'Vt ≈ PINSP × C.' },
+        { label: '800 mL', is_correct: false, explanation: 'That would be C = 40.' },
+        { label: 'Cannot be calculated without knowing flow', is_correct: false, explanation: 'This is the deterministic relationship.' },
       ],
-      explanation: 'Decelerating flow is the visual fingerprint of PC.',
     },
     {
       id: 'M8-Q2',
-      prompt: 'PC: Pinsp 16, PEEP 5, Vt 480. Compliance halves. New Vt ≈',
+      prompt: "A PCV patient's PIP alarm has never fired, but his Vt has dropped from 480 to 270 over six hours. The most likely cause is:",
       options: [
-        { label: '480 (unchanged)', is_correct: false },
-        { label: '240', is_correct: true },
-        { label: '960', is_correct: false },
-        { label: 'Variable', is_correct: false },
+        { label: 'The vent is broken', is_correct: false, explanation: "Unlikely — PIP alarm wouldn't fire in PCV anyway." },
+        { label: 'Worsening compliance, increased resistance, or both', is_correct: true, explanation: 'Book Ch. 9. In PCV the PIP is fixed; Vt collapse is the only warning of worsening mechanics.' },
+        { label: 'The patient is over-sedated', is_correct: false, explanation: "Sedation doesn't change Vt at a fixed PINSP." },
+        { label: 'Migrated endotracheal tube into the right mainstem', is_correct: false, explanation: 'Possible but would also raise plat dramatically; first instinct is mechanics.' },
       ],
-      explanation: 'Driving pressure 11 was delivering 480 mL (C ≈ 44). Halve C, Pinsp same → 240 mL. Silent danger.',
     },
     {
       id: 'M8-Q3',
-      prompt: 'Switch from VC (Vt 500, peak 32, plateau 26) to PC. PEEP 5. Approximate Pinsp:',
+      prompt: 'Inverse-ratio ventilation (I:E ≥ 1:1) in PCV is:',
       options: [
-        { label: '11', is_correct: false },
-        { label: '21', is_correct: true },
-        { label: '27', is_correct: false },
-        { label: '32', is_correct: false },
+        { label: 'Always required in severe ARDS', is_correct: false, explanation: 'A niche maneuver.' },
+        { label: 'Used occasionally for severe hypoxemia, but requires heavy sedation', is_correct: true, explanation: 'Book Ch. 9. Owens: "Try breathing in for two seconds and out for one — this is uncomfortable."' },
+        { label: 'Standard for all PCV settings', is_correct: false, explanation: 'Normal I:E is 1:2 to 1:4.' },
+        { label: 'Used to reduce peak pressures', is_correct: false, explanation: 'It actually raises mean airway pressure.' },
       ],
-      explanation: 'Match the driving pressure: plateau 26 − PEEP 5 = 21 cmH2O above PEEP.',
     },
     {
       id: 'M8-Q4',
-      prompt: 'Clinical advantage of PC over VC:',
+      prompt: 'Which is the WORST patient for PCV?',
       options: [
-        { label: 'Guaranteed MV', is_correct: false },
-        { label: 'Predictable Vt regardless of mechanics', is_correct: false },
-        { label: 'Pressure limited by design', is_correct: true },
-        { label: 'PC always better synchrony', is_correct: false },
+        { label: 'A stable ARDS patient on chronic vent', is_correct: false, explanation: 'PCV is fine here.' },
+        { label: 'A status asthmaticus patient with rising resistance', is_correct: true, explanation: 'Book Ch. 15. In severe bronchospasm, rising resistance silently drops Vt in PCV; VCV is the mode of choice.' },
+        { label: 'A post-op patient with normal lungs', is_correct: false, explanation: 'PCV is fine.' },
+        { label: 'A weaning candidate', is_correct: false, explanation: "PSV is the answer for a weaning candidate; PCV isn't *worse* than other A/C modes." },
       ],
-      explanation: 'PC\'s appeal: pressure cannot exceed set value. Protects open alveoli in heterogeneous lungs.',
     },
     {
       id: 'M8-Q5',
-      prompt: 'In PC, increase Ti from 1.0 to 1.5 s:',
+      prompt: 'Driving pressure in a PCV patient is measured by:',
       options: [
-        { label: 'Modest Vt increase + raises mean airway pressure', is_correct: true },
-        { label: 'No effect on Vt', is_correct: false },
-        { label: 'Decreases Vt', is_correct: false },
-        { label: 'Decreases mean airway pressure', is_correct: false },
+        { label: 'Reading the PINSP directly', is_correct: false, explanation: 'PINSP includes resistance.' },
+        { label: 'Performing an inspiratory hold to obtain plat, then subtracting PEEP', is_correct: true, explanation: 'Book Ch. 9. The hold equilibrates airway pressures; plat − PEEP is the DP regardless of mode.' },
+        { label: 'Looking at the peak inspiratory flow', is_correct: false, explanation: 'Unrelated.' },
+        { label: 'It cannot be measured in PCV', is_correct: false, explanation: 'Common myth.' },
       ],
-      explanation: 'Longer Ti lets lungs equilibrate with set pressure → modest Vt increase. Mean Paw rises clearly. M14 lever.',
     },
   ],
 
   explore_card: {
-    patient_context: 'Passive patient on pressure control. The vent is set to deliver each breath at a fixed inspiratory pressure of 15 above PEEP.',
+    patient_context: 'Same post-laparotomy septic patient as M7, but the attending placed him on PCV. Compliance 35.',
     unlocked_controls_description: [
-      { name: 'Inspiratory pressure (Pinsp)', description: 'the target pressure for each breath. Range 1–60 cmH2O above PEEP.' },
-      { name: 'Compliance', description: 'how easily the lungs stretch. Range 15–80 mL/cmH2O. Adjustable here so you can see how PC reacts to compliance changes.' },
+      { name: 'PINSP · 8–30', description: 'rise above PEEP. Total peak = PINSP + PEEP.' },
+      { name: 'Rate · 8–30', description: 'mandatory minimum.' },
+      { name: 'PEEP · 0–18', description: 'end-expiratory floor.' },
+      { name: 'FiO2 · 30–80%', description: 'inspired oxygen.' },
+      { name: 'I-time · 0.6–1.5', description: 'how long the pressure is held.' },
+      { name: 'Compliance · 20–60', description: 'sandbox lever — drag it to see Vt swing.' },
     ],
     readouts_description: [
-      { name: 'Peak pressure', description: 'should equal Pinsp + PEEP since PC holds pressure constant.' },
-      { name: 'Tidal volume delivered (Vte)', description: 'this is the dependent variable in PC. It\'s what *changes* when mechanics change.' },
-      { name: 'Three waveforms: pressure, flow, volume', description: 'note the decelerating flow shape.' },
+      { name: 'Vt (delivered), plat (after hold), peak pressure, MVe', description: 'the four numbers PCV makes you watch.' },
     ],
     suggestions: [
-      'Look at the flow waveform — decelerating, not square. That\'s the PC signature, opposite of VC.',
-      'Try raising inspiratory pressure by 5. Watch the volume rise.',
-      'Now reset, then *lower* compliance by half (simulating worsening lung disease). Pressure waveform doesn\'t change much — but what does the delivered tidal volume do?',
-      'This is the inverse of VC: pressure is the fixed knob, volume is what gives way.',
+      'Raise PINSP from 18 to 26. Vt climbs from ~430 to ~620.',
+      'Drop compliance to 20 at PINSP 18. Vt falls to ~245.',
+      'At PINSP 18, perform an inspiratory hold. Watch plat lag PIP by 1–2 cmH2O (low resistance).',
+      'Bump resistance to 25 at PINSP 18 — Vt drops, but plat is still measurable.',
     ],
   },
-  user_facing_task: "You'll make two adjustments that show how pressure control behaves. First, raise the inspiratory pressure and identify what happens to the delivered tidal volume. Then simulate worsening lung compliance and identify what happens to volume and pressure.",
+
+  user_facing_task:
+    'Titrate PINSP to a lung-protective Vt. Your patient is on PCV with PINSP 18 and PEEP 8. The compliance is ~35. Adjust the PINSP so the delivered Vt lands at 6 mL/kg PBW (~430 mL for this patient), with total peak pressure ≤30 and driving pressure ≤15. Hold for 5 breaths.',
   success_criteria_display: [
-    'Increase inspiratory pressure by at least 30% and identify the effect on tidal volume.',
-    'Reduce compliance by at least 30% and identify what happens to pressure and volume.',
-    'Sim resets between the two.',
+    'Tidal volume 410–470 mL.',
+    'Total peak pressure ≤ 30 cmH2O.',
+    'Driving pressure ≤ 15 cmH2O.',
+    'Sustained for 5 consecutive breaths.',
   ],
-  task_framing_style: 'A',
+  task_framing_style: 'B',
 
   key_points: [
-    'PC: pressure guaranteed; volume dependent.',
-    'Square pressure, decelerating flow.',
-    'Inverse of VC: same compliance change yields opposite waveform consequence.',
-    'Silent failure mode: delivered Vt drops without alarm when mechanics worsen.',
+    'PCV guarantees PINSP and I-time. Vt is the dependent variable.',
+    'Vt ≈ PINSP × Compliance. As compliance changes, Vt swings.',
+    'The PIP alarm does not warn you in PCV — the low-Vt alarm does.',
+    'PINSP is the rise above PEEP. Driving pressure is plat minus PEEP. Not the same.',
+    'In severe bronchospasm, choose VCV — PCV will silently underventilate as resistance rises.',
   ],
 };

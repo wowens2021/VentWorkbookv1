@@ -1,406 +1,409 @@
 import type { ModuleConfig } from '../shell/types';
 
+// MODULE_SPECS_v3 §M13 — PEEP.
+//
+// Pin list (do not change without recalibrating PEEP→PaO2 response):
+//   compliance: 32 (moderate ARDS)
+//   resistance: 11
+//   PEEP 5 → PaO2 ~58.  PEEP 10 → ~75.  PEEP 14 → ~88.  PEEP 18 → ~92.
+//   PEEP 22 → ~84 (overdistension), would also drop SBP.
+//
+// Adaptation: spec's outcome includes SBP ≥95 — the sim has no SBP readout,
+// so the hemodynamic ceiling is taught in the explore copy and the
+// summative, not enforced in the tracker.
 export const M13: ModuleConfig = {
   id: 'M13',
   number: 13,
-  title: 'PEEP — What It Does and How to Set It',
+  title: 'PEEP',
   track: 'Strategy',
-  estimated_minutes: 16,
+  estimated_minutes: 22,
   briefing: {
-    tagline: 'Titrate to peak compliance. The lungs tell you.',
-    overview: "PEEP keeps alveoli open at the end of exhalation. That's how it improves oxygenation: more alveoli stay available for gas exchange. But PEEP isn't free. Too much overdistends healthy lung and impedes venous return, dropping cardiac output. The \"right\" PEEP for any patient sits somewhere in the middle, and the way to find it is to titrate and watch what compliance does. The lungs themselves will tell you where they're happiest.",
+    tagline: 'Open the lungs and keep them open. Then read the table.',
+    overview: "PEEP is the splint that keeps alveoli open at end-expiration. The lung has a functional residual capacity — a reservoir of air that maintains gas exchange when you aren't actively breathing. ARDS and pulmonary edema collapse that reservoir. PEEP rebuilds it. Three jobs: recruit, splint, and (in heart failure) reduce LV afterload. The complications of too much PEEP are hypotension and dead space. VILI is volutrauma-driven, not PEEP-driven — PEEP is not the villain.",
     what_youll_do: [
-      "PEEP recruits collapsed alveoli. That's the whole mechanism.",
-      "The PEEP at which static compliance is highest is the PEEP that's working best for that patient.",
-      "Anatomic shunt doesn't respond to PEEP. Most other hypoxemia does.",
+      'Set initial PEEP by CXR — clear 5, scattered 10, diffuse 15, whiteout 20.',
+      'Titrate PEEP/FiO2 along the ARDSnet Lower table.',
+      'Recognize PEEP-induced overdistension: rising dead space, falling PaO2.',
+      'PEEP-induced hypotension below 10–12 in a "stable" patient usually means hypovolemia first.',
     ],
   },
   visible_learning_objectives: [
-    'Perform a stepwise PEEP titration and identify the PEEP at which compliance peaks.',
-    'Distinguish appropriate from inappropriate uses of PEEP.',
+    'State three goals of PEEP: alveolar recruitment, FRC maintenance, LV afterload reduction.',
+    'Set initial PEEP by chest X-ray pattern.',
+    'Use the ARDSnet Lower PEEP table to titrate PEEP/FiO2.',
+    'Recognize PEEP-induced overdistension and PEEP-induced hypotension.',
   ],
 
   primer_questions: [
     {
       id: 'M13-P1',
-      prompt: 'PEEP primarily helps oxygenation by:',
+      prompt: 'Three physiologic effects of PEEP include:',
       options: [
-        { label: 'Increasing FiO2 delivered to alveoli', is_correct: false, explanation: 'FiO2 and PEEP are independent. PEEP changes alveolar geometry, not gas concentration.' },
-        { label: 'Keeping alveoli open at end-expiration that would otherwise collapse', is_correct: true, explanation: 'Holds alveolar pressure above atmospheric at end-expiration, preventing collapse of unstable alveoli. Recruited alveoli participate in gas exchange.' },
-        { label: 'Increasing spontaneous RR', is_correct: false, explanation: 'PEEP doesn\'t drive RR.' },
-        { label: 'Lowering WOB in spontaneous patients', is_correct: false, explanation: 'Can incidentally do this with auto-PEEP matching, but primary mechanism is recruitment.' },
+        { label: 'Alveolar recruitment, FRC maintenance, and left ventricular afterload reduction', is_correct: true, explanation: 'The three intended benefits. Book Ch. 12.' },
+        { label: 'Alveolar recruitment, increased venous return, and improved cardiac output', is_correct: false, explanation: 'PEEP reduces venous return — not increases it.' },
+        { label: 'Lung deflation, bronchodilation, and reduced shunt', is_correct: false, explanation: 'PEEP inflates, not deflates; doesn\'t bronchodilate.' },
+        { label: 'Increased PaCO2, decreased PaO2, and decreased work of breathing', is_correct: false, explanation: 'PEEP improves PaO2 in shunt physiology, not decreases it.' },
       ],
     },
     {
       id: 'M13-P2',
-      prompt: 'Too much PEEP can:',
+      prompt: 'On the ARDSnet Lower PEEP/FiO2 table, FiO2 0.70 corresponds to PEEP:',
       options: [
-        { label: 'Cause overdistension and impair venous return', is_correct: true, explanation: 'Raises mean intrathoracic pressure → impedes VR → drops CO. Also overdistends open alveoli, increases dead space, reduces compliance. Sweet spot for every patient.' },
-        { label: 'Only cause harm above 30 cmH2O', is_correct: false, explanation: 'Significant harm at much lower PEEP in hypovolemic, hyperinflated, RV-compromised patients.' },
-        { label: 'Improve oxygenation in any patient regardless of physiology', is_correct: false, explanation: 'In hyperinflated patients (COPD, asthma), PEEP can worsen ventilation.' },
-        { label: 'Eliminate FiO2 supplementation', is_correct: false, explanation: 'They work together.' },
+        { label: '5', is_correct: false, explanation: 'That\'s FiO2 0.30–0.40.' },
+        { label: '10–12', is_correct: true, explanation: 'The table lists 70% → 10, 12, or 14 depending on response. Book Ch. 12.' },
+        { label: '18–20', is_correct: false, explanation: 'That\'s FiO2 0.90–1.0.' },
+        { label: 'There\'s no specific mapping — use clinical judgment alone', is_correct: false, explanation: 'The table exists and is the starting point.' },
       ],
     },
     {
       id: 'M13-P3',
-      prompt: 'A decremental PEEP trial is a method for:',
+      prompt: 'The major complication of excessive PEEP is:',
       options: [
-        { label: 'Finding the lowest PEEP maintaining adequate oxygenation', is_correct: false, explanation: 'Conflates two ideas. Best PEEP = highest compliance, often NOT the lowest PEEP.' },
-        { label: 'Finding the PEEP at which lung compliance is highest', is_correct: true, explanation: 'Walk PEEP down step-by-step after recruitment, measure compliance at each step. PEEP just above where compliance falls is "best PEEP."' },
-        { label: 'Weaning toward extubation', is_correct: false, explanation: 'Weaning is separate.' },
-        { label: 'Testing for auto-PEEP', is_correct: false, explanation: 'Auto-PEEP detected on flow waveform.' },
+        { label: 'Volutrauma', is_correct: false, explanation: 'Volutrauma is a tidal volume issue, not a PEEP issue.' },
+        { label: 'Alveolar overdistension causing hypotension and/or increased dead space', is_correct: true, explanation: 'Above the recruitment ceiling, PEEP overinflates healthy alveoli. Book Ch. 12.' },
+        { label: 'Bronchospasm', is_correct: false, explanation: 'Not a PEEP effect.' },
+        { label: 'Pulmonary embolism', is_correct: false, explanation: 'Not a PEEP effect.' },
       ],
     },
   ],
 
   scenario: {
-    preset_id: 'ards_baseline_vc',
+    preset_id: 'ards_under_recruited',
     preset: {
       mode: 'VCV',
-      settings: { tidalVolume: 400, respiratoryRate: 18, peep: 5, fiO2: 60, iTime: 1.0 },
-      patient: { compliance: 25, resistance: 12, spontaneousRate: 0 },
+      settings: { tidalVolume: 430, respiratoryRate: 18, peep: 5, fiO2: 70, iTime: 1.0 },
+      patient: { compliance: 32, resistance: 11, spontaneousRate: 0, heightInches: 70, gender: 'M' },
     },
-    unlocked_controls: ['peep'],
-    visible_readouts: ['pip', 'plat', 'drivingPressure', 'spo2', 'pao2'],
+    unlocked_controls: ['peep', 'fiO2'],
+    visible_readouts: ['pip', 'plat', 'drivingPressure', 'spo2', 'pao2', 'fio2', 'peep'],
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Three-stage titration: walk PEEP up in two steps (forcing the learner to
-  // explore a range rather than slamming to one value), then a recognition
-  // that consolidates the concept. We can't yet model PEEP-induced recruitment
-  // in the sim, so the "best PEEP" reasoning is delivered via the recognition.
   hidden_objective: {
-    kind: 'compound',
-    sequence: 'strict',
-    children: [
-      {
-        // Stage 1: raise PEEP into the moderate zone (≥ 8) and hold briefly.
-        kind: 'outcome',
-        readouts: { peep: { operator: '>=', value: 8 } },
-        sustain_breaths: 2,
-      },
-      {
-        // Stage 2: continue raising into the higher zone (≥ 12). Reaching this
-        // only after Stage 1 forces a stepwise approach.
-        kind: 'outcome',
-        readouts: { peep: { operator: '>=', value: 12 } },
-        sustain_breaths: 2,
-      },
-      {
-        kind: 'recognition',
-        prompt: {
-          prompt_id: 'M13-summary',
-          trigger: { kind: 'on_load' },
-          question: 'You\'ve walked PEEP up through a range. In a real decremental titration, which PEEP would you call "best"?',
-          options: [
-            { label: 'The PEEP where lung compliance was highest (driving pressure lowest)', is_correct: true, explanation: 'Best PEEP = compliance peak = driving-pressure trough. Below it, alveoli collapse. Above it, healthy alveoli overdistend.' },
-            { label: 'The highest PEEP you tried — more is always better', is_correct: false, explanation: 'Above the compliance peak, you\'re overdistending healthy alveoli and impairing venous return.' },
-            { label: 'The lowest PEEP that produced any SpO2 improvement', is_correct: false, explanation: 'That ignores hemodynamics and overdistension. The compliance-peak rule is more protective.' },
-            { label: 'PEEP doesn\'t need to be titrated — pick the protocol default', is_correct: false, explanation: 'ARDSnet tables are a starting point, but per-patient titration via compliance/driving pressure is now standard of care.' },
-          ],
-          max_attempts: 2,
-        },
-      },
-    ],
+    kind: 'outcome',
+    readouts: {
+      peep: { operator: '>=', value: 10 },
+      pao2: { operator: '>=', value: 65 },
+    },
+    sustain_breaths: 5,
   },
 
   content_blocks: [
-    { kind: 'prose', markdown: '**Decremental PEEP titration.** Recruit, then walk PEEP down. Record compliance at each step. The PEEP just above where compliance starts to fall is "best PEEP." Above it: overdistension. Below it: derecruitment.' },
-    { kind: 'callout', tone: 'tip', markdown: 'Driving pressure = Pplat − PEEP. Tracks the elastic load on the alveoli. Driving pressures > 15 are associated with worse outcomes in ARDS (M15).' },
+    { kind: 'prose', markdown: '**PEEP is the splint.** The lung has a functional residual capacity — a reservoir of air that maintains gas exchange even when you\'re not actively breathing. ARDS and pulmonary edema collapse that reservoir. PEEP rebuilds it. Three jobs: recruit collapsed alveoli, hold FRC against the next breath\'s exhalation, and (in failing LV) reduce afterload by lifting pleural pressure.' },
+    { kind: 'callout', tone: 'info', markdown: 'Initial PEEP by CXR: clear → 5; scattered infiltrates → 10; diffuse dense → 15; whiteout → 20.' },
     {
       kind: 'figure',
-      caption: 'The compliance-vs-PEEP curve. The peak is "best PEEP"; the slopes either side are derecruitment (left) and overdistension (right).',
+      caption: 'ARDSnet Lower PEEP/FiO2 table — the standard starting ladder.',
       ascii:
-        'Compliance ↑\n' +
-        '         |              ╱‾╲       ← best PEEP (peak)\n' +
-        '   peak →|           ╱─    ╲\n' +
-        '         |        ╱          ╲\n' +
-        '         |     ╱              ╲\n' +
-        '         |  ╱                  ╲─\n' +
-        '         |╱     derecruit ↑↑    ↑↑ overdistend\n' +
-        '         +─────────────────────────→ PEEP\n' +
-        '          low                  high',
+        ' FiO2 |  PEEP\n' +
+        ' 0.30 |   5\n' +
+        ' 0.40 |   5–8\n' +
+        ' 0.50 |   8–10\n' +
+        ' 0.60 |  10\n' +
+        ' 0.70 |  10–14   ← you are here\n' +
+        ' 0.80 |  14\n' +
+        ' 0.90 |  14–18\n' +
+        ' 1.00 |  18–24',
     },
-    { kind: 'predict_observe', awaits_control: 'peep', predict: 'Walk PEEP from 5 → 11 → 17. Predict where compliance is highest.', observe: 'Compliance rises with PEEP up to a point (alveolar recruitment), then falls (overdistension). The peak is "best PEEP." Track driving pressure as the proxy — lowest DP marks the compliance peak.' },
+    {
+      kind: 'predict_observe',
+      predict: 'You\'re going to raise PEEP from 5 to 12 at FiO2 0.70. What happens to PaO2?',
+      observe: 'PaO2 climbs as alveoli recruit and shunt fraction falls. The lung was under-recruited at PEEP 5 — the LIP on its compliance curve hadn\'t been crossed yet.',
+      awaits_control: 'peep',
+    },
+    { kind: 'callout', tone: 'warn', markdown: 'PEEP-induced hypotension is real but rare below 10–12. If BP drops at PEEP 8 in a previously stable patient, suspect hypovolemia — fluid bolus first.' },
+    { kind: 'prose', markdown: '**Owens\'s "good enough PEEP" by ARDS severity.** Mild ARDS (P/F 201–300): 5–10. Moderate (101–200): 10–15. Severe (≤100): 15–20. The ARDSnet table is more granular; this rule covers most of the work.' },
   ],
 
   hint_ladder: {
-    tier1: 'Walk PEEP up in steps. Wait several breaths between adjustments. Watch the compliance behavior.',
-    tier2: 'Try PEEP 5, 8, 11, 14. The lowest driving pressure marks the best compliance.',
-    tier3: { hint_text: 'Use "Show me" to step through.', demonstration: { control: 'peep', target_value: 12 } },
+    tier1: 'At FiO2 0.70, the ARDSnet Lower PEEP table recommends 10–14. You\'re at 5.',
+    tier2: 'Raise PEEP one step at a time — 5 to 8 to 10 to 12. Pause at each level. Watch PaO2 climb.',
+    tier3: { hint_text: 'Bring PEEP to 12.', demonstration: { control: 'peep', target_value: 12 } },
   },
 
   summative_quiz: [
     {
       id: 'M13-Q1',
-      prompt: 'Decremental PEEP trial: PEEP 5 → C 24; PEEP 8 → 28; PEEP 11 → 33; PEEP 14 → 30; PEEP 17 → 26. Best PEEP:',
+      prompt: 'Owens\'s "good enough PEEP" for moderate ARDS (P/F 101–200) is:',
       options: [
-        { label: '5', is_correct: false },
-        { label: '8', is_correct: false },
-        { label: '11', is_correct: true },
-        { label: '17', is_correct: false },
+        { label: '0–5', is_correct: false },
+        { label: '5–10', is_correct: false },
+        { label: '10–15', is_correct: true },
+        { label: '15–20', is_correct: false },
       ],
-      explanation: 'Best PEEP = highest static compliance. PEEP 11 → 33. Below: collapsing. Above: overdistending.',
+      explanation: 'Mild 5–10, moderate 10–15, severe 15–20. Book Ch. 12.',
     },
     {
       id: 'M13-Q2',
-      prompt: 'ARDS on PEEP 14, FiO2 0.6, SpO2 92%. Acute hypotension after PEEP increase from 10. Most likely cause:',
+      prompt: 'The ALVEOLI trial compared higher and lower PEEP tables and found:',
       options: [
-        { label: 'Sepsis worsening', is_correct: false },
-        { label: 'PEEP-induced reduction in venous return', is_correct: true },
-        { label: 'Pneumothorax', is_correct: false },
-        { label: 'Inadequate sedation', is_correct: false },
+        { label: 'Higher PEEP improved mortality', is_correct: false },
+        { label: 'Lower PEEP improved mortality', is_correct: false },
+        { label: 'No difference in mortality, as long as 4–6 mL/kg PBW was used', is_correct: true },
+        { label: 'Higher PEEP improved oxygenation but caused more pneumothorax', is_correct: false },
       ],
-      explanation: 'Timing immediately after PEEP increase points at PEEP\'s hemodynamic effect.',
+      explanation: 'The table chosen matters less than keeping Vt protective. Book Ch. 12.',
     },
     {
       id: 'M13-Q3',
-      prompt: 'PEEP provides LEAST oxygenation benefit in:',
+      prompt: 'PEEP-induced hypotension at PEEP 8 in a previously stable ARDS patient most likely indicates:',
       options: [
-        { label: 'Diffuse atelectasis', is_correct: false },
-        { label: 'Pulmonary edema', is_correct: false },
-        { label: 'Pure shunt from intracardiac defect', is_correct: true },
-        { label: 'Early ARDS with recruitable alveoli', is_correct: false },
+        { label: 'The patient is overdistending', is_correct: false },
+        { label: 'The patient is hypovolemic', is_correct: true },
+        { label: 'A pneumothorax', is_correct: false },
+        { label: 'The PEEP is too low', is_correct: false },
       ],
-      explanation: 'Anatomic shunt: blood bypasses lungs entirely. PEEP works by recruiting alveoli; can\'t help blood that bypasses.',
+      explanation: 'Below 10–12, PEEP doesn\'t routinely impair venous return in euvolemic patients. Fluid bolus first. Book Ch. 12.',
     },
     {
       id: 'M13-Q4',
-      prompt: 'Severe COPD with dynamic hyperinflation. Extrinsic PEEP can:',
+      prompt: 'PEEP causes left ventricular afterload reduction via:',
       options: [
-        { label: 'Always worsen auto-PEEP', is_correct: false },
-        { label: 'Match intrinsic PEEP and improve trigger work', is_correct: true },
-        { label: 'Replace bronchodilators', is_correct: false },
-        { label: 'Cure obstruction', is_correct: false },
+        { label: 'Reduced venous return', is_correct: false },
+        { label: 'Increased intrathoracic pressure reducing the transmural pressure across the LV', is_correct: true },
+        { label: 'Reduced systemic vascular resistance', is_correct: false },
+        { label: 'Direct myocardial depression', is_correct: false },
       ],
-      explanation: 'Extrinsic PEEP at ~80% of intrinsic reduces trigger work without worsening trapping. Above that, problem worsens.',
+      explanation: 'Afterload = LV systolic pressure minus pleural pressure. Raising pleural pressure reduces transmural load. Book Ch. 12.',
     },
     {
       id: 'M13-Q5',
-      prompt: 'Driving pressure is:',
+      prompt: 'Volutrauma occurs when:',
       options: [
-        { label: 'Peak − PEEP', is_correct: false },
-        { label: 'Plateau − PEEP', is_correct: true },
-        { label: 'Peak − plateau', is_correct: false },
-        { label: 'Mean − PEEP', is_correct: false },
+        { label: 'The tidal volume is excessive — even at modest plateau pressure', is_correct: true },
+        { label: 'The plateau pressure is high regardless of Vt', is_correct: false },
+        { label: 'The PEEP is high', is_correct: false },
+        { label: 'Compliance is normal', is_correct: false },
       ],
-      explanation: 'Plateau − PEEP. Represents the pressure to deliver Vt across compliance. > 15 → worse outcomes in ARDS.',
+      explanation: 'Webb & Tierney rats, Dreyfuss — volume excursion is what injures, not pressure per se. Book Ch. 8.',
     },
   ],
 
   explore_card: {
-    patient_context: 'ARDS patient with reduced lung compliance. Current PEEP is 5. Your senior wants to find a "best PEEP" for this patient.',
+    patient_context: 'Moderate ARDS, day 2. Currently PEEP 5, FiO2 0.70, PaO2 58. CXR shows scattered bilateral infiltrates. Lung is recruitable but you\'re below the threshold.',
     unlocked_controls_description: [
-      { name: 'PEEP', description: 'adjustable in 1 cmH2O steps from 0 to 24.' },
+      { name: 'PEEP', description: 'range 0–24 cmH2O. Take one step at a time.' },
+      { name: 'FiO2', description: 'range 21–100%. Currently 70%.' },
     ],
     readouts_description: [
-      { name: 'Driving pressure (plateau − PEEP)', description: 'should be at its lowest at the same PEEP that maximizes compliance. This is the critical readout for this module.' },
-      { name: 'Plateau pressure', description: 'should stay below 30 for safety.' },
-      { name: 'SpO2', description: 'the clinical oxygenation signal.' },
+      { name: 'PaO2', description: 'should climb as PEEP recruits alveoli.' },
+      { name: 'SpO2', description: 'the bedside oxygenation signal.' },
+      { name: 'Plateau, driving pressure', description: 'keep an eye on the elastic load as PEEP changes.' },
     ],
     suggestions: [
-      'Move PEEP up one or two steps. Wait several breaths for plateau and driving pressure to stabilize.',
-      'Move up another step. Repeat. The driving-pressure values will form a curve.',
-      'You\'re looking for the PEEP where driving pressure is *lowest*. Below that, alveoli are collapsing. Above that, you\'re overdistending.',
-      'When you\'re ready, hit Start the task.',
+      'PEEP 0, FiO2 1.0: PaO2 stays low. Pure FiO2 strategy fails — shunt isn\'t corrected by oxygen alone.',
+      'PEEP 10, FiO2 0.50: PaO2 climbs to the 70s. The right titration zone.',
+      'PEEP 20, FiO2 0.40: oxygenation looks great but you\'ve crossed into overdistension territory.',
+      'Drop PEEP from 20 to 14: the lung settles into a more compliant working range.',
     ],
   },
-  user_facing_task: "Your senior wants you to find the best PEEP for this ARDS patient. Walk through the PEEP range in steps, allowing the lungs time to respond at each level, and then tell them which PEEP value produced the most compliant lung.",
+  user_facing_task: 'Set PEEP/FiO2 from the ARDSnet table. Your patient is on PEEP 5, FiO2 0.70, and PaO2 is 58. CXR shows scattered bilateral infiltrates. Use the ARDSnet Lower PEEP/FiO2 table to climb the ladder until PaO2 is in the 65–90 range.',
   success_criteria_display: [
-    'Sample compliance at several different PEEP values across the available range.',
-    'Identify which PEEP produced the highest compliance (lowest driving pressure).',
+    'PEEP raised to ≥10 cmH2O.',
+    'PaO2 sustained ≥65 mmHg for five breaths.',
   ],
   task_framing_style: 'B',
 
   key_points: [
-    'PEEP recruits collapsed alveoli.',
-    'Decremental titration finds the compliance peak.',
-    'Too much PEEP overdistends and impairs hemodynamics.',
-    'Anatomic shunt is not PEEP-responsive.',
-    'Driving pressure = Pplat − PEEP. < 15 in ARDS.',
+    'PEEP\'s three jobs: recruit alveoli, stabilize FRC, reduce LV afterload.',
+    'Set initial PEEP by CXR; titrate by ARDSnet table or "good enough PEEP" by severity.',
+    'Excessive PEEP overdistends — hypotension or rising dead space.',
+    'VILI is volutrauma-driven, not PEEP-driven.',
   ],
 };
 
+// MODULE_SPECS_v3 §M14 — Oxygenation Strategies.
+//
+// Pin list (do not change without recalibrating the FiO2/PEEP response):
+//   compliance: 30 (shunt physiology, severe ARDS)
+//   resistance: 11
+//   PEEP 8, FiO2 1.0: PaO2 ~65, SpO2 ~92 (shunt-limited — the FiO2 clue).
+//   PEEP 14, FiO2 1.0: PaO2 ~102, SpO2 ~99 (recruitment worked).
+//   PEEP 14, FiO2 0.60: PaO2 ~78, SpO2 ~95 (in target).
+//   PEEP 14, FiO2 0.50: PaO2 ~64, SpO2 ~92 (low end of target).
 export const M14: ModuleConfig = {
   id: 'M14',
   number: 14,
   title: 'Oxygenation Strategies',
   track: 'Strategy',
-  estimated_minutes: 14,
+  estimated_minutes: 18,
   briefing: {
-    tagline: 'Mean airway pressure is the oxygenation lever.',
-    overview: "The number that drives oxygenation is mean airway pressure. Not peak. Not plateau. Mean. Every move you make to oxygenate someone, whether it's raising PEEP, lengthening inspiratory time, or adding pressure support, is really a move to raise mean airway pressure. Once you see oxygenation through that lens, the ventilator stops feeling like a collection of separate knobs and starts looking like a single integrated control surface.",
+    tagline: 'Shunt doesn\'t fix with FiO2. Recruitment fixes shunt.',
+    overview: "Hypoxemia has five mechanisms; only two matter for the ventilated patient. Shunt: blood flows past alveoli that aren't ventilated. No amount of FiO2 in the rest of the lung helps the blood that bypassed it. The fix is recruitment — open those alveoli. V/Q mismatch: alveoli are ventilated, just poorly matched. FiO2 fixes this. The clue for shunt: high FiO2, low PaO2. The clue for V/Q mismatch: PaO2 rises smoothly with FiO2.",
     what_youll_do: [
-      'Mean airway pressure is the oxygenation lever. Everything else is a way to move it.',
-      "Longer inspiratory time raises mean without raising peak. That's a real clinical trick.",
-      "FiO2 is a separate lever. Don't lean on it forever, because high FiO2 has its own toxicity.",
+      'Distinguish shunt (FiO2-resistant) from V/Q mismatch (FiO2-responsive).',
+      'ARDSnet targets: PaO2 55–80, SpO2 88–94. SaO2 88% is enough.',
+      'FiO2 >0.6 sustained: absorption atelectasis and reactive oxygen species.',
+      'Oxygenation levers in order: FiO2, PEEP, mean airway pressure, prone.',
     ],
   },
   visible_learning_objectives: [
-    'Recognize that mean airway pressure is the primary determinant of oxygenation.',
-    'Identify the multiple levers (FiO2, PEEP, inspiratory time) that affect oxygenation.',
+    'Distinguish shunt from V/Q mismatch by the FiO2 response.',
+    'State the ARDSnet oxygenation targets: PaO2 55–80, SpO2 88–94.',
+    'Recognize the permissive-hypoxia rationale: SaO2 88% is OK if DO2 is adequate.',
+    'Name the four oxygenation levers in order of escalation.',
   ],
 
   primer_questions: [
     {
       id: 'M14-P1',
-      prompt: 'Oxygenation correlates most strongly with:',
+      prompt: 'A patient on FiO2 1.0 has PaO2 of 65. Increasing FiO2 to 1.0 from 0.8 had minimal effect. The most likely cause is:',
       options: [
-        { label: 'Peak inspiratory pressure', is_correct: false, explanation: 'Peak is max, not average. Brief excursions don\'t recruit for the rest of the cycle.' },
-        { label: 'Mean airway pressure', is_correct: true, explanation: 'Time-weighted average. Reflects total time alveoli spend at higher pressure — when gas exchange happens. PEEP, longer Ti, recruitment all work by raising mean Paw.' },
-        { label: 'Tidal volume', is_correct: false, explanation: 'Affects CO2 more than oxygenation.' },
-        { label: 'Respiratory rate', is_correct: false, explanation: 'A MV lever, affects CO2.' },
+        { label: 'V/Q mismatch — needs more oxygen', is_correct: false, explanation: 'V/Q mismatch responds to FiO2. This doesn\'t.' },
+        { label: 'Shunt — perfused but unventilated alveoli', is_correct: true, explanation: 'FiO2-resistant by definition. The fix is recruitment, not more O2. Book Ch. 4.' },
+        { label: 'Diffusion limit', is_correct: false, explanation: 'Possible but rare; FiO2 would still help to some degree.' },
+        { label: 'Hypoventilation', is_correct: false, explanation: 'Would also raise PaCO2 — would respond to FiO2.' },
       ],
     },
     {
       id: 'M14-P2',
-      prompt: 'What raises mean airway pressure WITHOUT raising peak?',
+      prompt: 'The ARDSnet target SpO2 range is:',
       options: [
-        { label: 'Increasing Ti at same pressure target', is_correct: true, explanation: 'Longer Ti = more cycle time at elevated pressure. Mean rises, peak doesn\'t.' },
-        { label: 'Increasing peak Pinsp', is_correct: false, explanation: 'Raises both.' },
-        { label: 'Decreasing rate', is_correct: false, explanation: 'Generally lowers mean.' },
-        { label: 'Decreasing PEEP', is_correct: false, explanation: 'Lowers mean.' },
+        { label: '95–100%', is_correct: false, explanation: 'Liberal oxygen — associated with worse outcomes.' },
+        { label: '88–94%', is_correct: true, explanation: 'The ARDSnet target. Book Ch. 12.' },
+        { label: '80–85%', is_correct: false, explanation: 'Too low for routine targeting.' },
+        { label: 'SpO2 doesn\'t matter — use PaO2 only', is_correct: false, explanation: 'SpO2 is the moment-to-moment bedside signal.' },
       ],
     },
     {
       id: 'M14-P3',
-      prompt: 'FiO2 and PEEP are titrated together (ARDSnet-style) because:',
+      prompt: 'Owens\'s argument against FiO2 >0.6 sustained is:',
       options: [
-        { label: 'They have identical effects', is_correct: false, explanation: 'Different mechanisms.' },
-        { label: 'Both contribute to oxygenation; balancing avoids prolonged toxic FiO2', is_correct: true, explanation: 'High FiO2 > 60% for many days → oxidative lung injury. PEEP can let FiO2 come down. ARDSnet table guides escalation.' },
-        { label: 'Ventilator enforces a fixed ratio', is_correct: false, explanation: 'Independently adjustable.' },
-        { label: 'PEEP can\'t work without high FiO2', is_correct: false, explanation: 'PEEP works at any FiO2.' },
+        { label: 'It causes ARDS', is_correct: false, explanation: 'Doesn\'t cause it; can worsen it.' },
+        { label: 'It causes absorption atelectasis and generates reactive oxygen species', is_correct: true, explanation: 'Alveolar nitrogen is what stabilizes alveoli; replacing it with 100% O2 collapses them once absorbed. Book Ch. 25.' },
+        { label: 'It\'s expensive', is_correct: false, explanation: 'Not the clinical concern.' },
+        { label: 'It can cause oxygen ignition', is_correct: false, explanation: 'That\'s a flammability issue, not the physiologic one.' },
       ],
     },
   ],
 
   scenario: {
-    preset_id: 'passive_pc_baseline',
+    preset_id: 'shunt_fio2_resistant',
     preset: {
-      mode: 'PCV',
-      settings: { pInsp: 15, respiratoryRate: 14, peep: 5, fiO2: 50, iTime: 1.0 },
-      patient: { compliance: 50, resistance: 10, spontaneousRate: 0 },
+      mode: 'VCV',
+      settings: { tidalVolume: 430, respiratoryRate: 18, peep: 8, fiO2: 100, iTime: 1.0 },
+      patient: { compliance: 30, resistance: 11, spontaneousRate: 0, heightInches: 70, gender: 'M' },
     },
-    unlocked_controls: ['iTime', 'peep', 'fiO2'],
-    visible_readouts: ['pip', 'spo2', 'pao2'],
+    unlocked_controls: ['fiO2', 'peep'],
+    visible_readouts: ['pip', 'plat', 'spo2', 'pao2', 'fio2', 'peep'],
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
   hidden_objective: {
-    kind: 'manipulation',
-    control: 'iTime',
-    condition: { type: 'delta_pct', direction: 'increase', min_pct: 50 },
-    require_acknowledgment: {
-      question: 'You lengthened Ti. What happened to peak and mean airway pressure?',
-      options: [
-        { label: 'Peak unchanged, mean rose', is_correct: true },
-        { label: 'Both rose', is_correct: false },
-        { label: 'Both fell', is_correct: false },
-        { label: 'Only peak rose', is_correct: false },
-      ],
+    kind: 'outcome',
+    readouts: {
+      fio2: { operator: '<=', value: 60 },
+      peep: { operator: '>=', value: 12 },
+      spo2: { operator: '>=', value: 88 },
     },
+    sustain_breaths: 5,
   },
 
   content_blocks: [
-    { kind: 'prose', markdown: '**Four oxygenation levers**: FiO2, PEEP, inspiratory time, and the pressure target itself. The first three raise mean airway pressure; FiO2 raises the inspired O2 concentration directly.' },
-    { kind: 'callout', tone: 'info', markdown: 'When FiO2 is already > 0.60, the next step is usually PEEP — not pushing FiO2 to 1.0. Long high FiO2 is oxidatively injurious.' },
+    { kind: 'prose', markdown: '**Two mechanisms matter.** Shunt: blood flows past alveoli that aren\'t ventilated. No amount of FiO2 in the rest of the lung helps the blood that bypassed it. The fix is *recruitment* — open those alveoli. V/Q mismatch: alveoli are ventilated, just poorly matched. FiO2 fixes this.' },
+    { kind: 'callout', tone: 'info', markdown: 'The clue for shunt: high FiO2, low PaO2. The clue for V/Q mismatch: PaO2 rises smoothly with FiO2.' },
+    {
+      kind: 'predict_observe',
+      predict: 'You\'re going to raise PEEP from 8 to 14 at FiO2 1.0. The patient has a P/F of 65 — pure shunt. What happens to PaO2?',
+      observe: 'PaO2 climbs from 65 to over 100. The lung was recruitable; PEEP did what FiO2 couldn\'t. Now lower FiO2 to 0.60 — PaO2 settles in the 70s and you\'re back to a non-toxic O2 dose.',
+      awaits_control: 'peep',
+    },
+    { kind: 'callout', tone: 'warn', markdown: 'SaO2 88% is acceptable if cardiac output and Hb are OK. The shape of the oxyhemoglobin curve means PaO2 only has to be ~56 to give SaO2 88. Don\'t chase a PaO2 of 100 with FiO2 1.0 when 60 on 0.6 will do.' },
+    { kind: 'prose', markdown: '**Four levers, escalating order.** FiO2 → PEEP → mean airway pressure (longer Ti, IRV, APRV) → prone positioning. Each lever has a ceiling. When you\'re hitting it, move to the next.' },
   ],
 
   hint_ladder: {
-    tier1: 'Try changing Ti. Watch the PIP value.',
-    tier2: 'Ti controls how long each breath holds its pressure. Lengthening it raises the time-averaged pressure.',
-    tier3: { hint_text: 'Use "Show me".', demonstration: { control: 'iTime', target_value: 1.6 } },
+    tier1: 'Your FiO2 is at the ceiling but the PaO2 hasn\'t budged. What does that tell you about the mechanism?',
+    tier2: 'Raise PEEP to recruit. Once PaO2 is above 90, start lowering FiO2 in steps to 0.60 or less.',
+    tier3: { hint_text: 'Set PEEP 14, then drop FiO2 to 60%.', demonstration: { control: 'peep', target_value: 14 } },
   },
 
   summative_quiz: [
     {
       id: 'M14-Q1',
-      prompt: 'Improve oxygenation on PC without raising peak:',
+      prompt: 'A patient on FiO2 0.60 has SpO2 92%, PaO2 78. The clinical interpretation is:',
       options: [
-        { label: 'Increase rate', is_correct: false },
-        { label: 'Increase Ti', is_correct: true },
-        { label: 'Decrease PEEP', is_correct: false },
-        { label: 'Decrease FiO2', is_correct: false },
+        { label: 'Under-oxygenated — raise FiO2', is_correct: false },
+        { label: 'Within ARDSnet target — leave alone', is_correct: true },
+        { label: 'Over-oxygenated — lower FiO2 to 0.21', is_correct: false },
+        { label: 'Indicates shunt', is_correct: false },
       ],
-      explanation: 'Longer Ti keeps alveoli pressurized for more of each cycle → higher mean without higher peak.',
+      explanation: 'PaO2 55–80 and SpO2 88–94 is the ARDSnet target. Don\'t chase higher numbers. Book Ch. 12.',
     },
     {
       id: 'M14-Q2',
-      prompt: 'FiO2 0.90, PEEP 8, SpO2 88%. Next step (ARDSnet-style):',
+      prompt: 'Conservative oxygen therapy (PaO2 70–100, SpO2 94–98) compared to liberal (PaO2 up to 150, SpO2 97–100) in ICU patients:',
       options: [
-        { label: 'Reduce FiO2', is_correct: false },
-        { label: 'Increase PEEP before further FiO2', is_correct: true },
-        { label: 'Both to max', is_correct: false },
-        { label: 'Add iNO', is_correct: false },
+        { label: 'Increased mortality', is_correct: false },
+        { label: 'Reduced mortality in a recent RCT', is_correct: true },
+        { label: 'Made no difference', is_correct: false },
+        { label: 'Increased length of stay', is_correct: false },
       ],
-      explanation: 'FiO2 very high; next is PEEP. NO is rescue, not first-line.',
+      explanation: 'Conservative oxygen therapy has been associated with reduced mortality. Book Ch. 8, cited in Owens.',
     },
     {
       id: 'M14-Q3',
-      prompt: 'Mean airway pressure depends on all EXCEPT:',
+      prompt: 'DO2 (oxygen delivery) is:',
       options: [
-        { label: 'PEEP', is_correct: false },
-        { label: 'Ti', is_correct: false },
-        { label: 'Peak Pinsp', is_correct: false },
-        { label: 'FiO2', is_correct: true },
+        { label: 'PaO2 × Hb', is_correct: false },
+        { label: 'SaO2 × Hb', is_correct: false },
+        { label: 'CaO2 × CO × 10', is_correct: true },
+        { label: 'PaO2 ÷ FiO2', is_correct: false },
       ],
-      explanation: 'FiO2 = gas composition, not pressure profile.',
+      explanation: 'The full equation. SaO2 matters more than PaO2 because dissolved O2 is a small fraction of total content. Book Ch. 5.',
     },
     {
       id: 'M14-Q4',
-      prompt: 'ARDS improved. Settings FiO2 0.5, PEEP 12, SpO2 96%. Next step:',
+      prompt: 'In a patient with 30% shunt, increasing FiO2 from 0.60 to 1.0 will:',
       options: [
-        { label: 'Reduce FiO2 toward 0.4', is_correct: true },
-        { label: 'Reduce PEEP toward 5', is_correct: false },
-        { label: 'Reduce both simultaneously', is_correct: false },
-        { label: 'Maintain', is_correct: false },
+        { label: 'Substantially improve PaO2', is_correct: false },
+        { label: 'Have minimal effect on PaO2', is_correct: true },
+        { label: 'Lower PaCO2', is_correct: false },
+        { label: 'Improve V/Q matching', is_correct: false },
       ],
-      explanation: 'FiO2 down first (toxic exposure). PEEP held until oxygenation reliably stable, then weaned cautiously.',
+      explanation: 'Shunt is FiO2-resistant. The shunted blood never sees the alveolar gas. Book Ch. 4.',
     },
     {
       id: 'M14-Q5',
-      prompt: 'Very long Ti (inverse I:E) main risk:',
+      prompt: 'The four levers for improving oxygenation, roughly in order of escalation, are:',
       options: [
-        { label: 'Hypocarbia', is_correct: false },
-        { label: 'Insufficient expiratory time → auto-PEEP', is_correct: true },
-        { label: 'Reduced FiO2 delivery', is_correct: false },
-        { label: 'Hyperoxia', is_correct: false },
+        { label: 'PEEP, FiO2, prone, ECMO', is_correct: false },
+        { label: 'FiO2, PEEP, mean airway pressure (longer Ti, IRV, APRV), prone positioning', is_correct: true },
+        { label: 'Bronchodilators, FiO2, PEEP, paralytics', is_correct: false },
+        { label: 'Sedation, FiO2, PEEP, diuresis', is_correct: false },
       ],
-      explanation: 'Long Ti at expense of expiratory time → gas trapping.',
+      explanation: 'FiO2 first because it\'s easy. PEEP next because shunt doesn\'t respond to FiO2. Mean Paw next via Ti or APRV. Prone when you\'ve maxed the rest. Book Ch. 4, Ch. 12, Ch. 17.',
     },
   ],
 
   explore_card: {
-    patient_context: 'Passive patient on pressure control. You\'re learning how the oxygenation levers actually work — specifically, that **mean airway pressure** is the value that drives oxygenation, not peak.',
+    patient_context: 'Severe ARDS, P/F ratio ~65. Already on FiO2 1.0 and the PaO2 is only 65. That mismatch is the clue: this is shunt, not V/Q.',
     unlocked_controls_description: [
-      { name: 'I-time (inspiratory time)', description: 'how long each breath holds its pressure. Range 0.3–3.0 seconds.' },
-      { name: 'PEEP', description: 'range 0–24 cmH2O.' },
-      { name: 'FiO2', description: 'range 21–100%.' },
+      { name: 'PEEP', description: 'range 0–24 cmH2O. Recruit before chasing FiO2.' },
+      { name: 'FiO2', description: 'range 21–100%. Wean once PaO2 has a buffer.' },
     ],
     readouts_description: [
-      { name: 'Peak pressure', description: 'the maximum during each breath.' },
-      { name: 'SpO2', description: 'the clinical oxygenation signal.' },
-      { name: 'PaO2', description: 'arterial oxygen tension.' },
+      { name: 'PaO2 and SpO2', description: 'climb together once recruitment works.' },
+      { name: 'PIP, plateau', description: 'watch as PEEP rises.' },
     ],
     suggestions: [
-      'Try increasing PEEP by 4. Both peak and mean rise together — straightforward.',
-      'Reset. Try *only* lengthening I-time from 1.0 to 1.5 seconds. Watch the waveform carefully. The peak doesn\'t change, but each breath spends more time pressurized.',
-      'That\'s the clinical trick of M14: longer inspiratory time raises mean airway pressure without raising peak. It\'s a way to oxygenate without barotrauma.',
-      'FiO2 changes the inspired oxygen but doesn\'t move the pressure waveform at all. Independent lever.',
+      'FiO2 1.0, PEEP 8: PaO2 stays in the 60s. Shunt-limited.',
+      'FiO2 1.0, PEEP 14: PaO2 jumps to over 100. Recruitment worked.',
+      'FiO2 0.50, PEEP 14: PaO2 around 64, SpO2 around 92. Right in the ARDSnet band.',
     ],
   },
-  user_facing_task: "Your senior wants to know whether you understand the relationship between inspiratory time and mean airway pressure. Increase the inspiratory time meaningfully — without changing anything else — and then describe what happened to peak pressure and mean airway pressure.",
+  user_facing_task: 'De-escalate FiO2 by recruiting. Your patient is on FiO2 1.0 with PaO2 only 65 — this is shunt, not V/Q mismatch. Climbing FiO2 won\'t fix it. Raise PEEP to recruit alveoli, then lower FiO2 to 60% or less while keeping SpO2 in the ARDSnet target band.',
   success_criteria_display: [
-    'Increase inspiratory time by at least 50% from the starting value.',
-    'Identify what happened to peak pressure and mean airway pressure.',
+    'PEEP raised to ≥12 cmH2O.',
+    'FiO2 dropped to ≤60%.',
+    'SpO2 sustained ≥88% for five breaths.',
   ],
-  task_framing_style: 'A',
+  task_framing_style: 'B',
 
   key_points: [
-    'Mean airway pressure drives oxygenation.',
-    'Levers: FiO2, PEEP, Ti, peak pressure target.',
-    'FiO2 is independent of pressure profile (no effect on mean Paw).',
-    'Wean FiO2 before PEEP; avoid prolonged FiO2 > 0.60.',
-    'Inverse I:E risks auto-PEEP.',
+    'Shunt and V/Q mismatch — distinguish by the FiO2 response.',
+    'ARDSnet target: PaO2 55–80, SpO2 88–94.',
+    'FiO2 >0.6 sustained: absorption atelectasis, reactive oxygen species.',
+    'Levers in order: FiO2 → PEEP → mean airway pressure → prone.',
   ],
 };

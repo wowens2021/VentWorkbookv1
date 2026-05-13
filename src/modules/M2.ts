@@ -1,16 +1,13 @@
 import type { ModuleConfig, TrackerConfig, ControlName, ReadoutName } from '../shell/types';
 
 /**
- * Click-target recognition helper. Per MASTER_SHELL_v3 §6 M2 + Pattern B,
- * vocabulary modules where the learning is "read the display" must use
- * click-target mode — the learner clicks the actual reading or control,
- * not a multiple-choice text option.
+ * M2 — Vocabulary and the Vent Display
+ * Track: Foundations · Archetype: vocabulary (click-target) · 13 min
+ * Anchor chapters: VB Ch. 1, Ch. 3, Ch. 7
  *
- * The `options` array is kept as the canonical record (drives telemetry +
- * "Show me" fallback) but is not shown to the learner when `click_targets`
- * is non-empty; the question banner appears above the Measured Values
- * strip and the matching tiles become clickable.
+ * Specced verbatim against docs/MODULE_SPECS_v3.md §M2.
  */
+
 function clickTargetRecognition(
   prompt_id: string,
   question: string,
@@ -28,16 +25,11 @@ function clickTargetRecognition(
       prompt_id,
       trigger: { kind: 'on_load' },
       question,
-      options: targets.map(t => ({
-        label: t.label,
-        is_correct: t.is_correct,
-        explanation: t.explanation,
-      })),
+      options: targets.map(t => ({ label: t.label, is_correct: t.is_correct, explanation: t.explanation })),
       click_targets: targets.map(t => ({
-        element:
-          t.kind === 'readout'
-            ? { kind: 'readout', name: t.name as ReadoutName }
-            : { kind: 'control', name: t.name as ControlName },
+        element: t.kind === 'readout'
+          ? { kind: 'readout', name: t.name as ReadoutName }
+          : { kind: 'control', name: t.name as ControlName },
         label: t.label,
         is_correct: t.is_correct,
         explanation: t.explanation,
@@ -51,253 +43,272 @@ export const M2: ModuleConfig = {
   number: 2,
   title: 'Vocabulary and the Vent Display',
   track: 'Foundations',
-  estimated_minutes: 12,
+  estimated_minutes: 13,
   briefing: {
     tagline: 'Read any vent display in under a minute.',
-    overview: "Every ventilator says the same things in slightly different ways. Vt, Pplat, PEEP, MV, RR. Once you know what each label means and where it lives on the screen, you can walk up to any ventilator and orient yourself in under a minute. The other thing worth knowing right now: every value on the display is either something you set, or something the patient and machine are doing as a result. Confusing the two is one of the most common bedside mistakes.",
+    overview:
+      "Every ventilator says the same things in slightly different ways. Vt, Pplat, PEEP, MV, RR. Once you know what each label means and where it lives on the screen, you can walk up to any ventilator and orient yourself in under a minute. The other thing worth knowing right now: every value on the display is either something you set, or something the patient and machine are doing as a result. Confusing the two is one of the most common bedside mistakes.",
     what_youll_do: [
       'Set values and measured values are different categories, even when they share a name.',
       'Plateau pressure is what the alveoli actually feel. Peak pressure includes the cost of pushing gas through tubes.',
       'Minute ventilation is just rate times tidal volume. Most "where did the CO2 go" questions start here.',
     ],
   },
+
   visible_learning_objectives: [
-    'Match ventilator terminology to display elements.',
-    'Distinguish set values from measured values.',
+    'Define eight bedside terms: Vt, MVe, PEEP, FiO2, PIP, Pplat, I:E, set rate.',
+    'For each term, point to it on a live display.',
+    'State which terms are set vs measured.',
+    'Predict which readouts change when each control moves.',
   ],
 
   primer_questions: [
     {
       id: 'M2-P1',
-      prompt: "What is the difference between 'set rate' and 'measured rate'?",
+      prompt: 'Compliance, in the simplest form, is:',
       options: [
-        { label: 'They are the same thing displayed in different units', is_correct: false, explanation: 'These are conceptually different values. They may be equal in a fully passive patient, but their meanings are not interchangeable.' },
-        { label: "Set rate is the operator's input; measured rate is what the patient is actually doing", is_correct: true, explanation: 'Every ventilator distinguishes what you tell it (set) from what the system actually does (measured). When a patient triggers breaths above the set rate, measured exceeds set — and that gap is clinically meaningful.' },
-        { label: 'Set rate is shown only in volume modes; measured rate only in pressure modes', is_correct: false, explanation: 'Both set and measured values exist in every mode.' },
-        { label: 'Measured rate is during inspiration; set rate during expiration', is_correct: false, explanation: 'Rate is per-minute, not per-phase.' },
+        { label: 'Change in volume divided by change in pressure.', is_correct: true, explanation: 'Owens, Commandment I. Normal respiratory-system compliance is ~100 mL/cmH2O off the vent and 70–80 on it.' },
+        { label: 'Change in pressure divided by change in volume.', is_correct: false, explanation: "That's elastance — the reciprocal." },
+        { label: 'The same as airway resistance.', is_correct: false, explanation: 'Compliance is a property of the lung-and-chest-wall system; resistance is a property of the airways.' },
+        { label: 'A reading on the vent display labeled "C".', is_correct: false, explanation: 'Most vents don\'t display compliance directly. You compute it: Vt / (Pplat − PEEP).' },
       ],
     },
     {
       id: 'M2-P2',
-      prompt: 'Plateau pressure is best understood as:',
+      prompt: 'In VCV, Vte and set Vt should be nearly equal. If Vte is consistently 90 mL less than set Vt, the most common reason is:',
       options: [
-        { label: 'The highest pressure the ventilator produces during a breath', is_correct: false, explanation: 'That describes peak pressure, not plateau. Peak includes the resistive component of pushing gas through tubes; plateau strips that away.' },
-        { label: 'The pressure measured during a brief inspiratory hold, reflecting alveolar pressure', is_correct: true, explanation: 'When you pause flow at end-inspiration, pressure equilibrates with the alveoli. This is the gateway to thinking about compliance vs. resistance.' },
-        { label: 'The pressure remaining at end-expiration', is_correct: false, explanation: "That's PEEP." },
-        { label: 'The average pressure across the entire breath', is_correct: false, explanation: "That's mean airway pressure, which matters for oxygenation but is not plateau." },
+        { label: 'A leak — cuff, circuit, or bronchopleural fistula.', is_correct: true, explanation: 'Volume in ≠ volume out → something escaped.' },
+        { label: "The patient's lungs absorbed it.", is_correct: false, explanation: "Lungs don't absorb air; gas exchange is at the alveolar level and is a tiny fraction of Vt." },
+        { label: 'PEEP is too low.', is_correct: false, explanation: "PEEP doesn't change Vte directly in VCV." },
+        { label: 'The flow trigger is too sensitive.', is_correct: false, explanation: 'Affects triggering, not delivered volume.' },
       ],
     },
     {
       id: 'M2-P3',
-      prompt: 'Minute ventilation is calculated as:',
+      prompt: 'I:E ratio of 1:2 on the display means:',
       options: [
-        { label: 'Respiratory rate × tidal volume', is_correct: true, explanation: 'Minute ventilation is how much air moves per minute — breaths per minute times volume per breath. The foundational equation.' },
-        { label: 'Respiratory rate ÷ tidal volume', is_correct: false, explanation: 'That ratio is the rapid shallow breathing index (RSBI), a weaning predictor — not minute ventilation.' },
-        { label: 'Tidal volume × peak pressure', is_correct: false, explanation: 'Pressure and volume are not multiplied to get a flow-per-time quantity.' },
-        { label: 'PEEP × respiratory rate', is_correct: false, explanation: 'PEEP is a pressure, not a volume; this combination has no physiologic meaning.' },
+        { label: 'Inspiration takes twice as long as expiration.', is_correct: false, explanation: "That's 2:1 (inverse ratio)." },
+        { label: 'Expiration takes twice as long as inspiration.', is_correct: true, explanation: 'Normal-ish for adults at rest. Book Ch. 9.' },
+        { label: 'The set rate is 1, and the actual is 2.', is_correct: false, explanation: "I:E isn't about rate." },
+        { label: "There's two seconds for inspiration and one for expiration.", is_correct: false, explanation: "That's the inverse ratio; obstructive patients will hate it." },
       ],
     },
   ],
 
   scenario: {
-    preset_id: 'passive_baseline_vc',
+    preset_id: 'M2_healthy_baseline_vcv',
     preset: {
+      // Same patient as M1. Vocabulary doesn't require sickness.
       mode: 'VCV',
       settings: { tidalVolume: 450, respiratoryRate: 14, peep: 5, fiO2: 40, iTime: 1.0 },
-      patient: { compliance: 70, resistance: 10, spontaneousRate: 0 },
+      patient: { compliance: 55, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
-    unlocked_controls: [],
-    visible_readouts: ['pip', 'plat', 'vte', 'peep', 'fio2', 'actualRate', 'mve', 'ieRatio'],
+    // Adds iTime to M1's unlocks — last term in the vocabulary is I:E,
+    // and the only way to see I:E move on the display is to move iTime.
+    unlocked_controls: ['tidalVolume', 'respiratoryRate', 'peep', 'fiO2', 'iTime'],
+    visible_readouts: ['pip', 'plat', 'vte', 'mve', 'totalPeep', 'autoPeep', 'actualRate', 'ieRatio'],
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
-  // Eight vocabulary recognitions in click-target mode. Per MASTER_SHELL_v3
-  // §6 M2 + Pattern B: vocabulary modules where the learning is "read the
-  // display" must let the learner click the actual reading or control on
-  // the sim. The strict-order sequence ensures the learner sees each
-  // question in deliberate succession; click feedback (wrong tile →
-  // popup with explanation; correct tile → popup + Continue) advances.
+  // Eight click-target recognitions in any order. These eight terms
+  // collectively define the rest of the curriculum — a learner who
+  // confuses Vt with Vte at M3 will be lost by M7.
   hidden_objective: {
     kind: 'compound',
-    sequence: 'strict',
+    sequence: 'any_order',
+    reset_between: false,
     children: [
-      clickTargetRecognition(
-        'M2-vt',
-        'Click the reading that shows **tidal volume (Vt)** — the volume of one breath.',
-        [
-          { kind: 'readout', name: 'vte', label: 'Vte', is_correct: true, explanation: 'Vte is the volume of one breath (mL). Typical adult 350–600. Vt or Vte is the standard label.' },
-          { kind: 'readout', name: 'mve', label: 'VE', is_correct: false, explanation: 'VE is per-minute volume (Vt × RR), not per-breath.' },
-          { kind: 'readout', name: 'actualRate', label: 'RR', is_correct: false, explanation: 'RR is a frequency (breaths/min), not a volume.' },
-          { kind: 'readout', name: 'pip', label: 'PIP', is_correct: false, explanation: 'PIP is a pressure, not a volume.' },
-        ],
-      ),
-      clickTargetRecognition(
-        'M2-ve',
-        'Click the reading that shows **minute ventilation (VE)** — total volume per minute.',
-        [
-          { kind: 'readout', name: 'mve', label: 'VE', is_correct: true, explanation: 'VE = Vt × RR, in L/min. Typical adult 6–10.' },
-          { kind: 'readout', name: 'vte', label: 'Vte', is_correct: false, explanation: 'Vte is per-breath, not per-minute.' },
-          { kind: 'readout', name: 'actualRate', label: 'RR', is_correct: false, explanation: 'RR is a frequency.' },
-          { kind: 'readout', name: 'totalPeep', label: 'tPEEP', is_correct: false, explanation: 'PEEP is a pressure.' },
-        ],
-      ),
-      clickTargetRecognition(
-        'M2-peep',
-        'Click the **PEEP** control — the end-expiratory floor pressure the operator dialed in.',
-        [
-          { kind: 'control', name: 'peep', label: 'PEEP control', is_correct: true, explanation: 'PEEP sets the floor pressure at end-expiration. Typical adult 5–15 cmH2O.' },
-          { kind: 'readout', name: 'pip', label: 'PIP', is_correct: false, explanation: 'PIP is the peak pressure, not the floor.' },
-          { kind: 'readout', name: 'plat', label: 'Pplat', is_correct: false, explanation: 'Pplat is mid-inspiratory plateau pressure.' },
-          { kind: 'readout', name: 'drivingPressure', label: 'DP', is_correct: false, explanation: 'Driving pressure = Pplat − PEEP. It uses PEEP but is not PEEP.' },
-        ],
-      ),
-      clickTargetRecognition(
-        'M2-fio2',
-        'Click the **FiO2** control — the inspired oxygen fraction.',
-        [
-          { kind: 'control', name: 'fiO2', label: 'FiO2 control', is_correct: true, explanation: 'FiO2 is the fraction of inspired oxygen (21–100%). Operator-set.' },
-          { kind: 'control', name: 'peep', label: 'PEEP control', is_correct: false, explanation: 'PEEP is a pressure setting, not gas concentration.' },
-          { kind: 'readout', name: 'mve', label: 'VE', is_correct: false, explanation: 'VE is minute ventilation — a volume per time.' },
-          { kind: 'control', name: 'respiratoryRate', label: 'Rate control', is_correct: false, explanation: 'Rate sets breaths per minute, not oxygen fraction.' },
-        ],
-      ),
-      clickTargetRecognition(
-        'M2-pip',
-        'Click the reading that shows **peak inspiratory pressure (PIP)** — the highest pressure during a breath.',
-        [
-          { kind: 'readout', name: 'pip', label: 'PIP', is_correct: true, explanation: 'PIP is the maximum pressure during inspiration — the top of the Airway Pressure waveform.' },
-          { kind: 'readout', name: 'plat', label: 'Pplat', is_correct: false, explanation: 'Pplat is lower than peak — the resistive component is removed during the inspiratory hold.' },
-          { kind: 'readout', name: 'totalPeep', label: 'tPEEP', is_correct: false, explanation: 'PEEP is the floor pressure, not the peak.' },
-          { kind: 'readout', name: 'drivingPressure', label: 'DP', is_correct: false, explanation: 'Driving pressure ≠ peak pressure.' },
-        ],
-      ),
-      clickTargetRecognition(
-        'M2-pplat',
-        'Click the reading that shows **plateau pressure (Pplat)** — the alveolar pressure during an inspiratory hold.',
-        [
-          { kind: 'readout', name: 'plat', label: 'Pplat', is_correct: true, explanation: 'Pplat is alveolar pressure with flow stopped, revealed by holding inspiration. The number that matters for compliance.' },
-          { kind: 'readout', name: 'pip', label: 'PIP', is_correct: false, explanation: 'PIP includes the resistive component; Pplat does not.' },
-          { kind: 'readout', name: 'totalPeep', label: 'tPEEP', is_correct: false, explanation: 'PEEP is the end-expiratory baseline, not the plateau.' },
-          { kind: 'readout', name: 'mve', label: 'VE', is_correct: false, explanation: 'VE is a volume, not a pressure.' },
-        ],
-      ),
-      clickTargetRecognition(
-        'M2-ie',
-        'Click the reading that shows the **I:E ratio** — inspiratory time vs expiratory time.',
-        [
-          { kind: 'readout', name: 'ieRatio', label: 'I:E', is_correct: true, explanation: 'I:E expresses inspiratory time relative to expiratory time within one breath cycle (e.g. 1:2).' },
-          { kind: 'readout', name: 'actualRate', label: 'RR', is_correct: false, explanation: 'RR is a frequency, not a ratio.' },
-          { kind: 'readout', name: 'rsbi', label: 'RSBI', is_correct: false, explanation: 'RSBI is the rapid shallow breathing index (RR / Vt), used for weaning prediction.' },
-          { kind: 'readout', name: 'drivingPressure', label: 'DP', is_correct: false, explanation: 'Driving pressure is unrelated to timing.' },
-        ],
-      ),
-      clickTargetRecognition(
-        'M2-rr',
-        'Last one — click the **Rate** control that shows the **set respiratory rate** chosen by the operator.',
-        [
-          { kind: 'control', name: 'respiratoryRate', label: 'Rate control', is_correct: true, explanation: 'The Rate setting is operator-chosen. The measured RR (in the Measured Values strip) may exceed it if the patient triggers extra breaths.' },
-          { kind: 'readout', name: 'actualRate', label: 'Actual RR', is_correct: false, explanation: 'Actual RR is the measured result, not the operator setting. They can differ.' },
-          { kind: 'readout', name: 'vte', label: 'Vte', is_correct: false, explanation: 'Vte is a volume, not a rate.' },
-          { kind: 'control', name: 'fiO2', label: 'FiO2 control', is_correct: false, explanation: 'FiO2 is the oxygen fraction, not the rate.' },
-        ],
-      ),
+      clickTargetRecognition('M2-vt', 'Click the set tidal volume control — the order you ordered.', [
+        { kind: 'control', name: 'tidalVolume', label: 'Set Vt', is_correct: true, explanation: 'Set Vt is the order. The vent delivers it (in VCV) and you read Vte to confirm.' },
+        { kind: 'readout', name: 'vte', label: 'Vte', is_correct: false, explanation: 'Vte is the *exhaled* tidal volume — the measured report, not the order.' },
+        { kind: 'readout', name: 'mve', label: 'MVe', is_correct: false, explanation: 'MVe is per-minute volume (Vte × actual rate). Not per breath.' },
+        { kind: 'readout', name: 'pip', label: 'PIP', is_correct: false, explanation: 'PIP is a pressure measurement, not a volume.' },
+      ]),
+      clickTargetRecognition('M2-vte', 'Click the exhaled tidal volume readout — what the patient actually exhaled.', [
+        { kind: 'readout', name: 'vte', label: 'Vte', is_correct: true, explanation: 'Vte ends in *e* for exhaled. The flow sensor measures it on the way out.' },
+        { kind: 'control', name: 'tidalVolume', label: 'Set Vt', is_correct: false, explanation: 'That is the order. Vte is the report.' },
+        { kind: 'readout', name: 'mve', label: 'MVe', is_correct: false, explanation: 'MVe is per minute; Vte is per breath.' },
+        { kind: 'readout', name: 'plat', label: 'Pplat', is_correct: false, explanation: 'Pplat is a pressure measurement, not a volume.' },
+      ]),
+      clickTargetRecognition('M2-mve', 'Click the minute ventilation readout — how much air this patient moves per minute.', [
+        { kind: 'readout', name: 'mve', label: 'MVe', is_correct: true, explanation: 'MVe = Vte × actual rate. L/min, not mL.' },
+        { kind: 'readout', name: 'vte', label: 'Vte', is_correct: false, explanation: 'Vte is one breath; MVe is per minute.' },
+        { kind: 'control', name: 'tidalVolume', label: 'Set Vt', is_correct: false, explanation: 'Set Vt × set rate is *set* MVe — close, but the measured number on the display is MVe.' },
+        { kind: 'readout', name: 'actualRate', label: 'Actual rate', is_correct: false, explanation: 'Actual rate is a frequency, not a volume.' },
+      ]),
+      clickTargetRecognition('M2-peep', "Click the PEEP control — the end-expiratory floor you're ordering.", [
+        { kind: 'control', name: 'peep', label: 'PEEP (control)', is_correct: true, explanation: 'Set PEEP is the order. Total PEEP is the report — they should match unless auto-PEEP is present.' },
+        { kind: 'readout', name: 'totalPeep', label: 'Total PEEP (readout)', is_correct: false, explanation: "Total PEEP is what's *measured* — it can be higher than set if auto-PEEP is present." },
+        { kind: 'readout', name: 'autoPeep', label: 'Auto-PEEP', is_correct: false, explanation: 'Auto-PEEP is the gap (Total − set). A problem to find, not a setting.' },
+        { kind: 'control', name: 'fiO2', label: 'FiO2', is_correct: false, explanation: 'FiO2 is oxygen, not pressure.' },
+      ]),
+      clickTargetRecognition('M2-fio2', 'Click the FiO2 control.', [
+        { kind: 'control', name: 'fiO2', label: 'FiO2', is_correct: true, explanation: 'FiO2 is the fraction of inspired oxygen, 21–100%. Operator-set.' },
+        { kind: 'control', name: 'peep', label: 'PEEP', is_correct: false, explanation: 'PEEP is pressure, not gas composition.' },
+        { kind: 'readout', name: 'mve', label: 'MVe', is_correct: false, explanation: 'MVe is a volume, not a gas fraction.' },
+        { kind: 'control', name: 'respiratoryRate', label: 'Rate', is_correct: false, explanation: 'Rate sets breaths per minute, not oxygen.' },
+      ]),
+      clickTargetRecognition('M2-pip', 'Click the peak airway pressure readout.', [
+        { kind: 'readout', name: 'pip', label: 'PIP', is_correct: true, explanation: 'PIP = peak inspiratory pressure. The highest point of each inspiration.' },
+        { kind: 'readout', name: 'plat', label: 'Pplat', is_correct: false, explanation: 'Pplat is the alveolar pressure during an inspiratory hold — lower than PIP.' },
+        { kind: 'readout', name: 'totalPeep', label: 'Total PEEP', is_correct: false, explanation: 'Total PEEP is the floor pressure, not the peak.' },
+        { kind: 'readout', name: 'drivingPressure', label: 'DP', is_correct: false, explanation: 'Driving pressure = Pplat − PEEP. Not the same as peak.' },
+      ]),
+      clickTargetRecognition('M2-plat', 'Click the alveolar (plateau) pressure readout.', [
+        { kind: 'readout', name: 'plat', label: 'Pplat', is_correct: true, explanation: 'Pplat is alveolar pressure with flow stopped — the number that matters for compliance.' },
+        { kind: 'readout', name: 'pip', label: 'PIP', is_correct: false, explanation: 'PIP includes airway resistance; Pplat is alveolar pressure with flow stopped.' },
+        { kind: 'readout', name: 'totalPeep', label: 'Total PEEP', is_correct: false, explanation: 'Total PEEP is the end-expiratory floor, not the inspiratory plateau.' },
+        { kind: 'readout', name: 'drivingPressure', label: 'DP', is_correct: false, explanation: 'Driving pressure uses Pplat but is Pplat − PEEP.' },
+      ]),
+      clickTargetRecognition('M2-ie', 'Click the I:E ratio readout.', [
+        { kind: 'readout', name: 'ieRatio', label: 'I:E', is_correct: true, explanation: 'I:E is the ratio of inspiration to expiration time. Derived from rate and I-time.' },
+        { kind: 'control', name: 'iTime', label: 'I-time (control)', is_correct: false, explanation: 'I-time sets it; I:E is the derived ratio.' },
+        { kind: 'readout', name: 'actualRate', label: 'Actual rate', is_correct: false, explanation: 'Rate is a frequency; I:E is a ratio.' },
+        { kind: 'readout', name: 'rsbi', label: 'RSBI', is_correct: false, explanation: 'RSBI is rate ÷ tidal volume — a weaning index, not I:E.' },
+      ]),
     ],
   },
 
   content_blocks: [
-    { kind: 'prose', markdown: '**Set vs. measured.** Every value on the ventilator display is one of two things: a setting you (or the previous clinician) chose, or a measurement of what the system is actually doing. Confusing them is the most common bedside error.' },
-    { kind: 'callout', tone: 'info', markdown: 'A gap between **set Vt** and **delivered Vt** usually means a leak. A gap between **set rate** and **measured rate** usually means patient effort.' },
-    { kind: 'prose', markdown: 'Eight terms to know cold: tidal volume (Vt), minute ventilation (VE or MV), PEEP, FiO2, peak pressure (PIP), plateau pressure (Pplat), I:E ratio, and respiratory rate (RR — both set and measured).' },
+    {
+      kind: 'prose',
+      markdown:
+        "Eight terms, and that's most of the bedside language. **Four are set by you**: Vt, rate, PEEP, FiO2. **Three are measured**: PIP, Vte, Pplat. **One is derived**: I:E. Confuse Vt with Vte, or PIP with Pplat, and the next 17 modules won't make sense.",
+    },
+    {
+      kind: 'callout',
+      tone: 'info',
+      markdown:
+        "Set values are **orders**. Measured values are **reports**. The vent doesn't decide; it executes. If the report doesn't match the order — leak, fight, or broken sensor.",
+    },
+    {
+      kind: 'predict_observe',
+      awaits_control: 'iTime',
+      predict:
+        'If you shorten the I-time from 1.0 s to 0.6 s at a rate of 14, what happens to the I:E ratio readout?',
+      observe:
+        'I:E lengthens — from about 1:3 to about 1:6. Less time inhaling, more time exhaling per breath. Obstructive patients would thank you.',
+    },
+    {
+      kind: 'figure',
+      caption: 'PIP is the peak; Pplat is the alveolar reading you only see when flow stops.',
+      ascii:
+        'Pressure ↑\n' +
+        '         |        ┌─── PIP\n' +
+        '         |       ╱│\n' +
+        '         |      ╱ │  ┌── Pplat (after inspiratory hold)\n' +
+        '         |     ╱  └──┤\n' +
+        '         |    ╱      │\n' +
+        '         |   ╱       │\n' +
+        '         |__/        └─── PEEP\n' +
+        '         +─── insp ─────── hold ── exp ─→ time',
+    },
+    {
+      kind: 'formative',
+      question: 'Which of these is **not** a derived value?',
+      options: [
+        { label: 'I:E ratio', is_correct: false },
+        { label: 'Compliance', is_correct: false },
+        { label: 'MVe (minute ventilation)', is_correct: false },
+        { label: 'Vte', is_correct: true },
+      ],
+      answer:
+        'Vte is measured — what the flow sensor saw on the way out. I:E is derived from rate and I-time. Compliance is derived from Vt, Pplat, and PEEP. MVe is derived from Vte and actual rate.',
+    },
   ],
 
   hint_ladder: {
-    tier1: 'Look at the Measured Values strip on the right. Each label corresponds to a specific term.',
-    tier2: 'Vte is the volume of one breath. VE is the volume per minute (Vt × RR).',
-    tier3: { hint_text: 'Use "Show me" to highlight each readout.' },
+    tier1: "Eight prompts, in any order. Wrong clicks just explain — don't worry about getting one wrong.",
+    tier2: 'Set values live in the controls column (left side of the sim). Measured values live in the readouts strip (top of the sim).',
+    tier3: { hint_text: 'Use "Show me" to auto-fill the next correct click with its explanation.' },
   },
 
   summative_quiz: [
     {
       id: 'M2-Q1',
-      prompt: "On a ventilator display, you see 'Pplat 22' next to a button labeled 'inspiratory hold.' What does 22 represent?",
+      prompt: 'Static compliance of the respiratory system is calculated at the bedside as:',
       options: [
-        { label: 'The peak inspiratory pressure', is_correct: false },
-        { label: 'The pressure during a brief end-inspiratory pause, reflecting alveolar pressure', is_correct: true },
-        { label: 'The pressure at end-expiration', is_correct: false },
-        { label: 'The driving pressure', is_correct: false },
+        { label: 'Vt ÷ (PIP − PEEP)', is_correct: false, explanation: "That's *dynamic* compliance — uses PIP and includes resistance." },
+        { label: 'Vt ÷ (Pplat − PEEP)', is_correct: true, explanation: 'Uses Pplat — flow has stopped, so resistance is out of the equation.' },
+        { label: 'PIP × rate', is_correct: false, explanation: 'Means nothing physiologically.' },
+        { label: 'Pplat × Vte', is_correct: false, explanation: 'Wrong shape.' },
       ],
-      explanation: 'Pplat is plateau pressure, measured by pausing flow at end-inspiration so the system equilibrates with alveolar pressure. This strips out the resistive component and is the key measurement for assessing compliance.',
     },
     {
       id: 'M2-Q2',
-      prompt: 'A ventilator display shows: set Vt 450, delivered Vt 380, set rate 16, measured rate 16. The most likely explanation is:',
+      prompt: 'Normal respiratory system compliance for a ventilated adult is around:',
       options: [
-        { label: 'The patient is taking spontaneous breaths', is_correct: false },
-        { label: 'There is a leak in the circuit', is_correct: true },
-        { label: 'The ventilator is malfunctioning', is_correct: false },
-        { label: 'The settings are misconfigured', is_correct: false },
+        { label: '25 mL/cmH2O', is_correct: false, explanation: "That's moderate-severe ARDS." },
+        { label: '70–80 mL/cmH2O', is_correct: true, explanation: 'Owens, Commandment I. Healthy people off the vent are closer to 100.' },
+        { label: '200 mL/cmH2O', is_correct: false, explanation: "That's lung-alone or chest-wall-alone in normals — the two in parallel give ~100." },
+        { label: 'There is no normal — it depends entirely on body weight.', is_correct: false, explanation: 'PBW matters, but the ballpark is well-known.' },
       ],
-      explanation: 'Set values are operator inputs; delivered values are measured outputs. A gap between set and delivered tidal volume — with the same rate — strongly suggests gas is escaping (cuff leak or circuit leak).',
     },
     {
       id: 'M2-Q3',
-      prompt: 'A patient has tidal volume 500 mL and respiratory rate 14. Minute ventilation is approximately:',
+      prompt: 'Set rate vs actual rate. The vent shows set 14, actual 22. Most likely:',
       options: [
-        { label: '3.5 L/min', is_correct: false },
-        { label: '7 L/min', is_correct: true },
-        { label: '14 L/min', is_correct: false },
-        { label: '35 L/min', is_correct: false },
+        { label: 'The vent is auto-cycling on a circuit leak.', is_correct: false, explanation: 'Possible but less common as a first thought; the simpler reading is that the patient is triggering.' },
+        { label: 'The patient is triggering 8 breaths above the set rate.', is_correct: true, explanation: 'In A/C, anything above the set rate is the patient.' },
+        { label: 'The vent is broken.', is_correct: false, explanation: 'Diagnosis of exclusion.' },
+        { label: 'The PEEP is too high.', is_correct: false, explanation: "PEEP doesn't directly drive triggering rate." },
       ],
-      explanation: 'MV = Vt × RR = 0.5 L × 14 = 7 L/min. Typical adult minute ventilation.',
     },
     {
       id: 'M2-Q4',
-      prompt: 'A patient on volume control has set rate 12, measured rate 22. This tells you:',
+      prompt: 'MVe is best understood as:',
       options: [
-        { label: 'The ventilator is malfunctioning', is_correct: false },
-        { label: 'The patient is taking many spontaneous breaths above the set rate', is_correct: true },
-        { label: 'The patient is over-sedated', is_correct: false },
-        { label: 'There is a leak doubling the breath count', is_correct: false },
+        { label: 'Set Vt × set rate', is_correct: false, explanation: 'That\'s "set minute ventilation." MVe is the *measured* version.' },
+        { label: 'Vte × actual rate', is_correct: true, explanation: 'What the patient is actually moving per minute.' },
+        { label: 'PIP × rate', is_correct: false, explanation: 'Pressure, not volume.' },
+        { label: 'Set Vt only', is_correct: false, explanation: 'Per-breath, not per-minute.' },
       ],
-      explanation: 'Measured rate exceeding set rate by a large margin means active patient triggering. A gap of 10 breaths/min suggests significant patient drive — possibly pain, agitation, hypercapnia, or acidosis. Flag to assess the patient.',
     },
     {
       id: 'M2-Q5',
-      prompt: 'Which set-versus-measured pair would most likely indicate a problem?',
+      prompt: 'I:E ratio 1:5 on a patient with COPD means:',
       options: [
-        { label: 'Set rate 14, measured rate 14', is_correct: false },
-        { label: 'Set PEEP 5, measured PEEP 5', is_correct: false },
-        { label: 'Set Vt 500, delivered Vt 320', is_correct: true },
-        { label: 'Set FiO2 0.4, measured FiO2 0.4', is_correct: false },
+        { label: 'The expiratory time is very long — good for letting trapped air escape.', is_correct: true, explanation: 'Long Te is the whole point of obstructive-disease ventilation (book Ch. 1, Ch. 15).' },
+        { label: 'The patient is hyperventilating.', is_correct: false, explanation: "I:E ratio isn't about minute ventilation." },
+        { label: 'The PEEP needs to be raised.', is_correct: false, explanation: "Doesn't follow from the ratio." },
+        { label: 'The inspiratory time is dangerously short.', is_correct: false, explanation: 'Short Ti is intentional here — gives exhalation room.' },
       ],
-      explanation: 'Significant gap between set and delivered tidal volume is abnormal and warrants investigation — most commonly a leak.',
     },
   ],
 
   explore_card: {
-    patient_context: 'Same passive patient as M1. This is a vocabulary module — you\'re still in "learn to read" mode.',
-    unlocked_controls_description: [],
+    patient_context:
+      "Same patient as M1 — stable, post-intubation hour 1. You're here to map your eight terms onto the live display.",
+    unlocked_controls_description: [
+      { name: 'Tidal volume · 350–600 mL', description: 'volume per breath you order.' },
+      { name: 'Rate · 8–24 / min', description: 'minimum rate.' },
+      { name: 'PEEP · 0–18', description: 'end-expiratory floor.' },
+      { name: 'FiO2 · 21–100%', description: 'inspired oxygen fraction.' },
+      { name: 'I-time · 0.5–1.5 s', description: 'newly unlocked. Affects I:E ratio.' },
+    ],
     readouts_description: [
-      { name: 'Set values (operator inputs)', description: 'set Vt, set rate, PEEP, FiO2, I:E ratio.' },
-      { name: 'Measured values (what the patient is doing)', description: 'delivered Vt, measured rate, minute ventilation, peak pressure, plateau pressure.' },
+      { name: 'PIP, Pplat, Vte, MVe, Total PEEP, I:E', description: 'the six measured / derived values you\'re about to find by name.' },
     ],
     suggestions: [
-      'Find the eight terms from the reading on the actual display. They\'re arranged differently than the table.',
-      'Notice which values are "set" (operator-controlled) and which are "measured" (consequences). Some look almost the same name.',
-      'Make a mental note of where each lives on the display before the task starts.',
+      'Raise Vt from 450 to 550. Watch PIP and Pplat both rise.',
+      'Raise rate from 14 to 20. Watch MVe climb. The I:E ratio also tightens (less expiratory time per breath).',
+      'Drop I-time from 1.0 to 0.6. Watch I:E lengthen. Imagine the patient with COPD breathing on this — better.',
+      'Raise PEEP from 5 to 10. Watch PIP and Pplat both rise by ~5. Total PEEP follows.',
     ],
   },
-  user_facing_task: "Your senior runs you through a vocabulary check on the ventilator. They'll name eight values; for each, you click on the matching reading or control on the display.",
+
+  user_facing_task: 'Eight terms. Eight clicks. Click the reading or control that matches each clinical phrase.',
   success_criteria_display: [
-    'Eight values, in order. Click the matching tile or control for each.',
-    "Wrong clicks aren't punished — the popup explains why it's wrong; correct clicks advance to the next.",
+    'Find each term as it\'s named (8 prompts total).',
+    "Wrong clicks explain — they don't penalize.",
   ],
   task_framing_style: 'C',
 
   key_points: [
-    'Eight core terms: Vt, VE, PEEP, FiO2, PIP, Pplat, I:E, RR.',
-    'Set values = operator input. Measured values = what the system is doing.',
-    'Gaps between set and measured Vt = leak. Gaps between set and measured rate = patient drive.',
-    'Plateau pressure (Pplat) is the alveolar pressure during an inspiratory hold.',
+    'Eight terms. Four set, three measured, one derived.',
+    'Vte ≈ set Vt in VCV unless something is leaking.',
+    'MVe = Vte × *actual* rate, not set rate.',
+    'Pplat tells you about the alveoli; PIP tells you about the airways and the alveoli together.',
+    'I:E shrinks when you raise rate; lengthens when you shorten I-time.',
   ],
 };

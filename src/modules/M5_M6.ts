@@ -1,214 +1,292 @@
 import type { ModuleConfig } from '../shell/types';
 
+/**
+ * M5 — Gas Exchange Basics
+ * Track: Physiology · Archetype: concept demo (compound strict, reset_between) · 16 min
+ * Anchor chapters: VB Ch. 4, Ch. 5, Ch. 7
+ *
+ * Specced verbatim against docs/MODULE_SPECS_v3.md §M5.
+ */
 export const M5: ModuleConfig = {
   id: 'M5',
   number: 5,
   title: 'Gas Exchange Basics',
   track: 'Physiology',
-  estimated_minutes: 15,
+  estimated_minutes: 16,
   briefing: {
     tagline: 'Shunt kills oxygenation. Dead space kills ventilation.',
-    overview: "Hypoxia and hypercapnia look different to the lung. Shunt is blood flowing past alveoli that aren't getting any air. It kills oxygenation and doesn't respond well to cranking up the FiO2. Dead space is air flowing into alveoli that aren't getting any blood. It kills CO2 clearance and is what's happening when the end-tidal drops out of nowhere. Knowing which one you're dealing with changes what you do.",
+    overview:
+      "Hypoxia and hypercapnia look different to the lung. Shunt is blood flowing past alveoli that aren't getting any air. It kills oxygenation and doesn't respond well to cranking up the FiO2. Dead space is air flowing into alveoli that aren't getting any blood. It kills CO2 clearance and is what's happening when the end-tidal drops out of nowhere. Knowing which one you're dealing with changes what you do.",
     what_youll_do: [
       'Shunt is a perfusion-without-ventilation problem. Dead space is a ventilation-without-perfusion problem.',
       "Pure shunt doesn't respond to FiO2. PEEP and recruitment are the tools that work.",
       'A sudden drop in end-tidal CO2 in a sick patient is dead space until proven otherwise.',
     ],
   },
+
   visible_learning_objectives: [
-    'Distinguish shunt from dead space by their characteristic gas exchange signatures.',
-    'Recognize that shunt affects oxygenation primarily; dead space affects ventilation primarily.',
+    'Distinguish the four bedside causes of hypoxemia: shunt, V/Q mismatch, dead space, hypoventilation.',
+    'State the bedside test that distinguishes shunt from V/Q mismatch (response to 100% FiO2).',
+    'Explain the dead-space signature: PaCO2 up, ETCO2 down, the gradient widens.',
+    'Relate the oxygen content equation conceptually: SaO2 is what matters, not PaO2.',
   ],
 
   primer_questions: [
     {
       id: 'M5-P1',
-      prompt: 'Shunt is best defined as:',
+      prompt: 'Shunt and V/Q mismatch differ most usefully at the bedside in:',
       options: [
-        { label: 'Alveoli that are ventilated but not perfused', is_correct: false, explanation: "That's dead space — the opposite." },
-        { label: 'Alveoli that are perfused but not ventilated', is_correct: true, explanation: 'Shunt = perfusion without ventilation. Blood passes through unventilated lung and returns without picking up O2. Pneumonia, atelectasis, and ARDS all create shunt physiology.' },
-        { label: 'Areas with both ventilation and perfusion', is_correct: false, explanation: "That's normal V/Q matching." },
-        { label: 'Areas with neither', is_correct: false, explanation: 'Describes destroyed lung, not the standard shunt/dead-space definitions.' },
+        { label: 'Their response to inhaled bronchodilators.', is_correct: false, explanation: "Bronchodilators don't distinguish the two." },
+        { label: "Their response to 100% FiO2 — V/Q corrects, shunt doesn't.", is_correct: true, explanation: 'Book Ch. 4. The bedside test.' },
+        { label: 'Their effect on PaCO2.', is_correct: false, explanation: 'Both can affect PaCO2 if severe; not the discriminator.' },
+        { label: 'Whether the patient is in shock.', is_correct: false, explanation: 'Both can occur with or without shock.' },
       ],
     },
     {
       id: 'M5-P2',
-      prompt: 'Increasing FiO2 to 100% will substantially improve oxygenation in a patient with:',
+      prompt: 'Dead-space ventilation refers to:',
       options: [
-        { label: 'Pure shunt physiology', is_correct: false, explanation: "Pure shunt is FiO2-resistant — blood never contacts the O2 no matter how high the FiO2." },
-        { label: 'V/Q mismatch (without true shunt)', is_correct: true, explanation: 'V/Q mismatch (low but nonzero ventilation) responds well to higher FiO2 — the O2 reaches alveoli inefficiently, and raising the concentration overcomes the inefficiency.' },
-        { label: 'Anatomic shunt from a cardiac defect', is_correct: false, explanation: 'Anatomic shunt behaves like pure shunt — blood bypasses lungs.' },
-        { label: 'None of the above', is_correct: false, explanation: 'B is correct.' },
+        { label: 'Alveoli that are perfused but not ventilated.', is_correct: false, explanation: "That's shunt." },
+        { label: 'Alveoli that are ventilated but not perfused.', is_correct: true, explanation: 'Book Ch. 4. PE, low cardiac output, hyperinflation.' },
+        { label: 'Air in the endotracheal tube.', is_correct: false, explanation: 'Partially right (anatomic dead space), but the *clinical* concept refers to alveolar dead space.' },
+        { label: 'Air in the gut.', is_correct: false, explanation: 'Not gas exchange.' },
       ],
     },
     {
       id: 'M5-P3',
-      prompt: 'A patient develops a large pulmonary embolus. End-tidal CO2 will:',
+      prompt: "Owens's first rule of oxygen is:",
       options: [
-        { label: 'Rise abruptly', is_correct: false, explanation: 'Expected change is downward, not upward.' },
-        { label: 'Fall abruptly because of increased dead space', is_correct: true, explanation: 'PE blocks pulmonary blood flow to ventilated alveoli — by definition dead space. Air moves in/out but no CO2 reaches them. ETCO2 drops sharply while arterial CO2 may stay normal or rise. The widening ETCO2-PaCO2 gradient is the dead-space signature.' },
-        { label: "Be unchanged because PE doesn't affect ventilation", is_correct: false, explanation: 'PE has major effect on dead space and ETCO2.' },
-        { label: 'Fall because of decreased oxygen delivery', is_correct: false, explanation: 'O2 delivery and ETCO2 are different physiologies.' },
+        { label: 'The PaO2 is what matters.', is_correct: false, explanation: "That's textbook chemistry. Bedside, SaO2 matters." },
+        { label: 'The SaO2 is what matters, not the PaO2.', is_correct: true, explanation: 'Book Ch. 5. Hemoglobin carries 97%+ of arterial O2; PaO2 contributes <2%.' },
+        { label: 'Always target PaO2 above 100.', is_correct: false, explanation: "That's hyperoxia; not a target." },
+        { label: "Hemoglobin doesn't affect oxygen delivery.", is_correct: false, explanation: "It's the dominant term in DO2." },
       ],
     },
   ],
 
   scenario: {
-    preset_id: 'gas_exchange_demo',
+    preset_id: 'M5_gas_exchange_baseline',
     preset: {
       mode: 'VCV',
       settings: { tidalVolume: 450, respiratoryRate: 14, peep: 5, fiO2: 40, iTime: 1.0 },
-      patient: { compliance: 35, resistance: 10, spontaneousRate: 0, deadSpaceFraction: 0.45 },
+      patient: { compliance: 50, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
-    unlocked_controls: ['compliance', 'fiO2', 'peep'],
+    // compliance = shunt proxy in this sim. rate drives dead-space ratio.
+    unlocked_controls: ['compliance', 'respiratoryRate', 'fiO2', 'peep'],
     visible_readouts: ['pip', 'plat', 'spo2', 'pao2', 'paco2'],
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Two complementary tasks demonstrating shunt-vs-dead-space signatures with
-  // the controls we actually have. Strict sequence so each is a clean
-  // experiment; reset between so prior changes don't carry over.
+  // Two compound-strict children. Step 1: induce "shunt" (compliance ↓),
+  // try to fix with FiO2 (fails), acknowledge. Step 2: induce dead-space
+  // (rate ↑), watch PaCO2 paradoxically rise, acknowledge.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
     reset_between: true,
     children: [
       {
-        // Part A: shunt signature — drop compliance (proxy for collapsed alveoli).
-        // SpO2 should fall. ETCO2/PaCO2 should be largely unchanged.
-        kind: 'manipulation',
-        control: 'compliance',
-        condition: { type: 'delta_pct', direction: 'decrease', min_pct: 40 },
-        require_acknowledgment: {
-          question: 'You worsened the patient\'s lung disease (lower compliance — a shunt-like state). Which readout changed most?',
-          options: [
-            { label: 'SpO2 fell — oxygenation suffered', is_correct: true, explanation: 'Shunt = blood passing through unventilated alveoli. SpO2 falls; CO2 elimination is largely preserved. That\'s the oxygenation signature of shunt.' },
-            { label: 'End-tidal CO2 fell', is_correct: false, explanation: 'A falling end-tidal CO2 with a widening ETCO2-PaCO2 gradient is the dead-space pattern, not shunt.' },
-            { label: 'Both changed equally', is_correct: false, explanation: 'Shunt and dead space have distinct signatures. Shunt → SpO2 falls. Dead space → ETCO2 gradient widens.' },
-            { label: 'Nothing changed', is_correct: false, explanation: 'Look at the SpO2 readout — it tracks oxygenation.' },
-          ],
-        },
+        // Step 1: shunt — compliance ≤ 25, then FiO2 ≥ 90, then ack.
+        kind: 'compound',
+        sequence: 'strict',
+        reset_between: false,
+        children: [
+          {
+            kind: 'manipulation',
+            control: 'compliance',
+            condition: { type: 'absolute', operator: '<=', value: 25 },
+          },
+          {
+            kind: 'manipulation',
+            control: 'fiO2',
+            // FiO2 stored as % in this sim — 90 = 0.90.
+            condition: { type: 'absolute', operator: '>=', value: 90 },
+            require_acknowledgment: {
+              question: 'You cranked FiO2 to 90%. The SpO2 barely moved. Best explanation?',
+              options: [
+                { label: "Shunt — the blood goes past alveoli that have no air in them. Adding more oxygen to the rest doesn't fix that blood.", is_correct: true, explanation: "Right. Shunt is the FiO2-resistant cause of hypoxemia. The fix is to *open* the closed alveoli — that's PEEP, not FiO2." },
+                { label: 'V/Q mismatch — needs more FiO2', is_correct: false, explanation: "V/Q mismatch *responds* to FiO2 — you'd have seen the SpO2 climb. Failure to respond is the bedside test for shunt." },
+                { label: 'Dead space — needs higher rate', is_correct: false, explanation: 'Dead space causes hypercapnia, not refractory hypoxemia.' },
+              ],
+            },
+          },
+        ],
       },
       {
-        // Part B: V/Q-mismatch responsiveness — raise FiO2 high. SpO2 climbs back.
-        kind: 'manipulation',
-        control: 'fiO2',
-        condition: { type: 'absolute', operator: '>=', value: 80 },
-        require_acknowledgment: {
-          question: 'You pushed FiO2 to ≥80% on the same struggling patient. What does the SpO2 response tell you?',
-          options: [
-            { label: 'It improved substantially — V/Q mismatch is FiO2-responsive', is_correct: true, explanation: 'V/Q mismatch (low but nonzero ventilation to alveoli) responds well to higher FiO2 — the gas reaches the alveoli, just inefficiently, and raising the concentration overcomes it.' },
-            { label: 'It barely moved — this must be pure anatomic shunt', is_correct: false, explanation: 'In this preset compliance loss creates V/Q mismatch rather than absolute shunt, so FiO2 should help. Pure anatomic shunt would be unresponsive.' },
-            { label: 'PaCO2 changed instead', is_correct: false, explanation: 'PaCO2 reflects ventilation, not oxygenation. FiO2 is an oxygenation lever.' },
-            { label: 'Nothing changed', is_correct: false, explanation: 'Watch the SpO2 number as you push FiO2 up.' },
-          ],
-        },
+        // Step 2: dead-space — rate ≥ 30, then ack.
+        kind: 'compound',
+        sequence: 'strict',
+        reset_between: false,
+        children: [
+          {
+            kind: 'manipulation',
+            control: 'respiratoryRate',
+            condition: { type: 'absolute', operator: '>=', value: 30 },
+            require_acknowledgment: {
+              question: 'You cranked rate to 30. MVe went up. PaCO2 went *up* too, not down. Best explanation?',
+              options: [
+                { label: 'Dead-space ventilation rose proportionally — same minute volume, less of it is alveolar', is_correct: true, explanation: "Right. Anatomic dead space is ~150 mL per breath. At rate 30, you're wasting 4.5 L/min of dead-space ventilation. The patient is hyperventilating air past his own dead space." },
+                { label: 'The vent is malfunctioning', is_correct: false, explanation: 'No — this is exactly what the physiology predicts.' },
+                { label: 'PEEP needs to come up', is_correct: false, explanation: "PEEP doesn't change dead-space ratio. The fix is *bigger* breaths, slower rate." },
+              ],
+            },
+          },
+        ],
       },
     ],
   },
 
   content_blocks: [
-    { kind: 'prose', markdown: '**Shunt = perfusion without ventilation** (low SpO2 resistant to FiO2). **Dead space = ventilation without perfusion** (rising PaCO2 with falling ETCO2). The two failures look superficially similar but require opposite reasoning.' },
-    { kind: 'callout', tone: 'info', markdown: 'The ETCO2-to-PaCO2 gradient is normally < 5 mmHg. A widening gradient is the dead-space signature — even when the absolute numbers look normal.' },
+    {
+      kind: 'prose',
+      markdown:
+        "Patients get hypoxemic for four reasons that matter. Three are airway problems (**shunt, V/Q mismatch, hypoventilation**); one is a perfusion problem (**dead space**). The bedside tests for each are different. The fix for each is different. You can't reach for FiO2 as a hammer for everything — it only works on V/Q.",
+    },
+    {
+      kind: 'callout',
+      tone: 'info',
+      markdown:
+        "The clean test for shunt: if 100% oxygen doesn't fix the hypoxemia, it's shunt. The fix is to **open the alveoli** — PEEP, recruitment, prone.",
+    },
+    {
+      kind: 'predict_observe',
+      awaits_control: 'compliance',
+      predict:
+        "You'll drop compliance into the ARDS range to simulate flooded alveoli. SpO2 will fall. If you now crank FiO2 to 100%, will it come back?",
+      observe:
+        "SpO2 barely budged. Shunt is FiO2-resistant. PEEP would help; FiO2 won't.",
+    },
+    {
+      kind: 'predict_observe',
+      awaits_control: 'respiratoryRate',
+      predict:
+        'This patient is breathing at rate 14, Vt 450, MVe ~6.3 L/min. Bump the rate to 30. Predict the PaCO2 direction.',
+      observe:
+        'PaCO2 went *up*. At rate 30, anatomic dead-space ventilation is 30 × 150 = 4.5 L/min — most of the minute volume is wasted. *Slow the rate; bigger breaths.*',
+    },
+    {
+      kind: 'callout',
+      tone: 'warn',
+      markdown:
+        "A tachypneic patient with a normal PaCO2 isn't safe — he's spending a lot of work to stay normal, and a little fatigue will tip him into respiratory failure.",
+    },
+    {
+      kind: 'formative',
+      question: 'PaCO2 50, ETCO2 25. Gradient: 25. Most likely:',
+      options: [
+        { label: 'Sensor error.', is_correct: false },
+        { label: 'Dead space — PE, low cardiac output, or auto-PEEP. The widening gradient is the signature.', is_correct: true },
+        { label: 'Hypoventilation.', is_correct: false },
+        { label: 'Shunt.', is_correct: false },
+      ],
+      answer:
+        'A normal PaCO2-to-ETCO2 gradient is 3–5 mmHg. 25 is a huge gap and the signature is dead space. Differential: pulmonary embolism, falling cardiac output, severe auto-PEEP. Book Ch. 7. Hypoventilation raises *both* numbers in parallel. Shunt affects oxygenation, not CO2 clearance.',
+    },
   ],
 
   hint_ladder: {
-    tier1: 'Try changing FiO2. Watch SpO2 and PaO2.',
-    tier2: 'V/Q mismatch responds to FiO2. Shunt does not.',
-    tier3: { hint_text: 'Use "Show me".' },
+    tier1: "Step 1: induce a shunt — what knob simulates that here? Then try to fix it with the wrong tool.",
+    tier2: 'Step 1: compliance ≤ 25, then FiO2 ≥ 90%. Step 2 (after reset): rate ≥ 30. Each step has an acknowledgment after.',
+    tier3: { hint_text: 'Use "Show me" to run the active step\'s manipulations in order.', demonstration: { control: 'compliance', target_value: 22 } },
   },
 
   summative_quiz: [
     {
       id: 'M5-Q1',
-      prompt: 'Severe ARDS, PaO2 55 on FiO2 100%. Most likely mechanism:',
+      prompt: 'A patient on FiO2 1.0 has a PaO2 of 65. The A-a gradient is:',
       options: [
-        { label: 'Pure dead space', is_correct: false },
-        { label: 'Shunt', is_correct: true },
-        { label: 'Diffusion limitation', is_correct: false },
-        { label: 'Hypoventilation', is_correct: false },
+        { label: "Normal — he's just on a lot of oxygen.", is_correct: false, explanation: 'On 100%, expected PaO2 is ~600. A gradient of 50+ is enormous.' },
+        { label: "Widened — and that's diagnostic of either shunt or severe V/Q mismatch.", is_correct: true, explanation: 'Book Ch. 4. FiO2 1.0 failing to correct hypoxemia = shunt.' },
+        { label: 'Lowered — PEEP must be working.', is_correct: false, explanation: "PEEP doesn't lower the A-a gradient *directly*." },
+        { label: 'Cannot be calculated without ABG.', is_correct: false, explanation: 'You have a PaO2 — calculation works.' },
       ],
-      explanation: 'Hypoxemia unresponsive to 100% FiO2 = shunt. ARDS produces extensive shunt from collapsed/consolidated alveoli.',
     },
     {
       id: 'M5-Q2',
-      prompt: 'You suspect PE. Most supportive gas-exchange finding:',
+      prompt: 'Anatomic dead space in a normal 70-inch-tall adult is approximately:',
       options: [
-        { label: 'Falling SpO2 with normal ETCO2', is_correct: false },
-        { label: 'Falling ETCO2 with rising arterial CO2', is_correct: true },
-        { label: 'Falling SpO2 with rising ETCO2', is_correct: false },
-        { label: 'Rising ETCO2 with normal arterial CO2', is_correct: false },
+        { label: '25 mL', is_correct: false, explanation: "That's nothing — too low for a healthy airway." },
+        { label: '75 mL', is_correct: false, explanation: 'Underestimates.' },
+        { label: '150–180 mL — about 1 mL per cm of height', is_correct: true, explanation: 'Book Ch. 4.' },
+        { label: '300 mL', is_correct: false, explanation: "That's tidal-volume territory in a small adult." },
       ],
-      explanation: 'PE creates dead space. ETCO2 falls (unperfused alveoli have no CO2 to exhale); arterial CO2 may rise. Widening gradient is the classic signature.',
     },
     {
       id: 'M5-Q3',
-      prompt: 'Which responds well to increasing FiO2?',
+      prompt: 'VD/VT ratio > 0.6 most strongly suggests:',
       options: [
-        { label: 'Massive shunt from lobar pneumonia', is_correct: false },
-        { label: 'V/Q mismatch from basilar atelectasis', is_correct: true },
-        { label: 'Right-to-left intracardiac shunt', is_correct: false },
-        { label: 'PE', is_correct: false },
+        { label: 'Hypoventilation', is_correct: false, explanation: 'Different problem.' },
+        { label: 'Shunt', is_correct: false, explanation: 'Shunt is the opposite (perfused, not ventilated).' },
+        { label: 'Large dead-space fraction — think PE, low CO, severe hyperinflation', is_correct: true, explanation: 'Normal VD/VT ≤ 0.3 (book Ch. 4).' },
+        { label: 'Normal physiology', is_correct: false, explanation: 'Normal is ≤ 0.3.' },
       ],
-      explanation: 'V/Q mismatch is FiO2-responsive. True shunt and intracardiac shunt are not. PE is dead space, not shunt.',
     },
     {
       id: 'M5-Q4',
-      prompt: 'Dead space is best categorized as:',
+      prompt: 'A widening ETCO2-PaCO2 gradient (e.g., from 5 to 18) most useful interpretation is:',
       options: [
-        { label: 'A problem of oxygenation', is_correct: false },
-        { label: 'A problem of ventilation', is_correct: true },
-        { label: 'A problem of perfusion', is_correct: false },
-        { label: 'A problem of diffusion', is_correct: false },
+        { label: 'Better gas exchange', is_correct: false, explanation: "It's worse." },
+        { label: 'Worsening dead space — PE, falling cardiac output, auto-PEEP', is_correct: true, explanation: 'Book Ch. 7. Trend matters as much as the value.' },
+        { label: 'Better cardiac output', is_correct: false, explanation: 'Falling CO widens the gradient.' },
+        { label: 'ETCO2 sensor failure', is_correct: false, explanation: 'Diagnosis of exclusion.' },
       ],
-      explanation: 'Dead space = wasted ventilation. The patient must breathe more to clear the same CO2.',
     },
     {
       id: 'M5-Q5',
-      prompt: 'SpO2 89% on room air → 98% on FiO2 0.40. Most likely:',
+      prompt: 'The strongest single tool to address pure shunt physiology in a ventilated patient is:',
       options: [
-        { label: 'Pure shunt', is_correct: false },
-        { label: 'V/Q mismatch', is_correct: true },
-        { label: 'Right-to-left cardiac shunt', is_correct: false },
-        { label: 'Hypoventilation alone', is_correct: false },
+        { label: 'Higher FiO2', is_correct: false, explanation: 'Shunt is FiO2-resistant by definition.' },
+        { label: 'Higher PEEP and lung-recruitment maneuvers', is_correct: true, explanation: 'Book Ch. 12. Open the closed alveoli.' },
+        { label: 'Switching from VCV to PCV', is_correct: false, explanation: "Mode doesn't change physiology." },
+        { label: 'Higher set rate', is_correct: false, explanation: 'Affects ventilation, not shunt-driven oxygenation.' },
       ],
-      explanation: 'Easy correction with modest FiO2 = V/Q mismatch signature.',
     },
   ],
 
   explore_card: {
-    patient_context: 'A model patient whose shunt fraction and dead-space fraction you can dial independently. The point is to see *different* gas-exchange signatures for each.',
+    patient_context:
+      "Stable patient at baseline. You're going to induce two distinct gas-exchange problems and watch how the vent reading and the SpO2/CO2 numbers respond. Note: the sim uses compliance as a stand-in for \"shunt severity\" — a teaching abstraction, not exact physiology.",
     unlocked_controls_description: [
-      { name: 'Compliance (proxy for shunt severity)', description: 'lower compliance approximates ARDS-style shunt physiology in this sim.' },
-      { name: 'FiO2', description: 'inspired oxygen concentration. 21–100%.' },
-      { name: 'PEEP', description: 'end-expiratory pressure. Recruits collapsed alveoli (reduces shunt).' },
+      { name: 'Compliance · 18–80', description: 'proxy for shunt severity in this sim. Low compliance ≈ flooded alveoli ≈ refractory hypoxemia.' },
+      { name: 'Rate · 8–35', description: 'pushes the dead-space ratio when held high.' },
+      { name: 'FiO2 · 21–100%', description: 'the FiO2 lever. Test which problem it fixes.' },
+      { name: 'PEEP · 0–18', description: 'the shunt lever.' },
     ],
     readouts_description: [
-      { name: 'SpO2', description: 'the oxygenation signal.' },
-      { name: 'ETCO2 vs PaCO2', description: 'how much the end-tidal underestimates the arterial PaCO2. A widening gradient is the dead-space fingerprint.' },
-      { name: 'PaO2', description: 'arterial oxygen tension.' },
+      { name: 'SpO2, PaCO2, ETCO2, the gradient', description: 'the four gas-exchange numbers you\'ll watch react.' },
     ],
     suggestions: [
-      'Drop compliance into the ARDS range. Notice SpO2 fall.',
-      'Push FiO2 up and watch how much (or how little) SpO2 recovers — that\'s the difference between V/Q mismatch and true shunt.',
-      'The point: shunt and dead space have *different gas-exchange signatures*. One affects oxygenation. The other affects CO2 elimination.',
+      'Drop compliance to 22. Watch SpO2 fall. Now push FiO2 to 100%. Watch how little it helps.',
+      'Reset. Drop compliance to 22 *and* raise PEEP to 15. Now SpO2 climbs — that\'s the right fix.',
+      'Reset. Push rate to 30 with everything else normal. Watch PaCO2 rise, not fall. Counter-intuitive but predictable.',
+      'Try the worst combo: low compliance + high rate. Both problems at once — the fixes don\'t interact, you need both.',
     ],
   },
-  user_facing_task: "You'll demonstrate the gas-exchange signature of shunt vs dead space. Raise FiO2 substantially and observe whether oxygenation improves — that's the V/Q vs shunt distinction.",
+
+  user_facing_task:
+    "Two short experiments. First, induce shunt (drop the compliance) and try to fix the SpO2 with FiO2 alone — and see why it doesn't work. Then induce dead-space (high rate) and see why the PaCO2 paradoxically rises.",
   success_criteria_display: [
-    'Push FiO2 to 80% or higher.',
-    'Identify whether the response indicates V/Q mismatch (FiO2-responsive) or pure shunt (resistant).',
+    "Crash compliance to ≤ 25, then push FiO2 to ≥ 90% — explain why SpO2 didn't fix.",
+    'Push rate to ≥ 30 — explain why PaCO2 went up despite the bigger minute ventilation.',
   ],
   task_framing_style: 'A',
 
   key_points: [
-    'Shunt → oxygenation problem (FiO2-resistant in pure form).',
-    'Dead space → ventilation problem (ETCO2 falls, PaCO2 rises).',
-    'Widening ETCO2-PaCO2 gradient is the dead-space signature.',
-    'V/Q mismatch is FiO2-responsive; pure shunt is not.',
+    'Four bedside causes of hypoxemia: shunt, V/Q mismatch, dead space, hypoventilation.',
+    "Shunt = perfused but not ventilated. Doesn't fix with O2. Fixes with PEEP.",
+    'V/Q mismatch is the most common cause of hypoxemic respiratory failure. Fixes with O2.',
+    'Dead space = ventilated but not perfused. PaCO2 rises, ETCO2 falls (or rises less). Gradient widens.',
+    'SaO2 is what matters. Cardiac output and hemoglobin are bigger levers than PaO2.',
   ],
 };
 
+/**
+ * M6 — Auto-PEEP and Air Trapping
+ * Track: Physiology · Archetype: target state, two-stage · 15 min
+ * Anchor chapters: VB Ch. 2, Ch. 3 (Commandment IX), Ch. 13, Ch. 15
+ *
+ * Specced verbatim against docs/MODULE_SPECS_v3.md §M6.
+ */
 export const M6: ModuleConfig = {
   id: 'M6',
   number: 6,
@@ -217,180 +295,234 @@ export const M6: ModuleConfig = {
   estimated_minutes: 15,
   briefing: {
     tagline: 'See trapping on the flow waveform. Slow down to fix it.',
-    overview: "The lungs need time to empty. If you don't give them enough, gas piles up inside, and the next breath stacks on top of the leftovers. That trapped pressure is auto-PEEP, and it causes more problems than people realize. Higher work of breathing. Worse hemodynamics. Mysterious hypotension after every rate increase. The fix is almost always the same: slow down and give exhalation more room.",
+    overview:
+      "The lungs need time to empty. If you don't give them enough, gas piles up inside, and the next breath stacks on top of the leftovers. That trapped pressure is auto-PEEP, and it causes more problems than people realize. Higher work of breathing. Worse hemodynamics. Mysterious hypotension after every rate increase. The fix is almost always the same: slow down and give exhalation more room.",
     what_youll_do: [
       'Auto-PEEP is end-expiratory pressure the patient generates on their own, not pressure you set.',
       "The flow waveform tells you instantly. If expiration doesn't reach zero before the next breath, you're trapping.",
       'Obstructive disease is the classic setting, but any patient on a fast rate with normal-shaped lungs can do it.',
     ],
   },
+
   visible_learning_objectives: [
-    'Recognize auto-PEEP on the flow-time waveform.',
-    'Resolve auto-PEEP by adjusting respiratory rate or expiratory time.',
+    'Define auto-PEEP: end-expiratory alveolar pressure higher than the set PEEP.',
+    "Recognize it on the flow waveform (expiratory flow doesn't return to zero).",
+    'Name the three levers for fixing it: lower rate, shorter I-time, treat the obstruction.',
+    'State the worst-case consequence: hypotension, PEA arrest — and the disconnect maneuver.',
   ],
 
   primer_questions: [
     {
       id: 'M6-P1',
-      prompt: 'Auto-PEEP refers to:',
+      prompt: 'Auto-PEEP is best defined as:',
       options: [
-        { label: 'PEEP that the ventilator sets automatically', is_correct: false, explanation: '"Auto" refers to the patient, not the machine.' },
-        { label: 'End-expiratory alveolar pressure exceeding set PEEP, from incomplete exhalation', is_correct: true, explanation: 'When expiratory time is too short relative to airway resistance, air doesn\'t fully exit before the next breath. Trapped volume creates pressure above set PEEP.' },
-        { label: 'Transient early-inspiratory pressure', is_correct: false, explanation: 'Not auto-PEEP.' },
-        { label: 'A safety feature preventing barotrauma', is_correct: false, explanation: 'Auto-PEEP is a pathology — it raises intrathoracic pressure, impairs venous return, increases work of breathing.' },
+        { label: 'The PEEP setting you ordered.', is_correct: false, explanation: "That's set PEEP." },
+        { label: "End-expiratory alveolar pressure that is higher than the set PEEP — air trapped because the patient can't exhale completely.", is_correct: true, explanation: 'Book Ch. 17.' },
+        { label: 'PEEP that increases on inspiration.', is_correct: false, explanation: 'PEEP is by definition end-*expiratory*.' },
+        { label: 'PEEP measured during noninvasive ventilation.', is_correct: false, explanation: 'Not the definition.' },
       ],
     },
     {
       id: 'M6-P2',
-      prompt: 'Which patient is at highest risk for auto-PEEP?',
+      prompt: 'The flow-waveform sign of auto-PEEP is:',
       options: [
-        { label: 'Young trauma patient with normal lungs on VC', is_correct: false, explanation: 'Normal lungs have normal resistance — exhalation is fast.' },
-        { label: 'Post-op patient with normal lungs on PSV', is_correct: false, explanation: 'Normal mechanics = normal exhalation times.' },
-        { label: 'COPD patient on VC with rate 24', is_correct: true, explanation: 'COPD = high resistance + prolonged expiratory time. Rate 24 = ~1.5 s expiratory time. Classic auto-PEEP setup.' },
-        { label: 'ARDS patient on low Vt with rate 18', is_correct: false, explanation: 'ARDS is compliance problem — exhalation is fast.' },
+        { label: 'The inspiratory flow has a square shape.', is_correct: false, explanation: "That's just constant flow in VCV." },
+        { label: "The expiratory flow doesn't return to zero before the next breath starts.", is_correct: true, explanation: 'Book Ch. 2. The patient is mid-exhale when the next vent breath fires.' },
+        { label: 'The PIP waveform is double-humped.', is_correct: false, explanation: "That's double triggering." },
+        { label: 'There is no flow waveform visible.', is_correct: false, explanation: 'Equipment failure.' },
       ],
     },
     {
       id: 'M6-P3',
-      prompt: 'On the flow-time waveform, the hallmark of auto-PEEP is:',
+      prompt: 'The single most effective ventilator change to relieve dynamic hyperinflation is:',
       options: [
-        { label: 'Inspiratory flow is taller than normal', is_correct: false, explanation: 'Inspiratory flow height depends on set flow/pressure target.' },
-        { label: 'Expiratory flow does not return to zero before the next breath', is_correct: true, explanation: 'Diagnostic sign. Gas is still flowing out when the next breath is delivered — the expiratory limb is cut off before baseline.' },
-        { label: 'Square flow pattern', is_correct: false, explanation: 'Determined by mode (VC vs PC), not auto-PEEP.' },
-        { label: 'Multiple peaks during a single breath', is_correct: false, explanation: 'Suggests dyssynchrony, not auto-PEEP.' },
+        { label: 'Increase PEEP.', is_correct: false, explanation: "In *asthma*, applied PEEP worsens trapping. In COPD, modest applied PEEP can splint airways open — but it's not the *most effective* lever." },
+        { label: 'Lower the respiratory rate.', is_correct: true, explanation: 'Book Ch. 2. Slower rate = longer expiratory time = air drains.' },
+        { label: 'Increase the FiO2.', is_correct: false, explanation: "Doesn't change mechanics." },
+        { label: 'Switch to PCV.', is_correct: false, explanation: 'Risky in severe bronchospasm — Pplat can fall silently.' },
       ],
     },
   ],
 
   scenario: {
-    preset_id: 'obstructive_baseline',
+    preset_id: 'M6_obstructive_baseline',
     preset: {
+      // Compliance preserved (60 — obstructive disease doesn't make stiff
+      // lungs), resistance elevated (22 — mucus + mild bronchospasm).
+      // Rate 18 + Ti 1.0 + resistance 22 → baseline Te is barely sufficient.
+      // PIN: compliance 60, resistance 22, iTime 1.0 — DO NOT CHANGE.
+      // These three together set the auto-PEEP susceptibility. Change any
+      // and Step 1 induction may not trigger.
       mode: 'VCV',
-      settings: { tidalVolume: 450, respiratoryRate: 12, peep: 5, fiO2: 40, iTime: 1.0 },
-      patient: { compliance: 50, resistance: 25, spontaneousRate: 0 },
+      settings: { tidalVolume: 480, respiratoryRate: 18, peep: 5, fiO2: 50, iTime: 1.0 },
+      patient: { compliance: 60, resistance: 22, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
-    unlocked_controls: ['respiratoryRate', 'iTime'],
-    visible_readouts: ['pip', 'plat', 'totalPeep', 'autoPeep'],
+    unlocked_controls: ['respiratoryRate', 'iTime', 'tidalVolume', 'peep'],
+    visible_readouts: ['pip', 'plat', 'autoPeep', 'totalPeep', 'mve'],
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Stage 1: induce auto-PEEP by raising rate (autoPeep > 2). Stage 2: resolve it.
+  // Step 1: induce auto-PEEP ≥ 4. Step 2: resolve auto-PEEP ≤ 1.5 for
+  // 5 breaths. NO reset_between — the two steps form a single narrative.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
+    reset_between: false,
     children: [
       {
         kind: 'outcome',
-        readouts: { autoPeep: { operator: '>', value: 2 } },
+        readouts: { autoPeep: { operator: '>=', value: 4 } },
         sustain_breaths: 3,
       },
       {
         kind: 'outcome',
-        readouts: { autoPeep: { operator: '<', value: 1 } },
+        readouts: { autoPeep: { operator: '<=', value: 1.5 } },
         sustain_breaths: 5,
       },
     ],
   },
 
   content_blocks: [
-    { kind: 'prose', markdown: '**Dynamic hyperinflation.** When expiratory time is shorter than the patient\'s expiratory time constant (R × C), gas stays trapped. The trapped volume produces a pressure called auto-PEEP — also intrinsic PEEP, also PEEPi.' },
-    { kind: 'callout', tone: 'warn', markdown: 'Severe auto-PEEP causes hypotension by raising intrathoracic pressure and reducing venous return. In extremis, **disconnect the patient from the vent** to let the lungs deflate.' },
-    { kind: 'predict_observe', awaits_control: 'respiratoryRate', predict: 'Predict: when you raise the rate, the expiratory flow trace will...', observe: 'The expiratory flow doesn\'t return to baseline before the next breath cuts it off. That truncated expiratory limb IS the diagnostic sign.' },
+    {
+      kind: 'prose',
+      markdown:
+        "Auto-PEEP is the airway problem that won't show up on the peak pressure. It hides in the end-expiratory part of the cycle — the part nobody looks at unless they know to. **Watch the flow waveform.** If it doesn't get back to zero before the next breath fires, you have trapped air.",
+    },
+    {
+      kind: 'callout',
+      tone: 'warn',
+      markdown:
+        "In **severe asthma**, applied PEEP makes hyperinflation *worse*. In **COPD**, modest applied PEEP (75–85% of measured auto-PEEP) helps. Don't reflex into PEEP without knowing which one you have.",
+    },
+    {
+      kind: 'predict_observe',
+      awaits_control: 'respiratoryRate',
+      predict:
+        'This patient is on rate 18 with mild resistance. If you raise rate to 28, what happens to auto-PEEP?',
+      observe:
+        'It climbs. Less time between breaths → less time to exhale. The flow trace tells the story before the number does.',
+    },
+    {
+      kind: 'predict_observe',
+      awaits_control: 'iTime',
+      predict:
+        'Now shorten I-time from 1.0 to 0.6 at the same rate. Predict the auto-PEEP direction.',
+      observe:
+        'It falls — but only slightly. Longer expiratory time helps, but the dominant lever is *rate*.',
+    },
+    {
+      kind: 'callout',
+      tone: 'info',
+      markdown:
+        'The bedside test for auto-PEEP: perform an **expiratory hold**. The measured end-expiratory pressure will be higher than set PEEP. The difference is your auto-PEEP.',
+    },
+    {
+      kind: 'formative',
+      question: 'A COPD patient on the vent develops hypotension. Auto-PEEP is 12 cmH2O. Your next move is:',
+      options: [
+        { label: 'Give a fluid bolus.', is_correct: false },
+        { label: 'Disconnect the patient from the vent and let him exhale for 10–15 seconds.', is_correct: true },
+        { label: 'Raise the PEEP.', is_correct: false },
+        { label: 'Increase the rate.', is_correct: false },
+      ],
+      answer:
+        'Book Ch. 15. Trapped air is compressing his venous return. Disconnect from the vent, let him fully exhale, then resume with a lower rate. Fluids treat the symptom, not the cause. Raising PEEP or rate worsens trapping.',
+    },
   ],
 
   hint_ladder: {
-    tier1: 'Try increasing the respiratory rate. Watch the flow waveform.',
-    tier2: 'Once you see flow not returning to zero, resolve it by lowering rate or shortening I-time.',
-    tier3: { hint_text: 'Use "Show me".', demonstration: { control: 'respiratoryRate', target_value: 25 } },
+    tier1: 'Two steps. First, push the patient into clinically significant trapping. Second, fix it.',
+    tier2: 'Step 1: raise rate to 26+ and watch auto-PEEP climb past 4. Step 2: drop rate to 10–12 to give expiration room, sustained for 5 breaths.',
+    tier3: { hint_text: 'Use "Show me" to run Step 1 (raise rate to 26), then prompt you to drop it back.', demonstration: { control: 'respiratoryRate', target_value: 26 } },
   },
 
   summative_quiz: [
     {
       id: 'M6-Q1',
-      prompt: 'Most reliable way to confirm auto-PEEP:',
+      prompt: 'Auto-PEEP is most reliably measured by:',
       options: [
-        { label: 'Pressure-time slow upslope', is_correct: false },
-        { label: 'Flow-time: expiratory flow not returning to zero', is_correct: true },
-        { label: 'Chest X-ray', is_correct: false },
-        { label: 'Check set PEEP value', is_correct: false },
+        { label: 'Looking at the PIP trend.', is_correct: false, explanation: "PIP doesn't reveal end-expiratory pressure." },
+        { label: 'An expiratory hold — the measured end-expiratory pressure minus set PEEP.', is_correct: true, explanation: 'Book Ch. 15.' },
+        { label: 'The PaCO2.', is_correct: false, explanation: "CO2 may rise but isn't the measurement." },
+        { label: 'The set PEEP minus 1.', is_correct: false, explanation: 'No relationship.' },
       ],
-      explanation: 'Flow waveform is the diagnostic display. Set PEEP tells you nothing about auto-PEEP, which is intrinsic.',
     },
     {
       id: 'M6-Q2',
-      prompt: 'COPD on VC, auto-PEEP at rate 24. Most direct intervention:',
+      prompt: 'In a patient with severe asthma and dynamic hyperinflation, the application of PEEP usually:',
       options: [
-        { label: 'Increase PEEP', is_correct: false },
-        { label: 'Increase Vt', is_correct: false },
-        { label: 'Reduce respiratory rate', is_correct: true },
-        { label: 'Increase FiO2', is_correct: false },
+        { label: 'Helps — splints airways.', is_correct: false, explanation: "That's COPD." },
+        { label: 'Worsens trapping — the obstruction in asthma is fixed, so adding PEEP just adds pressure.', is_correct: true, explanation: 'Book Ch. 1, Ch. 15.' },
+        { label: 'Has no effect.', is_correct: false, explanation: 'Wrong.' },
+        { label: 'Lowers the PaCO2.', is_correct: false, explanation: 'Wrong.' },
       ],
-      explanation: 'Auto-PEEP from inadequate expiratory time. Reducing rate lengthens each cycle, giving more time for expiration.',
     },
     {
       id: 'M6-Q3',
-      prompt: 'Auto-PEEP is hemodynamically dangerous because it:',
+      prompt: 'A vent rate increase that raises PaCO2 instead of lowering it should make you suspect:',
       options: [
-        { label: 'Causes bradycardia', is_correct: false },
-        { label: 'Increases intrathoracic pressure, reducing venous return', is_correct: true },
-        { label: 'Directly raises BP', is_correct: false },
-        { label: 'Increases tissue O2 extraction', is_correct: false },
+        { label: 'Dead space', is_correct: false, explanation: 'Possible but not specific to vent-rate effect.' },
+        { label: 'Auto-PEEP — the higher rate compressed expiratory time, more trapping, less effective alveolar ventilation', is_correct: true, explanation: 'Owens, Commandment IX.' },
+        { label: 'Hypoventilation', is_correct: false, explanation: 'Opposite — you raised MVe.' },
+        { label: 'Sensor error', is_correct: false, explanation: 'Diagnosis of exclusion.' },
       ],
-      explanation: 'Trapped gas under pressure compresses great veins, reduces preload, drops CO. Severe auto-PEEP can cause arrest.',
     },
     {
       id: 'M6-Q4',
-      prompt: 'Least likely to develop auto-PEEP:',
+      prompt: 'In a hypotensive vented COPD patient with measured auto-PEEP of 14 cmH2O, the most important *first* action is:',
       options: [
-        { label: 'Severe asthma on VC', is_correct: false },
-        { label: 'COPD on PSV with high rate', is_correct: false },
-        { label: 'ARDS on lung-protective VC with high rate', is_correct: true },
-        { label: 'Bronchiolitis with prolonged expiratory phase', is_correct: false },
+        { label: 'Norepinephrine', is_correct: false, explanation: 'Treats the BP, not the cause.' },
+        { label: 'Disconnect from the vent, let the patient exhale for 10–15 seconds, then resume with a slower rate', is_correct: true, explanation: 'Book Ch. 15. Trapped air compresses venous return.' },
+        { label: 'Lower the PEEP setting from 5 to 0', is_correct: false, explanation: "Modest applied PEEP doesn't drive the trapping in COPD; the rate does. Disconnect first." },
+        { label: 'Increase FiO2 to 1.0', is_correct: false, explanation: "Doesn't address mechanics." },
       ],
-      explanation: 'ARDS is low compliance, not high resistance. Stiff lung empties quickly. High rates in ARDS don\'t trap.',
     },
     {
       id: 'M6-Q5',
-      prompt: 'Asthma + auto-PEEP → sudden hypotension. First emergency maneuver:',
+      prompt: 'Of the four levers to relieve dynamic hyperinflation, the most effective is:',
       options: [
-        { label: 'Push bolus epinephrine', is_correct: false },
-        { label: 'Disconnect briefly from vent to allow full exhalation', is_correct: true },
-        { label: 'Increase PEEP', is_correct: false },
-        { label: 'Increase FiO2', is_correct: false },
+        { label: 'Higher PEEP', is_correct: false, explanation: 'Counterintuitive — not the most effective, and harmful in asthma.' },
+        { label: 'Lower rate', is_correct: true, explanation: 'Book Ch. 2. Longer Te is the dominant fix.' },
+        { label: 'Higher Vt', is_correct: false, explanation: 'Higher Vt extends Ti and worsens trapping.' },
+        { label: 'Higher FiO2', is_correct: false, explanation: "Doesn't change mechanics." },
       ],
-      explanation: 'Disconnect, watch chest deflate, reconnect with reduced rate and longer expiratory time. Known emergency maneuver in severe asthma.',
     },
   ],
 
   explore_card: {
-    patient_context: 'This patient has narrowed airways (COPD-like). Compliance is normal; resistance is elevated. Exhalation takes longer than normal.',
+    patient_context:
+      "60-year-old COPD on his second day in the ICU. He's mildly air-trapped at baseline. You're going to make it worse, then fix it. In real life, this is the most common preventable bad-outcome in vented obstructive patients.",
     unlocked_controls_description: [
-      { name: 'Respiratory rate', description: 'breaths per minute. Range 8–32. Higher rate = less expiratory time per breath.' },
-      { name: 'I-time', description: 'ratio of inspiratory to expiratory time is implicit. A shorter I-time gives the lungs more time to empty.' },
+      { name: 'Rate · 8–28', description: 'the most powerful lever. Lower rate = longer Te.' },
+      { name: 'I-time · 0.5–1.5', description: 'shorter Ti gives more time for Te.' },
+      { name: 'Vt · 350–600', description: 'higher Vt at the same rate also extends Ti.' },
+      { name: 'PEEP · 0–18', description: 'for COPD can splint airways; for asthma makes it worse.' },
     ],
     readouts_description: [
-      { name: 'Flow waveform — expiratory limb', description: 'does it return to zero before the next breath starts?' },
-      { name: 'Auto-PEEP', description: 'the trapped pressure in the alveoli at end-expiration.' },
-      { name: 'Total PEEP', description: 'set PEEP + auto-PEEP.' },
+      { name: 'Auto-PEEP, Total PEEP', description: 'the auto-PEEP readout is what the tracker watches.' },
+      { name: 'Flow waveform (end-expiration)', description: 'does it return to zero before the next breath?' },
     ],
     suggestions: [
-      'Crank the rate up to 24. Watch the flow waveform — does expiration finish?',
-      'At a high rate, try shortening I-time vs lengthening it. What changes?',
-      'The goal of exploration: get a feel for *creating* and *resolving* the trapping pattern.',
+      "Push rate to 28. Watch auto-PEEP climb. The flow waveform won't return to zero.",
+      'Now drop rate to 10. Auto-PEEP falls. Te is now ~5 seconds — plenty of time to exhale.',
+      'Try shortening I-time from 1.0 to 0.5 instead of lowering rate. The I:E changes but the auto-PEEP relief is smaller. Rate is the bigger lever.',
+      "Raise PEEP from 5 to 12 (don't change rate). In real COPD this might splint airways open; in *asthma* it would worsen trapping.",
     ],
   },
-  user_facing_task: "Your task has two parts. First, push the ventilator settings until this patient is trapping air, then identify what you're seeing. Second, resolve the trapping by adjusting the settings until exhalation completes between breaths again.",
+
+  user_facing_task:
+    "This 60-year-old man with COPD is being ventilated. Right now he's borderline. Step 1: push him into clinically significant auto-PEEP (≥ 4 cmH2O) — your options are rate, Vt, and I-time. Step 2: now fix it. Bring auto-PEEP back to ≤ 1.5 and hold it for five breaths.",
   success_criteria_display: [
-    "Stage 1: get the patient into a trapping pattern (auto-PEEP rises above 2 cmH2O).",
-    "Stage 2: bring the patient back to a normal pattern (auto-PEEP < 1, sustained for several breaths).",
+    'Induce auto-PEEP ≥ 4 cmH2O, hold for 3 breaths.',
+    'Resolve auto-PEEP ≤ 1.5 cmH2O, hold for 5 breaths.',
   ],
-  task_framing_style: 'A',
+  task_framing_style: 'B',
 
   key_points: [
-    'Auto-PEEP = trapped end-expiratory pressure from incomplete exhalation.',
-    'Flow waveform diagnostic: expiratory flow does not reach zero before next breath.',
-    'Primary levers: lower respiratory rate, extend expiratory time.',
-    'Obstructive patients are highest risk.',
-    'Severe auto-PEEP → hypotension → disconnect to relieve.',
+    'Auto-PEEP = end-expiratory alveolar pressure > set PEEP. Measure with an expiratory hold.',
+    "Flow-waveform sign: expiratory flow doesn't return to zero before next breath.",
+    'Rate is the strongest lever — lower it. I-time is the second lever — shorten it.',
+    'In asthma, applied PEEP worsens trapping. In COPD, modest applied PEEP can help splint.',
+    "Severe auto-PEEP + hypotension → disconnect from the vent. Don't waste time on pressors first.",
   ],
 };
