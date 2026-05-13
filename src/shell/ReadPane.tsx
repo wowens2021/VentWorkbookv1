@@ -76,18 +76,15 @@ const ReadPane: React.FC<Props> = ({ module, harness, ctaLabel, onAdvance, track
 
         <ContentBlocks blocks={module.content_blocks} harness={harness} />
 
-        {/* Bottom-of-content CTA — full-prominence button for fast scrollers
-            who reach the end. The sticky version (below) catches everyone else. */}
-        <button
-          onClick={onAdvance}
-          className={`mt-6 w-full px-4 py-2.5 ${bgClass} ${bgHoverClass} text-white text-sm font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm`}
-        >
-          {ctaLabel} <ChevronRight size={14} />
-        </button>
-        <div className="h-12" /> {/* tail spacer so sticky bar doesn't overlap the inline CTA */}
+        {/* Tail spacer so the sticky CTA (below) doesn't overlap the last
+            content block. There used to be a second inline CTA here too;
+            it caused a duplicate button to appear once the learner scrolled
+            past 70 %. The sticky one below is now the single source of truth. */}
+        <div className="h-20" />
       </div>
 
-      {/* Sticky CTA — fades in once the learner has scrolled past ~70 %. */}
+      {/* Single sticky CTA — fades in once the learner has scrolled past ~70 %.
+          One button only, no duplicate at the end of content. */}
       {scrolledFar && (
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-3 pt-2 bg-gradient-to-t from-white via-white/95 to-white/0 pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
           <button
