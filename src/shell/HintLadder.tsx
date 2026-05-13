@@ -18,7 +18,9 @@ const HintLadder: React.FC<Props> = ({ hint, idleMs, onShowMe, onTierTriggered, 
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
   const [seen, setSeen] = useState<Set<number>>(new Set());
 
-  const intervals = hint.intervals_seconds ?? [60, 120, 180];
+  // F7: tighter cadence. Confused learners abandon long before 60 s of idle —
+  // tier 1 at 25 s gets them help while they still care.
+  const intervals = hint.intervals_seconds ?? [25, 75, 150];
   const tier =
     idleMs >= intervals[2] * 1000 ? 3 :
     idleMs >= intervals[1] * 1000 ? 2 :

@@ -164,6 +164,21 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
 
   const [hintTiersTriggered, setHintTiersTriggered] = useState(prior?.hint_tiers_triggered ?? 0);
 
+  // ── Compound-tracker progress (F3) + step-complete toast (F4) ──
+  const [childStates, setChildStates] = useState<boolean[]>(() => {
+    if (module.hidden_objective?.kind === 'compound') {
+      return module.hidden_objective.children.map(() => false);
+    }
+    return [];
+  });
+  const [stepToast, setStepToast] = useState<{ idx: number; total: number } | null>(null);
+  // Auto-dismiss the toast after 3 s so it doesn't linger.
+  useEffect(() => {
+    if (!stepToast) return;
+    const id = setTimeout(() => setStepToast(null), 3000);
+    return () => clearTimeout(id);
+  }, [stepToast]);
+
   // ── Engagement counters (per §1.9) ──
   const exploreStartedAtRef = useRef<number | null>(null);
   const exploreControlChangesRef = useRef(0);
@@ -204,10 +219,25 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
 
     const tracker = buildTracker(module.hidden_objective);
 
+    // Re-seed compound child progress on each phase entry / redo.
+    if (module.hidden_objective.kind === 'compound') {
+      setChildStates(module.hidden_objective.children.map(() => false));
+    } else {
+      setChildStates([]);
+    }
+    setStepToast(null);
+
     const ctx = {
       baseline_controls: harness.baseline_controls,
       presentPrompt: (p: InlinePromptConfig) => setActivePrompt(p),
       resetToPreset: () => harness.resetToPreset(),
+      // F4: announce which compound step just landed (1-based for display).
+      notifyStepComplete: (idx: number, total: number) =>
+        setStepToast({ idx, total }),
+      // F5: clear any inline prompt that was still waiting for an answer.
+      clearActivePrompt: () => setActivePrompt(null),
+      // F3: surface per-child progress so TaskCard can show checkmarks.
+      onProgress: (states: boolean[]) => setChildStates(states),
     };
 
     tracker.start(ctx, () => {
@@ -273,7 +303,9 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
         new_value: demo.target_value,
         timestamp: Date.now(),
       });
-      setTimeout(() => harness.resetToPreset(), 2000);
+      // Reset immediately — no timer-based delay. The learner sees the
+      // demonstrated value land and the sim return to baseline in one beat.
+      harness.resetToPreset();
       return;
     }
     const target = module.scenario.unlocked_controls[0];
@@ -284,6 +316,19 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
   const onResetToStart = () => {
     if (phase === 'try-it') resetClicksRef.current += 1;
     harness.resetToPreset();
+  };
+
+  /**
+   * F8: re-arm the try-it phase so the learner can redo the task.
+   * Clears the satisfaction flag; the wiring useEffect re-runs, rebuilds the
+   * tracker, resets the sim, and re-subscribes.
+   */
+  const onRedoTask = () => {
+    setObjectiveSatisfied(false);
+    setActivePrompt(null);
+    setStepToast(null);
+    // Don't wipe persisted achievement — the learner already completed it once.
+    // Just open the tracker again.
   };
 
   // ── Phase transitions ──
@@ -439,6 +484,18 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
     if (phase === 'try-it') {
       return (
         <div className="h-full flex flex-col overflow-hidden">
+          {/* F4: 3-second step-complete banner. Above HintLadder so a satisfied
+              step is clearly the headline, not the hint. */}
+          {stepToast && (
+            <div className="mx-5 mt-3 shrink-0 bg-emerald-50 border border-emerald-300 rounded-lg px-3 py-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                <ChevronRight size={12} className="text-white" />
+              </div>
+              <span className="text-[12px] font-bold text-emerald-900 leading-snug">
+                Step {stepToast.idx + 1} of {stepToast.total} complete — sim reset for the next step.
+              </span>
+            </div>
+          )}
           <div className="px-5 pt-3 shrink-0">
             <HintLadder
               hint={module.hint_ladder}
@@ -456,7 +513,9 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
               objectiveSatisfied={objectiveSatisfied}
               onReset={onResetToStart}
               onContinueToDebrief={advanceFromTryIt}
-              onShowHint={() => setLastInteractMs(Date.now() - 60_000)}  // force tier 1
+              onShowHint={() => setLastInteractMs(Date.now() - 26_000)}  // F7: tier 1 fires at 25 s
+              progress={childStates.length > 0 ? childStates : undefined}
+              onRedo={onRedoTask}
             />
           </div>
         </div>
@@ -557,7 +616,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
         })()}
       </div>
     );
-  }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs]);
+  }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs, childStates, stepToast]);
 
   // ── Inline recognition prompt overlay (over sim) ──
   const inlinePromptOverlay = activePrompt ? (

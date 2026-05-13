@@ -30,6 +30,12 @@ export interface TrackerContext {
   presentPrompt(prompt: InlinePromptConfig): void;
   /** Reset the sim back to its preset (used between compound children). */
   resetToPreset(): void;
+  /** F4: announce step completion in a compound flow (idx is 0-based). */
+  notifyStepComplete?(idx: number, total: number): void;
+  /** F5: clear any inline prompt currently presented (used on reset_between). */
+  clearActivePrompt?(): void;
+  /** F3: announce per-child satisfaction in a compound flow. */
+  onProgress?(states: boolean[]): void;
 }
 
 export interface Tracker {
@@ -41,6 +47,11 @@ export interface Tracker {
   handle(ev: HarnessEvent): void;
   /** Whether this tracker has fired `satisfied`. */
   isSatisfied(): boolean;
+  /**
+   * F5: clear transient mid-progress state (e.g. ManipulationTracker.awaitingAck)
+   * without firing `satisfied`. Default no-op.
+   */
+  reset?(): void;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -103,6 +114,13 @@ export class ManipulationTracker implements Tracker {
     this.onSatisfied = null;
   }
   isSatisfied() { return this.satisfied; }
+
+  /** F5: drop any pending acknowledgment so a sibling-driven reset doesn't
+   *  leave a stale prompt expecting an answer. */
+  reset() {
+    this.awaitingAck = false;
+    this.ackPromptId = null;
+  }
 
   handle(ev: HarnessEvent) {
     if (this.satisfied) return;
@@ -266,7 +284,21 @@ export class CompoundTracker implements Tracker {
   private onChildSatisfied(idx: number) {
     this.childSatisfied[idx] = true;
 
-    if (this.cfg.reset_between) this.ctx?.resetToPreset();
+    // F3: announce checklist progress to the shell.
+    this.ctx?.onProgress?.(this.childSatisfied.slice());
+
+    if (this.cfg.reset_between) {
+      // F4: tell the shell *which* step just landed so it can show a banner
+      // BEFORE the visible reset wipes the sim.
+      this.ctx?.notifyStepComplete?.(idx, this.children.length);
+      // F5: drop any in-flight acknowledgment on siblings that haven't fired yet,
+      // and clear the active prompt from the UI so a stale Q doesn't survive.
+      this.ctx?.clearActivePrompt?.();
+      this.children.forEach((c, i) => {
+        if (!this.childSatisfied[i]) c.reset?.();
+      });
+      this.ctx?.resetToPreset();
+    }
 
     if (this.childSatisfied.every(Boolean)) {
       this.satisfied = true;
@@ -280,6 +312,13 @@ export class CompoundTracker implements Tracker {
         this.children[this.currentIdx].start(this.ctx, () => this.onChildSatisfied(this.currentIdx));
       }
     }
+  }
+
+  /** Pass-through reset for nested compound trackers. */
+  reset() {
+    this.children.forEach((c, i) => {
+      if (!this.childSatisfied[i]) c.reset?.();
+    });
   }
 }
 

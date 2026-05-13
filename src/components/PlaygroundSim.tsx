@@ -244,9 +244,14 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     simInteractivity === 'live-disabled' || simInteractivity === 'live-frozen' || simInteractivity === 'locked';
 
   const isLocked = useCallback((control: ControlName) => {
+    // Global lock from a phase-level override (primer overlay, frozen end-state).
     if (allControlsGloballyLocked) return true;
+    // Policy: every control is universally interactive in every module EXCEPT
+    // 'mode', which still respects the module's scenario.unlocked_controls so
+    // modules that hinge on a fixed mode (e.g. M17 wean-to-PSV) stay correct.
+    if (control !== 'mode') return false;
     if (!unlockedControls) return false;
-    return !unlockedControls.includes(control);
+    return !unlockedControls.includes('mode');
   }, [unlockedControls, allControlsGloballyLocked]);
 
   // ── State (seeded from initialPreset if provided) ──
@@ -283,6 +288,27 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       if (initialPreset?.settings) setSettings({ ...DEFAULT_SETTINGS, ...initialPreset.settings });
       if (initialPreset?.patient) setPatient(p => ({ ...p, ...initialPreset.patient }));
       if (initialPreset?.mode) setMode(initialPreset.mode);
+      // F6: full waveform + timeline reset. Without this, waveforms carry over
+      // from before the reset and the user sees a visible discontinuity that
+      // looks like a glitch. Clear data, zero breath counter, restart sim time.
+      setDataPoints([]);
+      setCursorIndex(null);
+      setIsFrozen(false);
+      setActiveHoldType(null);
+      breathNumRef.current = 0;
+      startTimeRef.current = Date.now();
+      totalFreezeOffsetRef.current = 0;
+      lastFreezeTimeRef.current = 0;
+      setMetrics({
+        pip: 0, plat: 0, drivingPressure: 0, map: 0,
+        mve: 0, mveSpont: 0, totalPeep: initialPreset?.settings?.peep ?? 5,
+        vte: 0, isLastSpont: false, actualRate: initialPreset?.settings?.respiratoryRate ?? 20,
+      });
+      metricsRef.current = {
+        pip: 0, plat: 0, drivingPressure: 0, map: 0,
+        mve: 0, mveSpont: 0, totalPeep: initialPreset?.settings?.peep ?? 5,
+        vte: 0, isLastSpont: false, actualRate: initialPreset?.settings?.respiratoryRate ?? 20,
+      };
     });
     return off;
   }, [harness, initialPreset]);

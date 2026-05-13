@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, RotateCcw, ChevronRight, Lightbulb, Check } from 'lucide-react';
+import { Target, RotateCcw, ChevronRight, Lightbulb, Check, Circle } from 'lucide-react';
 import type { TaskFramingStyle } from './types';
 
 interface Props {
@@ -10,6 +10,15 @@ interface Props {
   onReset: () => void;
   onContinueToDebrief: () => void;
   onShowHint: () => void;
+  /**
+   * F3: per-criterion progress for compound objectives. `progress[i] === true`
+   * means the i-th child tracker has fired. Length matches `successCriteria`
+   * when the shell can map 1:1; otherwise we still render checkmarks up to
+   * min(length).
+   */
+  progress?: boolean[];
+  /** F8: re-arm the tracker so the learner can redo the task. */
+  onRedo?: () => void;
 }
 
 /**
@@ -25,6 +34,8 @@ const TaskCard: React.FC<Props> = ({
   onReset,
   onContinueToDebrief,
   onShowHint,
+  progress,
+  onRedo,
 }) => {
   if (objectiveSatisfied) {
     return (
@@ -49,6 +60,16 @@ const TaskCard: React.FC<Props> = ({
         >
           Continue to debrief <ChevronRight size={14} />
         </button>
+
+        {/* F8: redo-task link — re-arm the tracker without leaving the phase. */}
+        {onRedo && (
+          <button
+            onClick={onRedo}
+            className="mt-3 mx-auto flex items-center gap-1.5 text-[12px] font-bold text-zinc-500 hover:text-zinc-800 transition"
+          >
+            <RotateCcw size={12} /> Redo this task
+          </button>
+        )}
       </div>
     );
   }
@@ -75,12 +96,38 @@ const TaskCard: React.FC<Props> = ({
             Success criteria
           </span>
           <ul className="space-y-1.5">
-            {successCriteria.map((c, i) => (
-              <li key={i} className="text-[13px] text-zinc-700 leading-snug flex items-start gap-1.5">
-                <span className="text-emerald-600 mt-0.5">•</span>
-                <span>{c}</span>
-              </li>
-            ))}
+            {successCriteria.map((c, i) => {
+              // F3: show a filled check for satisfied steps, hollow circle otherwise.
+              // Only applied when the shell provided a progress array (compound trackers).
+              const hasProgress = !!progress && progress.length > 0;
+              const done = hasProgress && !!progress[i];
+              return (
+                <li key={i} className="text-[13px] leading-snug flex items-start gap-2">
+                  {hasProgress ? (
+                    done ? (
+                      <Check
+                        size={14}
+                        strokeWidth={3}
+                        className="text-emerald-600 mt-0.5 shrink-0 transition-opacity"
+                      />
+                    ) : (
+                      <Circle size={13} className="text-zinc-300 mt-0.5 shrink-0" />
+                    )
+                  ) : (
+                    <span className="text-emerald-600 mt-0.5">•</span>
+                  )}
+                  <span
+                    className={
+                      done
+                        ? 'text-zinc-400 line-through'
+                        : 'text-zinc-700'
+                    }
+                  >
+                    {c}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
