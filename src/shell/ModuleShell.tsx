@@ -656,8 +656,70 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
     );
   }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs, childStates, stepToast, readSubPhase, formativeBlocks]);
 
-  // ── Inline recognition prompt overlay (over sim) ──
-  const inlinePromptOverlay = activePrompt ? (
+  // ── Click-target mode (recognition by clicking a reading/control) ──
+  const isClickTargetMode = !!activePrompt?.click_targets && activePrompt.click_targets.length > 0;
+  const [clickFeedback, setClickFeedback] = useState<{
+    label: string; isCorrect: boolean; explanation?: string;
+  } | null>(null);
+  // Reset feedback whenever a new prompt loads.
+  useEffect(() => {
+    setClickFeedback(null);
+  }, [activePrompt?.prompt_id]);
+  // Auto-clear wrong-answer feedback after 2.5 s so the learner can retry.
+  useEffect(() => {
+    if (!clickFeedback || clickFeedback.isCorrect) return;
+    const id = setTimeout(() => setClickFeedback(null), 2500);
+    return () => clearTimeout(id);
+  }, [clickFeedback]);
+
+  const handleRecognitionElementClick = (label: string, isCorrect: boolean) => {
+    if (!activePrompt) return;
+    const target = activePrompt.click_targets?.find(t => t.label === label);
+    setClickFeedback({ label, isCorrect, explanation: target?.explanation });
+    respondToPrompt(label, isCorrect);
+  };
+
+  const recognitionTargets = isClickTargetMode
+    ? activePrompt!.click_targets!.map(t => ({
+        element: t.element,
+        label: t.label,
+        is_correct: t.is_correct,
+      }))
+    : undefined;
+
+  const recognitionBanner = isClickTargetMode ? (
+    <div className="bg-sky-50 border border-sky-300 rounded-xl px-4 py-3 shadow-sm">
+      <div className="flex items-center gap-2 mb-1">
+        <Target size={14} className="text-sky-600" />
+        <span className="text-[10px] font-black uppercase tracking-widest text-sky-700">
+          Click the reading
+        </span>
+      </div>
+      <p className="text-[14px] font-semibold text-zinc-900 leading-snug">
+        {activePrompt!.question}
+      </p>
+      {clickFeedback && (
+        <div
+          className={`mt-2 border rounded-md px-3 py-2 text-[12.5px] leading-snug ${
+            clickFeedback.isCorrect
+              ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+              : 'border-rose-300 bg-rose-50 text-rose-900'
+          }`}
+        >
+          <span className="font-bold">
+            {clickFeedback.isCorrect ? 'Correct.' : 'Not quite — try another.'}
+          </span>
+          {clickFeedback.explanation && (
+            <span className="ml-1.5 text-zinc-700">{clickFeedback.explanation}</span>
+          )}
+        </div>
+      )}
+    </div>
+  ) : null;
+
+  // ── Inline recognition prompt overlay (over sim) — MCQ modal only ──
+  // Suppressed in click-target mode so the modal doesn't block the readings.
+  const inlinePromptOverlay = activePrompt && !isClickTargetMode ? (
     <RecognitionPrompt
       prompt={activePrompt}
       onResponse={(label, isCorrect) => respondToPrompt(label, isCorrect)}
@@ -696,6 +758,9 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
           workbookContent={workbookContent}
           inlinePromptOverlay={inlinePromptOverlay}
           simInteractivity={simInteractivity}
+          recognitionTargets={recognitionTargets}
+          recognitionBanner={recognitionBanner}
+          onRecognitionElementClick={handleRecognitionElementClick}
           hideHeader
         />
       </div>

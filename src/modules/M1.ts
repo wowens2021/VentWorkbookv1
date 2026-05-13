@@ -56,9 +56,10 @@ export const M1: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Four recognition tasks — identify each of the core display readings.
-  // Each prompt is multiple-choice (clickable display regions aren't yet a
-  // sim affordance), and they must be answered in sequence.
+  // Four recognition tasks — the learner clicks the actual reading or
+  // control on the simulator. `click_targets` makes each readout/control on
+  // the sim itself a clickable answer; `options` remain as the canonical
+  // record of correct answer + per-option explanations.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
@@ -68,14 +69,19 @@ export const M1: ModuleConfig = {
         prompt: {
           prompt_id: 'M1-peak',
           trigger: { kind: 'on_load' },
-          question: 'On the ventilator display you\'re looking at, which reading shows the **peak airway pressure (PIP)** — the highest pressure during each breath?',
+          question: 'Click the reading on the display that shows the **peak airway pressure (PIP)** — the highest pressure during each breath.',
           options: [
-            { label: 'The PIP value in the Measured Values strip (the top of the pressure waveform)', is_correct: true, explanation: 'PIP is the maximum pressure during inspiration. On this display it\'s the value labeled PIP and the peak of the Airway Pressure waveform.' },
-            { label: 'The Vte value', is_correct: false, explanation: 'Vte is expired tidal volume (mL), not pressure.' },
-            { label: 'The PEEP value', is_correct: false, explanation: 'PEEP is the floor pressure at end-expiration, not the peak.' },
-            { label: 'The VE value', is_correct: false, explanation: 'VE is minute ventilation (L/min), not a pressure.' },
+            { label: 'PIP', is_correct: true, explanation: 'PIP is the maximum pressure during inspiration — the highest point on the Airway Pressure waveform.' },
+            { label: 'Vte', is_correct: false, explanation: 'Vte is expired tidal volume (mL), not pressure.' },
+            { label: 'tPEEP', is_correct: false, explanation: 'PEEP is the floor pressure at end-expiration, not the peak.' },
+            { label: 'VE', is_correct: false, explanation: 'VE is minute ventilation (L/min), not a pressure.' },
           ],
-          max_attempts: 2,
+          click_targets: [
+            { element: { kind: 'readout', name: 'pip' }, label: 'PIP', is_correct: true, explanation: 'PIP is the maximum pressure during inspiration — the highest point on the Airway Pressure waveform.' },
+            { element: { kind: 'readout', name: 'vte' }, label: 'Vte', is_correct: false, explanation: 'Vte is expired tidal volume (mL), not pressure.' },
+            { element: { kind: 'readout', name: 'totalPeep' }, label: 'tPEEP', is_correct: false, explanation: 'PEEP is the floor pressure at end-expiration, not the peak.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'VE', is_correct: false, explanation: 'VE is minute ventilation (L/min), not a pressure.' },
+          ],
         },
       },
       {
@@ -83,14 +89,19 @@ export const M1: ModuleConfig = {
         prompt: {
           prompt_id: 'M1-vt',
           trigger: { kind: 'on_load' },
-          question: 'Which reading shows the **tidal volume** — the volume of one breath?',
+          question: 'Now click the reading that shows the **tidal volume** — the volume of one breath.',
           options: [
-            { label: 'Vte (expired tidal volume, in mL)', is_correct: true, explanation: 'Vte is the volume the patient exhales each breath. Vt or Vte is the standard label.' },
-            { label: 'VE (minute ventilation)', is_correct: false, explanation: 'VE is volume per minute (Vt × RR), not per breath.' },
+            { label: 'Vte', is_correct: true, explanation: 'Vte is the volume the patient exhales each breath. Vt or Vte is the standard label.' },
+            { label: 'VE', is_correct: false, explanation: 'VE is volume per minute (Vt × RR), not per breath.' },
             { label: 'PIP', is_correct: false, explanation: 'PIP is a pressure, not a volume.' },
             { label: 'Pplat', is_correct: false, explanation: 'Pplat is plateau pressure (cmH2O), not volume.' },
           ],
-          max_attempts: 2,
+          click_targets: [
+            { element: { kind: 'readout', name: 'vte' }, label: 'Vte', is_correct: true, explanation: 'Vte is the volume the patient exhales each breath. Vt or Vte is the standard label.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'VE', is_correct: false, explanation: 'VE is volume per minute (Vt × RR), not per breath.' },
+            { element: { kind: 'readout', name: 'pip' }, label: 'PIP', is_correct: false, explanation: 'PIP is a pressure, not a volume.' },
+            { element: { kind: 'readout', name: 'plat' }, label: 'Pplat', is_correct: false, explanation: 'Pplat is plateau pressure (cmH2O), not volume.' },
+          ],
         },
       },
       {
@@ -98,14 +109,19 @@ export const M1: ModuleConfig = {
         prompt: {
           prompt_id: 'M1-peep',
           trigger: { kind: 'on_load' },
-          question: 'Which reading shows the **PEEP** — the floor pressure at end-expiration?',
+          question: 'Click the **PEEP** control — the floor pressure the ventilator holds at end-expiration.',
           options: [
-            { label: 'The PEEP control value (typically 5 here) — the baseline of the Airway Pressure waveform', is_correct: true, explanation: 'PEEP sits at the bottom of the pressure waveform between breaths. Typical adult range 5–15 cmH2O.' },
-            { label: 'PIP', is_correct: false, explanation: 'PIP is the peak, not the floor.' },
-            { label: 'Pplat', is_correct: false, explanation: 'Pplat is mid-inspiratory plateau, not the floor.' },
-            { label: 'RR', is_correct: false, explanation: 'RR is the rate (breaths per minute).' },
+            { label: 'PEEP control', is_correct: true, explanation: 'PEEP sits at the bottom of the pressure waveform between breaths. Typical adult range 5–15 cmH2O.' },
+            { label: 'Rate control', is_correct: false, explanation: 'Rate sets breaths per minute, not pressure.' },
+            { label: 'Vt control', is_correct: false, explanation: 'Vt is the breath volume, not pressure.' },
+            { label: 'FiO2 control', is_correct: false, explanation: 'FiO2 is the inspired oxygen fraction.' },
           ],
-          max_attempts: 2,
+          click_targets: [
+            { element: { kind: 'control', name: 'peep' }, label: 'PEEP control', is_correct: true, explanation: 'PEEP sits at the bottom of the pressure waveform between breaths. Typical adult range 5–15 cmH2O.' },
+            { element: { kind: 'control', name: 'respiratoryRate' }, label: 'Rate control', is_correct: false, explanation: 'Rate sets breaths per minute, not pressure.' },
+            { element: { kind: 'control', name: 'tidalVolume' }, label: 'Vt control', is_correct: false, explanation: 'Vt is the breath volume, not pressure.' },
+            { element: { kind: 'control', name: 'fiO2' }, label: 'FiO2 control', is_correct: false, explanation: 'FiO2 is the inspired oxygen fraction.' },
+          ],
         },
       },
       {
@@ -113,14 +129,19 @@ export const M1: ModuleConfig = {
         prompt: {
           prompt_id: 'M1-rate',
           trigger: { kind: 'on_load' },
-          question: 'Which reading shows the **set respiratory rate** — the rate the operator chose?',
+          question: 'Last one — click the control that shows the **set respiratory rate** chosen by the operator.',
           options: [
-            { label: 'The Rate control under the ventilator settings (currently 12 BPM)', is_correct: true, explanation: 'The Rate setting (in the controls row) is what the operator dialed in. The Actual RR readout (in Measured Values) may differ if the patient is triggering.' },
-            { label: 'The Vt control', is_correct: false, explanation: 'Vt is tidal volume, not rate.' },
-            { label: 'The PEEP control', is_correct: false, explanation: 'PEEP is a pressure setting.' },
-            { label: 'The FiO2 control', is_correct: false, explanation: 'FiO2 is the inspired oxygen fraction.' },
+            { label: 'Rate control', is_correct: true, explanation: 'The Rate control (currently 12 bpm) is what the operator dialed in. The Actual RR readout in Measured Values may differ if the patient is triggering extra breaths.' },
+            { label: 'Vt control', is_correct: false, explanation: 'Vt is tidal volume, not rate.' },
+            { label: 'PEEP control', is_correct: false, explanation: 'PEEP is a pressure setting.' },
+            { label: 'FiO2 control', is_correct: false, explanation: 'FiO2 is the inspired oxygen fraction.' },
           ],
-          max_attempts: 2,
+          click_targets: [
+            { element: { kind: 'control', name: 'respiratoryRate' }, label: 'Rate control', is_correct: true, explanation: 'The Rate control (currently 12 bpm) is what the operator dialed in. The Actual RR readout in Measured Values may differ if the patient is triggering extra breaths.' },
+            { element: { kind: 'control', name: 'tidalVolume' }, label: 'Vt control', is_correct: false, explanation: 'Vt is tidal volume, not rate.' },
+            { element: { kind: 'control', name: 'peep' }, label: 'PEEP control', is_correct: false, explanation: 'PEEP is a pressure setting.' },
+            { element: { kind: 'control', name: 'fiO2' }, label: 'FiO2 control', is_correct: false, explanation: 'FiO2 is the inspired oxygen fraction.' },
+          ],
         },
       },
     ],

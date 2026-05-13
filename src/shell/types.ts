@@ -108,6 +108,11 @@ export interface OutcomeTrackerConfig {
   sustain_breaths?: number; // default 1
 }
 
+/** A specific clickable element on the sim that a recognition prompt can target. */
+export type RecognitionTargetElement =
+  | { kind: 'readout'; name: ReadoutName }
+  | { kind: 'control'; name: ControlName };
+
 export interface InlinePromptConfig {
   prompt_id: string;
   trigger:
@@ -115,9 +120,26 @@ export interface InlinePromptConfig {
     | { kind: 'on_sim_state'; readouts: Partial<Record<ReadoutName, ReadoutCondition>> }
     | { kind: 'after_manipulation'; control: ControlName };
   question: string;
+  /**
+   * Required for MCQ-style prompts. When `click_targets` is also set, these
+   * are NOT shown to the learner — they remain as the canonical record of
+   * acceptable answers and their explanations.
+   */
   options: QuizOption[];
   max_attempts?: number;
   annotation_on_correct?: string;
+  /**
+   * Click-target mode. When non-empty, the learner answers by clicking a
+   * specific reading or control on the simulator instead of picking from an
+   * MCQ list. Each entry maps an on-sim element to a label / correctness /
+   * explanation so wrong clicks still surface useful feedback.
+   */
+  click_targets?: Array<{
+    element: RecognitionTargetElement;
+    label: string;
+    is_correct: boolean;
+    explanation?: string;
+  }>;
 }
 
 export interface RecognitionTrackerConfig {

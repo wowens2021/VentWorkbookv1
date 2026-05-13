@@ -37,6 +37,22 @@ interface PlaygroundSimProps {
    * The default false is what every embedded-in-shell instance uses.
    */
   playgroundMode?: boolean;
+  /**
+   * When set, the named on-sim elements (readouts/controls) render with a
+   * sky-blue highlight ring and become clickable. The first matching element
+   * the learner clicks fires `onRecognitionElementClick` with its label and
+   * `is_correct`. Used by click-target recognition prompts so the learner can
+   * literally click the "PIP" reading instead of picking from an MCQ list.
+   */
+  recognitionTargets?: Array<{
+    element: { kind: 'readout' | 'control'; name: string };
+    label: string;
+    is_correct: boolean;
+  }>;
+  /** Optional banner rendered above the Measured Values strip in click-target mode. */
+  recognitionBanner?: React.ReactNode;
+  /** Fires when the learner clicks any element listed in `recognitionTargets`. */
+  onRecognitionElementClick?: (label: string, isCorrect: boolean) => void;
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
@@ -96,22 +112,60 @@ const MetricBox = ({ label, value, color }: { label: string; value: any; color: 
   </div>
 );
 
-const NumericCard = ({ label, value, unit, color, sub = null }: any) => (
-  <div className="bg-white rounded-md border border-zinc-200 px-1.5 py-1 flex flex-col justify-between shadow-sm">
-    <div className="flex justify-between leading-none">
-      <span className="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">{label}</span>
-      {sub && <span className="text-[8px] font-bold text-zinc-400">{sub}</span>}
+const NumericCard = ({
+  label, value, unit, color, sub = null,
+  /** When set, the card renders a sky-blue pulsing ring and becomes a button. */
+  highlight = false,
+  onClick,
+}: any) => {
+  const baseCls = 'rounded-md px-1.5 py-1 flex flex-col justify-between shadow-sm transition';
+  const stateCls = highlight
+    ? 'bg-sky-50 border-2 border-sky-500 ring-2 ring-sky-300/60 cursor-pointer hover:bg-sky-100 animate-pulse'
+    : 'bg-white border border-zinc-200';
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${baseCls} ${stateCls} text-left`}
+      >
+        <div className="flex justify-between leading-none">
+          <span className="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">{label}</span>
+          {sub && <span className="text-[8px] font-bold text-zinc-400">{sub}</span>}
+        </div>
+        <div className="flex items-baseline gap-1">
+          <span className={`text-lg font-mono font-black tracking-tighter leading-none ${color}`}>
+            {typeof value === 'number' ? value.toFixed(0) : value}
+          </span>
+          <span className="text-[8px] text-zinc-500 uppercase font-black">{unit}</span>
+        </div>
+      </button>
+    );
+  }
+  return (
+    <div className={`${baseCls} ${stateCls}`}>
+      <div className="flex justify-between leading-none">
+        <span className="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">{label}</span>
+        {sub && <span className="text-[8px] font-bold text-zinc-400">{sub}</span>}
+      </div>
+      <div className="flex items-baseline gap-1">
+        <span className={`text-lg font-mono font-black tracking-tighter leading-none ${color}`}>
+          {typeof value === 'number' ? value.toFixed(0) : value}
+        </span>
+        <span className="text-[8px] text-zinc-500 uppercase font-black">{unit}</span>
+      </div>
     </div>
-    <div className="flex items-baseline gap-1">
-      <span className={`text-lg font-mono font-black tracking-tighter leading-none ${color}`}>
-        {typeof value === 'number' ? value.toFixed(0) : value}
-      </span>
-      <span className="text-[8px] text-zinc-500 uppercase font-black">{unit}</span>
-    </div>
-  </div>
-);
+  );
+};
 
-const ControlBox = ({ label, value, unit, min, max, step, onChange, forceDecimal = false, className = '' }: any) => {
+const ControlBox = ({
+  label, value, unit, min, max, step, onChange, forceDecimal = false, className = '',
+  /** When set, the control renders a sky-blue pulsing ring and the WHOLE box
+   *  becomes clickable to answer a recognition prompt. Stepper buttons remain
+   *  inert during click-target mode so the click is unambiguous. */
+  recognitionHighlight = false,
+  onRecognitionClick,
+}: any) => {
   const timerRef = useRef<any>(null);
   const intervalRef = useRef<any>(null);
   const valueRef = useRef(value);
@@ -132,6 +186,31 @@ const ControlBox = ({ label, value, unit, min, max, step, onChange, forceDecimal
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
+  if (recognitionHighlight && onRecognitionClick) {
+    // Click-target mode: render the whole box as one button. Stepper +/− are
+    // visible but inert so the learner doesn't accidentally change the value.
+    return (
+      <button
+        type="button"
+        onClick={onRecognitionClick}
+        className={`flex flex-col gap-0.5 ${className} text-left`}
+      >
+        <span className="text-[9px] font-bold text-sky-700 uppercase tracking-wider text-center">{label}</span>
+        <div className="flex items-center bg-sky-50 border-2 border-sky-500 ring-2 ring-sky-300/60 rounded-lg p-0.5 shadow-md animate-pulse">
+          <div className="flex-1 text-center px-1">
+            <div className="text-base font-mono font-extrabold leading-none tracking-tight text-zinc-900">
+              {forceDecimal ? Number(value).toFixed(1) : value}
+            </div>
+            <div className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-wider leading-none mt-0.5">{unit}</div>
+          </div>
+          <div className="flex flex-col gap-0.5 pointer-events-none opacity-50">
+            <span className="w-6 h-5 flex items-center justify-center rounded bg-white text-zinc-400"><Plus size={11} strokeWidth={2.5} /></span>
+            <span className="w-6 h-5 flex items-center justify-center rounded bg-white text-zinc-400"><Minus size={11} strokeWidth={2.5} /></span>
+          </div>
+        </div>
+      </button>
+    );
+  }
   return (
     <div className={`flex flex-col gap-0.5 ${className}`}>
       <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider text-center">{label}</span>
@@ -234,7 +313,42 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   hideHeader,
   simInteractivity = 'live',
   playgroundMode = false,
+  recognitionTargets,
+  recognitionBanner,
+  onRecognitionElementClick,
 }) => {
+  /**
+   * Lookup map for the recognition-click feature. Key is "kind:name"
+   * (e.g. "readout:pip", "control:respiratoryRate"). Each NumericCard /
+   * ControlBox call site looks itself up; a hit means "render the highlight
+   * ring and wire onClick to call the recognition callback."
+   */
+  const recognitionMap = useMemo(() => {
+    const m = new Map<string, { label: string; isCorrect: boolean }>();
+    (recognitionTargets ?? []).forEach(t => {
+      m.set(`${t.element.kind}:${t.element.name}`, { label: t.label, isCorrect: t.is_correct });
+    });
+    return m;
+  }, [recognitionTargets]);
+
+  // Shorthand the call sites use: pass element identity, get back the props
+  // a NumericCard or ControlBox needs to participate in click-target mode.
+  const recogPropsForReadout = (name: string) => {
+    const hit = recognitionMap.get(`readout:${name}`);
+    if (!hit) return {};
+    return {
+      highlight: true,
+      onClick: () => onRecognitionElementClick?.(hit.label, hit.isCorrect),
+    };
+  };
+  const recogPropsForControl = (name: string) => {
+    const hit = recognitionMap.get(`control:${name}`);
+    if (!hit) return {};
+    return {
+      recognitionHighlight: true,
+      onRecognitionClick: () => onRecognitionElementClick?.(hit.label, hit.isCorrect),
+    };
+  };
   /**
    * Per-phase global override: in 'live-disabled' and 'live-frozen' EVERY
    * control is locked regardless of the scenario's unlocked_controls list.
@@ -288,9 +402,13 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       if (initialPreset?.settings) setSettings({ ...DEFAULT_SETTINGS, ...initialPreset.settings });
       if (initialPreset?.patient) setPatient(p => ({ ...p, ...initialPreset.patient }));
       if (initialPreset?.mode) setMode(initialPreset.mode);
-      // F6: full waveform + timeline reset. Without this, waveforms carry over
-      // from before the reset and the user sees a visible discontinuity that
-      // looks like a glitch. Clear data, zero breath counter, restart sim time.
+      // F6: full waveform + timeline reset. Without this, waveforms carry
+      // over from before the reset and the user sees a visible discontinuity
+      // that looks like a glitch. Clear data, zero breath counter, restart
+      // sim time, and (critically) zero ALL breath-cycle timing refs so the
+      // animation loop will trigger the next mandatory breath at t≈0 instead
+      // of at the carried-over "last breath start" time (which could be
+      // hundreds of seconds in the past, freezing the sim).
       setDataPoints([]);
       setCursorIndex(null);
       setIsFrozen(false);
@@ -299,6 +417,27 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       startTimeRef.current = Date.now();
       totalFreezeOffsetRef.current = 0;
       lastFreezeTimeRef.current = 0;
+      // Breath-cycle timing — without these the sim appears frozen.
+      lastBreathStartTimeRef.current = 0;
+      nextMandatoryTimeRef.current = 0;
+      nextSpontaneousTimeRef.current = 0;
+      holdOffsetRef.current = 0;
+      holdStartTimeRef.current = 0;
+      holdStartRealMsRef.current = 0;
+      isHolding.current = false;
+      isExpHolding.current = false;
+      pendingInspRef.current = false;
+      pendingExpRef.current = false;
+      isPatientTriggeredRef.current = false;
+      isCurrentBreathSpontaneousRef.current = false;
+      wasInInspirationRef.current = false;
+      lastVolumeRef.current = 0;
+      currentFlowLpmRef.current = 0;
+      peakExpiratoryFlowRef.current = 0;
+      currentBreathPeakPressureRef.current = 0;
+      trappedVolumeAtBreathStartRef.current = 0;
+      vAtEndOfInspRef.current = 0;
+      actualInspDurationRef.current = 1.0;
       setMetrics({
         pip: 0, plat: 0, drivingPressure: 0, map: 0,
         mve: 0, mveSpont: 0, totalPeep: initialPreset?.settings?.peep ?? 5,
@@ -1070,6 +1209,15 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         {/* ── Left column: measured values strip → waveforms → vent controls ── */}
         <div className={`${playgroundMode ? 'lg:col-span-12' : 'lg:col-span-6'} flex flex-col gap-2 min-h-0 cursor-crosshair`}>
 
+          {/* Recognition click-target banner — only shown when an active
+              recognition prompt expects the learner to click a reading or
+              control on the sim (NOT when answering via MCQ). */}
+          {recognitionBanner && (
+            <div className="shrink-0">
+              {recognitionBanner}
+            </div>
+          )}
+
           {/* Measured values strip — moved to TOP.
               Playground mode lays the 11 cards out in a single horizontal row
               (full available width); module mode keeps the 6-column wrap. */}
@@ -1079,17 +1227,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Measured Values</span>
             </div>
             <div className={`grid gap-1 ${playgroundMode ? 'grid-cols-11' : 'grid-cols-6'}`}>
-              <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" />
-              <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" />
-              <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" />
-              <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} />
-              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color={metrics.drivingPressure > 15 ? 'text-rose-600' : 'text-violet-600'} />
-              <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" />
-              <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} />
+              <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" {...recogPropsForReadout('actualRate')} />
+              <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" {...recogPropsForReadout('ieRatio')} />
+              <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" {...recogPropsForReadout('pip')} />
+              <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} {...recogPropsForReadout('plat')} />
+              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color={metrics.drivingPressure > 15 ? 'text-rose-600' : 'text-violet-600'} {...recogPropsForReadout('drivingPressure')} />
+              <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" {...recogPropsForReadout('mve')} />
+              <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} {...recogPropsForReadout('vte')} />
               <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-600" />
-              <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" />
-              <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" />
-              <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-600' : rsbiValue > 80 ? 'text-amber-600' : 'text-emerald-600'} />
+              <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" {...recogPropsForReadout('totalPeep')} />
+              <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" {...recogPropsForReadout('autoPeep')} />
+              <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-600' : rsbiValue > 80 ? 'text-amber-600' : 'text-emerald-600'} {...recogPropsForReadout('rsbi')} />
             </div>
           </div>
 
@@ -1144,17 +1292,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
 
             {/* Knobs */}
             <div className={`flex flex-row flex-wrap justify-center px-1 items-center ${playgroundMode ? 'gap-3' : 'gap-1.5'}`}>
-              {mode !== 'PSV' && <ControlBox className="w-[90px]" label="Rate" value={settings.respiratoryRate} unit="bpm" min={4} max={40} step={1} onChange={(v: number) => handleSettingChange('respiratoryRate', v)} />}
+              {mode !== 'PSV' && <ControlBox className="w-[90px]" label="Rate" value={settings.respiratoryRate} unit="bpm" min={4} max={40} step={1} onChange={(v: number) => handleSettingChange('respiratoryRate', v)} {...recogPropsForControl('respiratoryRate')} />}
               {mode === 'PCV'
-                ? <ControlBox className="w-[90px]" label="Pinsp" value={settings.pInsp} unit="cmH2O" min={1} max={60} step={1} onChange={(v: number) => handleSettingChange('pInsp', v)} />
+                ? <ControlBox className="w-[90px]" label="Pinsp" value={settings.pInsp} unit="cmH2O" min={1} max={60} step={1} onChange={(v: number) => handleSettingChange('pInsp', v)} {...recogPropsForControl('pInsp')} />
                 : mode === 'PSV'
-                  ? <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} />
-                  : <ControlBox className="w-[90px]" label="Vt" value={settings.tidalVolume} unit="mL" min={200} max={1000} step={10} onChange={(v: number) => handleSettingChange('tidalVolume', v)} />}
-              {mode !== 'PSV' && <ControlBox className="w-[90px]" label="I-time" value={settings.iTime} unit="sec" min={0.3} max={3.0} step={0.1} onChange={(v: number) => handleSettingChange('iTime', v)} forceDecimal />}
-              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="PEEP" value={settings.peep} unit="cmH2O" min={0} max={24} step={1} onChange={(v: number) => handleSettingChange('peep', v)} />
-              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="FiO2" value={settings.fiO2} unit="%" min={21} max={100} step={5} onChange={(v: number) => handleSettingChange('fiO2', v)} />
-              {mode === 'SIMV/PS' && <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} />}
-              {(mode === 'PSV' || mode === 'SIMV/PS') && <ControlBox className="w-[90px]" label="End-Insp %" value={settings.endInspiratoryPercent} unit="%" min={0} max={50} step={1} onChange={(v: number) => handleSettingChange('endInspiratoryPercent', v)} />}
+                  ? <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel')} />
+                  : <ControlBox className="w-[90px]" label="Vt" value={settings.tidalVolume} unit="mL" min={200} max={1000} step={10} onChange={(v: number) => handleSettingChange('tidalVolume', v)} {...recogPropsForControl('tidalVolume')} />}
+              {mode !== 'PSV' && <ControlBox className="w-[90px]" label="I-time" value={settings.iTime} unit="sec" min={0.3} max={3.0} step={0.1} onChange={(v: number) => handleSettingChange('iTime', v)} forceDecimal {...recogPropsForControl('iTime')} />}
+              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="PEEP" value={settings.peep} unit="cmH2O" min={0} max={24} step={1} onChange={(v: number) => handleSettingChange('peep', v)} {...recogPropsForControl('peep')} />
+              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="FiO2" value={settings.fiO2} unit="%" min={21} max={100} step={5} onChange={(v: number) => handleSettingChange('fiO2', v)} {...recogPropsForControl('fiO2')} />
+              {mode === 'SIMV/PS' && <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel')} />}
+              {(mode === 'PSV' || mode === 'SIMV/PS') && <ControlBox className="w-[90px]" label="End-Insp %" value={settings.endInspiratoryPercent} unit="%" min={0} max={50} step={1} onChange={(v: number) => handleSettingChange('endInspiratoryPercent', v)} {...recogPropsForControl('endInspiratoryPercent')} />}
             </div>
           </div>
         </div>
