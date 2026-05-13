@@ -179,9 +179,14 @@ const WaveformPanel = React.memo(({
   return (
     <div className="bg-[#e0e0e0] rounded-xl border border-zinc-300 p-2 flex-1 relative min-h-0 overflow-hidden">
       <div className="absolute left-0 top-3 bottom-3 w-10 flex flex-col justify-between items-end pr-1.5 border-r border-zinc-500/40 z-20 pointer-events-none">
-        {[max, (max + min) / 2, min].map((v, i) => (
-          <div key={i} className="text-[8px] font-mono text-zinc-600 font-bold">{Math.round(v)}</div>
-        ))}
+        {/* Five evenly-spaced y-axis ticks computed from live bounds — scale
+            automatically as pressure/flow/volume axes auto-expand with use. */}
+        {[0, 1, 2, 3, 4].map(i => {
+          const v = max - (i * (max - min)) / 4;
+          return (
+            <div key={i} className="text-[8px] font-mono text-zinc-600 font-bold">{Math.round(v)}</div>
+          );
+        })}
       </div>
       <div className="flex justify-between items-start relative z-30 pl-10">
         <div className="flex flex-col leading-none">
@@ -199,7 +204,7 @@ const WaveformPanel = React.memo(({
         </div>
       )}
       <svg className="absolute inset-0 w-full h-full pt-3 pl-10 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 450 120">
-        {showZeroLine && <line x1="0" y1={zeroY} x2="450" y2={zeroY} stroke="#888" strokeWidth="1.2" strokeDasharray="5,3" vectorEffect="non-scaling-stroke" />}
+        {showZeroLine && <line x1="0" y1={zeroY} x2="450" y2={zeroY} stroke="#bbb" strokeWidth="0.8" strokeDasharray="4,4" vectorEffect="non-scaling-stroke" />}
         {segmentedPaths.map((seg, idx) => (
           <path key={idx} d={seg.path} fill="none" stroke={seg.color} strokeWidth="2.0" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
         ))}
