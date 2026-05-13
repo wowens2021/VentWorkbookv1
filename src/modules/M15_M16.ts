@@ -58,9 +58,20 @@ export const M15: ModuleConfig = {
     preset: {
       mode: 'VCV',
       settings: { tidalVolume: 560, respiratoryRate: 18, peep: 10, fiO2: 60, iTime: 1.0 },
-      // Moderate ARDS compliance. Tuned so that achieving Vt 6 mL/kg PBW (= 420
-      // mL for 70 kg) reliably drops driving pressure into the ≤15 zone:
-      // DP = 420/32 ≈ 13.1, plateau = 23.1, both pass.
+      // ─────────────────────────────────────────────────────────────────────
+      // ⚠️  DO NOT CHANGE compliance, heightInches, OR gender.
+      // Per MASTER_SHELL_v3 §6 M15: these three values are tuned together
+      // so that achieving the lung-protective target (Vt 6 mL/kg PBW =
+      // 420 mL for a 70 kg male, height 70") drops driving pressure into
+      // the ≤15 zone:
+      //   PBW = 0.91 × (177.8 − 152.4) + 50 ≈ 73 kg → target Vt ≈ 420 mL
+      //   DP  = 420 / 32 ≈ 13.1 cmH2O (passes ≤15)
+      //   Plateau = DP + PEEP = 13.1 + 10 ≈ 23.1 (passes ≤30)
+      // Resistance, spontaneousRate, and the settings are free to change
+      // for other reasons, but the compliance / height / gender trio is
+      // load-bearing for the task's achievability. If you alter them,
+      // re-derive the hidden_objective thresholds below.
+      // ─────────────────────────────────────────────────────────────────────
       patient: { compliance: 32, resistance: 12, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
     unlocked_controls: ['tidalVolume', 'respiratoryRate'],
@@ -241,6 +252,16 @@ export const M16: ModuleConfig = {
   scenario: {
     preset_id: 'obstructive_severe',
     preset: {
+      // ─────────────────────────────────────────────────────────────────────
+      // ⚠️  DO NOT CHANGE resistance (28), respiratoryRate (22), or
+      // iTime (1.0) without re-testing the auto-PEEP outcome target.
+      // Per MASTER_SHELL_v3 §6 M16: these three values together trip
+      // measured auto-PEEP above 2 cmH2O on the starting state, so the
+      // learner sees the problem they must solve. Changing any of them
+      // can either remove the trapping (task starts as already-solved)
+      // or push trapping so high the patient deteriorates before they
+      // can react. Other values (Vt, PEEP, FiO2, compliance) are free.
+      // ─────────────────────────────────────────────────────────────────────
       mode: 'VCV',
       settings: { tidalVolume: 400, respiratoryRate: 22, peep: 5, fiO2: 40, iTime: 1.0 },
       patient: { compliance: 50, resistance: 28, spontaneousRate: 0 },

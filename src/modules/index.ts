@@ -1,4 +1,4 @@
-import type { ModuleConfig } from '../shell/types';
+import type { ModuleConfig, TrackerConfig } from '../shell/types';
 import { M1 } from './M1';
 import { M2 } from './M2';
 import { M3 } from './M3';
@@ -19,3 +19,50 @@ export const MODULES: ModuleConfig[] = [
 export const MODULE_BY_ID: Record<string, ModuleConfig> = Object.fromEntries(
   MODULES.map(m => [m.id, m]),
 );
+
+/**
+ * Anti-pattern A2 guard (MASTER_SHELL_v3 §8): prompt_id must be globally
+ * unique across modules. Duplicates cause subscriber-mux confusion when
+ * multiple trackers think the same recognition_response is theirs.
+ *
+ * This walks every module's hidden_objective and every inline_prompt in
+ * the scenario, collects every prompt_id, and throws loudly at startup if
+ * any duplicates exist. Throwing here means the dev sees the problem in
+ * the browser console the moment they reload; the alternative — silent
+ * cross-contamination at runtime — is much worse.
+ *
+ * Convention: prompt_ids should be `{moduleId}-{shortname}` (e.g.
+ * `M1-peak`, `M11-3`, `M19-2`). The check doesn't enforce convention,
+ * just uniqueness.
+ */
+function collectPromptIds(tracker: TrackerConfig | undefined, into: Map<string, string>, moduleId: string) {
+  if (!tracker) return;
+  if (tracker.kind === 'recognition') {
+    const existing = into.get(tracker.prompt.prompt_id);
+    if (existing && existing !== moduleId) {
+      throw new Error(
+        `[modules] Duplicate prompt_id "${tracker.prompt.prompt_id}" — used by ${existing} and ${moduleId}. ` +
+          `prompt_id must be globally unique across all modules (per MASTER_SHELL_v3 §8 A2).`,
+      );
+    }
+    into.set(tracker.prompt.prompt_id, moduleId);
+  } else if (tracker.kind === 'compound') {
+    tracker.children.forEach(child => collectPromptIds(child, into, moduleId));
+  }
+}
+
+(function validatePromptIdUniqueness() {
+  const seen = new Map<string, string>();
+  for (const mod of MODULES) {
+    collectPromptIds(mod.hidden_objective, seen, mod.id);
+    (mod.scenario.inline_prompts ?? []).forEach(p => {
+      const existing = seen.get(p.prompt_id);
+      if (existing && existing !== mod.id) {
+        throw new Error(
+          `[modules] Duplicate prompt_id "${p.prompt_id}" — used by ${existing} and ${mod.id}.`,
+        );
+      }
+      seen.set(p.prompt_id, mod.id);
+    });
+  }
+})();

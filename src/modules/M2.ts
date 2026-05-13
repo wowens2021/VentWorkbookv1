@@ -1,11 +1,26 @@
-import type { ModuleConfig, TrackerConfig } from '../shell/types';
+import type { ModuleConfig, TrackerConfig, ControlName, ReadoutName } from '../shell/types';
 
-/** Concise helper to build a single recognition tracker. */
-function mcq(
+/**
+ * Click-target recognition helper. Per MASTER_SHELL_v3 §6 M2 + Pattern B,
+ * vocabulary modules where the learning is "read the display" must use
+ * click-target mode — the learner clicks the actual reading or control,
+ * not a multiple-choice text option.
+ *
+ * The `options` array is kept as the canonical record (drives telemetry +
+ * "Show me" fallback) but is not shown to the learner when `click_targets`
+ * is non-empty; the question banner appears above the Measured Values
+ * strip and the matching tiles become clickable.
+ */
+function clickTargetRecognition(
   prompt_id: string,
   question: string,
-  opts: [label: string, is_correct: boolean, explanation: string][],
-  max_attempts = 2,
+  targets: Array<{
+    kind: 'readout' | 'control';
+    name: ReadoutName | ControlName;
+    label: string;
+    is_correct: boolean;
+    explanation: string;
+  }>,
 ): TrackerConfig {
   return {
     kind: 'recognition',
@@ -13,8 +28,20 @@ function mcq(
       prompt_id,
       trigger: { kind: 'on_load' },
       question,
-      options: opts.map(([label, is_correct, explanation]) => ({ label, is_correct, explanation })),
-      max_attempts,
+      options: targets.map(t => ({
+        label: t.label,
+        is_correct: t.is_correct,
+        explanation: t.explanation,
+      })),
+      click_targets: targets.map(t => ({
+        element:
+          t.kind === 'readout'
+            ? { kind: 'readout', name: t.name as ReadoutName }
+            : { kind: 'control', name: t.name as ControlName },
+        label: t.label,
+        is_correct: t.is_correct,
+        explanation: t.explanation,
+      })),
     },
   };
 }
@@ -84,60 +111,96 @@ export const M2: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
-  // Eight vocabulary recognition tasks — any order. Each prompt asks the
-  // learner to pick the correct definition from a small option set.
+  // Eight vocabulary recognitions in click-target mode. Per MASTER_SHELL_v3
+  // §6 M2 + Pattern B: vocabulary modules where the learning is "read the
+  // display" must let the learner click the actual reading or control on
+  // the sim. The strict-order sequence ensures the learner sees each
+  // question in deliberate succession; click feedback (wrong tile →
+  // popup with explanation; correct tile → popup + Continue) advances.
   hidden_objective: {
     kind: 'compound',
-    sequence: 'any_order',
+    sequence: 'strict',
     children: [
-      mcq('M2-vt', 'Which reading shows **tidal volume (Vt)** — volume of one breath?', [
-        ['Vte / Vt in mL (typical adult 350–600)', true, 'Tidal volume is per-breath volume in mL.'],
-        ['VE in L/min', false, 'VE is per-minute volume, not per-breath.'],
-        ['RR in breaths/min', false, 'RR is a frequency, not a volume.'],
-        ['PIP in cmH2O', false, 'PIP is a pressure.'],
-      ]),
-      mcq('M2-ve', 'Which reading shows **minute ventilation (VE)** — total volume per minute?', [
-        ['VE in L/min', true, 'VE = Vt × RR, in L/min. Typical adult 6–10.'],
-        ['Vte in mL', false, 'Vte is per-breath, not per-minute.'],
-        ['Actual RR', false, 'RR is a frequency.'],
-        ['Total PEEP', false, 'PEEP is a pressure.'],
-      ]),
-      mcq('M2-peep', 'Which reading shows **PEEP** — the end-expiratory floor pressure?', [
-        ['The PEEP control value (cmH2O)', true, 'PEEP sets the floor pressure at end-expiration.'],
-        ['PIP', false, 'PIP is the peak, not the floor.'],
-        ['Pplat', false, 'Pplat is mid-inspiratory.'],
-        ['DP', false, 'Driving pressure = Pplat − PEEP.'],
-      ]),
-      mcq('M2-fio2', 'Which reading shows **FiO2** — the inspired oxygen fraction?', [
-        ['The FiO2 control (typically 21–100%)', true, 'FiO2 is the fraction of inspired oxygen.'],
-        ['SpO2', false, 'SpO2 is what the patient saturates at — a measured value, not an inspired setting.'],
-        ['PEEP', false, 'PEEP is a pressure.'],
-        ['VE', false, 'VE is minute ventilation.'],
-      ]),
-      mcq('M2-pip', 'Which reading shows **peak inspiratory pressure (PIP)** — the highest pressure during a breath?', [
-        ['PIP (top of the Airway Pressure waveform)', true, 'PIP is the maximum during inspiration.'],
-        ['Pplat', false, 'Pplat is lower than peak — resistive component is removed during the hold.'],
-        ['PEEP', false, 'PEEP is the floor.'],
-        ['DP', false, 'Driving pressure ≠ peak pressure.'],
-      ]),
-      mcq('M2-pplat', 'Which reading shows **plateau pressure (Pplat)** — the alveolar pressure during an inspiratory hold?', [
-        ['Pplat (after an inspiratory hold)', true, 'Pplat is alveolar pressure with flow stopped, revealed by holding inspiration.'],
-        ['PIP', false, 'PIP includes the resistive component; Pplat does not.'],
-        ['PEEP', false, 'PEEP is the end-expiratory baseline.'],
-        ['VE', false, 'VE is a volume, not a pressure.'],
-      ]),
-      mcq('M2-ie', 'Which reading shows the **I:E ratio** — inspiratory time vs expiratory time?', [
-        ['I:E (e.g. 1:2)', true, 'I:E expresses inspiratory time relative to expiratory time within one breath cycle.'],
-        ['RR', false, 'RR is a frequency, not a ratio.'],
-        ['Vt/PBW', false, 'Vt/PBW is volume per kg of predicted body weight.'],
-        ['DP', false, 'Driving pressure is unrelated to timing.'],
-      ]),
-      mcq('M2-rr', 'Which reading shows the **set respiratory rate (RR)** — what the operator dialed in?', [
-        ['The Rate control in the ventilator settings', true, 'The Rate setting is operator-chosen. The Actual RR (Measured Values) may exceed it if the patient triggers.'],
-        ['Actual RR (Measured Values)', false, 'Actual RR is the measured result, not the operator setting.'],
-        ['Vte', false, 'Vte is a volume.'],
-        ['SpO2', false, 'SpO2 is oxygen saturation.'],
-      ]),
+      clickTargetRecognition(
+        'M2-vt',
+        'Click the reading that shows **tidal volume (Vt)** — the volume of one breath.',
+        [
+          { kind: 'readout', name: 'vte', label: 'Vte', is_correct: true, explanation: 'Vte is the volume of one breath (mL). Typical adult 350–600. Vt or Vte is the standard label.' },
+          { kind: 'readout', name: 'mve', label: 'VE', is_correct: false, explanation: 'VE is per-minute volume (Vt × RR), not per-breath.' },
+          { kind: 'readout', name: 'actualRate', label: 'RR', is_correct: false, explanation: 'RR is a frequency (breaths/min), not a volume.' },
+          { kind: 'readout', name: 'pip', label: 'PIP', is_correct: false, explanation: 'PIP is a pressure, not a volume.' },
+        ],
+      ),
+      clickTargetRecognition(
+        'M2-ve',
+        'Click the reading that shows **minute ventilation (VE)** — total volume per minute.',
+        [
+          { kind: 'readout', name: 'mve', label: 'VE', is_correct: true, explanation: 'VE = Vt × RR, in L/min. Typical adult 6–10.' },
+          { kind: 'readout', name: 'vte', label: 'Vte', is_correct: false, explanation: 'Vte is per-breath, not per-minute.' },
+          { kind: 'readout', name: 'actualRate', label: 'RR', is_correct: false, explanation: 'RR is a frequency.' },
+          { kind: 'readout', name: 'totalPeep', label: 'tPEEP', is_correct: false, explanation: 'PEEP is a pressure.' },
+        ],
+      ),
+      clickTargetRecognition(
+        'M2-peep',
+        'Click the **PEEP** control — the end-expiratory floor pressure the operator dialed in.',
+        [
+          { kind: 'control', name: 'peep', label: 'PEEP control', is_correct: true, explanation: 'PEEP sets the floor pressure at end-expiration. Typical adult 5–15 cmH2O.' },
+          { kind: 'readout', name: 'pip', label: 'PIP', is_correct: false, explanation: 'PIP is the peak pressure, not the floor.' },
+          { kind: 'readout', name: 'plat', label: 'Pplat', is_correct: false, explanation: 'Pplat is mid-inspiratory plateau pressure.' },
+          { kind: 'readout', name: 'drivingPressure', label: 'DP', is_correct: false, explanation: 'Driving pressure = Pplat − PEEP. It uses PEEP but is not PEEP.' },
+        ],
+      ),
+      clickTargetRecognition(
+        'M2-fio2',
+        'Click the **FiO2** control — the inspired oxygen fraction.',
+        [
+          { kind: 'control', name: 'fiO2', label: 'FiO2 control', is_correct: true, explanation: 'FiO2 is the fraction of inspired oxygen (21–100%). Operator-set.' },
+          { kind: 'control', name: 'peep', label: 'PEEP control', is_correct: false, explanation: 'PEEP is a pressure setting, not gas concentration.' },
+          { kind: 'readout', name: 'mve', label: 'VE', is_correct: false, explanation: 'VE is minute ventilation — a volume per time.' },
+          { kind: 'control', name: 'respiratoryRate', label: 'Rate control', is_correct: false, explanation: 'Rate sets breaths per minute, not oxygen fraction.' },
+        ],
+      ),
+      clickTargetRecognition(
+        'M2-pip',
+        'Click the reading that shows **peak inspiratory pressure (PIP)** — the highest pressure during a breath.',
+        [
+          { kind: 'readout', name: 'pip', label: 'PIP', is_correct: true, explanation: 'PIP is the maximum pressure during inspiration — the top of the Airway Pressure waveform.' },
+          { kind: 'readout', name: 'plat', label: 'Pplat', is_correct: false, explanation: 'Pplat is lower than peak — the resistive component is removed during the inspiratory hold.' },
+          { kind: 'readout', name: 'totalPeep', label: 'tPEEP', is_correct: false, explanation: 'PEEP is the floor pressure, not the peak.' },
+          { kind: 'readout', name: 'drivingPressure', label: 'DP', is_correct: false, explanation: 'Driving pressure ≠ peak pressure.' },
+        ],
+      ),
+      clickTargetRecognition(
+        'M2-pplat',
+        'Click the reading that shows **plateau pressure (Pplat)** — the alveolar pressure during an inspiratory hold.',
+        [
+          { kind: 'readout', name: 'plat', label: 'Pplat', is_correct: true, explanation: 'Pplat is alveolar pressure with flow stopped, revealed by holding inspiration. The number that matters for compliance.' },
+          { kind: 'readout', name: 'pip', label: 'PIP', is_correct: false, explanation: 'PIP includes the resistive component; Pplat does not.' },
+          { kind: 'readout', name: 'totalPeep', label: 'tPEEP', is_correct: false, explanation: 'PEEP is the end-expiratory baseline, not the plateau.' },
+          { kind: 'readout', name: 'mve', label: 'VE', is_correct: false, explanation: 'VE is a volume, not a pressure.' },
+        ],
+      ),
+      clickTargetRecognition(
+        'M2-ie',
+        'Click the reading that shows the **I:E ratio** — inspiratory time vs expiratory time.',
+        [
+          { kind: 'readout', name: 'ieRatio', label: 'I:E', is_correct: true, explanation: 'I:E expresses inspiratory time relative to expiratory time within one breath cycle (e.g. 1:2).' },
+          { kind: 'readout', name: 'actualRate', label: 'RR', is_correct: false, explanation: 'RR is a frequency, not a ratio.' },
+          { kind: 'readout', name: 'rsbi', label: 'RSBI', is_correct: false, explanation: 'RSBI is the rapid shallow breathing index (RR / Vt), used for weaning prediction.' },
+          { kind: 'readout', name: 'drivingPressure', label: 'DP', is_correct: false, explanation: 'Driving pressure is unrelated to timing.' },
+        ],
+      ),
+      clickTargetRecognition(
+        'M2-rr',
+        'Last one — click the **Rate** control that shows the **set respiratory rate** chosen by the operator.',
+        [
+          { kind: 'control', name: 'respiratoryRate', label: 'Rate control', is_correct: true, explanation: 'The Rate setting is operator-chosen. The measured RR (in the Measured Values strip) may exceed it if the patient triggers extra breaths.' },
+          { kind: 'readout', name: 'actualRate', label: 'Actual RR', is_correct: false, explanation: 'Actual RR is the measured result, not the operator setting. They can differ.' },
+          { kind: 'readout', name: 'vte', label: 'Vte', is_correct: false, explanation: 'Vte is a volume, not a rate.' },
+          { kind: 'control', name: 'fiO2', label: 'FiO2 control', is_correct: false, explanation: 'FiO2 is the oxygen fraction, not the rate.' },
+        ],
+      ),
     ],
   },
 
@@ -224,10 +287,10 @@ export const M2: ModuleConfig = {
       'Make a mental note of where each lives on the display before the task starts.',
     ],
   },
-  user_facing_task: "Your senior runs you through a vocabulary check on the ventilator. They'll name eight values; for each, you click on the matching reading on the display.",
+  user_facing_task: "Your senior runs you through a vocabulary check on the ventilator. They'll name eight values; for each, you click on the matching reading or control on the display.",
   success_criteria_display: [
-    'Correctly match each term to its display element.',
-    'You have two attempts per term before the answer is revealed.',
+    'Eight values, in order. Click the matching tile or control for each.',
+    "Wrong clicks aren't punished — the popup explains why it's wrong; correct clicks advance to the next.",
   ],
   task_framing_style: 'C',
 

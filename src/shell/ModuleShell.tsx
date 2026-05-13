@@ -31,6 +31,10 @@ interface Props {
   nextModule?: ModuleConfig;
 }
 
+// Score math moved to ./scoring.ts per MASTER_SHELL_v3 §9 — a pure module
+// is testable and prevents anti-pattern A10 (drift between debrief renders).
+import { computeTotalScore } from './scoring';
+
 /**
  * C1: small RAF-driven count-up hook so the debrief score animates from 0
  * to its final value over `duration` ms. No external dependency. Returns
@@ -55,56 +59,8 @@ function useCountUp(target: number, duration = 1200): number {
   return value;
 }
 
-/**
- * Composite performance score, capped at 100. Component weights:
- *   - Primer first-attempt:   30 pts (primer_score / 3 × 30)
- *   - Summative quiz:         50 pts (quiz_score / 5 × 50)
- *   - Hint-usage bonus:       up to 10 pts (no hints) / 5 (tier 1 only) / 0
- *   - Reset-usage bonus:      up to 10 pts (zero resets) / 5 (one) / 0
- *   - Check-yourself bonus:   up to 5 pts (E3) — proportional to correct ratio
- *
- * Raw total can reach 105; the displayed percent is capped at 100. The +5
- * cushion lets a strong learner absorb a small hint/reset penalty without
- * losing their A grade.
- */
-function computeTotalScore(rec: {
-  primer_score?: number;
-  primer_total?: number;
-  quiz_score?: number;
-  quiz_total?: number;
-  hint_tiers_triggered?: number;
-  reset_to_start_clicks?: number;
-  check_yourself_correct?: number;
-  check_yourself_total?: number;
-}): { percent: number; letter: 'A' | 'B' | 'C' | 'D' | 'F'; breakdown: Record<string, number> } {
-  const primerPts = rec.primer_total && rec.primer_score !== undefined
-    ? Math.round((rec.primer_score / rec.primer_total) * 30)
-    : 0;
-  const quizPts = rec.quiz_total && rec.quiz_score !== undefined
-    ? Math.round((rec.quiz_score / rec.quiz_total) * 50)
-    : 0;
-  const hintBonus = (rec.hint_tiers_triggered ?? 0) === 0 ? 10
-    : (rec.hint_tiers_triggered ?? 0) === 1 ? 5
-    : 0;
-  const resetBonus = (rec.reset_to_start_clicks ?? 0) === 0 ? 10
-    : (rec.reset_to_start_clicks ?? 0) === 1 ? 5
-    : 0;
-  const checkYourselfBonus = rec.check_yourself_total && rec.check_yourself_total > 0
-    ? Math.floor((rec.check_yourself_correct ?? 0) / rec.check_yourself_total * 5)
-    : 0;
-  const raw = primerPts + quizPts + hintBonus + resetBonus + checkYourselfBonus;
-  const percent = Math.max(0, Math.min(100, raw));
-  const letter: 'A' | 'B' | 'C' | 'D' | 'F' =
-    percent >= 90 ? 'A' :
-    percent >= 80 ? 'B' :
-    percent >= 70 ? 'C' :
-    percent >= 60 ? 'D' : 'F';
-  return {
-    percent,
-    letter,
-    breakdown: { primerPts, quizPts, hintBonus, resetBonus, checkYourselfBonus },
-  };
-}
+// computeTotalScore now lives in ./scoring.ts (see import above). The
+// formula and weights are documented there. Do not re-inline this function.
 
 /**
  * B1 helper: which readouts should briefly halo when the learner moves a
@@ -1382,6 +1338,14 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
           inlinePromptOverlay={inlinePromptOverlay}
           simInteractivity={simInteractivity}
           flashReadouts={flashReadouts}
+          onPrvcAdjust={() => {
+            // Per MASTER_SHELL_v3 §6 M9 tighten: when the PRVC adaptive
+            // algorithm ticks its inspiratory-pressure target, flash the
+            // PIP readout so the learner sees the algorithm working. Only
+            // arm this during the try-it phase to avoid spurious halos
+            // in Read / Explore where the algorithm is also live.
+            if (phase === 'try-it') setFlashReadouts(['pip']);
+          }}
           recognitionTargets={recognitionTargets}
           recognitionBanner={recognitionBanner}
           onRecognitionElementClick={handleRecognitionElementClick}

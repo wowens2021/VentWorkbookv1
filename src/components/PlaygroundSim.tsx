@@ -69,6 +69,14 @@ interface PlaygroundSimProps {
    * parent after ~1 s.
    */
   flashReadouts?: string[];
+  /**
+   * Fires once per breath whenever the PRVC / SIMV-mandatory adaptive PI
+   * algorithm meaningfully adjusts its inspiratory pressure target. The
+   * parent uses this to flash the PIP readout so the learner can SEE the
+   * algorithm working (M9 — Pattern C). Adjustments below the threshold
+   * (small noise) are not reported.
+   */
+  onPrvcAdjust?: (delta: number) => void;
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
@@ -337,7 +345,13 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   recognitionBanner,
   onRecognitionElementClick,
   flashReadouts,
+  onPrvcAdjust,
 }) => {
+  // Cache the latest prvc-adjust callback in a ref so the animation loop —
+  // which closes over a single stable reference — can fire it without
+  // forcing a re-subscribe on every parent rerender.
+  const onPrvcAdjustRef = useRef<((delta: number) => void) | undefined>(onPrvcAdjust);
+  useEffect(() => { onPrvcAdjustRef.current = onPrvcAdjust; }, [onPrvcAdjust]);
   // Lookup set for the flash-on-control-change readout halos.
   const flashSet = useMemo(() => new Set(flashReadouts ?? []), [flashReadouts]);
   /**
@@ -923,6 +937,14 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           if (Math.abs(vtErr) > 5) {
             const correction = Math.max(-10, Math.min(10, vtErr / (patient.compliance || 40)));
             setPrvcAdaptivePi(p => Math.max(2, Math.min(45, p + correction)));
+            // M9 visual cue: tell the parent the PRVC algorithm just nudged
+            // its inspiratory-pressure target so the PIP halo can fire and
+            // the learner can SEE the algorithm at work breath by breath.
+            // Only fire on meaningful corrections (>0.5 cmH2O) to avoid
+            // halo strobing on near-equilibrium noise.
+            if (Math.abs(correction) > 0.5) {
+              onPrvcAdjustRef.current?.(correction);
+            }
           }
         }
         lastBreathStartTimeRef.current = elapsedInSim;

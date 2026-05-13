@@ -107,7 +107,21 @@ export const M13: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**Decremental PEEP titration.** Recruit, then walk PEEP down. Record compliance at each step. The PEEP just above where compliance starts to fall is "best PEEP." Above it: overdistension. Below it: derecruitment.' },
     { kind: 'callout', tone: 'tip', markdown: 'Driving pressure = Pplat − PEEP. Tracks the elastic load on the alveoli. Driving pressures > 15 are associated with worse outcomes in ARDS (M15).' },
-    { kind: 'predict_observe', awaits_control: 'peep', predict: 'Walk PEEP from 5 → 11 → 17. Predict where compliance is highest.', observe: 'Compliance rises with PEEP up to a point (alveolar recruitment), then falls (overdistension). The peak is "best PEEP."' },
+    {
+      kind: 'figure',
+      caption: 'The compliance-vs-PEEP curve. The peak is "best PEEP"; the slopes either side are derecruitment (left) and overdistension (right).',
+      ascii:
+        'Compliance ↑\n' +
+        '         |              ╱‾╲       ← best PEEP (peak)\n' +
+        '   peak →|           ╱─    ╲\n' +
+        '         |        ╱          ╲\n' +
+        '         |     ╱              ╲\n' +
+        '         |  ╱                  ╲─\n' +
+        '         |╱     derecruit ↑↑    ↑↑ overdistend\n' +
+        '         +─────────────────────────→ PEEP\n' +
+        '          low                  high',
+    },
+    { kind: 'predict_observe', awaits_control: 'peep', predict: 'Walk PEEP from 5 → 11 → 17. Predict where compliance is highest.', observe: 'Compliance rises with PEEP up to a point (alveolar recruitment), then falls (overdistension). The peak is "best PEEP." Track driving pressure as the proxy — lowest DP marks the compliance peak.' },
   ],
 
   hint_ladder: {
