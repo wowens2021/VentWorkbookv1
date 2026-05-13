@@ -307,6 +307,16 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
   const taskControlChangesRef = useRef(0);
   const resetClicksRef = useRef(0);
 
+  // Belt-and-suspenders cleanup: if the phase changes away from try-it
+  // (debrief, back-nav to read, etc.), wipe any lingering recognition
+  // prompt + click-feedback popup so they don't bleed into other phases.
+  useEffect(() => {
+    if (phase !== 'try-it') {
+      setActivePrompt(null);
+      setClickFeedback(null);
+    }
+  }, [phase]);
+
   // ── Debrief sub-view (summary ↔ detailed evaluations) ──
   // The debrief opens on the score summary. The three per-question answer
   // reviews (primer / check-yourself / knowledge check) used to render
@@ -437,6 +447,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
 
     tracker.start(ctx, () => {
       setObjectiveSatisfied(true);
+      // The whole compound is done — clear both the recognition question
+      // banner (driven by activePrompt) and any in-flight click-feedback
+      // popup so neither lingers into the debrief phase.
+      setActivePrompt(null);
+      setClickFeedback(null);
       // Capture replay snapshot
       const snap = harness.snapshot();
       const ref = `snap_${module.id}_${Date.now()}`;
