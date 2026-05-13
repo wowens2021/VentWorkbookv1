@@ -1286,6 +1286,21 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
         <RecognitionPrompt
           prompt={activePrompt}
           onResponse={(label, isCorrect) => respondToPrompt(label, isCorrect)}
+          onContinue={() => {
+            // Force-advance: emit a recognition_response with is_correct=true
+            // using the prompt's correct option label, so a wrong-answer
+            // attempt no longer blocks the tracker. The original wrong
+            // response has already been emitted by `onResponse` above for
+            // telemetry, so attempts_per_recognition still reflects reality.
+            if (!activePrompt) return;
+            const correctOpt = activePrompt.options.find(o => o.is_correct);
+            if (correctOpt) {
+              respondToPrompt(correctOpt.label, true);
+            } else {
+              // Defensive fallback: just close the prompt.
+              setActivePrompt(null);
+            }
+          }}
           onDismiss={() => setActivePrompt(null)}
         />
       ) : null;
