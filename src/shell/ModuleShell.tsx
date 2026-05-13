@@ -3,6 +3,7 @@ import { ArrowLeft, BookOpen, Target, Clock, ChevronRight, Trophy, Home, RotateC
 import type { ModuleConfig, InlinePromptConfig, ExploreCardConfig } from './types';
 import PrimerQuiz from './PrimerQuiz';
 import ContentBlocks from './ContentBlocks';
+import CheckYourselfPage from './CheckYourselfPage';
 import SummativeQuiz from './SummativeQuiz';
 import ReviewCard from './ReviewCard';
 import HintLadder from './HintLadder';
@@ -112,6 +113,16 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
   const [phase, setPhase] = useState<Phase>(initialPhase);
   const [objectiveSatisfied, setObjectiveSatisfied] = useState(!!prior?.objective_satisfied_at);
   const [quizSubmitted, setQuizSubmitted] = useState(!!prior?.quiz_submitted_at);
+
+  // Sub-phase within Read: 'prose' (the readable content) → 'check' (standalone
+  // MCQ "Check yourself" page) → advance to Explore. The check sub-phase is
+  // only entered if the module actually has formative content blocks; otherwise
+  // Read → Explore directly.
+  const formativeBlocks = useMemo(
+    () => module.content_blocks.filter((b): b is Extract<typeof b, { kind: 'formative' }> => b.kind === 'formative'),
+    [module]
+  );
+  const [readSubPhase, setReadSubPhase] = useState<'prose' | 'check'>('prose');
 
   // ── Completed-phase tracking (for back-navigation) ──
   // A phase is "completed" once the learner has advanced past it OR satisfied
@@ -343,7 +354,19 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
     setLastInteractMs(Date.now());
   };
 
+  /** Move from Read's prose sub-view → either the check-yourself MCQ page
+   *  (if the module has formative blocks) or directly to Explore. */
   const advanceFromRead = () => {
+    if (formativeBlocks.length > 0 && readSubPhase === 'prose') {
+      setReadSubPhase('check');
+      return;
+    }
+    advanceFromReadOrCheck();
+  };
+
+  /** Move from Read (either sub-phase) → Explore. Persists timestamps and
+   *  initializes the exploration counters. */
+  const advanceFromReadOrCheck = () => {
     persistProgress({
       module_id: module.id,
       reading_completed_at: new Date().toISOString(),
@@ -354,6 +377,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       module_id: module.id,
       exploration_started_at: new Date().toISOString(),
     });
+    setReadSubPhase('prose'); // reset for back-nav
     setPhase('explore');
   };
 
@@ -436,6 +460,20 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
     }
 
     if (phase === 'read') {
+      // Sub-phase 'check' — standalone MCQ page between prose and explore.
+      if (readSubPhase === 'check' && formativeBlocks.length > 0) {
+        return (
+          <CheckYourselfPage
+            blocks={formativeBlocks}
+            onContinue={advanceFromReadOrCheck}
+          />
+        );
+      }
+      // Sub-phase 'prose' — uncluttered reading view; formative blocks are
+      // stripped out by ContentBlocks and rendered on the next sub-page.
+      const ctaLabel = formativeBlocks.length > 0
+        ? 'Continue — quick check yourself'
+        : "I'm ready — let me try it";
       return (
         <div className="h-full flex flex-col px-5 py-3 overflow-y-auto">
           <div className="mb-3 pb-3 border-b border-zinc-200">
@@ -465,7 +503,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
             onClick={advanceFromRead}
             className="mt-4 w-full px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover text-white text-sm font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm"
           >
-            I'm ready — let me try it <ChevronRight size={14} />
+            {ctaLabel} <ChevronRight size={14} />
           </button>
         </div>
       );
@@ -616,7 +654,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
         })()}
       </div>
     );
-  }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs, childStates, stepToast]);
+  }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs, childStates, stepToast, readSubPhase, formativeBlocks]);
 
   // ── Inline recognition prompt overlay (over sim) ──
   const inlinePromptOverlay = activePrompt ? (

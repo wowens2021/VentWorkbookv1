@@ -130,7 +130,17 @@ export const M1: ModuleConfig = {
     { kind: 'prose', markdown: '**Four indications for mechanical ventilation.** Every intubation answers one of four questions: Is oxygenation failing? Is ventilation (CO2 clearance) failing? Is the airway unprotected? Is the work of breathing too high to sustain? Match the indication to the deficit — don\'t intubate to "fix" what isn\'t broken.' },
     { kind: 'callout', tone: 'tip', markdown: 'Before manipulating the ventilator, learn to **read** it. Every number on the display answers one of three questions: what was set, what was measured, or what was calculated.' },
     { kind: 'prose', markdown: 'On the right, you\'re looking at a stable patient on volume control. Find the **peak pressure** (PIP) on the Airway Pressure waveform — it\'s the top of each breath. Find the **tidal volume** (Vte) in the measured values strip. Find the **PEEP** — the floor of the pressure waveform between breaths. Find the **set rate** — the number that controls how many breaths per minute the ventilator delivers.' },
-    { kind: 'formative', question: 'A ventilator display shows PIP 24, Pplat 18, PEEP 5. What is the peak-plateau gap?', answer: '24 − 18 = 6 cmH2O. This gap reflects the resistive component of pressure. Normal-ish; we\'ll explore wider gaps in M4.' },
+    {
+      kind: 'formative',
+      question: 'A ventilator display shows PIP 24, Pplat 18, PEEP 5. What is the peak-plateau gap?',
+      options: [
+        { label: '6 cmH2O', is_correct: true },
+        { label: '13 cmH2O', is_correct: false },
+        { label: '18 cmH2O', is_correct: false },
+        { label: '24 cmH2O', is_correct: false },
+      ],
+      answer: '24 − 18 = 6 cmH2O. The peak-plateau gap reflects the resistive component of pressure — the work the ventilator does to push gas through the tube and airways. PIP − PEEP gives total inspiratory pressure; PPLAT − PEEP gives just the elastic (alveolar) component. The gap between them isolates resistance. This one is normal-ish; we\'ll explore wider gaps in M4.',
+    },
   ],
 
   hint_ladder: {

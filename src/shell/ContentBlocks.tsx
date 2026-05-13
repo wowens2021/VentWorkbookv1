@@ -53,25 +53,16 @@ const Block: React.FC<{ block: ContentBlock }> = ({ block }) => {
     );
   }
 
-  if (block.kind === 'formative') return <Formative block={block} />;
+  // Formative blocks render on the standalone "Check yourself" page between
+  // Read and Explore — NOT inline. This keeps the read page focused on prose
+  // and gives the quiz its own dedicated, engagement-optimized view.
+  if (block.kind === 'formative') return null;
   if (block.kind === 'predict_observe') return <PredictObserve block={block} />;
   return null;
 };
 
-const Formative: React.FC<{ block: Extract<ContentBlock, { kind: 'formative' }> }> = ({ block }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border border-zinc-200 rounded-lg p-3.5 my-3 bg-zinc-50">
-      <div className="text-[12px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">Check yourself</div>
-      <p className="text-[15px] text-zinc-900 leading-relaxed">{block.question}</p>
-      {!open ? (
-        <button onClick={() => setOpen(true)} className="mt-2 text-[13px] font-bold text-sky-600 hover:text-sky-700">Show answer →</button>
-      ) : (
-        <div className="mt-2 pt-2 border-t border-zinc-200 text-[14px] text-emerald-700 leading-relaxed">{block.answer}</div>
-      )}
-    </div>
-  );
-};
+// Formative ("Check yourself") rendering moved to CheckYourselfPage between
+// Read and Explore. Kept the type intact so existing module configs compile.
 
 const PredictObserve: React.FC<{ block: Extract<ContentBlock, { kind: 'predict_observe' }> }> = ({ block }) => {
   const [revealed, setRevealed] = useState(false);

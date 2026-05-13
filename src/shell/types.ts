@@ -20,7 +20,17 @@ export type ContentBlock =
   | { kind: 'prose'; markdown: string }
   | { kind: 'figure'; src?: string; caption?: string; ascii?: string }
   | { kind: 'callout'; tone: 'info' | 'warn' | 'tip'; markdown: string }
-  | { kind: 'formative'; question: string; answer: string }
+  | {
+      kind: 'formative';
+      question: string;
+      /** Plain-text explanation. Used as the "Show answer" reveal in legacy
+       *  modules; reused as the explanation shown after MCQ submission. */
+      answer: string;
+      /** Optional MCQ options. When present, the check-yourself page renders a
+       *  multiple-choice prompt and `answer` becomes the post-submission
+       *  explanation. When absent, the legacy "Show answer →" reveal is used. */
+      options?: { label: string; is_correct: boolean }[];
+    }
   | { kind: 'predict_observe'; predict: string; observe: string };
 
 // ── Scenario / sim configuration ──
