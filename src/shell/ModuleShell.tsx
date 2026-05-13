@@ -101,6 +101,28 @@ function readoutsRelatedToControl(controlName: string, trackerCfg: any): string[
  * Derive an explore card from the scenario if the module didn't author one.
  * Generic fallback — keeps the shell working through transitional builds.
  */
+/**
+ * Derive the try-it success-criteria checklist directly from the tracker
+ * configuration when every objective is a recognition prompt. This keeps the
+ * blue question banner above the sim and the criteria list on the TaskCard
+ * in sync without a second authoring step that can drift. For mixed trackers
+ * (manipulation + outcome + recognition) we fall back to the module's
+ * explicit `success_criteria_display`.
+ */
+function deriveSuccessCriteria(module: ModuleConfig): string[] {
+  const obj = module.hidden_objective;
+  if (obj?.kind === 'recognition' && obj.prompt?.question) {
+    return [obj.prompt.question];
+  }
+  if (obj?.kind === 'compound') {
+    const allRecognition = obj.children.every((c: any) => c?.kind === 'recognition' && c?.prompt?.question);
+    if (allRecognition) {
+      return obj.children.map((c: any) => c.prompt.question as string);
+    }
+  }
+  return module.success_criteria_display ?? ['Continue exploring until the objective is met.'];
+}
+
 function deriveExploreCard(module: ModuleConfig): ExploreCardConfig {
   const unlocked = module.scenario.unlocked_controls.map(c => ({
     name: c,
@@ -750,7 +772,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
           <div className="flex-1 overflow-hidden">
             <TaskCard
               userFacingTask={module.user_facing_task ?? 'Continue using the simulator to complete this module.'}
-              successCriteria={module.success_criteria_display ?? ['Continue exploring until the objective is met.']}
+              successCriteria={deriveSuccessCriteria(module)}
               framingStyle={module.task_framing_style}
               objectiveSatisfied={objectiveSatisfied}
               onReset={onResetToStart}

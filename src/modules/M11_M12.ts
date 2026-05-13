@@ -215,11 +215,8 @@ export const M11: ModuleConfig = {
     ],
   },
   user_facing_task: 'Three patients in a row. For each, read the waveform description and the bedside context, and select the dyssynchrony pattern. You must get all three correct, in any order, in one pass.',
-  success_criteria_display: [
-    'Identify ineffective triggering on the COPD/auto-PEEP scenario.',
-    'Identify double triggering on the ARDS/strong-drive scenario.',
-    'Identify flow starvation on the PRVC/air-hunger scenario.',
-  ],
+  // success_criteria_display omitted — shell auto-derives from the three
+  // recognition questions so the checklist matches the prompt wording exactly.
   task_framing_style: 'C',
 
   key_points: [

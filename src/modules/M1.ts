@@ -344,13 +344,10 @@ export const M1: ModuleConfig = {
     ],
   },
 
-  user_facing_task: 'Find four readings on this display. Each prompt names a clinical concept. Click the reading or control that matches. Wrong clicks don\'t penalize you — they explain what you just clicked.',
-  success_criteria_display: [
-    'Find peak airway pressure.',
-    "Find this breath's exhaled tidal volume.",
-    'Find the PEEP order.',
-    'Find the rate order.',
-  ],
+  user_facing_task: 'Four prompts. For each one, click the matching tile on the sim — readings live up top, controls at the bottom. Wrong clicks don\'t penalize you; they explain what you just clicked.',
+  // success_criteria_display intentionally omitted — the shell auto-derives
+  // the criteria list from the four recognition prompt questions so the
+  // checklist and the blue banner above the sim stay word-for-word in sync.
   task_framing_style: 'C',
 
   key_points: [

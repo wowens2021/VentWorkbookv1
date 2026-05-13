@@ -297,11 +297,9 @@ export const M2: ModuleConfig = {
     ],
   },
 
-  user_facing_task: 'Eight terms. Eight clicks. Click the reading or control that matches each clinical phrase.',
-  success_criteria_display: [
-    'Find each term as it\'s named (8 prompts total).',
-    "Wrong clicks explain — they don't penalize.",
-  ],
+  user_facing_task: 'Eight prompts. For each, click the matching tile on the sim — readings live up top, controls at the bottom. Wrong clicks don\'t penalize; they explain what you just clicked.',
+  // success_criteria_display omitted — shell auto-derives the checklist from
+  // the 8 recognition prompt questions so the criteria match the banner.
   task_framing_style: 'C',
 
   key_points: [

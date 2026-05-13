@@ -232,11 +232,8 @@ export const M17: ModuleConfig = {
     ],
   },
   user_facing_task: 'Read the bedside data and decide. Your patient finished a 30-minute SBT on CPAP 5 / PS 7 / FiO2 40%. At the 30-minute mark: RR 18, spontaneous Vt 380 mL, SpO2 95%, HR 88, BP 124/72. Check pre-criteria. Compute RSBI. Decide.',
-  success_criteria_display: [
-    'Verify all five pre-SBT criteria are met.',
-    'Compute RSBI correctly (within ±2).',
-    'Choose the correct disposition.',
-  ],
+  // success_criteria_display omitted — shell auto-derives from the three
+  // recognition prompts so the checklist matches the questions verbatim.
   task_framing_style: 'C',
 
   key_points: [
@@ -480,12 +477,8 @@ export const M18: ModuleConfig = {
     ],
   },
   user_facing_task: 'Four patients. For each, decide: extubate now, extubate with NIPPV standby, delay and treat, or back to A/C. Get all four right.',
-  success_criteria_display: [
-    'Scenario 1 (cuff leak): correct decision.',
-    'Scenario 2 (cardiogenic): correct decision.',
-    'Scenario 3 (brain injury): correct decision.',
-    'Scenario 4 (failed pre-screen): correct decision.',
-  ],
+  // success_criteria_display omitted — shell auto-derives from the four
+  // recognition prompt questions so each ticks off as the learner answers.
   task_framing_style: 'C',
 
   key_points: [
@@ -755,13 +748,8 @@ export const M19: ModuleConfig = {
     ],
   },
   user_facing_task: 'Five decompensations in a row. For each, identify the pattern: D / O / P / E / S. Get all five right.',
-  success_criteria_display: [
-    'Scenario 1: displacement identified.',
-    'Scenario 2: obstruction identified.',
-    'Scenario 3: tension pneumothorax identified.',
-    'Scenario 4: equipment leak identified.',
-    'Scenario 5: stacking / auto-PEEP identified.',
-  ],
+  // success_criteria_display omitted — shell auto-derives from the five
+  // recognition prompts so each scenario ticks off in order as it's solved.
   task_framing_style: 'C',
 
   key_points: [
