@@ -10,6 +10,14 @@ export const M11: ModuleConfig = {
   title: 'Dyssynchrony Recognition',
   track: 'Modes',
   estimated_minutes: 18,
+  briefing: {
+    overview: 'When the patient and the ventilator disagree, the waveforms tell you exactly how. This module is pure pattern-recognition — five classic dyssynchronies you\'ll see again and again at the bedside.',
+    what_youll_do: [
+      'Identify ineffective triggering, double triggering, flow starvation, premature and delayed cycling.',
+      'Map each pattern to its root cause.',
+      'Pick a corrective adjustment for each pattern, not just a sedation order.',
+    ],
+  },
   visible_learning_objectives: [
     'Recognize the five common patterns of patient-ventilator dyssynchrony.',
     'Identify the waveform features that distinguish each pattern.',
@@ -245,6 +253,14 @@ export const M12: ModuleConfig = {
   title: 'SIMV and Hybrid Modes',
   track: 'Modes',
   estimated_minutes: 12,
+  briefing: {
+    overview: 'SIMV gives the patient mandatory breaths plus the option to add their own spontaneous ones with pressure support. It\'s a hybrid — and like all hybrids, it has specific use cases and specific failure modes.',
+    what_youll_do: [
+      'See how SIMV mixes mandatory and spontaneous breaths in one cycle.',
+      'Recognize when SIMV is the right weaning tool — and when A/C is better.',
+      'Diagnose the most common SIMV pitfall: insufficient PS on the spontaneous breaths.',
+    ],
+  },
   visible_learning_objectives: [
     'Distinguish mandatory from spontaneous breaths in a SIMV waveform.',
     'Predict the effect of changing the SIMV mandatory rate on the breath mix.',

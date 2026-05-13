@@ -6,6 +6,14 @@ export const M9: ModuleConfig = {
   title: 'PRVC and Dual-Control Modes',
   track: 'Modes',
   estimated_minutes: 12,
+  briefing: {
+    overview: 'Dual-control modes try to give you both: a guaranteed tidal volume AND a pressure-limited breath. They work by adjusting pressure breath-to-breath based on what the lungs delivered last time — a feedback loop you can see in action.',
+    what_youll_do: [
+      'Trace how PRVC adapts its inspiratory pressure across breaths.',
+      'Distinguish PRVC behavior from straight VCV and straight PCV.',
+      'Know the failure modes of dual control: patient effort and changing compliance.',
+    ],
+  },
   visible_learning_objectives: [
     "Recognize PRVC's breath-by-breath pressure adjustment behavior.",
     'Understand when dual-control modes are useful and how they can fail.',
@@ -197,6 +205,14 @@ export const M10: ModuleConfig = {
   title: 'Pressure Support and Spontaneous Modes',
   track: 'Modes',
   estimated_minutes: 14,
+  briefing: {
+    overview: 'When the patient breathes for themselves, the ventilator\'s job is to assist, not command. Pressure support sets a target inspiratory pressure and lets the patient set the rate and the volume — the bridge to extubation.',
+    what_youll_do: [
+      'Configure PSV with the right pressure-support level and PEEP.',
+      'Understand flow-cycling: how the vent decides inspiration is over.',
+      'Adjust the cycle-off threshold for obstructive vs restrictive patients.',
+    ],
+  },
   visible_learning_objectives: [
     'Adjust pressure support and observe the effect on tidal volume.',
     'Adjust trigger sensitivity and observe the effect on patient-initiated breaths.',

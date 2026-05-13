@@ -218,6 +218,19 @@ export interface ModuleConfig {
   success_criteria_display?: string[];
   /** Phase 4 — A/B/C framing style. Determines tone but not behavior. */
   task_framing_style?: TaskFramingStyle;
+
+  /**
+   * One-time intro splash shown when the learner first enters the module
+   * (and after a Restart). Paints the broad picture of what's coming before
+   * the primer quiz starts. If omitted, the shell derives a generic
+   * orientation from `visible_learning_objectives` and `track`.
+   */
+  briefing?: {
+    /** 2-4 sentence orientation paragraph. */
+    overview: string;
+    /** 2-4 short bullets — what the learner will actually do in this module. */
+    what_youll_do?: string[];
+  };
 }
 
 // ── Persistence record (v2 — richer per-phase telemetry per §1.9) ──
@@ -225,6 +238,8 @@ export interface ProgressRecord {
   learner_id: string;
   module_id: string;
   started_at: string;
+  /** When the learner clicked through the one-time intro briefing splash. */
+  briefing_acknowledged_at?: string;
   // Phase 1
   primer_completed_at?: string;
   primer_score?: number;

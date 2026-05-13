@@ -25,6 +25,14 @@ export const M2: ModuleConfig = {
   title: 'Vocabulary and the Vent Display',
   track: 'Foundations',
   estimated_minutes: 12,
+  briefing: {
+    overview: 'Half of getting comfortable with a ventilator is knowing what every abbreviation on the screen means. This module walks you through the vocabulary that everything else in the workbook will build on.',
+    what_youll_do: [
+      'Match common ventilator abbreviations to the parameters they represent.',
+      'Identify whether a value is a setting, a measured outcome, or a calculated index.',
+      'Build a working vocabulary so the next eight modules read naturally.',
+    ],
+  },
   visible_learning_objectives: [
     'Match ventilator terminology to display elements.',
     'Distinguish set values from measured values.',

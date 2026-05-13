@@ -6,6 +6,14 @@ export const M1: ModuleConfig = {
   title: 'Why We Ventilate',
   track: 'Foundations',
   estimated_minutes: 12,
+  briefing: {
+    overview: 'Before you change a setting, you have to understand why the patient is on the vent in the first place. Every intubation answers one of four questions — and matching the indication to the deficit is the foundation of everything else in this workbook.',
+    what_youll_do: [
+      'Recognize the four indications: oxygenation failure, ventilation failure, airway protection, work of breathing.',
+      'Read the four core values on a ventilator display: PIP, Vte, PEEP, and rate.',
+      'Distinguish set values from measured values — the difference matters.',
+    ],
+  },
   visible_learning_objectives: [
     'Recognize the four primary indications for mechanical ventilation.',
     'Read the basic values from a ventilator display.',

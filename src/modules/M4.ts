@@ -6,6 +6,14 @@ export const M4: ModuleConfig = {
   title: 'Compliance and Resistance',
   track: 'Physiology',
   estimated_minutes: 15,
+  briefing: {
+    overview: 'Compliance and resistance are the two mechanical knobs every patient brings to the bedside. This module teaches you to separate them by reading the pressure waveform — a skill you\'ll use on every vented patient for the rest of your career.',
+    what_youll_do: [
+      'Quantify static compliance from VT, plateau pressure, and PEEP.',
+      'Tell apart a compliance problem from a resistance problem at the waveform.',
+      'Practice the bedside maneuvers (inspiratory hold) that let you measure both.',
+    ],
+  },
   visible_learning_objectives: [
     'Distinguish compliance problems from resistance problems on the pressure waveform.',
     'Use the peak-plateau gap as a diagnostic tool.',

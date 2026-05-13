@@ -4,6 +4,7 @@ import type { ModuleConfig, InlinePromptConfig, ExploreCardConfig } from './type
 import PrimerQuiz from './PrimerQuiz';
 import ContentBlocks from './ContentBlocks';
 import CheckYourselfPage from './CheckYourselfPage';
+import IntroBriefing from './IntroBriefing';
 import SummativeQuiz from './SummativeQuiz';
 import ReviewCard from './ReviewCard';
 import HintLadder from './HintLadder';
@@ -97,6 +98,19 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
   useEffect(() => {
     persistProgress({ module_id: module.id, started_at: prior?.started_at ?? new Date().toISOString() });
   }, [module.id]);
+
+  // ── One-time intro briefing splash ──
+  // Shown when the learner first enters the module, before any phase starts.
+  // Acknowledgment is persisted so resuming or navigating back doesn't show
+  // it again. A Restart clears the ack alongside the rest of the progress.
+  const [briefingDone, setBriefingDone] = useState(!!prior?.briefing_acknowledged_at);
+  const acknowledgeBriefing = () => {
+    persistProgress({
+      module_id: module.id,
+      briefing_acknowledged_at: new Date().toISOString(),
+    });
+    setBriefingDone(true);
+  };
 
   // ── Phase state machine (§1.4 — 5-phase model) ──
   const initialPhase: Phase = prior?.quiz_submitted_at
@@ -479,6 +493,9 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
     taskStartedAtRef.current = null;
     harness.resetToPreset();
     setPhase('primer');
+    // Show the intro briefing splash again on restart so the learner gets
+    // re-oriented before re-attempting the module.
+    setBriefingDone(false);
     // Re-seed started_at so the dashboard sees a fresh attempt
     persistProgress({ module_id: module.id, started_at: new Date().toISOString() });
   };
@@ -958,6 +975,20 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
           onDismiss={() => setActivePrompt(null)}
         />
       ) : null;
+
+  // ── One-time briefing splash short-circuits everything else ──
+  // Shown until the learner clicks "Begin module →". This intentionally
+  // bypasses the harness/sim altogether so the orientation feels separate
+  // from the working sim view.
+  if (!briefingDone) {
+    return (
+      <IntroBriefing
+        module={module}
+        onBegin={acknowledgeBriefing}
+        onBack={onBack}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-brand-cream text-zinc-900 font-sans overflow-hidden select-none">

@@ -6,6 +6,14 @@ export const M5: ModuleConfig = {
   title: 'Gas Exchange Basics',
   track: 'Physiology',
   estimated_minutes: 15,
+  briefing: {
+    overview: 'The ventilator and the alveolus are two different machines coupled through the blood. To set the vent rationally you need to know which knob fixes oxygenation and which knob fixes ventilation — and why FiO2 and PEEP aren\'t the same lever.',
+    what_youll_do: [
+      'Identify the four causes of hypoxemia and which respond to FiO2.',
+      'Recognize when raising FiO2 alone fails — and PEEP is the better lever.',
+      'Read the P/F ratio and the A-a gradient at a glance.',
+    ],
+  },
   visible_learning_objectives: [
     'Distinguish shunt from dead space by their characteristic gas exchange signatures.',
     'Recognize that shunt affects oxygenation primarily; dead space affects ventilation primarily.',
@@ -206,6 +214,14 @@ export const M6: ModuleConfig = {
   title: 'Auto-PEEP and Air Trapping',
   track: 'Physiology',
   estimated_minutes: 15,
+  briefing: {
+    overview: 'When expiration runs out of time, air gets stuck in the lung. The trapped pressure (auto-PEEP) drives hypotension, dyssynchrony, and barotrauma — and it doesn\'t show up on the regular pressure readout. This module makes the invisible visible.',
+    what_youll_do: [
+      'Spot auto-PEEP on the expiratory flow waveform without doing a hold.',
+      'Measure auto-PEEP with an end-expiratory hold maneuver.',
+      'Apply the three levers (rate, I:E, bronchodilator) to resolve trapping.',
+    ],
+  },
   visible_learning_objectives: [
     'Recognize auto-PEEP on the flow-time waveform.',
     'Resolve auto-PEEP by adjusting respiratory rate or expiratory time.',

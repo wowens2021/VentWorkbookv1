@@ -6,6 +6,14 @@ export const M15: ModuleConfig = {
   title: 'ARDS-Specific Ventilation',
   track: 'Strategy',
   estimated_minutes: 16,
+  briefing: {
+    overview: 'ARDS is the canonical lung-injury syndrome — and the ventilator settings that protect ARDS lungs (low VT, controlled plateau, attentive PEEP) are now the default for every patient. This module makes those settings explicit and shows you what happens when you violate them.',
+    what_youll_do: [
+      'Target 4–6 mL/kg PBW tidal volume and a plateau pressure under 30 cmH2O.',
+      'Manage driving pressure (Pplat − PEEP) as the single best mortality signal.',
+      'Decide when to consider proning, NMBA, and ECMO.',
+    ],
+  },
   visible_learning_objectives: [
     'Achieve a lung-protective state (Vt ≤ 6 mL/kg, plateau ≤ 30, driving pressure ≤ 15).',
     'Recognize trade-offs between lung-protective settings and CO2 clearance.',
@@ -182,6 +190,14 @@ export const M16: ModuleConfig = {
   title: 'Obstructive Disease Ventilation',
   track: 'Strategy',
   estimated_minutes: 14,
+  briefing: {
+    overview: 'Asthma and COPD patients on the vent need the opposite of an ARDS patient: long expiratory times, low rates, and permissive hypercapnia. Get it wrong and you create auto-PEEP, hypotension, and arrest.',
+    what_youll_do: [
+      'Set rate (8–12) and I:E (1:3 or longer) for obstructive physiology.',
+      'Tolerate elevated PaCO2 to stay safe — permissive hypercapnia in context.',
+      'Match external PEEP to the patient\'s measured auto-PEEP, never above it.',
+    ],
+  },
   visible_learning_objectives: [
     'Recognize and resolve auto-PEEP in an obstructive patient by adjusting rate and I:E.',
     'Understand the rationale for permissive hypercapnia in obstructive disease.',

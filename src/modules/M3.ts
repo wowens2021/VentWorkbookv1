@@ -6,6 +6,14 @@ export const M3: ModuleConfig = {
   title: 'The Equation of Motion',
   track: 'Foundations',
   estimated_minutes: 18,
+  briefing: {
+    overview: 'Every ventilator breath obeys one equation: pressure equals volume divided by compliance plus resistance times flow. Once you see how those three terms fight each other, almost every alarm and waveform finally makes sense.',
+    what_youll_do: [
+      'Decompose airway pressure into elastic and resistive components.',
+      'Predict how each component changes when compliance drops or resistance rises.',
+      'Use peak-minus-plateau as a bedside measure of resistance.',
+    ],
+  },
   visible_learning_objectives: [
     'State the equation of motion.',
     'Predict which waveform component changes when compliance, resistance, or flow rate is altered.',

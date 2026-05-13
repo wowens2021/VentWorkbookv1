@@ -6,6 +6,14 @@ export const M17: ModuleConfig = {
   title: 'Weaning Concepts',
   track: 'Weaning',
   estimated_minutes: 14,
+  briefing: {
+    overview: 'Weaning isn\'t a single event — it\'s a daily question: can the patient breathe enough on their own to take the tube out? This module covers the readiness check, the spontaneous breathing trial, and the index you use to predict success.',
+    what_youll_do: [
+      'Apply the SBT readiness criteria daily.',
+      'Run a spontaneous breathing trial on CPAP 5 / PS 7 for 30–120 minutes.',
+      'Compute and interpret RSBI (rapid shallow breathing index).',
+    ],
+  },
   visible_learning_objectives: [
     'Switch a patient from full support to a spontaneous breathing trial and read the RSBI.',
     'Recognize the criteria for weaning readiness.',
@@ -208,6 +216,14 @@ export const M18: ModuleConfig = {
   title: 'Extubation Criteria and Failure',
   track: 'Weaning',
   estimated_minutes: 14,
+  briefing: {
+    overview: 'Passing an SBT isn\'t the same as being safe to extubate. Airway protection, secretions, cuff leak, and mental status all matter. This module makes the extubation checklist explicit — and walks through what failure looks like.',
+    what_youll_do: [
+      'Synthesize SBT result, neuro status, secretions, cuff leak, and lab data.',
+      'Decide between extubation, tracheostomy, and continued ventilation.',
+      'Recognize early extubation failure and intervene before re-intubation.',
+    ],
+  },
   visible_learning_objectives: [
     'Integrate multiple data points into a single extubation decision.',
     'Recognize predictors of extubation failure.',
@@ -387,6 +403,14 @@ export const M19: ModuleConfig = {
   title: 'Troubleshooting the Vent (DOPE)',
   track: 'Synthesis',
   estimated_minutes: 18,
+  briefing: {
+    overview: 'When a vented patient suddenly deteriorates, you have a few seconds to find the cause. DOPE is the ICU mnemonic that gets you there: Displacement, Obstruction, Pneumothorax, Equipment. This is the synthesis module — everything you\'ve learned, applied under time pressure.',
+    what_youll_do: [
+      'Run the DOPE differential when a patient acutely worsens.',
+      'Use the pressure-time and flow-time waveforms to localize the problem.',
+      'Decide when to disconnect and bag-ventilate versus adjust on the vent.',
+    ],
+  },
   visible_learning_objectives: [
     'Recognize and diagnose each of the four DOPE fault categories.',
     'Build a systematic mental model for rapid bedside troubleshooting.',

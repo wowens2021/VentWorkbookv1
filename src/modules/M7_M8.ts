@@ -6,6 +6,14 @@ export const M7: ModuleConfig = {
   title: 'Volume Control',
   track: 'Modes',
   estimated_minutes: 12,
+  briefing: {
+    overview: 'Volume control is the workhorse mode of the ICU. You set a tidal volume; the ventilator guarantees it; pressure becomes the variable. This module teaches you to read PIP and plateau when VT is fixed.',
+    what_youll_do: [
+      'Set rate, VT, I-time, PEEP, and FiO2 to a sensible starting point.',
+      'Predict the pressure response when compliance or resistance changes.',
+      'Recognize the limitations of VCV in heterogeneous lungs.',
+    ],
+  },
   visible_learning_objectives: [
     'Identify the characteristic VC waveform pattern.',
     'Predict how Vt and inspiratory flow changes affect the pressure waveform.',
@@ -201,6 +209,14 @@ export const M8: ModuleConfig = {
   title: 'Pressure Control',
   track: 'Modes',
   estimated_minutes: 12,
+  briefing: {
+    overview: 'In pressure control the ventilator guarantees a pressure — and the tidal volume becomes whatever the lungs allow. That flip in what\'s fixed and what\'s variable changes everything about how you monitor the patient.',
+    what_youll_do: [
+      'Set inspiratory pressure, I-time, rate, PEEP, and FiO2 in PCV.',
+      'Watch VT swing with compliance changes — a useful diagnostic signal.',
+      'Decide when PCV is the right tool and when it\'s the wrong one.',
+    ],
+  },
   visible_learning_objectives: [
     'Identify the characteristic PC waveform pattern.',
     'Recognize that in PC, tidal volume is the dependent variable.',

@@ -6,6 +6,14 @@ export const M13: ModuleConfig = {
   title: 'PEEP — What It Does and How to Set It',
   track: 'Strategy',
   estimated_minutes: 16,
+  briefing: {
+    overview: 'PEEP recruits alveoli, reduces shunt, and props open distal airways — but too much PEEP overdistends and crashes preload. This module walks you up the PEEP-FiO2 ladder and shows you how to find "best PEEP" from compliance.',
+    what_youll_do: [
+      'Predict PEEP\'s effects on oxygenation, hemodynamics, and lung mechanics.',
+      'Walk a methodical PEEP titration and read compliance at each step.',
+      'Use the ARDSNet PEEP-FiO2 table as a starting point, not a destination.',
+    ],
+  },
   visible_learning_objectives: [
     'Perform a stepwise PEEP titration and identify the PEEP at which compliance peaks.',
     'Distinguish appropriate from inappropriate uses of PEEP.',
@@ -204,6 +212,14 @@ export const M14: ModuleConfig = {
   title: 'Oxygenation Strategies',
   track: 'Strategy',
   estimated_minutes: 14,
+  briefing: {
+    overview: 'Once you know your tools, oxygenation becomes a sequenced game: FiO2 first when the patient is hypoxic, PEEP second when the FiO2 is climbing, then prone position and beyond if neither is enough.',
+    what_youll_do: [
+      'Order the oxygenation interventions from least to most aggressive.',
+      'Set explicit SpO2 and PaO2 targets — not every patient needs 100%.',
+      'Recognize when you\'re maxed out on conventional ventilation.',
+    ],
+  },
   visible_learning_objectives: [
     'Recognize that mean airway pressure is the primary determinant of oxygenation.',
     'Identify the multiple levers (FiO2, PEEP, inspiratory time) that affect oxygenation.',
