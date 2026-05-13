@@ -248,8 +248,8 @@ export const M1: ModuleConfig = {
   success_criteria_display: [
     'Click the peak pressure reading when asked.',
     'Click the tidal volume reading when asked.',
-    'Click the PEEP reading when asked.',
-    'Click the set rate reading when asked.',
+    'Click the PEEP control when asked.',
+    'Click the set rate control when asked.',
   ],
   task_framing_style: 'C',
 
