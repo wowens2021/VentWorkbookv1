@@ -204,7 +204,7 @@ const WaveformPanel = React.memo(({
         </div>
       )}
       <svg className="absolute inset-0 w-full h-full pt-3 pl-10 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 450 120">
-        {showZeroLine && <line x1="0" y1={zeroY} x2="450" y2={zeroY} stroke="#8c8b8b" strokeWidth="0.6" strokeDasharray="3,5" strokeOpacity="0.7" vectorEffect="non-scaling-stroke" />}
+        {showZeroLine && <line x1="0" y1={zeroY} x2="450" y2={zeroY} stroke="#7a7a7a" strokeWidth="0.6" strokeDasharray="3,5" strokeOpacity="0.7" vectorEffect="non-scaling-stroke" />}
         {segmentedPaths.map((seg, idx) => (
           <path key={idx} d={seg.path} fill="none" stroke={seg.color} strokeWidth="2.0" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
         ))}
