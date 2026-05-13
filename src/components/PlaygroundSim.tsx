@@ -83,7 +83,7 @@ const generateSegmentedPaths = (
 
   return segments.map(s => ({
     path: s.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`).join(' '),
-    color: s.isSpont ? '#facc15' : defaultColor,
+    color: s.isSpont ? '#fc4c4c' : defaultColor,
   }));
 };
 
@@ -173,12 +173,14 @@ const WaveformPanel = React.memo(({
   const { min, max } = bounds;
   const cursorValue = cursorIndex !== null && dataPoints[cursorIndex] ? dataPoints[cursorIndex][dataKey] : 0;
   const cursorY = 120 - (((cursorValue - min) / (max - min)) * 120);
-  const zeroY = 120 - (((0 - min) / (max - min)) * 120);
+  // Zero line always sits at the visual midpoint (y=60 out of 120) so it
+  // reads as a consistent centre reference across all three waveform panels.
+  const zeroY = 60;
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-2 flex-1 relative min-h-0 overflow-hidden shadow-inner">
-      <div className="absolute left-0 top-3 bottom-3 w-10 flex flex-col justify-between items-end pr-1.5 border-r border-zinc-200 z-20 pointer-events-none">
+    <div className="bg-[#e0e0e0] rounded-xl border border-zinc-300 p-2 flex-1 relative min-h-0 overflow-hidden">
+      <div className="absolute left-0 top-3 bottom-3 w-10 flex flex-col justify-between items-end pr-1.5 border-r border-zinc-500/40 z-20 pointer-events-none">
         {[max, (max + min) / 2, min].map((v, i) => (
-          <div key={i} className="text-[8px] font-mono text-zinc-700 font-black">{Math.round(v)}</div>
+          <div key={i} className="text-[8px] font-mono text-zinc-600 font-bold">{Math.round(v)}</div>
         ))}
       </div>
       <div className="flex justify-between items-start relative z-30 pl-10">
@@ -188,12 +190,12 @@ const WaveformPanel = React.memo(({
         </div>
       </div>
       <svg className="absolute inset-0 w-full h-full pt-3 pl-10 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 450 120">
-        {showZeroLine && <line x1="0" y1={zeroY} x2="450" y2={zeroY} stroke="#475569" strokeWidth="1" strokeDasharray="4" vectorEffect="non-scaling-stroke" />}
+        {showZeroLine && <line x1="0" y1={zeroY} x2="450" y2={zeroY} stroke="#888" strokeWidth="1.2" strokeDasharray="5,3" vectorEffect="non-scaling-stroke" />}
         {segmentedPaths.map((seg, idx) => (
           <path key={idx} d={seg.path} fill="none" stroke={seg.color} strokeWidth="2.0" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
         ))}
         {isHoldActive && title === "Airway Pressure" && (
-          <text x="225" y="60" textAnchor="middle" fill="#facc15" className="text-xl font-black uppercase tracking-widest animate-pulse">HOLD</text>
+          <text x="225" y="60" textAnchor="middle" fill="#fc4c4c" className="text-xl font-black uppercase tracking-widest animate-pulse">HOLD</text>
         )}
         {isFrozen && cursorIndex !== null && !isNaN(cursorIndex) && (
           <g>
