@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BookOpen, Target, Clock, ChevronRight, Trophy, Home, RotateCcw } from 'lucide-react';
+import { ArrowLeft, BookOpen, Target, Clock, ChevronRight, Trophy, Home, RotateCcw, Check, X } from 'lucide-react';
 import type { ModuleConfig, InlinePromptConfig, ExploreCardConfig } from './types';
 import PrimerQuiz from './PrimerQuiz';
 import ContentBlocks from './ContentBlocks';
@@ -291,6 +291,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
   // ── Recognition response → harness ──
   const respondToPrompt = (selectedLabel: string, isCorrect: boolean) => {
     if (!activePrompt) return;
+    const promptIdAtClick = activePrompt.prompt_id;
     harness.emit({
       type: 'recognition_response',
       prompt_id: activePrompt.prompt_id,
@@ -298,7 +299,15 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       is_correct: isCorrect,
       timestamp: Date.now(),
     });
-    if (isCorrect) setTimeout(() => setActivePrompt(null), 800);
+    if (isCorrect) {
+      // Only clear `activePrompt` 800 ms later if it's still the one we
+      // just answered. The compound tracker may have synchronously loaded
+      // the NEXT prompt during the emit chain — wiping the active prompt
+      // in that case would erase the new question.
+      setTimeout(() => {
+        setActivePrompt(p => p?.prompt_id === promptIdAtClick ? null : p);
+      }, 800);
+    }
   };
 
   // ── Hint tier ──
@@ -328,9 +337,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       return;
     }
 
-    // 2) Recognition prompt currently active — auto-answer with the correct
-    //    label so the learner who is stuck can still advance. For click-target
-    //    prompts (e.g. M1), the green flash lands on the correct tile too.
+    // 2) Recognition prompt currently active. For click-target prompts, show
+    //    the explanation popup pre-populated with the correct answer — the
+    //    learner clicks "Continue →" to actually advance, matching the normal
+    //    click flow. For pure MCQ prompts (no click_targets), advance via
+    //    respondToPrompt directly.
     if (activePrompt) {
       const correctClick = activePrompt.click_targets?.find(t => t.is_correct);
       if (correctClick) {
@@ -339,28 +350,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
           isCorrect: true,
           explanation: correctClick.explanation,
         });
-        harness.emit({
-          type: 'recognition_response',
-          prompt_id: activePrompt.prompt_id,
-          selected_label: correctClick.label,
-          is_correct: true,
-          timestamp: Date.now(),
-        });
-        // Mirror respondToPrompt's auto-clear so the next prompt loads
-        // cleanly when the compound tracker advances.
-        setTimeout(() => setActivePrompt(null), 800);
         return;
       }
       const correctOpt = activePrompt.options.find(o => o.is_correct);
       if (correctOpt) {
-        harness.emit({
-          type: 'recognition_response',
-          prompt_id: activePrompt.prompt_id,
-          selected_label: correctOpt.label,
-          is_correct: true,
-          timestamp: Date.now(),
-        });
-        setTimeout(() => setActivePrompt(null), 800);
+        respondToPrompt(correctOpt.label, true);
         return;
       }
     }
@@ -705,22 +699,106 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
 
   // ── Click-target mode (recognition by clicking a reading/control) ──
   const isClickTargetMode = !!activePrompt?.click_targets && activePrompt.click_targets.length > 0;
-  // Reset feedback whenever a new prompt loads.
-  useEffect(() => {
-    setClickFeedback(null);
-  }, [activePrompt?.prompt_id]);
-  // Auto-clear wrong-answer feedback after 2.5 s so the learner can retry.
-  useEffect(() => {
-    if (!clickFeedback || clickFeedback.isCorrect) return;
-    const id = setTimeout(() => setClickFeedback(null), 2500);
-    return () => clearTimeout(id);
-  }, [clickFeedback]);
 
-  const handleRecognitionElementClick = (label: string, isCorrect: boolean) => {
+  /**
+   * Short human descriptions for every readout / control so an unmapped tile
+   * click still yields a useful "[Tile] shows X, not what we're looking for"
+   * popup. Keeps the schema lean — module configs only need to spell out
+   * targets they want a *specific* explanation for.
+   */
+  const READOUT_DESC: Record<string, string> = {
+    pip: 'peak inspiratory pressure (cmH2O)',
+    plat: 'plateau pressure (cmH2O)',
+    drivingPressure: 'driving pressure (cmH2O)',
+    mve: 'minute ventilation (L/min)',
+    vte: 'expired tidal volume per breath (mL)',
+    totalPeep: 'total PEEP (cmH2O)',
+    autoPeep: 'auto-PEEP / air trapping (cmH2O)',
+    actualRate: 'the measured respiratory rate (bpm)',
+    ieRatio: 'the inspiration : expiration ratio',
+    rsbi: 'rapid shallow breathing index',
+  };
+  const CONTROL_DESC: Record<string, string> = {
+    respiratoryRate: 'the set respiratory rate (bpm)',
+    tidalVolume: 'the set tidal volume (mL)',
+    pInsp: 'the set inspiratory pressure (cmH2O)',
+    psLevel: 'the pressure-support level (cmH2O)',
+    iTime: 'the set inspiratory time (sec)',
+    peep: 'the set PEEP (cmH2O)',
+    fiO2: 'the set FiO2 (%)',
+    endInspiratoryPercent: 'the expiratory-trigger threshold (%)',
+  };
+
+  /**
+   * Click handler for recognition click-target mode.
+   *
+   * Behavior contract (per UX directive):
+   *   - WRONG click → show popup with explanation. The recognition_response
+   *     is emitted with `is_correct: false` for telemetry; the tracker does
+   *     NOT advance. The "Try again" button on the popup just dismisses;
+   *     the question banner above the readings stays the same so the learner
+   *     can pick another tile.
+   *   - CORRECT click → show popup with explanation. The recognition_response
+   *     is NOT emitted yet — emit happens on "Continue →" so the next
+   *     prompt's banner doesn't appear behind the open popup.
+   */
+  const handleRecognitionElementClick = (
+    label: string,
+    isCorrect: boolean,
+    element: { kind: 'readout' | 'control'; name: string },
+  ) => {
     if (!activePrompt) return;
-    const target = activePrompt.click_targets?.find(t => t.label === label);
-    setClickFeedback({ label, isCorrect, explanation: target?.explanation });
-    respondToPrompt(label, isCorrect);
+    // Ignore further clicks while the feedback popup is open — the learner
+    // must dismiss it before answering again.
+    if (clickFeedback) return;
+    const configured = activePrompt.click_targets?.find(
+      t => t.element.kind === element.kind && t.element.name === element.name,
+    );
+    let explanation = configured?.explanation;
+    if (!explanation) {
+      const desc = (element.kind === 'readout' ? READOUT_DESC : CONTROL_DESC)[element.name];
+      const askingFor = activePrompt.click_targets?.find(t => t.is_correct)?.label;
+      if (desc && askingFor) {
+        explanation = `${label} shows ${desc} — not ${askingFor.toLowerCase()}. Try another reading.`;
+      } else if (desc) {
+        explanation = `${label} shows ${desc}. That's not what we're looking for — try another.`;
+      } else {
+        explanation = 'That isn\'t the right one. Try another reading.';
+      }
+    }
+    setClickFeedback({ label, isCorrect, explanation });
+    if (!isCorrect) {
+      // Emit immediately so wrong attempts are recorded; tracker stays put.
+      harness.emit({
+        type: 'recognition_response',
+        prompt_id: activePrompt.prompt_id,
+        selected_label: label,
+        is_correct: false,
+        timestamp: Date.now(),
+      });
+    }
+    // For correct clicks, the emit is deferred until the learner clicks
+    // "Continue →" in the popup.
+  };
+
+  /**
+   * Popup dismissal. For CORRECT clicks, this is also where we finally fire
+   * the recognition_response that advances the compound tracker to the next
+   * step. For WRONG clicks, this just closes the popup so the learner can
+   * try again on the same question.
+   */
+  const dismissClickFeedback = () => {
+    if (!clickFeedback) return;
+    if (clickFeedback.isCorrect && activePrompt) {
+      harness.emit({
+        type: 'recognition_response',
+        prompt_id: activePrompt.prompt_id,
+        selected_label: clickFeedback.label,
+        is_correct: true,
+        timestamp: Date.now(),
+      });
+    }
+    setClickFeedback(null);
   };
 
   const recognitionTargets = isClickTargetMode
@@ -731,6 +809,8 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       }))
     : undefined;
 
+  // Compact question banner above the Measured Values strip — never blocks
+  // the readings themselves.
   const recognitionBanner = isClickTargetMode ? (
     <div className="bg-sky-50 border border-sky-300 rounded-xl px-4 py-3 shadow-sm">
       <div className="flex items-center gap-2 mb-1">
@@ -742,34 +822,71 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       <p className="text-[14px] font-semibold text-zinc-900 leading-snug">
         {activePrompt!.question}
       </p>
-      {clickFeedback && (
-        <div
-          className={`mt-2 border rounded-md px-3 py-2 text-[12.5px] leading-snug ${
-            clickFeedback.isCorrect
-              ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-              : 'border-rose-300 bg-rose-50 text-rose-900'
-          }`}
-        >
-          <span className="font-bold">
-            {clickFeedback.isCorrect ? 'Correct.' : 'Not quite — try another.'}
-          </span>
-          {clickFeedback.explanation && (
-            <span className="ml-1.5 text-zinc-700">{clickFeedback.explanation}</span>
-          )}
-        </div>
-      )}
     </div>
   ) : null;
 
-  // ── Inline recognition prompt overlay (over sim) — MCQ modal only ──
-  // Suppressed in click-target mode so the modal doesn't block the readings.
-  const inlinePromptOverlay = activePrompt && !isClickTargetMode ? (
-    <RecognitionPrompt
-      prompt={activePrompt}
-      onResponse={(label, isCorrect) => respondToPrompt(label, isCorrect)}
-      onDismiss={() => setActivePrompt(null)}
-    />
+  // Click-feedback modal — sits ABOVE the waveform area only (the readings
+  // and the workbook stay visible underneath / above). Shows whatever the
+  // learner clicked, with explanation. Wrong clicks have a "Try again"
+  // button that just dismisses; correct clicks have "Continue →" which
+  // closes — the compound tracker has already advanced via respondToPrompt.
+  const clickFeedbackModal = clickFeedback ? (
+    <div className="bg-white border-2 rounded-2xl shadow-2xl p-5 max-w-md w-full"
+      style={{ borderColor: clickFeedback.isCorrect ? '#10b981' : '#e11d48' }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        {clickFeedback.isCorrect ? (
+          <>
+            <Check size={18} className="text-emerald-600" strokeWidth={3} />
+            <span className="text-[11px] font-black uppercase tracking-widest text-emerald-700">
+              Correct
+            </span>
+          </>
+        ) : (
+          <>
+            <X size={18} className="text-rose-600" strokeWidth={3} />
+            <span className="text-[11px] font-black uppercase tracking-widest text-rose-700">
+              Not that one
+            </span>
+          </>
+        )}
+        <span className="ml-auto text-[11px] font-mono text-zinc-400">
+          You clicked: <span className="font-bold text-zinc-700">{clickFeedback.label}</span>
+        </span>
+      </div>
+      {clickFeedback.explanation && (
+        <p className="text-[14px] text-zinc-800 leading-relaxed mb-4">
+          {clickFeedback.explanation}
+        </p>
+      )}
+      <div className="flex justify-end">
+        <button
+          onClick={dismissClickFeedback}
+          className={`px-4 py-2 rounded-lg text-[13px] font-bold transition shadow-sm ${
+            clickFeedback.isCorrect
+              ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+              : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-300'
+          }`}
+        >
+          {clickFeedback.isCorrect ? 'Continue →' : 'Try again'}
+        </button>
+      </div>
+    </div>
   ) : null;
+
+  // ── Inline recognition prompt overlay (over sim) ──
+  // MCQ prompts render the legacy floating modal. Click-target prompts use
+  // the modal above (clickFeedbackModal) for feedback only — the question
+  // itself is the banner above the Measured Values strip.
+  const inlinePromptOverlay = clickFeedbackModal
+    ? clickFeedbackModal
+    : activePrompt && !isClickTargetMode ? (
+        <RecognitionPrompt
+          prompt={activePrompt}
+          onResponse={(label, isCorrect) => respondToPrompt(label, isCorrect)}
+          onDismiss={() => setActivePrompt(null)}
+        />
+      ) : null;
 
   return (
     <div className="flex flex-col h-screen bg-brand-cream text-zinc-900 font-sans overflow-hidden select-none">

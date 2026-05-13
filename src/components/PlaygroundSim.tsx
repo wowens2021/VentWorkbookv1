@@ -51,8 +51,17 @@ interface PlaygroundSimProps {
   }>;
   /** Optional banner rendered above the Measured Values strip in click-target mode. */
   recognitionBanner?: React.ReactNode;
-  /** Fires when the learner clicks any element listed in `recognitionTargets`. */
-  onRecognitionElementClick?: (label: string, isCorrect: boolean) => void;
+  /**
+   * Fires on any tile / control click while recognition click-mode is active.
+   * Receives the on-tile label, the correctness from the targets map (or
+   * `false` if the clicked element isn't in the targets map), and the
+   * element identity so the parent can look up a per-element explanation.
+   */
+  onRecognitionElementClick?: (
+    label: string,
+    isCorrect: boolean,
+    element: { kind: 'readout' | 'control'; name: string },
+  ) => void;
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
@@ -114,20 +123,17 @@ const MetricBox = ({ label, value, color }: { label: string; value: any; color: 
 
 const NumericCard = ({
   label, value, unit, color, sub = null,
-  /** When set, the card renders a sky-blue pulsing ring and becomes a button. */
-  highlight = false,
+  /** When set, the card is clickable. Visual appearance is identical to a
+   *  non-clickable card so the recognition task isn't given away. */
   onClick,
 }: any) => {
-  const baseCls = 'rounded-md px-1.5 py-1 flex flex-col justify-between shadow-sm transition';
-  const stateCls = highlight
-    ? 'bg-sky-50 border-2 border-sky-500 ring-2 ring-sky-300/60 cursor-pointer hover:bg-sky-100 animate-pulse'
-    : 'bg-white border border-zinc-200';
+  const baseCls = 'bg-white rounded-md border border-zinc-200 px-1.5 py-1 flex flex-col justify-between shadow-sm transition';
   if (onClick) {
     return (
       <button
         type="button"
         onClick={onClick}
-        className={`${baseCls} ${stateCls} text-left`}
+        className={`${baseCls} text-left cursor-pointer hover:bg-zinc-50 hover:border-zinc-300`}
       >
         <div className="flex justify-between leading-none">
           <span className="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">{label}</span>
@@ -143,7 +149,7 @@ const NumericCard = ({
     );
   }
   return (
-    <div className={`${baseCls} ${stateCls}`}>
+    <div className={baseCls}>
       <div className="flex justify-between leading-none">
         <span className="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">{label}</span>
         {sub && <span className="text-[8px] font-bold text-zinc-400">{sub}</span>}
@@ -160,10 +166,10 @@ const NumericCard = ({
 
 const ControlBox = ({
   label, value, unit, min, max, step, onChange, forceDecimal = false, className = '',
-  /** When set, the control renders a sky-blue pulsing ring and the WHOLE box
-   *  becomes clickable to answer a recognition prompt. Stepper buttons remain
-   *  inert during click-target mode so the click is unambiguous. */
-  recognitionHighlight = false,
+  /** When set, the whole box becomes clickable to answer a recognition
+   *  prompt. Stepper +/− buttons are inert in this mode so the click is
+   *  unambiguous. Visual appearance is identical to a normal control so the
+   *  answer isn't given away. */
   onRecognitionClick,
 }: any) => {
   const timerRef = useRef<any>(null);
@@ -186,17 +192,18 @@ const ControlBox = ({
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
-  if (recognitionHighlight && onRecognitionClick) {
-    // Click-target mode: render the whole box as one button. Stepper +/− are
-    // visible but inert so the learner doesn't accidentally change the value.
+  if (onRecognitionClick) {
+    // Click-target mode: the WHOLE box is a button. No visual cue — the
+    // learner shouldn't be able to spot the candidates by looking. Stepper
+    // +/− are visible but inert so the click is unambiguous.
     return (
       <button
         type="button"
         onClick={onRecognitionClick}
         className={`flex flex-col gap-0.5 ${className} text-left`}
       >
-        <span className="text-[9px] font-bold text-sky-700 uppercase tracking-wider text-center">{label}</span>
-        <div className="flex items-center bg-sky-50 border-2 border-sky-500 ring-2 ring-sky-300/60 rounded-lg p-0.5 shadow-md animate-pulse">
+        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider text-center">{label}</span>
+        <div className="flex items-center bg-zinc-100 border border-zinc-300 hover:border-zinc-400 rounded-lg p-0.5 shadow-inner transition-all">
           <div className="flex-1 text-center px-1">
             <div className="text-base font-mono font-extrabold leading-none tracking-tight text-zinc-900">
               {forceDecimal ? Number(value).toFixed(1) : value}
@@ -318,11 +325,14 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   onRecognitionElementClick,
 }) => {
   /**
-   * Lookup map for the recognition-click feature. Key is "kind:name"
-   * (e.g. "readout:pip", "control:respiratoryRate"). Each NumericCard /
-   * ControlBox call site looks itself up; a hit means "render the highlight
-   * ring and wire onClick to call the recognition callback."
+   * Recognition click-target mode is active whenever `recognitionTargets` is
+   * provided. In this mode EVERY readout tile and EVERY control box becomes
+   * clickable — there's no visual highlight on the configured candidates so
+   * the answer isn't given away. The configured candidates determine which
+   * clicks count as "correct" or as a specific "wrong with explanation"; any
+   * unmapped tile produces a generic wrong-feedback path.
    */
+  const recognitionClickMode = !!recognitionTargets && recognitionTargets.length > 0;
   const recognitionMap = useMemo(() => {
     const m = new Map<string, { label: string; isCorrect: boolean }>();
     (recognitionTargets ?? []).forEach(t => {
@@ -331,22 +341,29 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     return m;
   }, [recognitionTargets]);
 
-  // Shorthand the call sites use: pass element identity, get back the props
-  // a NumericCard or ControlBox needs to participate in click-target mode.
-  const recogPropsForReadout = (name: string) => {
+  // Shorthand for NumericCard call sites. Returns `onClick` for any readout
+  // (clickable) when click-mode is on, looking up the configured target for
+  // proper labelling. Unmapped tiles still fire with their on-screen label.
+  const recogPropsForReadout = (name: string, fallbackLabel: string) => {
+    if (!recognitionClickMode) return {};
     const hit = recognitionMap.get(`readout:${name}`);
-    if (!hit) return {};
     return {
-      highlight: true,
-      onClick: () => onRecognitionElementClick?.(hit.label, hit.isCorrect),
+      onClick: () => onRecognitionElementClick?.(
+        hit?.label ?? fallbackLabel,
+        hit?.isCorrect ?? false,
+        { kind: 'readout', name },
+      ),
     };
   };
-  const recogPropsForControl = (name: string) => {
+  const recogPropsForControl = (name: string, fallbackLabel: string) => {
+    if (!recognitionClickMode) return {};
     const hit = recognitionMap.get(`control:${name}`);
-    if (!hit) return {};
     return {
-      recognitionHighlight: true,
-      onRecognitionClick: () => onRecognitionElementClick?.(hit.label, hit.isCorrect),
+      onRecognitionClick: () => onRecognitionElementClick?.(
+        hit?.label ?? fallbackLabel,
+        hit?.isCorrect ?? false,
+        { kind: 'control', name },
+      ),
     };
   };
   /**
@@ -1227,17 +1244,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Measured Values</span>
             </div>
             <div className={`grid gap-1 ${playgroundMode ? 'grid-cols-11' : 'grid-cols-6'}`}>
-              <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" {...recogPropsForReadout('actualRate')} />
-              <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" {...recogPropsForReadout('ieRatio')} />
-              <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" {...recogPropsForReadout('pip')} />
-              <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} {...recogPropsForReadout('plat')} />
-              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color={metrics.drivingPressure > 15 ? 'text-rose-600' : 'text-violet-600'} {...recogPropsForReadout('drivingPressure')} />
-              <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" {...recogPropsForReadout('mve')} />
-              <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} {...recogPropsForReadout('vte')} />
-              <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-600" />
-              <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" {...recogPropsForReadout('totalPeep')} />
-              <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" {...recogPropsForReadout('autoPeep')} />
-              <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-600' : rsbiValue > 80 ? 'text-amber-600' : 'text-emerald-600'} {...recogPropsForReadout('rsbi')} />
+              <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" {...recogPropsForReadout('actualRate', 'RR')} />
+              <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" {...recogPropsForReadout('ieRatio', 'I:E')} />
+              <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" {...recogPropsForReadout('pip', 'PIP')} />
+              <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} {...recogPropsForReadout('plat', 'Pplat')} />
+              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color={metrics.drivingPressure > 15 ? 'text-rose-600' : 'text-violet-600'} {...recogPropsForReadout('drivingPressure', 'DP')} />
+              <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" {...recogPropsForReadout('mve', 'VE')} />
+              <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} {...recogPropsForReadout('vte', 'Vte')} />
+              <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-600" {...recogPropsForReadout('vte', 'Vt/PBW')} />
+              <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" {...recogPropsForReadout('totalPeep', 'tPEEP')} />
+              <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" {...recogPropsForReadout('autoPeep', 'autoPEEP')} />
+              <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-600' : rsbiValue > 80 ? 'text-amber-600' : 'text-emerald-600'} {...recogPropsForReadout('rsbi', 'RSBI')} />
             </div>
           </div>
 
@@ -1292,17 +1309,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
 
             {/* Knobs */}
             <div className={`flex flex-row flex-wrap justify-center px-1 items-center ${playgroundMode ? 'gap-3' : 'gap-1.5'}`}>
-              {mode !== 'PSV' && <ControlBox className="w-[90px]" label="Rate" value={settings.respiratoryRate} unit="bpm" min={4} max={40} step={1} onChange={(v: number) => handleSettingChange('respiratoryRate', v)} {...recogPropsForControl('respiratoryRate')} />}
+              {mode !== 'PSV' && <ControlBox className="w-[90px]" label="Rate" value={settings.respiratoryRate} unit="bpm" min={4} max={40} step={1} onChange={(v: number) => handleSettingChange('respiratoryRate', v)} {...recogPropsForControl('respiratoryRate', 'Rate control')} />}
               {mode === 'PCV'
-                ? <ControlBox className="w-[90px]" label="Pinsp" value={settings.pInsp} unit="cmH2O" min={1} max={60} step={1} onChange={(v: number) => handleSettingChange('pInsp', v)} {...recogPropsForControl('pInsp')} />
+                ? <ControlBox className="w-[90px]" label="Pinsp" value={settings.pInsp} unit="cmH2O" min={1} max={60} step={1} onChange={(v: number) => handleSettingChange('pInsp', v)} {...recogPropsForControl('pInsp', 'Pinsp control')} />
                 : mode === 'PSV'
-                  ? <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel')} />
-                  : <ControlBox className="w-[90px]" label="Vt" value={settings.tidalVolume} unit="mL" min={200} max={1000} step={10} onChange={(v: number) => handleSettingChange('tidalVolume', v)} {...recogPropsForControl('tidalVolume')} />}
-              {mode !== 'PSV' && <ControlBox className="w-[90px]" label="I-time" value={settings.iTime} unit="sec" min={0.3} max={3.0} step={0.1} onChange={(v: number) => handleSettingChange('iTime', v)} forceDecimal {...recogPropsForControl('iTime')} />}
-              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="PEEP" value={settings.peep} unit="cmH2O" min={0} max={24} step={1} onChange={(v: number) => handleSettingChange('peep', v)} {...recogPropsForControl('peep')} />
-              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="FiO2" value={settings.fiO2} unit="%" min={21} max={100} step={5} onChange={(v: number) => handleSettingChange('fiO2', v)} {...recogPropsForControl('fiO2')} />
-              {mode === 'SIMV/PS' && <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel')} />}
-              {(mode === 'PSV' || mode === 'SIMV/PS') && <ControlBox className="w-[90px]" label="End-Insp %" value={settings.endInspiratoryPercent} unit="%" min={0} max={50} step={1} onChange={(v: number) => handleSettingChange('endInspiratoryPercent', v)} {...recogPropsForControl('endInspiratoryPercent')} />}
+                  ? <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel', 'PS control')} />
+                  : <ControlBox className="w-[90px]" label="Vt" value={settings.tidalVolume} unit="mL" min={200} max={1000} step={10} onChange={(v: number) => handleSettingChange('tidalVolume', v)} {...recogPropsForControl('tidalVolume', 'Vt control')} />}
+              {mode !== 'PSV' && <ControlBox className="w-[90px]" label="I-time" value={settings.iTime} unit="sec" min={0.3} max={3.0} step={0.1} onChange={(v: number) => handleSettingChange('iTime', v)} forceDecimal {...recogPropsForControl('iTime', 'I-time control')} />}
+              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="PEEP" value={settings.peep} unit="cmH2O" min={0} max={24} step={1} onChange={(v: number) => handleSettingChange('peep', v)} {...recogPropsForControl('peep', 'PEEP control')} />
+              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="FiO2" value={settings.fiO2} unit="%" min={21} max={100} step={5} onChange={(v: number) => handleSettingChange('fiO2', v)} {...recogPropsForControl('fiO2', 'FiO2 control')} />
+              {mode === 'SIMV/PS' && <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel', 'PS control')} />}
+              {(mode === 'PSV' || mode === 'SIMV/PS') && <ControlBox className="w-[90px]" label="End-Insp %" value={settings.endInspiratoryPercent} unit="%" min={0} max={50} step={1} onChange={(v: number) => handleSettingChange('endInspiratoryPercent', v)} {...recogPropsForControl('endInspiratoryPercent', 'End-Insp control')} />}
             </div>
           </div>
         </div>
