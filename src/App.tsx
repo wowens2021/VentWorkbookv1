@@ -45,6 +45,7 @@ const App: React.FC = () => {
       <ModuleShell
         key={view.module.id}
         module={view.module}
+        nextModule={next}
         onBack={() => setView({ kind: 'modules' })}
         onHome={() => setView({ kind: 'home' })}
         onNext={next ? () => setView({ kind: 'module', module: next }) : undefined}

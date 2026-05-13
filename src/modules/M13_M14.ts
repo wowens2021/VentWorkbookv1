@@ -7,6 +7,7 @@ export const M13: ModuleConfig = {
   track: 'Strategy',
   estimated_minutes: 16,
   briefing: {
+    tagline: 'Titrate to peak compliance. The lungs tell you.',
     overview: "PEEP keeps alveoli open at the end of exhalation. That's how it improves oxygenation: more alveoli stay available for gas exchange. But PEEP isn't free. Too much overdistends healthy lung and impedes venous return, dropping cardiac output. The \"right\" PEEP for any patient sits somewhere in the middle, and the way to find it is to titrate and watch what compliance does. The lungs themselves will tell you where they're happiest.",
     what_youll_do: [
       "PEEP recruits collapsed alveoli. That's the whole mechanism.",
@@ -106,7 +107,7 @@ export const M13: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**Decremental PEEP titration.** Recruit, then walk PEEP down. Record compliance at each step. The PEEP just above where compliance starts to fall is "best PEEP." Above it: overdistension. Below it: derecruitment.' },
     { kind: 'callout', tone: 'tip', markdown: 'Driving pressure = Pplat − PEEP. Tracks the elastic load on the alveoli. Driving pressures > 15 are associated with worse outcomes in ARDS (M15).' },
-    { kind: 'predict_observe', predict: 'Walk PEEP from 5 → 11 → 17. Predict where compliance is highest.', observe: 'Compliance rises with PEEP up to a point (alveolar recruitment), then falls (overdistension). The peak is "best PEEP."' },
+    { kind: 'predict_observe', awaits_control: 'peep', predict: 'Walk PEEP from 5 → 11 → 17. Predict where compliance is highest.', observe: 'Compliance rises with PEEP up to a point (alveolar recruitment), then falls (overdistension). The peak is "best PEEP."' },
   ],
 
   hint_ladder: {
@@ -213,6 +214,7 @@ export const M14: ModuleConfig = {
   track: 'Strategy',
   estimated_minutes: 14,
   briefing: {
+    tagline: 'Mean airway pressure is the oxygenation lever.',
     overview: "The number that drives oxygenation is mean airway pressure. Not peak. Not plateau. Mean. Every move you make to oxygenate someone, whether it's raising PEEP, lengthening inspiratory time, or adding pressure support, is really a move to raise mean airway pressure. Once you see oxygenation through that lens, the ventilator stops feeling like a collection of separate knobs and starts looking like a single integrated control surface.",
     what_youll_do: [
       'Mean airway pressure is the oxygenation lever. Everything else is a way to move it.',

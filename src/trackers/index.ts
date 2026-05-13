@@ -36,6 +36,13 @@ export interface TrackerContext {
   clearActivePrompt?(): void;
   /** F3: announce per-child satisfaction in a compound flow. */
   onProgress?(states: boolean[]): void;
+  /**
+   * B2: announce partial progress toward a sustain-breath outcome
+   * ("3 of 5 breaths within range"). Fires on every sim_tick from the active
+   * OutcomeTracker. Null means no in-flight progress (either there's no
+   * outcome-tracker child active, or it has just fired `satisfied`).
+   */
+  onOutcomeProgress?(progress: { current: number; target: number; label?: string } | null): void;
 }
 
 export interface Tracker {
@@ -162,25 +169,43 @@ export class ManipulationTracker implements Tracker {
 export class OutcomeTracker implements Tracker {
   private satisfied = false;
   private counter = 0;
+  private ctx: TrackerContext | null = null;
   private onSatisfied: (() => void) | null = null;
 
   constructor(private cfg: OutcomeTrackerConfig) {}
 
-  start(_ctx: TrackerContext, onSatisfied: () => void) {
+  start(ctx: TrackerContext, onSatisfied: () => void) {
+    this.ctx = ctx;
     this.onSatisfied = onSatisfied;
   }
-  stop() { this.onSatisfied = null; }
+  stop() {
+    this.ctx = null;
+    this.onSatisfied = null;
+  }
   isSatisfied() { return this.satisfied; }
 
   handle(ev: HarnessEvent) {
     if (this.satisfied || ev.type !== 'sim_tick') return;
+    const target = this.cfg.sustain_breaths ?? 1;
     if (readoutsSatisfied(ev.computed_readouts, this.cfg.readouts)) {
       this.counter++;
-      if (this.counter >= (this.cfg.sustain_breaths ?? 1)) {
+      // B2: announce per-breath progress so the shell can render
+      // "Holding 3 of 5 breaths…" before satisfaction fires.
+      this.ctx?.onOutcomeProgress?.({
+        current: Math.min(this.counter, target),
+        target,
+        label: 'breaths within target',
+      });
+      if (this.counter >= target) {
         this.satisfied = true;
+        this.ctx?.onOutcomeProgress?.(null);
         this.onSatisfied?.();
       }
     } else {
+      if (this.counter !== 0) {
+        // Drop to zero progress so the chip reflects that the run streak broke.
+        this.ctx?.onOutcomeProgress?.({ current: 0, target, label: 'breaths within target' });
+      }
       this.counter = 0;
     }
   }

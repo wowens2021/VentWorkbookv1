@@ -26,6 +26,7 @@ export const M2: ModuleConfig = {
   track: 'Foundations',
   estimated_minutes: 12,
   briefing: {
+    tagline: 'Read any vent display in under a minute.',
     overview: "Every ventilator says the same things in slightly different ways. Vt, Pplat, PEEP, MV, RR. Once you know what each label means and where it lives on the screen, you can walk up to any ventilator and orient yourself in under a minute. The other thing worth knowing right now: every value on the display is either something you set, or something the patient and machine are doing as a result. Confusing the two is one of the most common bedside mistakes.",
     what_youll_do: [
       'Set values and measured values are different categories, even when they share a name.',

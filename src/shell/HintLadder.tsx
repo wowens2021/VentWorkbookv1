@@ -6,6 +6,13 @@ interface Props {
   hint: HintConfig;
   /** Number of ms since the last relevant sim interaction. */
   idleMs: number;
+  /**
+   * B3: number of control changes since the last forward progress on the
+   * tracker. Active learners stuck in a loop never go idle, so idle-only
+   * trigger never fires for them. This signal surfaces a tier when the
+   * learner has made N moves without nudging the tracker forward.
+   */
+  changesSinceProgress?: number;
   /** Called when learner clicks "Show me". Always counts as tier-3 engagement. */
   onShowMe?: () => void;
   /**
@@ -19,16 +26,26 @@ interface Props {
   suppressed?: boolean;
 }
 
-const HintLadder: React.FC<Props> = ({ hint, idleMs, onShowMe, onTierTriggered, suppressed }) => {
+const HintLadder: React.FC<Props> = ({ hint, idleMs, changesSinceProgress = 0, onShowMe, onTierTriggered, suppressed }) => {
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
 
   // F7: tighter cadence. Confused learners abandon long before 60 s of idle —
   // tier 1 at 25 s gets them help while they still care.
   const intervals = hint.intervals_seconds ?? [25, 75, 150];
-  const tier =
+  // B3: parallel thresholds for control-changes without progress. A learner
+  // actively trying but stuck in a loop never goes idle, so the idle timer
+  // never escalates — these change-count thresholds catch that case.
+  const changeThresholds = [5, 10, 15];
+  const tierFromIdle =
     idleMs >= intervals[2] * 1000 ? 3 :
     idleMs >= intervals[1] * 1000 ? 2 :
     idleMs >= intervals[0] * 1000 ? 1 : 0;
+  const tierFromChanges =
+    changesSinceProgress >= changeThresholds[2] ? 3 :
+    changesSinceProgress >= changeThresholds[1] ? 2 :
+    changesSinceProgress >= changeThresholds[0] ? 1 : 0;
+  // Surface whichever tier is higher — generous to the learner.
+  const tier = Math.max(tierFromIdle, tierFromChanges) as 0 | 1 | 2 | 3;
 
   if (suppressed || tier === 0 || dismissed.has(tier)) return null;
 

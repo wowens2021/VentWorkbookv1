@@ -7,6 +7,7 @@ export const M3: ModuleConfig = {
   track: 'Foundations',
   estimated_minutes: 18,
   briefing: {
+    tagline: 'P = V/C + R·flow + PEEP. The spine of every breath.',
     overview: "The equation of motion is the one piece of physiology that ties everything together. Pressure equals (volume divided by compliance) plus (flow times resistance) plus PEEP. That's it. Stretching the lungs costs pressure. Pushing gas through airways costs pressure. PEEP is the baseline. If you understand which term is doing the work in any given breath, you can predict what every ventilator change will do before you make it.",
     what_youll_do: [
       'The elastic component depends on lung stiffness. The resistive component depends on airway narrowness.',
@@ -117,8 +118,8 @@ export const M3: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**Pressure = (volume / compliance) + (flow × resistance) + PEEP.** Every waveform pattern in the rest of the workbook is an expression of this equation. The two components above PEEP — elastic and resistive — separate on the waveform: elastic determines plateau; resistive determines the peak-plateau gap.' },
     { kind: 'callout', tone: 'tip', markdown: '**Elastic** = the price of stretching the lungs. **Resistive** = the price of pushing gas through airways while flow is happening. Stop the flow (inspiratory pause), and resistive pressure vanishes.' },
-    { kind: 'predict_observe', predict: 'You\'re about to decrease compliance (stiffen the lungs). Predict: will peak rise, will plateau rise, will the peak-plateau gap change?', observe: 'Both peak and plateau rose — by approximately the same amount. The gap stayed the same because resistance didn\'t change. The elastic component carried both upward together.' },
-    { kind: 'predict_observe', predict: 'Now you\'ll increase resistance. What changes — peak only? Plateau only? Both?', observe: 'Peak rose sharply; plateau stayed about where it was. The gap widened. That gap is the resistive component.' },
+    { kind: 'predict_observe', awaits_control: 'compliance', predict: 'You\'re about to decrease compliance (stiffen the lungs). Predict: will peak rise, will plateau rise, will the peak-plateau gap change?', observe: 'Both peak and plateau rose — by approximately the same amount. The gap stayed the same because resistance didn\'t change. The elastic component carried both upward together.' },
+    { kind: 'predict_observe', awaits_control: 'resistance', predict: 'Now you\'ll increase resistance. What changes — peak only? Plateau only? Both?', observe: 'Peak rose sharply; plateau stayed about where it was. The gap widened. That gap is the resistive component.' },
   ],
 
   hint_ladder: {

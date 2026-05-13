@@ -7,6 +7,7 @@ export const M1: ModuleConfig = {
   track: 'Foundations',
   estimated_minutes: 12,
   briefing: {
+    tagline: 'Name the deficit before you change a setting.',
     overview: "People get put on ventilators for four reasons, and only four. Failure to oxygenate. Failure to ventilate. Failure to protect the airway. Excessive work of breathing. Everything you'll do later (the modes, the dials, the troubleshooting) gets easier if you can name which of these problems you're solving for the patient in front of you. Before you can change a ventilator, you have to read one.",
     what_youll_do: [
       'Oxygenation failure and ventilation failure are different problems with different blood gas signatures.',

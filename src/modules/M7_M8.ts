@@ -7,6 +7,7 @@ export const M7: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 12,
   briefing: {
+    tagline: 'Volume is fixed. Pressure is the message about the patient.',
     overview: "Volume control is the mode you set when you want to know exactly what the patient is getting per breath. You pick the tidal volume, you pick the flow, the machine delivers it no matter what. The trade-off is that pressure becomes the dependent variable. If the lungs get stiffer or the airways narrower, the pressure will climb to make the volume happen anyway. That's a feature, not a bug, but it's why high-pressure alarms in VC need a real look.",
     what_youll_do: [
       'In VC, you control volume and flow. The vent controls pressure to make it work.',
@@ -210,6 +211,7 @@ export const M8: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 12,
   briefing: {
+    tagline: 'Pressure is fixed. Volume is what gives way.',
     overview: "Pressure control flips the relationship. You pick the pressure, the machine holds it, and tidal volume is whatever the lungs accept at that pressure. This is gentler on stiff or heterogeneous lungs because you can't accidentally over-inflate them. The price is that volume drifts when mechanics change, so you have to watch the delivered tidal volume the same way you'd watch peak pressure in VC.",
     what_youll_do: [
       'In PC, you control pressure. Volume is what gives way.',

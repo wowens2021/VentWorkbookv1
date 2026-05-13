@@ -7,6 +7,7 @@ export const M15: ModuleConfig = {
   track: 'Strategy',
   estimated_minutes: 16,
   briefing: {
+    tagline: '6 mL/kg PBW. Plateau ≤ 30. Driving pressure ≤ 15.',
     overview: "ARDS killed a lot of people before we figured out that the ventilator was part of the problem. Big tidal volumes and high pressures, applied to already-injured lungs, cause more injury. Lung-protective ventilation reverses that. Small tidal volumes by predicted body weight. Plateau pressures kept under 30. Driving pressures kept under 15. Permissive hypercapnia when CO2 rises. The numbers are simple. The discipline of holding to them, breath after breath, is what saves the patient.",
     what_youll_do: [
       '6 mL per kg of predicted body weight is the starting tidal volume. Predicted, not actual.',
@@ -80,7 +81,7 @@ export const M15: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**Lung-protective ventilation = 6 mL/kg PBW, plateau ≤ 30, driving pressure ≤ 15.** All three simultaneously. PBW is calculated from height, not weight.' },
     { kind: 'callout', tone: 'tip', markdown: 'Lower the Vt first. To preserve minute ventilation, raise the rate (often into the 20s-30s). Permissive hypercapnia is expected.' },
-    { kind: 'predict_observe', predict: 'Patient is 70 kg PBW. Target Vt = 6 × 70 = 420 mL. Current Vt 560 = 8 mL/kg. What rate do you need to maintain MV around 9 L/min?', observe: '0.42 L × rate = 9 → rate ≈ 22. The trade-off in lung protection: smaller breaths, more breaths.' },
+    { kind: 'predict_observe', awaits_control: 'respiratoryRate', predict: 'Patient is 70 kg PBW. Target Vt = 6 × 70 = 420 mL. Current Vt 560 = 8 mL/kg. What rate do you need to maintain MV around 9 L/min?', observe: '0.42 L × rate = 9 → rate ≈ 22. The trade-off in lung protection: smaller breaths, more breaths.' },
   ],
 
   hint_ladder: {
@@ -191,6 +192,7 @@ export const M16: ModuleConfig = {
   track: 'Strategy',
   estimated_minutes: 14,
   briefing: {
+    tagline: 'Slow the rate. Let the CO2 rise. Save the patient.',
     overview: "Severe asthma and COPD are the inverse of ARDS. The compliance is usually fine. The problem is getting air out. Every ventilator decision in obstructive disease is built around giving exhalation more time. Lower rates. Shorter inspiratory times. Smaller tidal volumes when needed. The CO2 will rise. You let it. Trying to keep the CO2 normal in these patients is what causes the deaths from breath-stacking and hemodynamic collapse.",
     what_youll_do: [
       'The problem is expiratory flow, not lung stiffness.',

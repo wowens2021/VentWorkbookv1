@@ -11,6 +11,7 @@ export const M11: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 18,
   briefing: {
+    tagline: 'Five waveform patterns. Five fixes that aren\'t sedation.',
     overview: "Patient-ventilator dyssynchrony is the bedside skill that separates clinicians who fiddle with sedation from clinicians who fix the problem. There are five common patterns, and each one looks different on the waveform. Once you can spot them, you can start matching the ventilator to the patient instead of the other way around. The patient will tell you what they want. You just have to read the screen.",
     what_youll_do: [
       'The five patterns: ineffective triggering, double-triggering, flow starvation, premature cycling, delayed cycling.',
@@ -254,6 +255,7 @@ export const M12: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 12,
   briefing: {
+    tagline: 'A hybrid mode worth knowing — not reaching for first.',
     overview: "SIMV is a hybrid mode. Some breaths are guaranteed by the vent at a set rate and volume. Between those, the patient can take their own breaths, supported by PSV. It was designed as a weaning mode and was widely used for decades. Modern evidence has shifted away from it for that purpose. It's worth understanding because you'll still see it in the wild, and because the breath-mix concept underlies the way newer hybrid modes work.",
     what_youll_do: [
       'SIMV mixes mandatory and spontaneous breaths in the same minute.',

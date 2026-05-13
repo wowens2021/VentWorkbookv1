@@ -18,6 +18,8 @@ interface Props {
   completedPhases?: Set<Phase>;
   /** When provided, clicking a past/completed phase calls this. */
   onJumpToPhase?: (p: Phase) => void;
+  /** G2: optional track tint applied to the current-phase dot + connector. */
+  accentHex?: string;
 }
 
 /**
@@ -25,7 +27,7 @@ interface Props {
  * knows where they are in the five-phase sequence (§1.2 / §1.4).
  * Completed phases are clickable (back-navigation).
  */
-const PhaseBadge: React.FC<Props> = ({ phase, completedPhases, onJumpToPhase }) => {
+const PhaseBadge: React.FC<Props> = ({ phase, completedPhases, onJumpToPhase, accentHex }) => {
   const currentIdx = PHASE_ORDER.indexOf(phase);
   return (
     <div className="bg-white border-b border-zinc-200 px-4 py-2 flex items-center gap-1.5 shrink-0">
@@ -41,14 +43,21 @@ const PhaseBadge: React.FC<Props> = ({ phase, completedPhases, onJumpToPhase }) 
           const dotState = isPast || isCompleted
             ? 'bg-emerald-500'
             : isCurrent
-              ? 'bg-sky-500 ring-2 ring-sky-200'
+              ? '' // tint via inline style below
               : 'bg-zinc-200';
+          const dotInlineStyle: React.CSSProperties | undefined =
+            isCurrent && accentHex
+              ? { backgroundColor: accentHex, boxShadow: `0 0 0 2px ${accentHex}33` }
+              : isCurrent
+                ? { backgroundColor: '#0ea5e9', boxShadow: '0 0 0 2px #bae6fd' }
+                : undefined;
 
           const dot = (
             <div
               className={`h-2.5 w-2.5 rounded-full flex items-center justify-center transition ${dotState} ${
                 canJump ? 'cursor-pointer hover:ring-2 hover:ring-emerald-300' : ''
               }`}
+              style={dotInlineStyle}
               title={canJump ? `Return to ${PHASE_LABEL[p]}` : PHASE_LABEL[p]}
             >
               {(isPast || isCompleted) && !isCurrent && <Check size={8} className="text-white" strokeWidth={4} />}

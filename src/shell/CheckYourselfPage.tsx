@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
 import { Check, X, ChevronRight, HelpCircle } from 'lucide-react';
 import type { ContentBlock } from './types';
+import { successPhrase, wrongPhrase, continueCTA } from './microcopy';
 
 type FormativeBlock = Extract<ContentBlock, { kind: 'formative' }>;
+
+/** Stable check-yourself question id derived from its position in the
+ *  formative-blocks list and the module id. */
+export const checkYourselfQuestionId = (moduleId: string, blockIndex: number): string =>
+  `${moduleId}-CY${blockIndex + 1}`;
 
 interface Props {
   blocks: FormativeBlock[];
   onContinue: () => void;
+  /** Optional module id so emitted answers carry stable per-module question ids. */
+  moduleId?: string;
+  /** Fires the first time the learner clicks an option in each question. */
+  onAnswered?: (answer: { question_id: string; selected_label: string; is_correct: boolean }) => void;
 }
 
 /**
@@ -19,7 +29,7 @@ interface Props {
  *     either way and the learner can always continue.
  *   - Each question is independent — answering one doesn't lock the others.
  */
-const CheckYourselfPage: React.FC<Props> = ({ blocks, onContinue }) => {
+const CheckYourselfPage: React.FC<Props> = ({ blocks, onContinue, moduleId, onAnswered }) => {
   return (
     <div className="h-full flex flex-col px-6 py-5 overflow-y-auto">
       <div className="mb-4 pb-3 border-b border-zinc-200">
@@ -37,7 +47,14 @@ const CheckYourselfPage: React.FC<Props> = ({ blocks, onContinue }) => {
 
       <div className="space-y-5 flex-1">
         {blocks.map((b, idx) => (
-          <CheckYourselfQuestion key={idx} block={b} index={idx + 1} total={blocks.length} />
+          <CheckYourselfQuestion
+            key={idx}
+            block={b}
+            index={idx + 1}
+            total={blocks.length}
+            questionId={moduleId ? checkYourselfQuestionId(moduleId, idx) : `CY${idx + 1}`}
+            onAnswered={onAnswered}
+          />
         ))}
       </div>
 
@@ -45,22 +62,37 @@ const CheckYourselfPage: React.FC<Props> = ({ blocks, onContinue }) => {
         onClick={onContinue}
         className="mt-6 w-full px-4 py-3 bg-brand-olive hover:bg-brand-olive-hover text-white text-sm font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm"
       >
-        Continue to the simulator <ChevronRight size={14} />
+        {continueCTA(moduleId ?? 'check')} <ChevronRight size={14} />
       </button>
     </div>
   );
 };
 
-const CheckYourselfQuestion: React.FC<{ block: FormativeBlock; index: number; total: number }> = ({
-  block,
-  index,
-  total,
-}) => {
+const CheckYourselfQuestion: React.FC<{
+  block: FormativeBlock;
+  index: number;
+  total: number;
+  questionId: string;
+  onAnswered?: (answer: { question_id: string; selected_label: string; is_correct: boolean }) => void;
+}> = ({ block, index, total, questionId, onAnswered }) => {
   const [selected, setSelected] = useState<number | null>(null);
   const hasOptions = !!block.options && block.options.length > 0;
   const correctIdx = hasOptions ? block.options!.findIndex(o => o.is_correct) : -1;
   const submitted = selected !== null;
   const isCorrect = submitted && hasOptions && selected === correctIdx;
+
+  const handlePick = (i: number) => {
+    if (submitted) return;
+    setSelected(i);
+    if (hasOptions && onAnswered) {
+      const opt = block.options![i];
+      onAnswered({
+        question_id: questionId,
+        selected_label: opt.label,
+        is_correct: opt.is_correct,
+      });
+    }
+  };
 
   return (
     <section className="bg-white border border-stone-200 rounded-xl p-4 shadow-sm">
@@ -93,7 +125,7 @@ const CheckYourselfQuestion: React.FC<{ block: FormativeBlock; index: number; to
               <button
                 key={i}
                 disabled={submitted}
-                onClick={() => setSelected(i)}
+                onClick={() => handlePick(i)}
                 className={cls}
               >
                 <span className="font-mono text-[11px] font-bold text-zinc-500 shrink-0">
@@ -124,7 +156,9 @@ const CheckYourselfQuestion: React.FC<{ block: FormativeBlock; index: number; to
           }`}
         >
           <div className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-70">
-            {isCorrect ? 'Correct — here\'s the why' : 'Not quite — here\'s the why'}
+            {isCorrect
+              ? `${successPhrase(questionId).replace(/[.!]$/, '')} — here's the why`
+              : `${wrongPhrase(questionId).replace(/[.!]$/, '')} — here's the why`}
           </div>
           {block.answer}
         </div>

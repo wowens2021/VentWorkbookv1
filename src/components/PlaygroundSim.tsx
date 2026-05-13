@@ -62,6 +62,13 @@ interface PlaygroundSimProps {
     isCorrect: boolean,
     element: { kind: 'readout' | 'control'; name: string },
   ) => void;
+  /**
+   * B1: list of readout names to briefly outline in sky-blue. Used in the
+   * try-it phase to show the learner which numbers their just-changed control
+   * actually affects ("ah, this knob talks to that number"). Cleared by the
+   * parent after ~1 s.
+   */
+  flashReadouts?: string[];
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
@@ -126,8 +133,14 @@ const NumericCard = ({
   /** When set, the card is clickable. Visual appearance is identical to a
    *  non-clickable card so the recognition task isn't given away. */
   onClick,
+  /** B1: brief sky-blue halo to highlight which numbers a just-changed
+   *  control actually affects. Auto-cleared by the parent. */
+  flash = false,
 }: any) => {
-  const baseCls = 'bg-white rounded-md border border-zinc-200 px-1.5 py-1 flex flex-col justify-between shadow-sm transition';
+  const flashCls = flash
+    ? 'bg-sky-50 border-sky-400 ring-2 ring-sky-300/70 shadow-md'
+    : 'bg-white border-zinc-200';
+  const baseCls = `rounded-md border px-1.5 py-1 flex flex-col justify-between shadow-sm transition ${flashCls}`;
   if (onClick) {
     return (
       <button
@@ -323,7 +336,10 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   recognitionTargets,
   recognitionBanner,
   onRecognitionElementClick,
+  flashReadouts,
 }) => {
+  // Lookup set for the flash-on-control-change readout halos.
+  const flashSet = useMemo(() => new Set(flashReadouts ?? []), [flashReadouts]);
   /**
    * Recognition click-target mode is active whenever `recognitionTargets` is
    * provided. In this mode EVERY readout tile and EVERY control box becomes
@@ -1244,17 +1260,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Measured Values</span>
             </div>
             <div className={`grid gap-1 ${playgroundMode ? 'grid-cols-11' : 'grid-cols-6'}`}>
-              <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" {...recogPropsForReadout('actualRate', 'RR')} />
-              <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" {...recogPropsForReadout('ieRatio', 'I:E')} />
-              <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" {...recogPropsForReadout('pip', 'PIP')} />
-              <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} {...recogPropsForReadout('plat', 'Pplat')} />
-              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color={metrics.drivingPressure > 15 ? 'text-rose-600' : 'text-violet-600'} {...recogPropsForReadout('drivingPressure', 'DP')} />
-              <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" {...recogPropsForReadout('mve', 'VE')} />
-              <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} {...recogPropsForReadout('vte', 'Vte')} />
-              <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-600" {...recogPropsForReadout('vte', 'Vt/PBW')} />
-              <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" {...recogPropsForReadout('totalPeep', 'tPEEP')} />
-              <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" {...recogPropsForReadout('autoPeep', 'autoPEEP')} />
-              <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-600' : rsbiValue > 80 ? 'text-amber-600' : 'text-emerald-600'} {...recogPropsForReadout('rsbi', 'RSBI')} />
+              <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" flash={flashSet.has('actualRate')} {...recogPropsForReadout('actualRate', 'RR')} />
+              <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" flash={flashSet.has('ieRatio')} {...recogPropsForReadout('ieRatio', 'I:E')} />
+              <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" flash={flashSet.has('pip')} {...recogPropsForReadout('pip', 'PIP')} />
+              <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} flash={flashSet.has('plat')} {...recogPropsForReadout('plat', 'Pplat')} />
+              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color={metrics.drivingPressure > 15 ? 'text-rose-600' : 'text-violet-600'} flash={flashSet.has('drivingPressure')} {...recogPropsForReadout('drivingPressure', 'DP')} />
+              <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" flash={flashSet.has('mve')} {...recogPropsForReadout('mve', 'VE')} />
+              <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vte')} />
+              <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-600" flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vt/PBW')} />
+              <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" flash={flashSet.has('totalPeep')} {...recogPropsForReadout('totalPeep', 'tPEEP')} />
+              <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" flash={flashSet.has('autoPeep')} {...recogPropsForReadout('autoPeep', 'autoPEEP')} />
+              <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-600' : rsbiValue > 80 ? 'text-amber-600' : 'text-emerald-600'} flash={flashSet.has('rsbi')} {...recogPropsForReadout('rsbi', 'RSBI')} />
             </div>
           </div>
 

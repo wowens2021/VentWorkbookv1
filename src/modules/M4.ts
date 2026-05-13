@@ -7,6 +7,7 @@ export const M4: ModuleConfig = {
   track: 'Physiology',
   estimated_minutes: 15,
   briefing: {
+    tagline: 'Peak-plateau gap separates airway from lung.',
     overview: "This is the bedside skill the rest of the book builds on. When peak pressure rises, you have to know whether the lungs got stiffer or the airways got narrower, and the ventilator already tells you. The gap between peak and plateau is the answer. A small gap means the problem is in the lung itself. A big gap means the problem is in the airway. That single observation drives most of what you do for sudden pressure changes.",
     what_youll_do: [
       'Compliance problems raise peak and plateau together.',

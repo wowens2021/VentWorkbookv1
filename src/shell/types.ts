@@ -31,7 +31,16 @@ export type ContentBlock =
        *  explanation. When absent, the legacy "Show answer →" reveal is used. */
       options?: { label: string; is_correct: boolean }[];
     }
-  | { kind: 'predict_observe'; predict: string; observe: string };
+  | {
+      kind: 'predict_observe';
+      predict: string;
+      observe: string;
+      /** When set, the "Observe" half auto-reveals the first time the learner
+       *  changes the named control on the sim during the read phase — turning
+       *  the block from a click-to-reveal nudge into a genuine interactive
+       *  prediction. The legacy "Then observe →" button remains as a fallback. */
+      awaits_control?: ControlName;
+    };
 
 // ── Scenario / sim configuration ──
 export type ControlName =
@@ -230,6 +239,10 @@ export interface ModuleConfig {
     overview: string;
     /** 2-4 short bullets — what the learner will actually do in this module. */
     what_youll_do?: string[];
+    /** G1: ~50-char sticky chip text shown in the in-module top nav so the
+     *  briefing's headline lesson stays in peripheral view. Falls back to the
+     *  first visible_learning_objective if not authored. */
+    tagline?: string;
   };
 }
 
@@ -263,6 +276,11 @@ export interface ProgressRecord {
   quiz_submitted_at?: string;
   quiz_score?: number;
   quiz_answers?: { question_id: string; selected_label: string; is_correct: boolean }[];
+
+  /** Per-question answer log for the in-flow "Check yourself" formative
+   *  questions shown between Read and Explore. Powers a debrief review and
+   *  a small score bonus. */
+  check_yourself_answers?: { question_id: string; selected_label: string; is_correct: boolean }[];
 
   // ── Composite performance score (computed at module completion) ──
   /** Weighted 0–100 score: primer 30% + summative 50% + hint/reset bonuses. */

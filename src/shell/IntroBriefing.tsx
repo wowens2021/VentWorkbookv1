@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, BookOpen, Clock, ChevronRight, Compass, Target } from 'lucide-react';
 import type { ModuleConfig } from './types';
+import { trackTone } from './trackColors';
 
 interface Props {
   module: ModuleConfig;
@@ -18,6 +19,7 @@ interface Props {
  * Falls back to generic copy when a module hasn't authored its own briefing.
  */
 const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
+  const tone = trackTone(module.track);
   // Briefing content — authored if present, derived otherwise.
   const overview =
     module.briefing?.overview
@@ -32,8 +34,8 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
 
   return (
     <div className="flex flex-col h-screen bg-brand-cream text-zinc-900 font-sans overflow-hidden select-none">
-      {/* Top nav strip */}
-      <div className="flex items-center justify-between bg-brand-olive text-white px-5 py-2.5 shrink-0">
+      {/* Top nav strip — track-tinted to match the module shell. */}
+      <div className={`flex items-center justify-between ${tone.bg} ${tone.fgOnSolid} px-5 py-2.5 shrink-0`}>
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white transition"
@@ -54,7 +56,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
         <div className="w-full max-w-2xl bg-white border border-stone-200 rounded-2xl shadow-sm p-8">
           {/* Header */}
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-[10px] font-black uppercase tracking-widest text-brand-olive bg-stone-50 px-2 py-0.5 rounded">
+            <span className={`text-[10px] font-black uppercase tracking-widest ${tone.chipText} ${tone.chipBg} border ${tone.chipBorder} px-2 py-0.5 rounded`}>
               {module.track}
             </span>
             <span className="text-[10px] font-mono text-zinc-500">{module.id}</span>
@@ -73,8 +75,8 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
           {/* Overview */}
           <section className="mb-6">
             <div className="flex items-center gap-1.5 mb-2">
-              <Compass size={13} className="text-brand-olive" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-brand-olive">
+              <Compass size={13} className={tone.accentText} />
+              <span className={`text-[10px] font-black uppercase tracking-widest ${tone.accentText}`}>
                 What's this about
               </span>
             </div>
@@ -85,15 +87,15 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
           {bullets.length > 0 && (
             <section className="mb-7">
               <div className="flex items-center gap-1.5 mb-2">
-                <Target size={13} className="text-brand-olive" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-brand-olive">
+                <Target size={13} className={tone.accentText} />
+                <span className={`text-[10px] font-black uppercase tracking-widest ${tone.accentText}`}>
                   What you'll do
                 </span>
               </div>
               <ul className="space-y-1.5">
                 {bullets.map((b, i) => (
                   <li key={i} className="text-[14px] text-zinc-700 leading-snug flex items-start gap-2">
-                    <span className="text-brand-olive font-bold mt-0.5">{i + 1}.</span>
+                    <span className={`${tone.accentText} font-bold mt-0.5`}>{i + 1}.</span>
                     <span>{b}</span>
                   </li>
                 ))}
@@ -112,7 +114,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
           <div className="flex justify-end">
             <button
               onClick={onBegin}
-              className="flex items-center gap-1.5 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-hover text-white text-sm font-bold rounded-lg transition shadow-sm"
+              className={`flex items-center gap-1.5 px-5 py-2.5 ${tone.bg} ${tone.bgHover} ${tone.fgOnSolid} text-sm font-bold rounded-lg transition shadow-sm`}
             >
               Begin module <ChevronRight size={14} />
             </button>

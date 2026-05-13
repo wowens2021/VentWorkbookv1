@@ -7,6 +7,7 @@ export const M5: ModuleConfig = {
   track: 'Physiology',
   estimated_minutes: 15,
   briefing: {
+    tagline: 'Shunt kills oxygenation. Dead space kills ventilation.',
     overview: "Hypoxia and hypercapnia look different to the lung. Shunt is blood flowing past alveoli that aren't getting any air. It kills oxygenation and doesn't respond well to cranking up the FiO2. Dead space is air flowing into alveoli that aren't getting any blood. It kills CO2 clearance and is what's happening when the end-tidal drops out of nowhere. Knowing which one you're dealing with changes what you do.",
     what_youll_do: [
       'Shunt is a perfusion-without-ventilation problem. Dead space is a ventilation-without-perfusion problem.',
@@ -215,6 +216,7 @@ export const M6: ModuleConfig = {
   track: 'Physiology',
   estimated_minutes: 15,
   briefing: {
+    tagline: 'See trapping on the flow waveform. Slow down to fix it.',
     overview: "The lungs need time to empty. If you don't give them enough, gas piles up inside, and the next breath stacks on top of the leftovers. That trapped pressure is auto-PEEP, and it causes more problems than people realize. Higher work of breathing. Worse hemodynamics. Mysterious hypotension after every rate increase. The fix is almost always the same: slow down and give exhalation more room.",
     what_youll_do: [
       'Auto-PEEP is end-expiratory pressure the patient generates on their own, not pressure you set.',
@@ -293,7 +295,7 @@ export const M6: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**Dynamic hyperinflation.** When expiratory time is shorter than the patient\'s expiratory time constant (R × C), gas stays trapped. The trapped volume produces a pressure called auto-PEEP — also intrinsic PEEP, also PEEPi.' },
     { kind: 'callout', tone: 'warn', markdown: 'Severe auto-PEEP causes hypotension by raising intrathoracic pressure and reducing venous return. In extremis, **disconnect the patient from the vent** to let the lungs deflate.' },
-    { kind: 'predict_observe', predict: 'Predict: when you raise the rate, the expiratory flow trace will...', observe: 'The expiratory flow doesn\'t return to baseline before the next breath cuts it off. That truncated expiratory limb IS the diagnostic sign.' },
+    { kind: 'predict_observe', awaits_control: 'respiratoryRate', predict: 'Predict: when you raise the rate, the expiratory flow trace will...', observe: 'The expiratory flow doesn\'t return to baseline before the next breath cuts it off. That truncated expiratory limb IS the diagnostic sign.' },
   ],
 
   hint_ladder: {

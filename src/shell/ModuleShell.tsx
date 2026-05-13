@@ -2,9 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BookOpen, Target, Clock, ChevronRight, Trophy, Home, RotateCcw, Check, X } from 'lucide-react';
 import type { ModuleConfig, InlinePromptConfig, ExploreCardConfig } from './types';
 import PrimerQuiz from './PrimerQuiz';
-import ContentBlocks from './ContentBlocks';
 import CheckYourselfPage from './CheckYourselfPage';
 import IntroBriefing from './IntroBriefing';
+import ReadPane from './ReadPane';
+import PhaseHeroBanner from './PhaseHeroBanner';
+import TrackProgressStrip from './TrackProgressStrip';
+import { trackTone } from './trackColors';
+import { successPhrase, wrongPhrase, continueCTA } from './microcopy';
 import SummativeQuiz from './SummativeQuiz';
 import ReviewCard from './ReviewCard';
 import HintLadder from './HintLadder';
@@ -23,14 +27,46 @@ interface Props {
   onNext?: () => void;
   /** Optional explicit "go home" handler. Falls back to onBack if absent. */
   onHome?: () => void;
+  /** Metadata for the next module in sequence — powers the "Up next" line
+   *  on the debrief so the learner sees what they're about to start. */
+  nextModule?: ModuleConfig;
 }
 
 /**
- * Composite performance score (0–100). Weighting:
- *   - Primer first-attempt:   30% (primer_score / 3 × 30)
- *   - Summative quiz:         50% (quiz_score / 5 × 50)
- *   - Hint-usage bonus:       up to +10 (no hints) / +5 (tier 1 only) / 0 otherwise
- *   - Reset-usage bonus:      up to +10 (zero resets) / +5 (one) / 0 otherwise
+ * C1: small RAF-driven count-up hook so the debrief score animates from 0
+ * to its final value over `duration` ms. No external dependency. Returns
+ * the latest tweened integer; rerenders the parent on each frame.
+ */
+function useCountUp(target: number, duration = 1200): number {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    setValue(0);
+    let start: number | null = null;
+    let frame: number;
+    const tick = (now: number) => {
+      if (start === null) start = now;
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      setValue(Math.round(target * eased));
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration]);
+  return value;
+}
+
+/**
+ * Composite performance score, capped at 100. Component weights:
+ *   - Primer first-attempt:   30 pts (primer_score / 3 × 30)
+ *   - Summative quiz:         50 pts (quiz_score / 5 × 50)
+ *   - Hint-usage bonus:       up to 10 pts (no hints) / 5 (tier 1 only) / 0
+ *   - Reset-usage bonus:      up to 10 pts (zero resets) / 5 (one) / 0
+ *   - Check-yourself bonus:   up to 5 pts (E3) — proportional to correct ratio
+ *
+ * Raw total can reach 105; the displayed percent is capped at 100. The +5
+ * cushion lets a strong learner absorb a small hint/reset penalty without
+ * losing their A grade.
  */
 function computeTotalScore(rec: {
   primer_score?: number;
@@ -39,6 +75,8 @@ function computeTotalScore(rec: {
   quiz_total?: number;
   hint_tiers_triggered?: number;
   reset_to_start_clicks?: number;
+  check_yourself_correct?: number;
+  check_yourself_total?: number;
 }): { percent: number; letter: 'A' | 'B' | 'C' | 'D' | 'F'; breakdown: Record<string, number> } {
   const primerPts = rec.primer_total && rec.primer_score !== undefined
     ? Math.round((rec.primer_score / rec.primer_total) * 30)
@@ -52,7 +90,11 @@ function computeTotalScore(rec: {
   const resetBonus = (rec.reset_to_start_clicks ?? 0) === 0 ? 10
     : (rec.reset_to_start_clicks ?? 0) === 1 ? 5
     : 0;
-  const percent = Math.max(0, Math.min(100, primerPts + quizPts + hintBonus + resetBonus));
+  const checkYourselfBonus = rec.check_yourself_total && rec.check_yourself_total > 0
+    ? Math.floor((rec.check_yourself_correct ?? 0) / rec.check_yourself_total * 5)
+    : 0;
+  const raw = primerPts + quizPts + hintBonus + resetBonus + checkYourselfBonus;
+  const percent = Math.max(0, Math.min(100, raw));
   const letter: 'A' | 'B' | 'C' | 'D' | 'F' =
     percent >= 90 ? 'A' :
     percent >= 80 ? 'B' :
@@ -61,8 +103,43 @@ function computeTotalScore(rec: {
   return {
     percent,
     letter,
-    breakdown: { primerPts, quizPts, hintBonus, resetBonus },
+    breakdown: { primerPts, quizPts, hintBonus, resetBonus, checkYourselfBonus },
   };
+}
+
+/**
+ * B1 helper: which readouts should briefly halo when the learner moves a
+ * given control? Outcome trackers name their readouts explicitly — we pull
+ * those out first so the flash points the learner at the thing the tracker
+ * is actually watching. For manipulation / recognition tasks (no outcome
+ * dict), fall back to a hand-tuned affinity table mapping each control to
+ * the readouts physiologically downstream of it.
+ */
+function collectOutcomeReadouts(cfg: any): string[] {
+  if (!cfg) return [];
+  if (cfg.kind === 'outcome' && cfg.readouts) return Object.keys(cfg.readouts);
+  if (cfg.kind === 'compound' && Array.isArray(cfg.children)) {
+    return cfg.children.flatMap(collectOutcomeReadouts);
+  }
+  return [];
+}
+const CONTROL_AFFINITY: Record<string, string[]> = {
+  compliance: ['pip', 'plat', 'drivingPressure'],
+  resistance: ['pip', 'drivingPressure'],
+  peep: ['pip', 'plat', 'totalPeep'],
+  respiratoryRate: ['mve', 'autoPeep', 'actualRate'],
+  tidalVolume: ['vte', 'mve', 'pip', 'plat'],
+  fiO2: ['fio2'],
+  iTime: ['ieRatio'],
+  pInsp: ['pip', 'vte'],
+  psLevel: ['vte', 'mve'],
+  spontaneousRate: ['actualRate', 'mve', 'rsbi'],
+  endInspiratoryPercent: ['vte', 'ieRatio'],
+};
+function readoutsRelatedToControl(controlName: string, trackerCfg: any): string[] {
+  const fromOutcome = collectOutcomeReadouts(trackerCfg);
+  if (fromOutcome.length > 0) return fromOutcome;
+  return CONTROL_AFFINITY[controlName] ?? [];
 }
 
 /**
@@ -90,7 +167,7 @@ function deriveExploreCard(module: ModuleConfig): ExploreCardConfig {
   };
 }
 
-const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
+const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModule }) => {
   // ── Resume from prior progress ──
   const prior = useMemo(() => loadProgress(module.id), [module.id]);
 
@@ -211,6 +288,18 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
     return () => clearTimeout(id);
   }, [stepToast]);
 
+  // ── Phase transition hero banner (D2) ──
+  // 1.5 s "Phase N — Name" overlay. Triggered only on forward advances
+  // (call `flashHero(target)` inside each advanceFrom* helper), not on
+  // back-nav review jumps or on initial mount.
+  const [heroPhase, setHeroPhase] = useState<Phase | null>(null);
+  useEffect(() => {
+    if (!heroPhase) return;
+    const id = setTimeout(() => setHeroPhase(null), 1500);
+    return () => clearTimeout(id);
+  }, [heroPhase]);
+  const flashHero = (target: Phase) => setHeroPhase(target);
+
   // ── Engagement counters (per §1.9) ──
   const exploreStartedAtRef = useRef<number | null>(null);
   const exploreControlChangesRef = useRef(0);
@@ -218,13 +307,71 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
   const taskControlChangesRef = useRef(0);
   const resetClicksRef = useRef(0);
 
-  // ── Global harness subscriber for engagement counting ──
+  // ── B2: outcome progress chip ──
+  const [outcomeProgress, setOutcomeProgress] = useState<
+    { current: number; target: number; label?: string } | null
+  >(null);
+  // ── B3: hint trigger on N control changes without progress ──
+  // Incremented on every try-it control_changed. Reset to 0 whenever the
+  // tracker reports forward progress (outcome counter goes up OR a compound
+  // child fires). Surfaces tier 1 around 5 changes, tier 2 at 10, tier 3 at 15.
+  const [changesSinceProgress, setChangesSinceProgress] = useState(0);
+  const lastOutcomeProgressRef = useRef(0);
+
+  // ── B1: readout flash on control change ──
+  // When the learner changes a control in the try-it phase, briefly outline
+  // the related readouts in sky-blue so they SEE which numbers their knob
+  // talks to. Auto-cleared after 1.1 s.
+  const [flashReadouts, setFlashReadouts] = useState<string[]>([]);
+  useEffect(() => {
+    if (flashReadouts.length === 0) return;
+    const id = setTimeout(() => setFlashReadouts([]), 1100);
+    return () => clearTimeout(id);
+  }, [flashReadouts]);
+
+  // B3: reset the no-progress streak whenever the tracker advances —
+  // either an outcome counter ticked up, or a compound child fired.
+  useEffect(() => {
+    const cur = outcomeProgress?.current ?? 0;
+    if (cur > lastOutcomeProgressRef.current) {
+      lastOutcomeProgressRef.current = cur;
+      setChangesSinceProgress(0);
+    }
+    if (!outcomeProgress) lastOutcomeProgressRef.current = 0;
+  }, [outcomeProgress]);
+  const childStatesDoneCountRef = useRef(0);
+  useEffect(() => {
+    const done = childStates.filter(Boolean).length;
+    if (done > childStatesDoneCountRef.current) {
+      childStatesDoneCountRef.current = done;
+      setChangesSinceProgress(0);
+    }
+    if (done === 0) childStatesDoneCountRef.current = 0;
+  }, [childStates]);
+  // Phase-exit: reset the streak so re-entering try-it starts clean.
+  useEffect(() => {
+    if (phase !== 'try-it') {
+      setChangesSinceProgress(0);
+      lastOutcomeProgressRef.current = 0;
+      childStatesDoneCountRef.current = 0;
+    }
+  }, [phase]);
+
+  // ── Global harness subscriber for engagement counting + B1 flash ──
   // Always subscribed; only the tracker is conditionally subscribed in Phase 4.
   useEffect(() => {
     const off = harness.subscribe(ev => {
       if (ev.type === 'control_changed') {
         if (phase === 'explore') exploreControlChangesRef.current += 1;
-        if (phase === 'try-it') taskControlChangesRef.current += 1;
+        if (phase === 'try-it') {
+          taskControlChangesRef.current += 1;
+          const readouts = readoutsRelatedToControl(ev.control, module.hidden_objective);
+          if (readouts.length > 0) setFlashReadouts(readouts);
+          // B3: every try-it change starts a new "no-progress streak" tick.
+          // The streak is cleared elsewhere when outcomeProgress / childStates
+          // increment.
+          setChangesSinceProgress(n => n + 1);
+        }
         setLastInteractMs(Date.now());
       }
       if (ev.type === 'recognition_response') {
@@ -232,7 +379,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       }
     });
     return off;
-  }, [harness, phase]);
+  }, [harness, phase, module.hidden_objective]);
 
   // ── Wire harness to objective tracker — ONLY in Phase 4 ──
   useEffect(() => {
@@ -270,6 +417,10 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       clearActivePrompt: () => setActivePrompt(null),
       // F3: surface per-child progress so TaskCard can show checkmarks.
       onProgress: (states: boolean[]) => setChildStates(states),
+      // B2: wire outcome-tracker progress so TaskCard can show a live chip.
+      onOutcomeProgress: (
+        p: { current: number; target: number; label?: string } | null,
+      ) => setOutcomeProgress(p),
     };
 
     tracker.start(ctx, () => {
@@ -299,7 +450,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       if (prompt.trigger.kind === 'on_load') setActivePrompt(prompt);
     });
 
-    return () => { off(); tracker.stop(); };
+    return () => {
+      off();
+      tracker.stop();
+      setOutcomeProgress(null);
+    };
   }, [phase, objectiveSatisfied, module.id]);
 
   // ── Recognition response → harness ──
@@ -406,6 +561,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       primer_answers: answers,
     });
     setPhase('read');
+    flashHero('read');
     setLastInteractMs(Date.now());
   };
 
@@ -419,6 +575,23 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
     advanceFromReadOrCheck();
   };
 
+  /**
+   * E1: capture each check-yourself answer as the learner makes it, so the
+   * debrief can review them and the score can include a small bonus.
+   * Stable IDs (`{moduleId}-CY{n}`) are derived from the position of the
+   * formative block in the module's content_blocks list.
+   */
+  const checkYourselfAnswersRef = useRef<
+    Map<string, { question_id: string; selected_label: string; is_correct: boolean }>
+  >(new Map());
+  const handleCheckYourselfAnswer = (answer: {
+    question_id: string;
+    selected_label: string;
+    is_correct: boolean;
+  }) => {
+    checkYourselfAnswersRef.current.set(answer.question_id, answer);
+  };
+
   /** Move from Read (either sub-phase) → Explore. Persists timestamps and
    *  initializes the exploration counters. */
   const advanceFromReadOrCheck = () => {
@@ -426,6 +599,13 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       module_id: module.id,
       reading_completed_at: new Date().toISOString(),
     });
+    // Persist any captured check-yourself answers before leaving the sub-phase.
+    if (checkYourselfAnswersRef.current.size > 0) {
+      persistProgress({
+        module_id: module.id,
+        check_yourself_answers: Array.from(checkYourselfAnswersRef.current.values()),
+      });
+    }
     exploreStartedAtRef.current = Date.now();
     exploreControlChangesRef.current = 0;
     persistProgress({
@@ -434,6 +614,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
     });
     setReadSubPhase('prose'); // reset for back-nav
     setPhase('explore');
+    flashHero('explore');
   };
 
   const advanceFromExplore = () => {
@@ -446,15 +627,21 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       exploration_control_changes: exploreControlChangesRef.current,
     });
     setPhase('try-it');
+    flashHero('try-it');
     setLastInteractMs(Date.now());
   };
 
   const advanceFromTryIt = () => {
     setPhase('debrief');
+    flashHero('debrief');
   };
 
   const advanceFromDebrief = (score: number, answers: any[]) => {
     // Compute the composite total score and persist alongside the quiz result.
+    const cyAnswers =
+      Array.from(checkYourselfAnswersRef.current.values()).length > 0
+        ? Array.from(checkYourselfAnswersRef.current.values())
+        : prior?.check_yourself_answers ?? [];
     const merged = {
       primer_score: prior?.primer_score,
       primer_total: module.primer_questions.length,
@@ -462,6 +649,8 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       quiz_total: module.summative_quiz.length,
       hint_tiers_triggered: prior?.hint_tiers_triggered ?? 0,
       reset_to_start_clicks: prior?.reset_to_start_clicks ?? resetClicksRef.current,
+      check_yourself_correct: cyAnswers.filter(a => a.is_correct).length,
+      check_yourself_total: formativeBlocks.length,
     };
     const total = computeTotalScore(merged);
     persistProgress({
@@ -506,7 +695,10 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
   const isReviewing = completedPhases.has(phase) && phase !== 'debrief' && quizSubmitted;
   const simInteractivity: SimInteractivity =
     phase === 'primer' ? 'locked'
-    : phase === 'read' ? (isReviewing ? 'live' : 'live-disabled')
+    // Read phase is now fully live so the learner can poke the sim while
+    // reading — the `predict_observe` blocks auto-reveal when the targeted
+    // control changes. Mode-row locking still respects the module's scenario.
+    : phase === 'read' ? 'live'
     : phase === 'try-it' ? 'live'
     : phase === 'debrief' ? 'live-frozen'
     : 'live'; // explore
@@ -523,7 +715,9 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
         return (
           <CheckYourselfPage
             blocks={formativeBlocks}
+            moduleId={module.id}
             onContinue={advanceFromReadOrCheck}
+            onAnswered={handleCheckYourselfAnswer}
           />
         );
       }
@@ -533,37 +727,12 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
         ? 'Continue — quick check yourself'
         : "I'm ready — let me try it";
       return (
-        <div className="h-full flex flex-col px-5 py-3 overflow-y-auto">
-          <div className="mb-3 pb-3 border-b border-zinc-200">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[10px] font-black uppercase tracking-widest text-brand-olive bg-stone-50 px-2 py-0.5 rounded">{module.track}</span>
-              <span className="text-[10px] font-mono text-zinc-500">{module.id}</span>
-              <span className="text-[10px] text-zinc-400 flex items-center gap-1">
-                <Clock size={11} /> {module.estimated_minutes} min
-              </span>
-            </div>
-            <h1 className="font-display text-2xl font-semibold text-zinc-900 leading-tight tracking-tight">{module.title}</h1>
-            <div className="mt-2">
-              <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 flex items-center gap-1">
-                <Target size={11} /> Objectives
-              </div>
-              <ul className="space-y-0.5">
-                {module.visible_learning_objectives.map((o, i) => (
-                  <li key={i} className="text-[13px] text-zinc-700 leading-snug">• {o}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <div className="flex-1">
-            <ContentBlocks blocks={module.content_blocks} />
-          </div>
-          <button
-            onClick={advanceFromRead}
-            className="mt-4 w-full px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover text-white text-sm font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm"
-          >
-            {ctaLabel} <ChevronRight size={14} />
-          </button>
-        </div>
+        <ReadPane
+          module={module}
+          harness={harness}
+          ctaLabel={ctaLabel}
+          onAdvance={advanceFromRead}
+        />
       );
     }
 
@@ -596,6 +765,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
             <HintLadder
               hint={module.hint_ladder}
               idleMs={idleMs}
+              changesSinceProgress={changesSinceProgress}
               onShowMe={onShowMe}
               onTierTriggered={onTierTriggered}
               suppressed={objectiveSatisfied}
@@ -612,6 +782,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
               onShowHint={() => setLastInteractMs(Date.now() - 26_000)}  // F7: tier 1 fires at 25 s
               progress={childStates.length > 0 ? childStates : undefined}
               onRedo={onRedoTask}
+              outcomeProgress={outcomeProgress}
             />
           </div>
         </div>
@@ -630,6 +801,9 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
           // Pull the latest persisted record so the score is consistent with
           // what's stored (rather than relying on stale closures).
           const rec = loadProgress(module.id);
+          const cyAnswers = rec?.check_yourself_answers ?? [];
+          const cyCorrect = cyAnswers.filter(a => a.is_correct).length;
+          const cyTotal = formativeBlocks.length;
           const total = rec?.total_score_percent !== undefined
             ? { percent: rec.total_score_percent, letter: rec.total_score_letter ?? 'F' }
             : computeTotalScore({
@@ -639,6 +813,8 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
                 quiz_total: module.summative_quiz.length,
                 hint_tiers_triggered: rec?.hint_tiers_triggered,
                 reset_to_start_clicks: rec?.reset_to_start_clicks,
+                check_yourself_correct: cyCorrect,
+                check_yourself_total: cyTotal,
               });
           const letterColor =
             total.letter === 'A' ? 'text-emerald-600' :
@@ -647,8 +823,12 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
             total.letter === 'D' ? 'text-amber-700' : 'text-rose-600';
           return (
             <div className="h-full flex flex-col px-5 py-5 overflow-y-auto">
+              {/* C2: track-level progress strip — shows the larger arc so the
+                  learner sees how far they've come and what's next. */}
+              <TrackProgressStrip track={module.track} highlightCompleteId={module.id} />
+
               {/* Banner */}
-              <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-4 mb-5 flex items-center gap-3">
+              <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-4 mb-5 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-1 duration-500">
                 <Trophy size={20} className="text-emerald-700 shrink-0" />
                 <div>
                   <div className="text-[14px] font-bold text-emerald-900 leading-tight">Module complete</div>
@@ -671,6 +851,8 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
                   quiz_total: quizTotal,
                   hint_tiers_triggered: hintTiers,
                   reset_to_start_clicks: resets,
+                  check_yourself_correct: cyCorrect,
+                  check_yourself_total: cyTotal,
                 }).breakdown;
                 const taskSec = rec?.time_to_objective_sec;
                 const fmtSec = (s?: number) =>
@@ -688,8 +870,17 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
                       <div className="text-[10px] font-mono text-zinc-400">out of 100</div>
                     </div>
                     <div className="flex items-baseline gap-3 mb-5">
-                      <span className={`font-display text-5xl font-semibold ${letterColor} leading-none`}>{total.letter}</span>
-                      <span className="font-display text-3xl font-semibold text-stone-900 leading-none">{total.percent}%</span>
+                      {/* C1: letter pops in with a tiny bounce. */}
+                      <span
+                        className={`font-display text-5xl font-semibold ${letterColor} leading-none animate-in zoom-in-50 fade-in duration-700`}
+                      >
+                        {total.letter}
+                      </span>
+                      {/* C1: percent counts up from 0 over ~1.2 s. */}
+                      <CountedPercent
+                        target={total.percent}
+                        className="font-display text-3xl font-semibold text-stone-900 leading-none"
+                      />
                     </div>
 
                     {/* Component breakdown — each row shows the detail, the
@@ -727,6 +918,14 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
                         points={bd.resetBonus}
                         max={10}
                       />
+                      {cyTotal > 0 && (
+                        <BreakdownRow
+                          label="Check yourself bonus"
+                          detail={`${cyCorrect} of ${cyTotal} correct between the read and the sim`}
+                          points={bd.checkYourselfBonus}
+                          max={5}
+                        />
+                      )}
                     </div>
 
                     {/* Timing footer */}
@@ -744,6 +943,18 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
                 questions={module.primer_questions}
                 answers={rec?.primer_answers ?? []}
               />
+              {cyTotal > 0 && (
+                <AnswerReview
+                  title="Check yourself (between read and sim)"
+                  questions={formativeBlocks.map((b, i) => ({
+                    id: `${module.id}-CY${i + 1}`,
+                    prompt: b.question,
+                    options: b.options ?? [],
+                    explanation: b.answer,
+                  }))}
+                  answers={cyAnswers}
+                />
+              )}
               <AnswerReview
                 title="Knowledge check (after the module)"
                 questions={module.summative_quiz}
@@ -752,34 +963,66 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
 
               <ReviewCard keyPoints={module.key_points} />
 
-              {/* Three actions */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-5">
-                <button
-                  onClick={handleRestart}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-stone-300 hover:bg-stone-50 rounded-lg text-[13px] font-bold text-stone-700 transition"
-                >
-                  <RotateCcw size={14} /> Restart module
-                </button>
-                <button
-                  onClick={() => (onHome ?? onBack)()}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-stone-300 hover:bg-stone-50 rounded-lg text-[13px] font-bold text-stone-700 transition"
-                >
-                  <Home size={14} /> Return home
-                </button>
-                <button
-                  onClick={onNext}
-                  disabled={!onNext}
-                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:bg-stone-200 disabled:text-stone-400 text-white rounded-lg text-[13px] font-bold transition"
-                >
-                  Next module <ChevronRight size={14} />
-                </button>
+              {/* C3 + C4: reordered actions — Next module is the primary
+                  forward path, "Up next" microcopy below sets expectations,
+                  Return home is a tertiary text link, Restart is buried in a
+                  small secondary affordance below. */}
+              <div className="mt-5">
+                {/* C4: "Up next" one-liner above the primary button. */}
+                {onNext && nextModule && (
+                  <div className="mb-2 text-[12px] text-zinc-600">
+                    <span className="font-bold text-zinc-500 uppercase tracking-wider text-[10px] mr-1.5">Up next ·</span>
+                    <span className="font-bold text-zinc-800">{nextModule.id} — {nextModule.title}</span>
+                    <span className="text-zinc-400"> · {nextModule.estimated_minutes} min</span>
+                  </div>
+                )}
+                {!onNext && (
+                  <div className="mb-2 text-[12px] text-zinc-600 italic">
+                    You've reached the end of the track. Pick another module from the home page.
+                  </div>
+                )}
+
+                {/* C3: primary Next-module CTA in track color. */}
+                {onNext ? (
+                  <button
+                    onClick={onNext}
+                    className={`w-full flex items-center justify-center gap-1.5 px-4 py-3 ${trackTone(module.track).bg} ${trackTone(module.track).bgHover} ${trackTone(module.track).fgOnSolid} rounded-lg text-[14px] font-bold transition shadow-sm`}
+                  >
+                    Continue to {nextModule?.id ?? 'the next module'} <ChevronRight size={14} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => (onHome ?? onBack)()}
+                    className={`w-full flex items-center justify-center gap-1.5 px-4 py-3 ${trackTone(module.track).bg} ${trackTone(module.track).bgHover} ${trackTone(module.track).fgOnSolid} rounded-lg text-[14px] font-bold transition shadow-sm`}
+                  >
+                    <Home size={14} /> Return home
+                  </button>
+                )}
+
+                {/* Tertiary row: Return home (text link) + buried Restart. */}
+                <div className="mt-3 flex items-center justify-between text-[12px]">
+                  {onNext && (
+                    <button
+                      onClick={() => (onHome ?? onBack)()}
+                      className="flex items-center gap-1 text-zinc-500 hover:text-zinc-800 font-bold transition"
+                    >
+                      <Home size={12} /> Return home
+                    </button>
+                  )}
+                  <button
+                    onClick={handleRestart}
+                    className="ml-auto flex items-center gap-1 text-zinc-400 hover:text-zinc-700 font-bold transition"
+                  >
+                    <RotateCcw size={12} /> Restart this module
+                  </button>
+                </div>
               </div>
             </div>
           );
         })()}
       </div>
     );
-  }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs, childStates, stepToast, readSubPhase, formativeBlocks]);
+  }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs, childStates, stepToast, readSubPhase, formativeBlocks, outcomeProgress, changesSinceProgress, nextModule]);
 
   // ── Click-target mode (recognition by clicking a reading/control) ──
   const isClickTargetMode = !!activePrompt?.click_targets && activePrompt.click_targets.length > 0;
@@ -926,15 +1169,15 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
         {clickFeedback.isCorrect ? (
           <>
             <Check size={18} className="text-emerald-600" strokeWidth={3} />
-            <span className="text-[11px] font-black uppercase tracking-widest text-emerald-700">
-              Correct
+            <span className="text-[14px] font-black uppercase tracking-wide text-emerald-700">
+              {successPhrase(activePrompt?.prompt_id + '|' + clickFeedback.label)}
             </span>
           </>
         ) : (
           <>
             <X size={18} className="text-rose-600" strokeWidth={3} />
-            <span className="text-[11px] font-black uppercase tracking-widest text-rose-700">
-              Not that one
+            <span className="text-[14px] font-black uppercase tracking-wide text-rose-700">
+              {wrongPhrase(activePrompt?.prompt_id + '|' + clickFeedback.label)}
             </span>
           </>
         )}
@@ -956,7 +1199,9 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
               : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-300'
           }`}
         >
-          {clickFeedback.isCorrect ? 'Continue →' : 'Try again'}
+          {clickFeedback.isCorrect
+            ? continueCTA(activePrompt?.prompt_id ?? 'cy')
+            : 'Try again'}
         </button>
       </div>
     </div>
@@ -992,35 +1237,70 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
 
   return (
     <div className="flex flex-col h-screen bg-brand-cream text-zinc-900 font-sans overflow-hidden select-none">
-      {/* Top nav — olive brand strip */}
-      <div className="flex items-center justify-between bg-brand-olive text-white px-5 py-2.5 shrink-0">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white transition"
-        >
-          <ArrowLeft size={14} /> Back to simulations
-        </button>
-        <div className="flex items-center gap-2 text-[12px]">
-          <BookOpen size={13} className="text-white/70" />
-          <span className="font-bold text-white">{module.id}</span>
-          <span className="text-white/40">·</span>
-          <span className="text-[14px] font-semibold text-white/95">{module.title}</span>
-        </div>
-        <div className="w-[160px]" /> {/* spacer for symmetry */}
-      </div>
+      {/* Top nav — track-colored brand strip with a sticky learn-tagline. */}
+      {(() => {
+        const tone = trackTone(module.track);
+        const tagline =
+          module.briefing?.tagline ?? module.visible_learning_objectives?.[0] ?? '';
+        return (
+          <div className={`flex items-center justify-between ${tone.bg} ${tone.fgOnSolid} px-5 py-2.5 shrink-0`}>
+            <button
+              onClick={onBack}
+              className="flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white transition shrink-0"
+            >
+              <ArrowLeft size={14} /> Back to simulations
+            </button>
+            <div className="flex items-center gap-2 text-[12px] min-w-0">
+              <BookOpen size={13} className="text-white/70 shrink-0" />
+              <span
+                className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-white/15 text-white/95"
+              >
+                {module.track}
+              </span>
+              <span className="font-bold text-white shrink-0">{module.id}</span>
+              <span className="text-white/40 shrink-0">·</span>
+              <span className="text-[14px] font-semibold text-white/95 truncate">{module.title}</span>
+            </div>
+            <div className="hidden md:flex items-center gap-1.5 text-[11px] italic text-white/80 min-w-0 max-w-[280px]">
+              <span className="font-bold uppercase tracking-widest text-[9px] not-italic text-white/60 shrink-0">Goal</span>
+              <span className="truncate">{tagline}</span>
+            </div>
+          </div>
+        );
+      })()}
 
-      {/* Phase badge — clickable for completed phases (back-nav) */}
-      <PhaseBadge phase={phase} completedPhases={completedPhases} onJumpToPhase={jumpToPhase} />
+      {/* Phase badge — clickable for completed phases (back-nav). Current
+          dot is tinted with the track color so the in-module identity
+          stays consistent. */}
+      <PhaseBadge
+        phase={phase}
+        completedPhases={completedPhases}
+        onJumpToPhase={jumpToPhase}
+        accentHex={trackTone(module.track).hex}
+      />
 
       {/* Two-column body */}
-      <div className="flex-1 p-2 overflow-hidden min-h-0">
+      <div className="flex-1 p-2 overflow-hidden min-h-0 relative">
+        {/* D2: short-lived hero banner announcing the new phase. */}
+        {heroPhase && <PhaseHeroBanner phase={heroPhase} />}
+
         <PlaygroundSim
           harness={harness}
           initialPreset={module.scenario.preset}
           unlockedControls={module.scenario.unlocked_controls}
-          workbookContent={workbookContent}
+          workbookContent={
+            // D1: keyed wrapper so the workbook column re-mounts and replays
+            // the slide-in animation on every phase change.
+            <div
+              key={`${phase}-${readSubPhase}`}
+              className="h-full animate-in slide-in-from-right-4 fade-in duration-300"
+            >
+              {workbookContent}
+            </div>
+          }
           inlinePromptOverlay={inlinePromptOverlay}
           simInteractivity={simInteractivity}
+          flashReadouts={flashReadouts}
           recognitionTargets={recognitionTargets}
           recognitionBanner={recognitionBanner}
           onRecognitionElementClick={handleRecognitionElementClick}
@@ -1029,6 +1309,12 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
       </div>
     </div>
   );
+};
+
+/** C1: number that tweens from 0 → target using the useCountUp hook. */
+const CountedPercent: React.FC<{ target: number; className?: string }> = ({ target, className }) => {
+  const value = useCountUp(target);
+  return <span className={className}>{value}%</span>;
 };
 
 const ScoreRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (

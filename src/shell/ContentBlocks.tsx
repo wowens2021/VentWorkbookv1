@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Info, AlertTriangle, Lightbulb } from 'lucide-react';
-import type { ContentBlock } from './types';
+import React, { useEffect, useState } from 'react';
+import { Info, AlertTriangle, Lightbulb, Sparkles } from 'lucide-react';
+import type { ContentBlock, ControlName } from './types';
+import type { ScenarioHarness } from '../harness/ScenarioHarness';
 
 const renderInline = (md: string): React.ReactNode => {
   // Minimal markdown: **bold**, `code`, and newlines → <p>
@@ -24,7 +25,7 @@ const renderInline = (md: string): React.ReactNode => {
   });
 };
 
-const Block: React.FC<{ block: ContentBlock }> = ({ block }) => {
+const Block: React.FC<{ block: ContentBlock; harness?: ScenarioHarness }> = ({ block, harness }) => {
   if (block.kind === 'prose') return <div>{renderInline(block.markdown)}</div>;
 
   if (block.kind === 'figure') {
@@ -57,25 +58,54 @@ const Block: React.FC<{ block: ContentBlock }> = ({ block }) => {
   // Read and Explore — NOT inline. This keeps the read page focused on prose
   // and gives the quiz its own dedicated, engagement-optimized view.
   if (block.kind === 'formative') return null;
-  if (block.kind === 'predict_observe') return <PredictObserve block={block} />;
+  if (block.kind === 'predict_observe') return <PredictObserve block={block} harness={harness} />;
   return null;
 };
 
 // Formative ("Check yourself") rendering moved to CheckYourselfPage between
 // Read and Explore. Kept the type intact so existing module configs compile.
 
-const PredictObserve: React.FC<{ block: Extract<ContentBlock, { kind: 'predict_observe' }> }> = ({ block }) => {
+const PredictObserve: React.FC<{
+  block: Extract<ContentBlock, { kind: 'predict_observe' }>;
+  harness?: ScenarioHarness;
+}> = ({ block, harness }) => {
   const [revealed, setRevealed] = useState(false);
+
+  // Auto-reveal: when the block declares `awaits_control` and the learner
+  // changes that control on the live sim during the read phase, flip to the
+  // "Observe" half so the prediction is immediately validated.
+  useEffect(() => {
+    if (revealed || !harness || !block.awaits_control) return;
+    const wanted: ControlName = block.awaits_control;
+    const off = harness.subscribe(ev => {
+      if (ev.type === 'control_changed' && ev.control === wanted) {
+        setRevealed(true);
+      }
+    });
+    return off;
+  }, [revealed, harness, block.awaits_control]);
+
+  const ctaLabel = block.awaits_control
+    ? 'Try it in the sim · or reveal →'
+    : 'Then observe in the sim →';
+
   return (
     <div className="border-l-2 border-violet-400 bg-violet-50 rounded-r-lg p-3.5 my-3">
-      <div className="text-[11px] font-black uppercase tracking-widest text-violet-700 mb-1">Predict</div>
+      <div className="flex items-center gap-1.5 mb-1">
+        <div className="text-[11px] font-black uppercase tracking-widest text-violet-700">Predict</div>
+        {block.awaits_control && !revealed && (
+          <span className="text-[10px] font-mono text-violet-500 inline-flex items-center gap-0.5">
+            <Sparkles size={10} /> interactive
+          </span>
+        )}
+      </div>
       <p className="text-[14px] text-zinc-900 leading-relaxed mb-2">{block.predict}</p>
       {!revealed ? (
         <button onClick={() => setRevealed(true)} className="text-[13px] font-bold text-violet-600 hover:text-violet-700">
-          Then observe in the sim →
+          {ctaLabel}
         </button>
       ) : (
-        <div className="mt-2 pt-2 border-t border-violet-200">
+        <div className="mt-2 pt-2 border-t border-violet-200 animate-in fade-in slide-in-from-bottom-1 duration-500">
           <div className="text-[11px] font-black uppercase tracking-widest text-violet-700 mb-1">Observe</div>
           <p className="text-[14px] text-zinc-900 leading-relaxed">{block.observe}</p>
         </div>
@@ -84,9 +114,14 @@ const PredictObserve: React.FC<{ block: Extract<ContentBlock, { kind: 'predict_o
   );
 };
 
-interface Props { blocks: ContentBlock[]; }
-const ContentBlocks: React.FC<Props> = ({ blocks }) => (
-  <div className="space-y-1">{blocks.map((b, i) => <Block key={i} block={b} />)}</div>
+interface Props {
+  blocks: ContentBlock[];
+  /** Optional live harness so `predict_observe` blocks can auto-reveal when
+   *  the learner changes the targeted control on the sim. */
+  harness?: ScenarioHarness;
+}
+const ContentBlocks: React.FC<Props> = ({ blocks, harness }) => (
+  <div className="space-y-1">{blocks.map((b, i) => <Block key={i} block={b} harness={harness} />)}</div>
 );
 
 export default ContentBlocks;

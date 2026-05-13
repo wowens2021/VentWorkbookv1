@@ -7,6 +7,7 @@ export const M17: ModuleConfig = {
   track: 'Weaning',
   estimated_minutes: 14,
   briefing: {
+    tagline: 'SBT and RSBI — the daily question.',
     overview: "Getting people on the ventilator is the easy part. Getting them off requires a different set of judgments. Are they medically ready? Is the original reason for intubation resolving? Can they breathe with minimal support without falling apart? The bedside test for the last question is the spontaneous breathing trial, and the number that tells you whether to extubate or wait is the rapid shallow breathing index.",
     what_youll_do: [
       'Weaning readiness is multifactorial. Hemodynamics, gas exchange, mental status, secretions.',
@@ -217,6 +218,7 @@ export const M18: ModuleConfig = {
   track: 'Weaning',
   estimated_minutes: 14,
   briefing: {
+    tagline: 'A passed SBT is necessary — not sufficient.',
     overview: "Extubating a patient who isn't ready is worse than waiting a day. Reintubation carries real mortality. So extubation is a decision, not a reflex when the numbers look good. The numbers are part of it. Cough strength is part of it. Mental status is part of it. The cuff leak test is part of it. And the most important question is the one protocols sometimes forget to ask: is the reason this patient got intubated actually fixed?",
     what_youll_do: [
       'A passed SBT is necessary but not sufficient. Other factors matter independently.',
@@ -404,6 +406,7 @@ export const M19: ModuleConfig = {
   track: 'Synthesis',
   estimated_minutes: 18,
   briefing: {
+    tagline: 'DOPE: Displacement, Obstruction, Pneumothorax, Equipment.',
     overview: "A ventilated patient who acutely deteriorates needs you to think fast and in a structured way. The mnemonic is DOPE. Displacement. Obstruction. Pneumothorax. Equipment. Four categories, each with a recognizable signature on the ventilator's alarms and waveforms. The classic first move, before any imaging or labs, is to disconnect the patient from the vent and hand-ventilate. The bag tells you in seconds whether the problem is in the patient or in the circuit.",
     what_youll_do: [
       "Displacement, Obstruction, Pneumothorax, Equipment. Memorize the order. It's the bedside differential.",

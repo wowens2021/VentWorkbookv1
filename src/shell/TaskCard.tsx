@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, RotateCcw, ChevronRight, Lightbulb, Check, Circle } from 'lucide-react';
+import { Target, RotateCcw, ChevronRight, Lightbulb, Check, Circle, Activity } from 'lucide-react';
 import type { TaskFramingStyle } from './types';
 
 interface Props {
@@ -19,6 +19,12 @@ interface Props {
   progress?: boolean[];
   /** F8: re-arm the tracker so the learner can redo the task. */
   onRedo?: () => void;
+  /**
+   * B2: live partial-completion progress from the active outcome tracker.
+   * Rendered as a "Holding 3 of 5 breaths…" chip so the learner sees that
+   * their adjustments ARE working, even before satisfaction fires.
+   */
+  outcomeProgress?: { current: number; target: number; label?: string } | null;
 }
 
 /**
@@ -36,6 +42,7 @@ const TaskCard: React.FC<Props> = ({
   onShowHint,
   progress,
   onRedo,
+  outcomeProgress,
 }) => {
   if (objectiveSatisfied) {
     return (
@@ -130,6 +137,26 @@ const TaskCard: React.FC<Props> = ({
             })}
           </ul>
         </section>
+      )}
+
+      {/* B2: live "you're getting warmer" chip. Shown only while progress > 0
+          and not yet satisfied; gives the learner a visible signal that their
+          adjustments are landing in range before the tracker fires. */}
+      {outcomeProgress && outcomeProgress.target > 0 && (
+        <div className="mb-4 -mt-1 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2 px-3 py-2 bg-sky-50 border border-sky-200 rounded-lg">
+            <Activity size={14} className="text-sky-600 shrink-0" />
+            <span className="text-[12px] font-bold text-sky-900">
+              Holding {outcomeProgress.current} of {outcomeProgress.target} {outcomeProgress.label ?? 'breaths'}…
+            </span>
+            <div className="flex-1 h-1.5 rounded-full bg-sky-100 overflow-hidden ml-2">
+              <div
+                className="h-full bg-sky-500 rounded-full transition-all"
+                style={{ width: `${Math.min(100, (outcomeProgress.current / outcomeProgress.target) * 100)}%` }}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="mt-auto flex items-center gap-2 pt-4 border-t border-zinc-200">

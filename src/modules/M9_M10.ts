@@ -7,6 +7,7 @@ export const M9: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 12,
   briefing: {
+    tagline: 'Volume target. Pressure-limited. Mind the failure modes.',
     overview: "PRVC tries to give you the predictability of volume control with the safety of pressure control. You set a volume target, the vent picks the pressure to hit it, and adjusts breath by breath when mechanics shift. It works well in stable, passive patients. It has known failure modes in patients who are working hard or who are awake and asynchronous, because the algorithm sees their effort as the machine doing its job and quietly reduces support.",
     what_youll_do: [
       'PRVC adjusts pressure breath by breath to hit a volume target.',
@@ -206,6 +207,7 @@ export const M10: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 14,
   briefing: {
+    tagline: 'Patient triggers every breath. PS does the rest.',
     overview: "When the patient is breathing for themselves, pressure support is the simplest way to help. The patient triggers each breath. The vent adds a little (or a lot) of pressure during inspiration to take some of the work. There are two knobs that matter: how much support per breath, and how easy it is for the patient to trigger one. Most of what people call \"patient comfort on the vent\" lives in these two settings.",
     what_youll_do: [
       'Every breath in PSV is patient-initiated. No effort, no breath.',
