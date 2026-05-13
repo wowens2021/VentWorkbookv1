@@ -307,6 +307,18 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
   const taskControlChangesRef = useRef(0);
   const resetClicksRef = useRef(0);
 
+  // ── Debrief sub-view (summary ↔ detailed evaluations) ──
+  // The debrief opens on the score summary. The three per-question answer
+  // reviews (primer / check-yourself / knowledge check) used to render
+  // inline as three collapsed "lines" stacked under the score — that
+  // crowded the focus. They now live on a dedicated `evaluations` sub-page,
+  // reached from a single "Review your answers →" link on the summary.
+  const [debriefSubView, setDebriefSubView] = useState<'summary' | 'evaluations'>('summary');
+  // Reset back to summary whenever we re-enter debrief from elsewhere.
+  useEffect(() => {
+    if (phase !== 'debrief') setDebriefSubView('summary');
+  }, [phase]);
+
   // ── B2: outcome progress chip ──
   const [outcomeProgress, setOutcomeProgress] = useState<
     { current: number; target: number; label?: string } | null
@@ -821,6 +833,61 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
             total.letter === 'B' ? 'text-emerald-500' :
             total.letter === 'C' ? 'text-amber-600' :
             total.letter === 'D' ? 'text-amber-700' : 'text-rose-600';
+
+          // ─── Sub-view: detailed evaluations page ────────────────────
+          // Reached from the "Review your answers" link on the summary.
+          if (debriefSubView === 'evaluations') {
+            return (
+              <div className="h-full flex flex-col px-5 py-5 overflow-y-auto animate-in fade-in slide-in-from-right-4 duration-300">
+                <button
+                  onClick={() => setDebriefSubView('summary')}
+                  className="flex items-center gap-1.5 text-[12px] font-semibold text-zinc-500 hover:text-zinc-900 transition mb-3 self-start"
+                >
+                  <ArrowLeft size={14} /> Back to summary
+                </button>
+                <div className="mb-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  Detailed evaluation
+                </div>
+                <h1 className="font-display text-2xl font-semibold text-zinc-900 leading-tight tracking-tight mb-1">
+                  {module.title}
+                </h1>
+                <p className="text-[13px] text-zinc-600 mb-5">
+                  Every question you saw in this module — what you picked, whether it was right, and the correct answer when it wasn't.
+                </p>
+                <AnswerReview
+                  title="Primer (before the module)"
+                  questions={module.primer_questions}
+                  answers={rec?.primer_answers ?? []}
+                />
+                {cyTotal > 0 && (
+                  <AnswerReview
+                    title="Check yourself (between read and sim)"
+                    questions={formativeBlocks.map((b, i) => ({
+                      id: `${module.id}-CY${i + 1}`,
+                      prompt: b.question,
+                      options: b.options ?? [],
+                      explanation: b.answer,
+                    }))}
+                    answers={cyAnswers}
+                  />
+                )}
+                <AnswerReview
+                  title="Knowledge check (after the module)"
+                  questions={module.summative_quiz}
+                  answers={rec?.quiz_answers ?? []}
+                />
+                <div className="mt-4">
+                  <button
+                    onClick={() => setDebriefSubView('summary')}
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-stone-300 hover:bg-stone-50 rounded-lg text-[13px] font-bold text-stone-700 transition"
+                  >
+                    <ArrowLeft size={13} /> Back to summary
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div className="h-full flex flex-col px-5 py-5 overflow-y-auto">
               {/* C2: track-level progress strip — shows the larger arc so the
@@ -937,29 +1004,23 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                 );
               })()}
 
-              {/* ─── Per-question answer review ─────────────────────────── */}
-              <AnswerReview
-                title="Primer (before the module)"
-                questions={module.primer_questions}
-                answers={rec?.primer_answers ?? []}
-              />
-              {cyTotal > 0 && (
-                <AnswerReview
-                  title="Check yourself (between read and sim)"
-                  questions={formativeBlocks.map((b, i) => ({
-                    id: `${module.id}-CY${i + 1}`,
-                    prompt: b.question,
-                    options: b.options ?? [],
-                    explanation: b.answer,
-                  }))}
-                  answers={cyAnswers}
-                />
-              )}
-              <AnswerReview
-                title="Knowledge check (after the module)"
-                questions={module.summative_quiz}
-                answers={rec?.quiz_answers ?? []}
-              />
+              {/* Single "Review your answers →" link replaces the three
+                  inline AnswerReview cards. The detailed per-question
+                  breakdown lives on the standalone evaluations sub-page. */}
+              <button
+                onClick={() => setDebriefSubView('evaluations')}
+                className="w-full bg-white border border-stone-200 rounded-xl px-5 py-3 mb-5 flex items-center justify-between hover:bg-stone-50 transition group"
+              >
+                <div className="text-left">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-0.5">
+                    Detailed evaluation
+                  </div>
+                  <div className="text-[13px] font-bold text-zinc-800">
+                    Review your answers question by question
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-zinc-400 group-hover:text-zinc-700 transition" />
+              </button>
 
               <ReviewCard keyPoints={module.key_points} />
 
@@ -1022,7 +1083,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
         })()}
       </div>
     );
-  }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs, childStates, stepToast, readSubPhase, formativeBlocks, outcomeProgress, changesSinceProgress, nextModule]);
+  }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs, childStates, stepToast, readSubPhase, formativeBlocks, outcomeProgress, changesSinceProgress, nextModule, debriefSubView]);
 
   // ── Click-target mode (recognition by clicking a reading/control) ──
   const isClickTargetMode = !!activePrompt?.click_targets && activePrompt.click_targets.length > 0;
