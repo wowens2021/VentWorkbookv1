@@ -4,7 +4,15 @@ import type { QuizQuestion } from './types';
 
 interface Props {
   questions: QuizQuestion[];
-  onSubmit: (score: number) => void;
+  /**
+   * Receives the score AND the per-question answer log so the debrief can
+   * render a real breakdown (which questions the learner got right or wrong,
+   * and what they picked).
+   */
+  onSubmit: (
+    score: number,
+    answers: { question_id: string; selected_label: string; is_correct: boolean }[],
+  ) => void;
 }
 
 const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
@@ -100,7 +108,19 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
       {!submitted ? (
         <button
           disabled={!allAnswered}
-          onClick={() => { setSubmitted(true); onSubmit(score); }}
+          onClick={() => {
+            setSubmitted(true);
+            const log = questions.map((q, i) => {
+              const idx = answers[i];
+              const opt = idx !== null ? q.options[idx] : null;
+              return {
+                question_id: q.id,
+                selected_label: opt?.label ?? '',
+                is_correct: !!opt?.is_correct,
+              };
+            });
+            onSubmit(score, log);
+          }}
           className="mt-6 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:bg-zinc-100 disabled:text-zinc-400 text-white text-sm font-bold rounded-lg transition"
         >
           Submit

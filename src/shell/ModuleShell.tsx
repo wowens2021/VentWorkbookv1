@@ -607,14 +607,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
         {!quizSubmitted ? (
           <SummativeQuiz
             questions={module.summative_quiz}
-            onSubmit={(score) => {
-              const answers = module.summative_quiz.map(q => ({
-                question_id: q.id,
-                selected_label: '', // not yet exposed
-                is_correct: false,
-              }));
-              advanceFromDebrief(score, answers);
-            }}
+            onSubmit={(score, answers) => advanceFromDebrief(score, answers)}
           />
         ) : (() => {
           // Pull the latest persisted record so the score is consistent with
@@ -646,25 +639,99 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome }) => {
                 </div>
               </div>
 
-              {/* Total score card */}
-              <div className="bg-white border border-stone-200 rounded-xl p-5 mb-5">
-                <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Your total score</div>
-                <div className="flex items-baseline gap-3 mb-3">
-                  <span className={`font-display text-5xl font-semibold ${letterColor} leading-none`}>{total.letter}</span>
-                  <span className="font-display text-3xl font-semibold text-stone-900 leading-none">{total.percent}%</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-[11.5px]">
-                  <ScoreRow label="Primer" value={`${rec?.primer_score ?? 0} / ${module.primer_questions.length}`} />
-                  <ScoreRow label="Knowledge check" value={`${rec?.quiz_score ?? 0} / ${module.summative_quiz.length}`} />
-                  <ScoreRow label="Hint tiers used" value={String(rec?.hint_tiers_triggered ?? 0)} />
-                  <ScoreRow label="Resets" value={String(rec?.reset_to_start_clicks ?? 0)} />
-                </div>
-                {rec?.time_to_objective_sec !== undefined && (
-                  <div className="mt-3 pt-3 border-t border-stone-100 text-[11px] text-stone-500">
-                    Task completed in {rec.time_to_objective_sec}s
+              {/* ─── Full score breakdown ───────────────────────────────── */}
+              {(() => {
+                const primerScore = rec?.primer_score ?? 0;
+                const primerTotal = module.primer_questions.length;
+                const quizScore = rec?.quiz_score ?? 0;
+                const quizTotal = module.summative_quiz.length;
+                const hintTiers = rec?.hint_tiers_triggered ?? 0;
+                const resets = rec?.reset_to_start_clicks ?? 0;
+                const bd = computeTotalScore({
+                  primer_score: primerScore,
+                  primer_total: primerTotal,
+                  quiz_score: quizScore,
+                  quiz_total: quizTotal,
+                  hint_tiers_triggered: hintTiers,
+                  reset_to_start_clicks: resets,
+                }).breakdown;
+                const taskSec = rec?.time_to_objective_sec;
+                const fmtSec = (s?: number) =>
+                  s === undefined ? '—' : s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
+                // Total session time from started_at → quiz_submitted_at if both present.
+                const totalSec = rec?.started_at && rec?.quiz_submitted_at
+                  ? Math.max(0, Math.round(
+                      (new Date(rec.quiz_submitted_at).getTime() - new Date(rec.started_at).getTime()) / 1000
+                    ))
+                  : undefined;
+                return (
+                  <div className="bg-white border border-stone-200 rounded-xl p-5 mb-5">
+                    <div className="flex items-baseline justify-between mb-1">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Your total score</div>
+                      <div className="text-[10px] font-mono text-zinc-400">out of 100</div>
+                    </div>
+                    <div className="flex items-baseline gap-3 mb-5">
+                      <span className={`font-display text-5xl font-semibold ${letterColor} leading-none`}>{total.letter}</span>
+                      <span className="font-display text-3xl font-semibold text-stone-900 leading-none">{total.percent}%</span>
+                    </div>
+
+                    {/* Component breakdown — each row shows the detail, the
+                        points earned, the max points, and a progress bar. */}
+                    <div className="space-y-3">
+                      <BreakdownRow
+                        label="Primer questions"
+                        detail={`${primerScore} of ${primerTotal} correct`}
+                        points={bd.primerPts}
+                        max={30}
+                      />
+                      <BreakdownRow
+                        label="Knowledge check"
+                        detail={`${quizScore} of ${quizTotal} correct`}
+                        points={bd.quizPts}
+                        max={50}
+                      />
+                      <BreakdownRow
+                        label="Hint usage bonus"
+                        detail={
+                          hintTiers === 0 ? 'No hints engaged — full bonus'
+                          : hintTiers === 1 ? 'One tier of hints engaged — partial bonus'
+                          : `${hintTiers} hint tiers engaged — no bonus`
+                        }
+                        points={bd.hintBonus}
+                        max={10}
+                      />
+                      <BreakdownRow
+                        label="Reset usage bonus"
+                        detail={
+                          resets === 0 ? 'No resets — full bonus'
+                          : resets === 1 ? 'One reset — partial bonus'
+                          : `${resets} resets — no bonus`
+                        }
+                        points={bd.resetBonus}
+                        max={10}
+                      />
+                    </div>
+
+                    {/* Timing footer */}
+                    <div className="mt-5 pt-4 border-t border-stone-100 grid grid-cols-2 gap-3">
+                      <TimingCard label="Task completion" value={fmtSec(taskSec)} />
+                      <TimingCard label="Total module time" value={fmtSec(totalSec)} />
+                    </div>
                   </div>
-                )}
-              </div>
+                );
+              })()}
+
+              {/* ─── Per-question answer review ─────────────────────────── */}
+              <AnswerReview
+                title="Primer (before the module)"
+                questions={module.primer_questions}
+                answers={rec?.primer_answers ?? []}
+              />
+              <AnswerReview
+                title="Knowledge check (after the module)"
+                questions={module.summative_quiz}
+                answers={rec?.quiz_answers ?? []}
+              />
 
               <ReviewCard keyPoints={module.key_points} />
 
@@ -939,5 +1006,119 @@ const ScoreRow: React.FC<{ label: string; value: string }> = ({ label, value }) 
     <span className="font-mono font-bold text-zinc-900">{value}</span>
   </div>
 );
+
+/**
+ * One line in the score-breakdown card. Shows label + small detail string +
+ * a points/max readout and a thin progress bar so the relative contribution
+ * is visible at a glance.
+ */
+const BreakdownRow: React.FC<{
+  label: string;
+  detail: string;
+  points: number;
+  max: number;
+}> = ({ label, detail, points, max }) => {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (points / max) * 100)) : 0;
+  const barColor =
+    pct >= 90 ? 'bg-emerald-500' :
+    pct >= 70 ? 'bg-emerald-400' :
+    pct >= 50 ? 'bg-amber-400' :
+    pct > 0 ? 'bg-amber-500' : 'bg-zinc-300';
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <span className="text-[12.5px] font-bold text-zinc-800">{label}</span>
+        <span className="text-[12px] font-mono">
+          <span className="text-zinc-900 font-bold">{points}</span>
+          <span className="text-zinc-400"> / {max} pts</span>
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full bg-stone-100 overflow-hidden">
+        <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+      <div className="text-[11px] text-zinc-500 mt-1">{detail}</div>
+    </div>
+  );
+};
+
+/** Two-up timing summary cell. */
+const TimingCard: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="bg-stone-50 border border-stone-100 rounded-lg px-3 py-2">
+    <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-0.5">{label}</div>
+    <div className="text-[15px] font-mono font-bold text-zinc-900">{value}</div>
+  </div>
+);
+
+/**
+ * Per-question answer review card. Renders each question with a check or X,
+ * the option the learner picked, and (when not chosen) the correct option.
+ * Collapsed by default so the debrief stays scannable.
+ */
+const AnswerReview: React.FC<{
+  title: string;
+  questions: import('./types').QuizQuestion[];
+  answers: { question_id: string; selected_label: string; is_correct: boolean }[];
+}> = ({ title, questions, answers }) => {
+  const [open, setOpen] = React.useState(false);
+  if (questions.length === 0) return null;
+  const score = answers.filter(a => a.is_correct).length;
+  const total = questions.length;
+  return (
+    <div className="bg-white border border-stone-200 rounded-xl mb-5 overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-3 hover:bg-stone-50 transition"
+      >
+        <div className="flex items-center gap-2.5">
+          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{title}</span>
+          <span className="text-[11px] font-mono">
+            <span className={score === total ? 'text-emerald-600 font-bold' : 'text-zinc-700 font-bold'}>{score}</span>
+            <span className="text-zinc-400"> / {total} correct</span>
+          </span>
+        </div>
+        <span className="text-[11px] font-bold text-zinc-500">
+          {open ? 'Hide answers ▴' : 'Show answers ▾'}
+        </span>
+      </button>
+      {open && (
+        <div className="px-5 pb-4 space-y-3 border-t border-stone-100 pt-3">
+          {questions.map((q, i) => {
+            const ans = answers.find(a => a.question_id === q.id);
+            const isCorrect = ans?.is_correct ?? false;
+            const correctOpt = q.options.find(o => o.is_correct);
+            return (
+              <div key={q.id} className="border border-stone-200 rounded-lg p-3">
+                <div className="flex items-start gap-2 mb-1.5">
+                  {isCorrect ? (
+                    <Check size={14} className="text-emerald-600 mt-0.5 shrink-0" strokeWidth={3} />
+                  ) : (
+                    <X size={14} className="text-rose-600 mt-0.5 shrink-0" strokeWidth={3} />
+                  )}
+                  <div className="flex-1 text-[12.5px] font-semibold text-zinc-800 leading-snug">
+                    {i + 1}. {q.prompt}
+                  </div>
+                </div>
+                {ans && (
+                  <div className="ml-5 text-[11.5px] text-zinc-600 leading-relaxed">
+                    <span className="font-bold">{isCorrect ? 'You picked:' : 'You picked:'}</span>{' '}
+                    <span className={isCorrect ? 'text-emerald-700' : 'text-rose-700'}>
+                      {ans.selected_label || '(no answer)'}
+                    </span>
+                    {!isCorrect && correctOpt && (
+                      <div>
+                        <span className="font-bold">Correct answer:</span>{' '}
+                        <span className="text-emerald-700">{correctOpt.label}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default ModuleShell;
