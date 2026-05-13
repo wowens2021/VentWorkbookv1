@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
-import { Play, RotateCcw, Check, ArrowRight } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Play, RotateCcw, Check, ArrowRight, ChevronDown, Layers } from 'lucide-react';
 import { MODULES } from '../modules';
 import { loadProgress, listAllProgress } from '../persistence/progress';
 import type { ModuleConfig, Track, ProgressRecord } from '../shell/types';
+import { trackTone } from '../shell/trackColors';
 
 interface Props {
   onPickModule: (mod: ModuleConfig) => void;
@@ -57,7 +58,52 @@ function percent(p: ProgressRecord | null): number {
   return 5;
 }
 
+// Curriculum order — left-to-right and top-to-bottom on the page.
+const TRACK_ORDER: Track[] = ['Foundations', 'Physiology', 'Modes', 'Strategy', 'Weaning', 'Synthesis'];
+
+const TRACK_BLURB: Record<Track, string> = {
+  Foundations: 'Start here. The four reasons to intubate, the vent display vocabulary, the equation of motion.',
+  Physiology: 'How the lungs actually behave on the vent. Gas exchange, mechanics, trapping.',
+  Modes: 'Volume, pressure, dual-control, support. When to reach for each and what to watch.',
+  Strategy: 'PEEP titration, oxygenation ladders, disease-specific lung-protective recipes.',
+  Weaning: 'The daily judgments that decide whether the tube comes out today or tomorrow.',
+  Synthesis: 'Putting it together at the bedside when a vented patient acutely deteriorates.',
+};
+
 const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
+  // Group modules by track, preserving curriculum order within each.
+  const byTrack = useMemo(() => {
+    const map = new Map<Track, ModuleConfig[]>();
+    TRACK_ORDER.forEach(t => map.set(t, []));
+    MODULES.forEach(m => map.get(m.track)?.push(m));
+    return map;
+  }, []);
+
+  // Decide which track to auto-expand on mount: the first track that has
+  // at least one in-progress module, else the first incomplete track,
+  // else Foundations.
+  const initiallyOpen = useMemo<Track>(() => {
+    for (const t of TRACK_ORDER) {
+      const mods = byTrack.get(t) ?? [];
+      if (mods.some(m => statusOf(loadProgress(m.id)) === 'IN_PROGRESS')) return t;
+    }
+    for (const t of TRACK_ORDER) {
+      const mods = byTrack.get(t) ?? [];
+      if (mods.some(m => statusOf(loadProgress(m.id)) !== 'COMPLETED')) return t;
+    }
+    return 'Foundations';
+  }, [byTrack]);
+
+  const [openTracks, setOpenTracks] = useState<Set<Track>>(new Set([initiallyOpen]));
+  const toggleTrack = (t: Track) => {
+    setOpenTracks(prev => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+  };
+
   const overallStats = useMemo(() => {
     const all = listAllProgress();
     const completed = all.filter(p => !!p.quiz_submitted_at).length;
@@ -112,82 +158,185 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
           </div>
         </div>
 
-        {/* Horizontal row list */}
-        <div className="space-y-2.5">
-          {MODULES.map(mod => {
-            const prog = loadProgress(mod.id);
-            const status = statusOf(prog);
-            const difficulty = trackToDifficulty[mod.track];
-            const pct = percent(prog);
+        {/* Expand-all / Collapse-all */}
+        <div className="flex items-center justify-end gap-3 mb-3 text-[11px] font-bold">
+          <button
+            onClick={() => setOpenTracks(new Set(TRACK_ORDER))}
+            className="text-stone-500 hover:text-stone-900 transition"
+          >
+            Expand all
+          </button>
+          <span className="text-stone-300">·</span>
+          <button
+            onClick={() => setOpenTracks(new Set())}
+            className="text-stone-500 hover:text-stone-900 transition"
+          >
+            Collapse all
+          </button>
+        </div>
+
+        {/* Track sections */}
+        <div className="space-y-3">
+          {TRACK_ORDER.map(track => {
+            const mods = byTrack.get(track) ?? [];
+            if (mods.length === 0) return null;
+            const isOpen = openTracks.has(track);
+            const tone = trackTone(track);
+            const complete = mods.filter(m => statusOf(loadProgress(m.id)) === 'COMPLETED').length;
+            const inProgress = mods.filter(m => statusOf(loadProgress(m.id)) === 'IN_PROGRESS').length;
+            const trackPct = mods.length === 0
+              ? 0
+              : Math.round(mods.reduce((s, m) => s + percent(loadProgress(m.id)), 0) / mods.length);
             return (
-              <article
-                key={mod.id}
-                className={`bg-white border rounded-xl px-5 py-3.5 shadow-sm hover:shadow transition flex items-center gap-4 ${
-                  status === 'IN_PROGRESS' ? 'border-amber-300' : 'border-stone-200 hover:border-brand-olive'
-                }`}
+              <section
+                key={track}
+                className="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm transition"
               >
-                {/* Pills column (fixed width) */}
-                <div className="flex flex-col gap-1 shrink-0 w-[120px]">
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border text-center ${statusClasses[status]}`}>
-                    {statusLabel[status]}
-                  </span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border text-center ${difficultyClasses[difficulty]}`}>
-                    {difficulty}
-                  </span>
-                </div>
-
-                {/* Module id + track */}
-                <div className="shrink-0 w-[120px] hidden md:block">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-stone-400">
-                    Module {mod.number}
-                  </div>
-                  <div className="text-[11px] text-stone-500">{mod.track}</div>
-                </div>
-
-                {/* Title + topics */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-display text-lg font-semibold text-stone-900 leading-snug mb-0.5 truncate">
-                    {mod.title}
-                  </h3>
-                  <p className="text-[12px] text-stone-600 leading-snug line-clamp-1">
-                    {mod.visible_learning_objectives.join('; ')}.
-                  </p>
-                </div>
-
-                {/* Progress (in-progress only) */}
-                {status === 'IN_PROGRESS' && (
-                  <div className="hidden md:flex flex-col items-end shrink-0 w-[80px]">
-                    <span className="font-display text-base font-semibold text-amber-700 leading-none">{pct}%</span>
-                    <div className="mt-1.5 h-1 w-16 bg-stone-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-500" style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                )}
-                {status === 'COMPLETED' && (
-                  <div className="hidden md:flex items-center gap-1 shrink-0 w-[80px] justify-end">
-                    <Check size={14} className="text-emerald-600" />
-                    <span className="text-[11px] font-bold text-emerald-700">100%</span>
-                  </div>
-                )}
-                {status === 'NOT_STARTED' && (
-                  <div className="hidden md:block shrink-0 w-[80px]" />
-                )}
-
-                {/* CTA */}
+                {/* Banner header — dropdown trigger */}
                 <button
-                  onClick={() => onPickModule(mod)}
-                  className={`shrink-0 px-4 py-2 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition w-[110px] ${
-                    status === 'IN_PROGRESS'
-                      ? 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
-                      : status === 'COMPLETED'
-                        ? 'bg-white text-brand-olive border border-brand-olive hover:bg-stone-50'
-                        : 'bg-brand-olive text-white hover:bg-brand-olive-hover'
-                  }`}
+                  onClick={() => toggleTrack(track)}
+                  className="w-full flex items-stretch text-left group"
                 >
-                  {status === 'IN_PROGRESS' ? <RotateCcw size={12} /> : status === 'COMPLETED' ? <ArrowRight size={12} /> : <Play size={11} fill="currentColor" />}
-                  {status === 'IN_PROGRESS' ? 'Resume' : status === 'COMPLETED' ? 'Review' : 'Start'}
+                  {/* Color rail */}
+                  <div
+                    className="w-1.5 shrink-0 transition-all"
+                    style={{ backgroundColor: tone.hex }}
+                  />
+                  <div className="flex-1 flex items-center gap-4 px-5 py-4 hover:bg-stone-50/70 transition">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: `${tone.hex}1a`, color: tone.hex }}
+                    >
+                      <Layers size={18} strokeWidth={2.25} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h2
+                          className="font-display text-lg font-semibold text-stone-900 leading-none"
+                        >
+                          {track}
+                        </h2>
+                        <span
+                          className="text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
+                          style={{ backgroundColor: `${tone.hex}1a`, color: tone.hex }}
+                        >
+                          {complete}/{mods.length}
+                        </span>
+                        {inProgress > 0 && (
+                          <span className="text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                            {inProgress} in progress
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[12px] text-stone-600 leading-snug truncate">
+                        {TRACK_BLURB[track]}
+                      </p>
+                    </div>
+                    {/* Track-level progress bar */}
+                    <div className="hidden md:flex flex-col items-end shrink-0 w-[140px]">
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1 w-full">
+                        <span>Progress</span>
+                        <span>{trackPct}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full transition-all"
+                          style={{ width: `${trackPct}%`, backgroundColor: tone.hex }}
+                        />
+                      </div>
+                    </div>
+                    <ChevronDown
+                      size={20}
+                      className={`text-stone-400 group-hover:text-stone-700 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                  </div>
                 </button>
-              </article>
+
+                {/* Module rows — collapsible */}
+                {isOpen && (
+                  <div className="border-t border-stone-100 bg-stone-50/40 px-3 py-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {mods.map(mod => {
+                      const prog = loadProgress(mod.id);
+                      const status = statusOf(prog);
+                      const difficulty = trackToDifficulty[mod.track];
+                      const pct = percent(prog);
+                      return (
+                        <article
+                          key={mod.id}
+                          className={`bg-white border rounded-xl px-4 py-3 shadow-sm hover:shadow transition flex items-center gap-3 ${
+                            status === 'IN_PROGRESS' ? 'border-amber-300' : 'border-stone-200 hover:border-stone-300'
+                          }`}
+                        >
+                          {/* Module id + small pills column */}
+                          <div className="shrink-0 w-[80px] hidden md:flex flex-col gap-1">
+                            <div className="text-[10px] font-mono font-bold text-stone-500">
+                              {mod.id}
+                            </div>
+                            <div className="text-[10px] text-stone-400">
+                              {mod.estimated_minutes} min
+                            </div>
+                          </div>
+
+                          {/* Status + difficulty pills */}
+                          <div className="flex flex-col gap-1 shrink-0 w-[112px]">
+                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border text-center ${statusClasses[status]}`}>
+                              {statusLabel[status]}
+                            </span>
+                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border text-center ${difficultyClasses[difficulty]}`}>
+                              {difficulty}
+                            </span>
+                          </div>
+
+                          {/* Title + tagline */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-display text-base font-semibold text-stone-900 leading-snug mb-0.5 truncate">
+                              {mod.title}
+                            </h3>
+                            <p className="text-[12px] text-stone-600 leading-snug line-clamp-1 italic">
+                              {mod.briefing?.tagline ?? mod.visible_learning_objectives[0]}
+                            </p>
+                          </div>
+
+                          {/* Progress (in-progress only) */}
+                          {status === 'IN_PROGRESS' && (
+                            <div className="hidden md:flex flex-col items-end shrink-0 w-[70px]">
+                              <span className="font-display text-base font-semibold text-amber-700 leading-none">{pct}%</span>
+                              <div className="mt-1 h-1 w-14 bg-stone-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-amber-500" style={{ width: `${pct}%` }} />
+                              </div>
+                            </div>
+                          )}
+                          {status === 'COMPLETED' && (
+                            <div className="hidden md:flex items-center gap-1 shrink-0 w-[70px] justify-end">
+                              <Check size={14} className="text-emerald-600" />
+                              <span className="text-[11px] font-bold text-emerald-700">100%</span>
+                            </div>
+                          )}
+                          {status === 'NOT_STARTED' && (
+                            <div className="hidden md:block shrink-0 w-[70px]" />
+                          )}
+
+                          {/* CTA */}
+                          <button
+                            onClick={() => onPickModule(mod)}
+                            className={`shrink-0 px-4 py-2 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition w-[110px] ${
+                              status === 'IN_PROGRESS'
+                                ? 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
+                                : status === 'COMPLETED'
+                                  ? 'bg-white border hover:bg-stone-50'
+                                  : `${tone.bg} ${tone.bgHover} ${tone.fgOnSolid}`
+                            }`}
+                            style={status === 'COMPLETED' ? { color: tone.hex, borderColor: tone.hex } : undefined}
+                          >
+                            {status === 'IN_PROGRESS' ? <RotateCcw size={12} /> : status === 'COMPLETED' ? <ArrowRight size={12} /> : <Play size={11} fill="currentColor" />}
+                            {status === 'IN_PROGRESS' ? 'Resume' : status === 'COMPLETED' ? 'Review' : 'Start'}
+                          </button>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
             );
           })}
         </div>
