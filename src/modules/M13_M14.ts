@@ -7,11 +7,11 @@ export const M13: ModuleConfig = {
   track: 'Strategy',
   estimated_minutes: 16,
   briefing: {
-    overview: 'PEEP recruits alveoli, reduces shunt, and props open distal airways — but too much PEEP overdistends and crashes preload. This module walks you up the PEEP-FiO2 ladder and shows you how to find "best PEEP" from compliance.',
+    overview: "PEEP keeps alveoli open at the end of exhalation. That's how it improves oxygenation: more alveoli stay available for gas exchange. But PEEP isn't free. Too much overdistends healthy lung and impedes venous return, dropping cardiac output. The \"right\" PEEP for any patient sits somewhere in the middle, and the way to find it is to titrate and watch what compliance does. The lungs themselves will tell you where they're happiest.",
     what_youll_do: [
-      'Predict PEEP\'s effects on oxygenation, hemodynamics, and lung mechanics.',
-      'Walk a methodical PEEP titration and read compliance at each step.',
-      'Use the ARDSNet PEEP-FiO2 table as a starting point, not a destination.',
+      "PEEP recruits collapsed alveoli. That's the whole mechanism.",
+      "The PEEP at which static compliance is highest is the PEEP that's working best for that patient.",
+      "Anatomic shunt doesn't respond to PEEP. Most other hypoxemia does.",
     ],
   },
   visible_learning_objectives: [
@@ -213,11 +213,11 @@ export const M14: ModuleConfig = {
   track: 'Strategy',
   estimated_minutes: 14,
   briefing: {
-    overview: 'Once you know your tools, oxygenation becomes a sequenced game: FiO2 first when the patient is hypoxic, PEEP second when the FiO2 is climbing, then prone position and beyond if neither is enough.',
+    overview: "The number that drives oxygenation is mean airway pressure. Not peak. Not plateau. Mean. Every move you make to oxygenate someone, whether it's raising PEEP, lengthening inspiratory time, or adding pressure support, is really a move to raise mean airway pressure. Once you see oxygenation through that lens, the ventilator stops feeling like a collection of separate knobs and starts looking like a single integrated control surface.",
     what_youll_do: [
-      'Order the oxygenation interventions from least to most aggressive.',
-      'Set explicit SpO2 and PaO2 targets — not every patient needs 100%.',
-      'Recognize when you\'re maxed out on conventional ventilation.',
+      'Mean airway pressure is the oxygenation lever. Everything else is a way to move it.',
+      "Longer inspiratory time raises mean without raising peak. That's a real clinical trick.",
+      "FiO2 is a separate lever. Don't lean on it forever, because high FiO2 has its own toxicity.",
     ],
   },
   visible_learning_objectives: [

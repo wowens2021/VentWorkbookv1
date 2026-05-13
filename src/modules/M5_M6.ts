@@ -7,11 +7,11 @@ export const M5: ModuleConfig = {
   track: 'Physiology',
   estimated_minutes: 15,
   briefing: {
-    overview: 'The ventilator and the alveolus are two different machines coupled through the blood. To set the vent rationally you need to know which knob fixes oxygenation and which knob fixes ventilation — and why FiO2 and PEEP aren\'t the same lever.',
+    overview: "Hypoxia and hypercapnia look different to the lung. Shunt is blood flowing past alveoli that aren't getting any air. It kills oxygenation and doesn't respond well to cranking up the FiO2. Dead space is air flowing into alveoli that aren't getting any blood. It kills CO2 clearance and is what's happening when the end-tidal drops out of nowhere. Knowing which one you're dealing with changes what you do.",
     what_youll_do: [
-      'Identify the four causes of hypoxemia and which respond to FiO2.',
-      'Recognize when raising FiO2 alone fails — and PEEP is the better lever.',
-      'Read the P/F ratio and the A-a gradient at a glance.',
+      'Shunt is a perfusion-without-ventilation problem. Dead space is a ventilation-without-perfusion problem.',
+      "Pure shunt doesn't respond to FiO2. PEEP and recruitment are the tools that work.",
+      'A sudden drop in end-tidal CO2 in a sick patient is dead space until proven otherwise.',
     ],
   },
   visible_learning_objectives: [
@@ -215,11 +215,11 @@ export const M6: ModuleConfig = {
   track: 'Physiology',
   estimated_minutes: 15,
   briefing: {
-    overview: 'When expiration runs out of time, air gets stuck in the lung. The trapped pressure (auto-PEEP) drives hypotension, dyssynchrony, and barotrauma — and it doesn\'t show up on the regular pressure readout. This module makes the invisible visible.',
+    overview: "The lungs need time to empty. If you don't give them enough, gas piles up inside, and the next breath stacks on top of the leftovers. That trapped pressure is auto-PEEP, and it causes more problems than people realize. Higher work of breathing. Worse hemodynamics. Mysterious hypotension after every rate increase. The fix is almost always the same: slow down and give exhalation more room.",
     what_youll_do: [
-      'Spot auto-PEEP on the expiratory flow waveform without doing a hold.',
-      'Measure auto-PEEP with an end-expiratory hold maneuver.',
-      'Apply the three levers (rate, I:E, bronchodilator) to resolve trapping.',
+      'Auto-PEEP is end-expiratory pressure the patient generates on their own, not pressure you set.',
+      "The flow waveform tells you instantly. If expiration doesn't reach zero before the next breath, you're trapping.",
+      'Obstructive disease is the classic setting, but any patient on a fast rate with normal-shaped lungs can do it.',
     ],
   },
   visible_learning_objectives: [

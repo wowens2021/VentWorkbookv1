@@ -7,11 +7,11 @@ export const M17: ModuleConfig = {
   track: 'Weaning',
   estimated_minutes: 14,
   briefing: {
-    overview: 'Weaning isn\'t a single event — it\'s a daily question: can the patient breathe enough on their own to take the tube out? This module covers the readiness check, the spontaneous breathing trial, and the index you use to predict success.',
+    overview: "Getting people on the ventilator is the easy part. Getting them off requires a different set of judgments. Are they medically ready? Is the original reason for intubation resolving? Can they breathe with minimal support without falling apart? The bedside test for the last question is the spontaneous breathing trial, and the number that tells you whether to extubate or wait is the rapid shallow breathing index.",
     what_youll_do: [
-      'Apply the SBT readiness criteria daily.',
-      'Run a spontaneous breathing trial on CPAP 5 / PS 7 for 30–120 minutes.',
-      'Compute and interpret RSBI (rapid shallow breathing index).',
+      'Weaning readiness is multifactorial. Hemodynamics, gas exchange, mental status, secretions.',
+      'A spontaneous breathing trial is 30 to 120 minutes on minimal support.',
+      'RSBI under 105 favors successful extubation. Above 105, expect trouble.',
     ],
   },
   visible_learning_objectives: [
@@ -217,11 +217,11 @@ export const M18: ModuleConfig = {
   track: 'Weaning',
   estimated_minutes: 14,
   briefing: {
-    overview: 'Passing an SBT isn\'t the same as being safe to extubate. Airway protection, secretions, cuff leak, and mental status all matter. This module makes the extubation checklist explicit — and walks through what failure looks like.',
+    overview: "Extubating a patient who isn't ready is worse than waiting a day. Reintubation carries real mortality. So extubation is a decision, not a reflex when the numbers look good. The numbers are part of it. Cough strength is part of it. Mental status is part of it. The cuff leak test is part of it. And the most important question is the one protocols sometimes forget to ask: is the reason this patient got intubated actually fixed?",
     what_youll_do: [
-      'Synthesize SBT result, neuro status, secretions, cuff leak, and lab data.',
-      'Decide between extubation, tracheostomy, and continued ventilation.',
-      'Recognize early extubation failure and intervene before re-intubation.',
+      'A passed SBT is necessary but not sufficient. Other factors matter independently.',
+      'Weak cough and copious secretions are red flags even when the gas exchange looks good.',
+      'Reintubation is associated with longer ICU stays and higher mortality. The decision is worth getting right.',
     ],
   },
   visible_learning_objectives: [
@@ -404,11 +404,11 @@ export const M19: ModuleConfig = {
   track: 'Synthesis',
   estimated_minutes: 18,
   briefing: {
-    overview: 'When a vented patient suddenly deteriorates, you have a few seconds to find the cause. DOPE is the ICU mnemonic that gets you there: Displacement, Obstruction, Pneumothorax, Equipment. This is the synthesis module — everything you\'ve learned, applied under time pressure.',
+    overview: "A ventilated patient who acutely deteriorates needs you to think fast and in a structured way. The mnemonic is DOPE. Displacement. Obstruction. Pneumothorax. Equipment. Four categories, each with a recognizable signature on the ventilator's alarms and waveforms. The classic first move, before any imaging or labs, is to disconnect the patient from the vent and hand-ventilate. The bag tells you in seconds whether the problem is in the patient or in the circuit.",
     what_youll_do: [
-      'Run the DOPE differential when a patient acutely worsens.',
-      'Use the pressure-time and flow-time waveforms to localize the problem.',
-      'Decide when to disconnect and bag-ventilate versus adjust on the vent.',
+      "Displacement, Obstruction, Pneumothorax, Equipment. Memorize the order. It's the bedside differential.",
+      "The peak-versus-plateau distinction from M4 is what tells you which DOPE category you're in.",
+      'When in doubt, disconnect and bag. Most of these problems get sorted at the bedside before anyone reads a chest X-ray.',
     ],
   },
   visible_learning_objectives: [

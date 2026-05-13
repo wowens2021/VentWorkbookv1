@@ -7,11 +7,11 @@ export const M9: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 12,
   briefing: {
-    overview: 'Dual-control modes try to give you both: a guaranteed tidal volume AND a pressure-limited breath. They work by adjusting pressure breath-to-breath based on what the lungs delivered last time — a feedback loop you can see in action.',
+    overview: "PRVC tries to give you the predictability of volume control with the safety of pressure control. You set a volume target, the vent picks the pressure to hit it, and adjusts breath by breath when mechanics shift. It works well in stable, passive patients. It has known failure modes in patients who are working hard or who are awake and asynchronous, because the algorithm sees their effort as the machine doing its job and quietly reduces support.",
     what_youll_do: [
-      'Trace how PRVC adapts its inspiratory pressure across breaths.',
-      'Distinguish PRVC behavior from straight VCV and straight PCV.',
-      'Know the failure modes of dual control: patient effort and changing compliance.',
+      'PRVC adjusts pressure breath by breath to hit a volume target.',
+      "It's pressure-limited, so peaks can't run away.",
+      'A bucking or coughing patient on PRVC can fool the algorithm into giving them less support. Watch the pressure trend.',
     ],
   },
   visible_learning_objectives: [
@@ -206,11 +206,11 @@ export const M10: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 14,
   briefing: {
-    overview: 'When the patient breathes for themselves, the ventilator\'s job is to assist, not command. Pressure support sets a target inspiratory pressure and lets the patient set the rate and the volume — the bridge to extubation.',
+    overview: "When the patient is breathing for themselves, pressure support is the simplest way to help. The patient triggers each breath. The vent adds a little (or a lot) of pressure during inspiration to take some of the work. There are two knobs that matter: how much support per breath, and how easy it is for the patient to trigger one. Most of what people call \"patient comfort on the vent\" lives in these two settings.",
     what_youll_do: [
-      'Configure PSV with the right pressure-support level and PEEP.',
-      'Understand flow-cycling: how the vent decides inspiration is over.',
-      'Adjust the cycle-off threshold for obstructive vs restrictive patients.',
+      'Every breath in PSV is patient-initiated. No effort, no breath.',
+      'More support means bigger breaths and less work, not faster breathing.',
+      'Trigger too tight, and you miss efforts. Trigger too loose, and the vent fires on its own.',
     ],
   },
   visible_learning_objectives: [

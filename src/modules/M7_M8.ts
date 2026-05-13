@@ -7,11 +7,11 @@ export const M7: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 12,
   briefing: {
-    overview: 'Volume control is the workhorse mode of the ICU. You set a tidal volume; the ventilator guarantees it; pressure becomes the variable. This module teaches you to read PIP and plateau when VT is fixed.',
+    overview: "Volume control is the mode you set when you want to know exactly what the patient is getting per breath. You pick the tidal volume, you pick the flow, the machine delivers it no matter what. The trade-off is that pressure becomes the dependent variable. If the lungs get stiffer or the airways narrower, the pressure will climb to make the volume happen anyway. That's a feature, not a bug, but it's why high-pressure alarms in VC need a real look.",
     what_youll_do: [
-      'Set rate, VT, I-time, PEEP, and FiO2 to a sensible starting point.',
-      'Predict the pressure response when compliance or resistance changes.',
-      'Recognize the limitations of VCV in heterogeneous lungs.',
+      'In VC, you control volume and flow. The vent controls pressure to make it work.',
+      'The flow waveform is square. The pressure waveform ramps up.',
+      'A high-pressure alarm in VC is a message about the patient, not a setting to override.',
     ],
   },
   visible_learning_objectives: [
@@ -210,11 +210,11 @@ export const M8: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 12,
   briefing: {
-    overview: 'In pressure control the ventilator guarantees a pressure — and the tidal volume becomes whatever the lungs allow. That flip in what\'s fixed and what\'s variable changes everything about how you monitor the patient.',
+    overview: "Pressure control flips the relationship. You pick the pressure, the machine holds it, and tidal volume is whatever the lungs accept at that pressure. This is gentler on stiff or heterogeneous lungs because you can't accidentally over-inflate them. The price is that volume drifts when mechanics change, so you have to watch the delivered tidal volume the same way you'd watch peak pressure in VC.",
     what_youll_do: [
-      'Set inspiratory pressure, I-time, rate, PEEP, and FiO2 in PCV.',
-      'Watch VT swing with compliance changes — a useful diagnostic signal.',
-      'Decide when PCV is the right tool and when it\'s the wrong one.',
+      'In PC, you control pressure. Volume is what gives way.',
+      'The flow waveform decelerates as the lungs fill. That shape is the PC fingerprint.',
+      'A sudden drop in delivered tidal volume on PC is the signal that compliance got worse.',
     ],
   },
   visible_learning_objectives: [

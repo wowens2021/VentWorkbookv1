@@ -11,11 +11,11 @@ export const M11: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 18,
   briefing: {
-    overview: 'When the patient and the ventilator disagree, the waveforms tell you exactly how. This module is pure pattern-recognition — five classic dyssynchronies you\'ll see again and again at the bedside.',
+    overview: "Patient-ventilator dyssynchrony is the bedside skill that separates clinicians who fiddle with sedation from clinicians who fix the problem. There are five common patterns, and each one looks different on the waveform. Once you can spot them, you can start matching the ventilator to the patient instead of the other way around. The patient will tell you what they want. You just have to read the screen.",
     what_youll_do: [
-      'Identify ineffective triggering, double triggering, flow starvation, premature and delayed cycling.',
-      'Map each pattern to its root cause.',
-      'Pick a corrective adjustment for each pattern, not just a sedation order.',
+      'The five patterns: ineffective triggering, double-triggering, flow starvation, premature cycling, delayed cycling.',
+      'Each one has a specific waveform signature and a specific fix.',
+      'Sedation buries the problem. Synchrony solves it.',
     ],
   },
   visible_learning_objectives: [
@@ -254,11 +254,11 @@ export const M12: ModuleConfig = {
   track: 'Modes',
   estimated_minutes: 12,
   briefing: {
-    overview: 'SIMV gives the patient mandatory breaths plus the option to add their own spontaneous ones with pressure support. It\'s a hybrid — and like all hybrids, it has specific use cases and specific failure modes.',
+    overview: "SIMV is a hybrid mode. Some breaths are guaranteed by the vent at a set rate and volume. Between those, the patient can take their own breaths, supported by PSV. It was designed as a weaning mode and was widely used for decades. Modern evidence has shifted away from it for that purpose. It's worth understanding because you'll still see it in the wild, and because the breath-mix concept underlies the way newer hybrid modes work.",
     what_youll_do: [
-      'See how SIMV mixes mandatory and spontaneous breaths in one cycle.',
-      'Recognize when SIMV is the right weaning tool — and when A/C is better.',
-      'Diagnose the most common SIMV pitfall: insufficient PS on the spontaneous breaths.',
+      'SIMV mixes mandatory and spontaneous breaths in the same minute.',
+      'Lowering the mandatory rate shifts work from the vent to the patient.',
+      "Daily SBTs have largely replaced gradual SIMV weaning. Know the mode, but don't reach for it first.",
     ],
   },
   visible_learning_objectives: [

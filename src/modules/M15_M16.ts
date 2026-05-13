@@ -7,11 +7,11 @@ export const M15: ModuleConfig = {
   track: 'Strategy',
   estimated_minutes: 16,
   briefing: {
-    overview: 'ARDS is the canonical lung-injury syndrome — and the ventilator settings that protect ARDS lungs (low VT, controlled plateau, attentive PEEP) are now the default for every patient. This module makes those settings explicit and shows you what happens when you violate them.',
+    overview: "ARDS killed a lot of people before we figured out that the ventilator was part of the problem. Big tidal volumes and high pressures, applied to already-injured lungs, cause more injury. Lung-protective ventilation reverses that. Small tidal volumes by predicted body weight. Plateau pressures kept under 30. Driving pressures kept under 15. Permissive hypercapnia when CO2 rises. The numbers are simple. The discipline of holding to them, breath after breath, is what saves the patient.",
     what_youll_do: [
-      'Target 4–6 mL/kg PBW tidal volume and a plateau pressure under 30 cmH2O.',
-      'Manage driving pressure (Pplat − PEEP) as the single best mortality signal.',
-      'Decide when to consider proning, NMBA, and ECMO.',
+      '6 mL per kg of predicted body weight is the starting tidal volume. Predicted, not actual.',
+      'Plateau pressure 30 or less, driving pressure 15 or less. These are non-negotiable targets.',
+      'Permissive hypercapnia is the trade-off. The lungs come first, the CO2 sorts itself out.',
     ],
   },
   visible_learning_objectives: [
@@ -191,11 +191,11 @@ export const M16: ModuleConfig = {
   track: 'Strategy',
   estimated_minutes: 14,
   briefing: {
-    overview: 'Asthma and COPD patients on the vent need the opposite of an ARDS patient: long expiratory times, low rates, and permissive hypercapnia. Get it wrong and you create auto-PEEP, hypotension, and arrest.',
+    overview: "Severe asthma and COPD are the inverse of ARDS. The compliance is usually fine. The problem is getting air out. Every ventilator decision in obstructive disease is built around giving exhalation more time. Lower rates. Shorter inspiratory times. Smaller tidal volumes when needed. The CO2 will rise. You let it. Trying to keep the CO2 normal in these patients is what causes the deaths from breath-stacking and hemodynamic collapse.",
     what_youll_do: [
-      'Set rate (8–12) and I:E (1:3 or longer) for obstructive physiology.',
-      'Tolerate elevated PaCO2 to stay safe — permissive hypercapnia in context.',
-      'Match external PEEP to the patient\'s measured auto-PEEP, never above it.',
+      'The problem is expiratory flow, not lung stiffness.',
+      "Slow the rate. Give expiration more room. That's the single highest-yield move.",
+      "Permissive hypercapnia in obstructive disease is not optional. It's the strategy.",
     ],
   },
   visible_learning_objectives: [

@@ -7,11 +7,11 @@ export const M1: ModuleConfig = {
   track: 'Foundations',
   estimated_minutes: 12,
   briefing: {
-    overview: 'Before you change a setting, you have to understand why the patient is on the vent in the first place. Every intubation answers one of four questions — and matching the indication to the deficit is the foundation of everything else in this workbook.',
+    overview: "People get put on ventilators for four reasons, and only four. Failure to oxygenate. Failure to ventilate. Failure to protect the airway. Excessive work of breathing. Everything you'll do later (the modes, the dials, the troubleshooting) gets easier if you can name which of these problems you're solving for the patient in front of you. Before you can change a ventilator, you have to read one.",
     what_youll_do: [
-      'Recognize the four indications: oxygenation failure, ventilation failure, airway protection, work of breathing.',
-      'Read the four core values on a ventilator display: PIP, Vte, PEEP, and rate.',
-      'Distinguish set values from measured values — the difference matters.',
+      'Oxygenation failure and ventilation failure are different problems with different blood gas signatures.',
+      "An unconscious patient with normal lungs still needs a tube. That's an airway problem, not a lung problem.",
+      'The ventilator display has a vocabulary. Learn the abbreviations first. The physiology comes next.',
     ],
   },
   visible_learning_objectives: [

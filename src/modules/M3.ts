@@ -7,11 +7,11 @@ export const M3: ModuleConfig = {
   track: 'Foundations',
   estimated_minutes: 18,
   briefing: {
-    overview: 'Every ventilator breath obeys one equation: pressure equals volume divided by compliance plus resistance times flow. Once you see how those three terms fight each other, almost every alarm and waveform finally makes sense.',
+    overview: "The equation of motion is the one piece of physiology that ties everything together. Pressure equals (volume divided by compliance) plus (flow times resistance) plus PEEP. That's it. Stretching the lungs costs pressure. Pushing gas through airways costs pressure. PEEP is the baseline. If you understand which term is doing the work in any given breath, you can predict what every ventilator change will do before you make it.",
     what_youll_do: [
-      'Decompose airway pressure into elastic and resistive components.',
-      'Predict how each component changes when compliance drops or resistance rises.',
-      'Use peak-minus-plateau as a bedside measure of resistance.',
+      'The elastic component depends on lung stiffness. The resistive component depends on airway narrowness.',
+      "Faster inspiratory flow raises peak pressure but doesn't change plateau.",
+      'Every alarm, every waveform shape, every mode decision routes back to this equation eventually.',
     ],
   },
   visible_learning_objectives: [

@@ -26,11 +26,11 @@ export const M2: ModuleConfig = {
   track: 'Foundations',
   estimated_minutes: 12,
   briefing: {
-    overview: 'Half of getting comfortable with a ventilator is knowing what every abbreviation on the screen means. This module walks you through the vocabulary that everything else in the workbook will build on.',
+    overview: "Every ventilator says the same things in slightly different ways. Vt, Pplat, PEEP, MV, RR. Once you know what each label means and where it lives on the screen, you can walk up to any ventilator and orient yourself in under a minute. The other thing worth knowing right now: every value on the display is either something you set, or something the patient and machine are doing as a result. Confusing the two is one of the most common bedside mistakes.",
     what_youll_do: [
-      'Match common ventilator abbreviations to the parameters they represent.',
-      'Identify whether a value is a setting, a measured outcome, or a calculated index.',
-      'Build a working vocabulary so the next eight modules read naturally.',
+      'Set values and measured values are different categories, even when they share a name.',
+      'Plateau pressure is what the alveoli actually feel. Peak pressure includes the cost of pushing gas through tubes.',
+      'Minute ventilation is just rate times tidal volume. Most "where did the CO2 go" questions start here.',
     ],
   },
   visible_learning_objectives: [

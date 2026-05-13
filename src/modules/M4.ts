@@ -7,11 +7,11 @@ export const M4: ModuleConfig = {
   track: 'Physiology',
   estimated_minutes: 15,
   briefing: {
-    overview: 'Compliance and resistance are the two mechanical knobs every patient brings to the bedside. This module teaches you to separate them by reading the pressure waveform — a skill you\'ll use on every vented patient for the rest of your career.',
+    overview: "This is the bedside skill the rest of the book builds on. When peak pressure rises, you have to know whether the lungs got stiffer or the airways got narrower, and the ventilator already tells you. The gap between peak and plateau is the answer. A small gap means the problem is in the lung itself. A big gap means the problem is in the airway. That single observation drives most of what you do for sudden pressure changes.",
     what_youll_do: [
-      'Quantify static compliance from VT, plateau pressure, and PEEP.',
-      'Tell apart a compliance problem from a resistance problem at the waveform.',
-      'Practice the bedside maneuvers (inspiratory hold) that let you measure both.',
+      'Compliance problems raise peak and plateau together.',
+      'Resistance problems raise peak alone, widening the gap.',
+      'Plateau pressure is the most important number on the screen for evaluating lung mechanics.',
     ],
   },
   visible_learning_objectives: [
