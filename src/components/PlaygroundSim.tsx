@@ -189,14 +189,20 @@ const WaveformPanel = React.memo(({
           <span className="text-[9px] font-bold text-zinc-500">{unit}</span>
         </div>
       </div>
+      {/* HOLD badge — rendered in HTML so it's never distorted by the SVG
+           non-uniform scaling. Only shown on the Airway Pressure panel. */}
+      {isHoldActive && title === "Airway Pressure" && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none pl-10 pt-4">
+          <span className="text-[28px] font-black tracking-[0.25em] text-[#fc4c4c] animate-pulse drop-shadow-sm select-none">
+            HOLD
+          </span>
+        </div>
+      )}
       <svg className="absolute inset-0 w-full h-full pt-3 pl-10 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 450 120">
         {showZeroLine && <line x1="0" y1={zeroY} x2="450" y2={zeroY} stroke="#888" strokeWidth="1.2" strokeDasharray="5,3" vectorEffect="non-scaling-stroke" />}
         {segmentedPaths.map((seg, idx) => (
           <path key={idx} d={seg.path} fill="none" stroke={seg.color} strokeWidth="2.0" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
         ))}
-        {isHoldActive && title === "Airway Pressure" && (
-          <text x="225" y="60" textAnchor="middle" fill="#fc4c4c" className="text-xl font-black uppercase tracking-widest animate-pulse">HOLD</text>
-        )}
         {isFrozen && cursorIndex !== null && !isNaN(cursorIndex) && (
           <g>
             <line x1={cursorIndex} y1="0" x2={cursorIndex} y2="120" stroke="#0f172a" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" vectorEffect="non-scaling-stroke" />
@@ -313,6 +319,8 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   const isHolding = useRef(false);
   const isExpHolding = useRef(false);
   const holdStartTimeRef = useRef(0);
+  /** Real-clock ms when the current hold began — used for the 500 ms timeout. */
+  const holdStartRealMsRef = useRef(0);
   const holdOffsetRef = useRef(0);
   const lastVolumeRef = useRef(0);
   const lastBreathStartTimeRef = useRef(0);
@@ -699,6 +707,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         isExpHolding.current = true;
         setActiveHoldType('EXP');
         holdStartTimeRef.current = elapsedTotal;
+        holdStartRealMsRef.current = Date.now();
         pendingExpRef.current = false;
         startNewBreath = false;
       }
@@ -763,6 +772,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           isHolding.current = true;
           setActiveHoldType('INSP');
           holdStartTimeRef.current = elapsedTotal;
+          holdStartRealMsRef.current = Date.now();
           pendingInspRef.current = false;
         }
         setMetrics(m => {
@@ -777,8 +787,10 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       let p = settings.peep, f = 0, v = 0;
 
       if (isHolding.current) {
+        // Release after exactly 500 ms real time (per spec: 0.5 s end-insp pause).
+        const holdElapsedMs = Date.now() - holdStartRealMsRef.current;
         const dur = elapsedTotal - holdStartTimeRef.current;
-        if (dur < 0.5) {
+        if (holdElapsedMs < 500) {
           f = 0; v = vAtEndOfInspRef.current; p = (v / C) + settings.peep;
         } else {
           holdOffsetRef.current += dur;
