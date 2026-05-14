@@ -54,23 +54,27 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
             <h1 className="font-display text-5xl md:text-6xl font-bold text-stone-900 leading-[1.05] tracking-tight mb-5">
               Master mechanical<br />ventilation <span className="font-medium text-stone-600">— at your pace.</span>
             </h1>
-            <p className="text-[17px] text-stone-700 leading-relaxed mb-7 max-w-xl">
-              Evidence-based ICU simulations built from <em>The Ventilator Book</em>.
-              Adjust settings, interpret live waveforms, manage scenarios — without risk to patients.
-            </p>
+            <div className="text-[16px] text-stone-700 leading-relaxed mb-7 max-w-xl space-y-3.5">
+              <p>
+                <span className="font-semibold text-stone-900">Modules</span> are designed to help you learn mechanical ventilation, following the outline of <em>The Ventilator Book</em>. This course uses live waveforms and clinical scenarios to teach and reinforce key concepts.
+              </p>
+              <p>
+                The <span className="font-semibold text-stone-900">Ventilator Playground</span> is like a real ventilator that allows you to adjust settings and examine waveforms. This is perfect for teaching or for familiarizing yourself with ventilator controls.
+              </p>
+            </div>
 
             <div className="flex items-center gap-3">
               <button
                 onClick={onBrowseModules}
                 className="flex items-center gap-2 px-6 py-3 bg-brand-olive hover:bg-brand-olive-hover text-white rounded-full text-[14px] font-bold transition shadow-sm"
               >
-                Browse simulations <ArrowRight size={15} />
+                Learning Modules <ArrowRight size={15} />
               </button>
               <button
                 onClick={onOpenPlayground}
                 className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 rounded-full text-[14px] font-bold transition"
               >
-                <Play size={13} fill="currentColor" /> Open Playground
+                <Play size={13} fill="currentColor" /> Ventilator Playground
               </button>
             </div>
           </div>

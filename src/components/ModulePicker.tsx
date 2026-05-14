@@ -133,7 +133,7 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
         {/* Header */}
         <div className="mb-6">
           <h1 className="font-display text-4xl md:text-5xl font-bold text-stone-900 mb-2">
-            Clinical Simulations
+            Learning Modules
           </h1>
           <p className="text-[15px] text-stone-600 max-w-2xl">
             Work through evidence-based ventilator simulations. Each module includes a primer,

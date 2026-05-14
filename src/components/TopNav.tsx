@@ -17,7 +17,8 @@ interface TabDef {
 
 const TABS: TabDef[] = [
   { id: 'home', label: 'Home', icon: Home },
-  { id: 'modules', label: 'Simulations', icon: BookOpen },
+  { id: 'modules', label: 'Modules', icon: BookOpen },
+  { id: 'playground', label: 'Ventilator Playground', icon: Play },
   { id: 'knowledge-check', label: 'Knowledge Check', icon: Brain },
 ];
 
@@ -60,18 +61,8 @@ const TopNav: React.FC<Props> = ({ current, onNavigate }) => {
           })}
         </nav>
 
-        {/* Right side: playground pill + avatar placeholder */}
+        {/* Right side: avatar placeholder */}
         <div className="ml-auto flex items-center gap-3">
-          <button
-            onClick={() => onNavigate('playground')}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-bold transition ${
-              current === 'playground'
-                ? 'bg-white text-brand-olive'
-                : 'bg-white text-brand-olive hover:bg-stone-100'
-            }`}
-          >
-            <Play size={13} fill="currentColor" /> Playground
-          </button>
           <div className="w-9 h-9 rounded-full bg-white/15 text-white text-[11px] font-bold flex items-center justify-center border border-white/20">
             DD
           </div>
