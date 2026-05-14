@@ -161,6 +161,25 @@ export interface CompoundTrackerConfig {
   sequence?: 'any_order' | 'strict';
   reset_between?: boolean;
   children: TrackerConfig[];
+  /**
+   * A6: when true, the TaskCard renders ONE active step at a time
+   * (instead of showing all N criteria up front). After a child fires,
+   * an `observation` prose block reveals along with a "Next →" button
+   * that advances to the next un-satisfied child. Pairs with the
+   * existing `sequence: 'strict'` flag (A6 implies strict ordering).
+   *
+   * Use this for "guided tour" style modules where each manipulation
+   * has its own pedagogical commentary — e.g. "Change Vt → here's what
+   * happens to PIP → next, change rate."
+   */
+  present_one_at_a_time?: boolean;
+  /**
+   * Per-step prose strings shown after each child satisfies, only when
+   * `present_one_at_a_time` is set. Length should match `children.length`.
+   * The TaskCard shows `observation[i]` plus a "Next →" button after
+   * child[i] fires; advancing reveals child[i+1]'s direction.
+   */
+  observations?: string[];
 }
 
 export type TrackerConfig =
@@ -287,4 +306,25 @@ export interface ProgressRecord {
   total_score_percent?: number;
   /** A–F letter grade derived from total_score_percent. */
   total_score_letter?: 'A' | 'B' | 'C' | 'D' | 'F';
+
+  /**
+   * Active engagement time in seconds — accumulated only while the module
+   * tab is visible, the learner is mid-flow, and not idle for > 5 min.
+   * Replaces the misleading wall-clock between `started_at` and the most
+   * recent action, which could span days across sessions.
+   */
+  time_active_sec?: number;
+  /** Last point in time we wrote to time_active_sec — used to extend on
+   *  each phase advance or periodic flush. */
+  last_active_at?: string;
+
+  /**
+   * How many times the learner has submitted the summative quiz on this
+   * module. The score is "best attempt wins" (per Will's instruction):
+   * `quiz_score` always reflects the highest score achieved so far, and
+   * `total_score_percent` is recomputed against that best quiz score.
+   */
+  quiz_attempts?: number;
+  /** Highest summative score the learner has earned on this module. */
+  quiz_best_score?: number;
 }

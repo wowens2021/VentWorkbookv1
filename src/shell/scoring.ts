@@ -25,6 +25,19 @@
 
 export type LetterGrade = 'A' | 'B' | 'C' | 'D' | 'F';
 
+/**
+ * Pass threshold for the module summative. Below 80% the debrief surfaces
+ * a "Retake the module" CTA as the primary action; "Next module →" demotes
+ * to a small text link. Above the threshold, the normal forward CTA stays
+ * primary. We deliberately don't HARD-lock the next module — Will's
+ * instruction was "should have them redo … but it doesn't lock out the others."
+ */
+export const PASSING_THRESHOLD = 80;
+
+export function isPassing(percent: number): boolean {
+  return percent >= PASSING_THRESHOLD;
+}
+
 export interface ScoreInput {
   primer_score?: number;
   primer_total?: number;

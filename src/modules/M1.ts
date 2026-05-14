@@ -14,13 +14,17 @@ export const M1: ModuleConfig = {
   track: 'Foundations',
   estimated_minutes: 12,
   briefing: {
+    // Description line per Will's edit (B1): "The reasons for mechanical
+    // ventilation." Replaces the old opener; the GOAL hairline at the top of
+    // the module continues to show the tagline "Name the deficit before you
+    // change a setting."
     tagline: 'Name the deficit before you change a setting.',
     overview:
-      "People get put on ventilators for four reasons, and only four. Failure to oxygenate. Failure to ventilate. Failure to protect the airway. Excessive work of breathing. Everything you'll do later (the modes, the dials, the troubleshooting) gets easier if you can name which of these problems you're solving for the patient in front of you. Before you can change a ventilator, you have to read one.",
+      "The reasons for mechanical ventilation. People get put on ventilators for four reasons, and only four — failure to oxygenate, failure to ventilate, failure to protect the airway, and excessive work of breathing. Each of the four matches a recognizable type of respiratory failure, and naming the type tells you what the ventilator is actually for in this patient. Get this right and every later decision is easier.",
     what_youll_do: [
-      'Oxygenation failure and ventilation failure are different problems with different blood gas signatures.',
+      'Type I (hypoxemic) and Type II (hypercapnic) respiratory failure are different problems with different blood-gas signatures.',
       "An unconscious patient with normal lungs still needs a tube. That's an airway problem, not a lung problem.",
-      'The ventilator display has a vocabulary. Learn the abbreviations first. The physiology comes next.',
+      'A shocked septic patient on the verge of fatigue is intubated for the work of breathing, not the gas exchange.',
     ],
   },
 
@@ -61,30 +65,36 @@ export const M1: ModuleConfig = {
         },
       ],
     },
+    // B2: refocused on the type of respiratory failure (set-vs-measured
+    // belongs in M2 Vocabulary).
     {
       id: 'M1-P2',
-      prompt: 'Which of these is a measured value, not a set value?',
+      prompt:
+        '68-year-old with severe pneumonia. On a 100% non-rebreather his PaO2 is 55 mmHg, PaCO2 36, pH 7.42, alert and conversing. Which type of respiratory failure is this?',
       options: [
         {
-          label: 'Set rate.',
-          is_correct: false,
-          explanation: "You ordered it. The patient may breathe over it — that's a different number, the actual rate.",
-        },
-        {
-          label: 'PEEP knob.',
-          is_correct: false,
-          explanation: "That's the order — the floor of expiratory pressure you set.",
-        },
-        {
-          label: 'Peak inspiratory pressure (PIP).',
+          label: 'Type I — hypoxemic respiratory failure.',
           is_correct: true,
           explanation:
-            "PIP is what the system actually generates every breath. It depends on the patient's compliance, resistance, and the volume you ordered. You read it; you don't set it.",
+            'Low PaO2 with a normal-to-low PaCO2 = Type I (hypoxemic) failure. The lung is failing at oxygenation, not at clearing CO2. Book Ch. 4.',
         },
         {
-          label: 'FiO2.',
+          label: 'Type II — hypercapnic respiratory failure.',
           is_correct: false,
-          explanation: 'You set FiO2; the patient receives it.',
+          explanation:
+            'Type II requires an elevated PaCO2 (> 45) with acidemia. His PaCO2 is normal. Ventilation is fine; oxygenation is the problem.',
+        },
+        {
+          label: 'Type III — perioperative atelectasis.',
+          is_correct: false,
+          explanation:
+            'Type III is the post-op picture (FRC drop, atelectasis). Not the right setting here.',
+        },
+        {
+          label: 'Type IV — shock-related respiratory failure.',
+          is_correct: false,
+          explanation:
+            'Type IV is the patient who is intubated because shock has the diaphragm consuming too much of the cardiac output. He\'s talking — not in shock.',
         },
       ],
     },
@@ -300,14 +310,37 @@ export const M1: ModuleConfig = {
         { label: 'The vent is broken.', is_correct: false, explanation: 'Equipment failure is a diagnosis of exclusion (book Ch. 7).' },
       ],
     },
+    // B2: replaced the ETCO2-gradient item (which belongs in a future
+    // Patient Monitoring module). New Q4 covers Type II (hypercapnic)
+    // failure to balance the Q1 Type I item.
     {
       id: 'M1-Q4',
-      prompt: 'A normal PaCO2-to-ETCO2 gradient is about:',
+      prompt:
+        'A 72-year-old with severe COPD is admitted somnolent. ABG: pH 7.21, PaCO2 78, PaO2 62 on 4 L. The type of respiratory failure is:',
       options: [
-        { label: '3–5 mm Hg.', is_correct: true, explanation: 'Book Ch. 7. A widening gradient suggests dead space.' },
-        { label: '0 mm Hg.', is_correct: false, explanation: 'ETCO2 is always slightly below PaCO2 (mixing of alveolar with dead-space gas).' },
-        { label: '15 mm Hg.', is_correct: false, explanation: "That's a wide gradient — pathologic in most cases." },
-        { label: 'ETCO2 always exceeds PaCO2.', is_correct: false, explanation: 'It never does. That is the rule. Book Ch. 7.' },
+        {
+          label: 'Type I — hypoxemic respiratory failure.',
+          is_correct: false,
+          explanation:
+            'Type I has a low PaO2 with a NORMAL or LOW PaCO2. This patient is markedly hypercapnic and acidemic.',
+        },
+        {
+          label: 'Type II — hypercapnic respiratory failure.',
+          is_correct: true,
+          explanation:
+            'Elevated PaCO2 (> 45) with acidemia = Type II (hypercapnic) failure. The patient is failing to ventilate — to clear CO2 — not just to oxygenate. Book Ch. 4.',
+        },
+        {
+          label: 'Type III — perioperative.',
+          is_correct: false,
+          explanation: 'Type III is the post-op atelectasis picture — not the case here.',
+        },
+        {
+          label: 'Type IV — shock-related.',
+          is_correct: false,
+          explanation:
+            'Type IV is shock-driven respiratory failure (intubation to spare the diaphragm). The COPD picture is straightforward Type II.',
+        },
       ],
     },
     {

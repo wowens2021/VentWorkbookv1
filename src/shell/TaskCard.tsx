@@ -32,6 +32,24 @@ interface Props {
    * instruction in both places. Omitted when no prompt is active.
    */
   activeDirection?: string;
+  /**
+   * A6: when set, the TaskCard shows exactly ONE active step (rather
+   * than the full criteria list), and once that step lands shows an
+   * inline "observation" prose block with a "Next →" button that calls
+   * `onAdvanceStep`. Used by modules with
+   * `hidden_objective.present_one_at_a_time = true`.
+   */
+  sequential?: {
+    /** Index of the currently-active step (0-based). */
+    activeIndex: number;
+    /** Total steps. */
+    totalSteps: number;
+    /** Observation prose for the just-completed step, if any. */
+    observation: string | null;
+    /** Called when the learner clicks "Next →" to advance past the
+     *  current observation to the next step's direction. */
+    onAdvanceStep: () => void;
+  };
 }
 
 /**
@@ -51,6 +69,7 @@ const TaskCard: React.FC<Props> = ({
   onRedo,
   outcomeProgress,
   activeDirection,
+  sequential,
 }) => {
   if (objectiveSatisfied) {
     return (
@@ -105,7 +124,42 @@ const TaskCard: React.FC<Props> = ({
         {userFacingTask}
       </p>
 
-      {activeDirection && (
+      {/* A6: sequential one-step-at-a-time mode. Shows the active step
+          number, the current criterion text (active styling), then either
+          an observation + "Next →" button (if the step just landed) or
+          nothing (if the step is still in progress). */}
+      {sequential && (
+        <section className="mb-4 rounded-lg border border-brand-olive/30 bg-brand-olive/5 px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-brand-olive">
+              Step {sequential.activeIndex + 1} of {sequential.totalSteps}
+            </span>
+          </div>
+          <p className="text-[14px] font-semibold text-stone-900 leading-snug mb-2">
+            {successCriteria[sequential.activeIndex] ?? ''}
+          </p>
+          {sequential.observation && (
+            <>
+              <div className="mt-3 rounded-md bg-white border border-stone-200 px-3 py-2.5">
+                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 block mb-1">
+                  What just happened
+                </span>
+                <p className="text-[13px] text-stone-700 leading-snug">
+                  {sequential.observation}
+                </p>
+              </div>
+              <button
+                onClick={sequential.onAdvanceStep}
+                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-olive hover:bg-brand-olive-hover text-white rounded-full text-[12px] font-bold transition shadow-sm"
+              >
+                {sequential.activeIndex + 1 < sequential.totalSteps ? 'Next →' : 'Finish →'}
+              </button>
+            </>
+          )}
+        </section>
+      )}
+
+      {activeDirection && !sequential && (
         <section className="mb-4 rounded-lg border border-sky-300 bg-sky-50 px-3 py-2.5">
           <span className="text-[11px] font-black uppercase tracking-widest text-sky-700 block mb-1">
             Direction
@@ -116,7 +170,7 @@ const TaskCard: React.FC<Props> = ({
         </section>
       )}
 
-      {successCriteria.length > 0 && (
+      {successCriteria.length > 0 && !sequential && (
         <section className="mb-4">
           <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500 block mb-1.5">
             Success criteria
@@ -127,8 +181,21 @@ const TaskCard: React.FC<Props> = ({
               // Only applied when the shell provided a progress array (compound trackers).
               const hasProgress = !!progress && progress.length > 0;
               const done = hasProgress && !!progress[i];
+              // A4: the first un-satisfied step is "active." Bold it, give it
+              // a sky-blue indicator + light wash so it's obvious which step
+              // the learner is currently on. Past = strikethrough; future =
+              // dim hollow circle.
+              const firstUnsatisfied = hasProgress
+                ? progress!.findIndex(p => !p)
+                : -1;
+              const isActive = hasProgress && !done && i === firstUnsatisfied;
               return (
-                <li key={i} className="text-[13px] leading-snug flex items-start gap-2">
+                <li
+                  key={i}
+                  className={`text-[13px] leading-snug flex items-start gap-2 transition ${
+                    isActive ? 'bg-sky-50 border border-sky-200 rounded-md px-2 py-1' : ''
+                  }`}
+                >
                   {hasProgress ? (
                     done ? (
                       <Check
@@ -136,6 +203,8 @@ const TaskCard: React.FC<Props> = ({
                         strokeWidth={3}
                         className="text-emerald-600 mt-0.5 shrink-0 transition-opacity"
                       />
+                    ) : isActive ? (
+                      <span className="mt-1 shrink-0 inline-block w-2 h-2 rounded-full bg-sky-500 ring-2 ring-sky-200" />
                     ) : (
                       <Circle size={13} className="text-zinc-300 mt-0.5 shrink-0" />
                     )
@@ -146,7 +215,9 @@ const TaskCard: React.FC<Props> = ({
                     className={
                       done
                         ? 'text-zinc-400 line-through'
-                        : 'text-zinc-700'
+                        : isActive
+                          ? 'text-sky-900 font-semibold'
+                          : 'text-zinc-500'
                     }
                   >
                     {c}

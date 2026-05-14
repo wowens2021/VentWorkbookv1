@@ -1,9 +1,10 @@
 import type { ModuleConfig, TrackerConfig } from '../shell/types';
 import { M1 } from './M1';
 import { M2 } from './M2';
-import { M3 } from './M3';
+import { M3 } from './M3';            // Basic Vent Adjustments (Foundations)
 import { M4 } from './M4';
 import { M5, M6 } from './M5_M6';
+import { M_EOM } from './M_EOM';      // Equation of Motion (Physiology, after M5)
 import { M7, M8 } from './M7_M8';
 import { M9, M10 } from './M9_M10';
 import { M11, M12 } from './M11_M12';
@@ -11,8 +12,14 @@ import { M13, M14 } from './M13_M14';
 import { M15, M16 } from './M15_M16';
 import { M17, M18, M19 } from './M17_M18_M19';
 
+// Curriculum order: Foundations (M1–M3), then Physiology (M4 → M5 →
+// M-EOM → M6), then Modes/Strategy/Weaning/Synthesis. The picker
+// groups by track but preserves array order within each, so M-EOM
+// slots in between Gas Exchange Basics (M5) and Auto-PEEP (M6).
 export const MODULES: ModuleConfig[] = [
-  M1, M2, M3, M4, M5, M6, M7, M8, M9, M10,
+  M1, M2, M3,
+  M4, M5, M_EOM, M6,
+  M7, M8, M9, M10,
   M11, M12, M13, M14, M15, M16, M17, M18, M19,
 ];
 

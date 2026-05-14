@@ -1,138 +1,139 @@
 import type { ModuleConfig } from '../shell/types';
 
 /**
- * M3 — The Equation of Motion
- * Track: Foundations · Archetype: concept demo (compound, reset_between) · 15 min
- * Anchor chapters: VB Ch. 3 (Commandments I, V, VI), Ch. 8, Ch. 13
+ * M3 — Basic Vent Adjustments  (D2)
  *
- * Specced verbatim against docs/MODULE_SPECS_v3.md §M3.
+ * Replaces the old M3 (Equation of Motion), which moved to Physiology
+ * as M-EOM after M4/M5. The Foundations track now closes with this
+ * knob-tour module: four basic adjustments, each made in isolation,
+ * each with its own "what just happened" prose. The learner doesn't
+ * have to interpret the equation of motion — they just have to feel
+ * which knob moves which number on the display.
+ *
+ * Implementation uses the new `present_one_at_a_time` compound flag
+ * (A6): step → observation → "Next →" → next step.
+ *
+ * Track: Foundations · Archetype: guided knob walk-through · 14 min
+ * Anchor chapters: VB Ch. 1, Ch. 11
  */
 export const M3: ModuleConfig = {
   id: 'M3',
   number: 3,
-  title: 'The Equation of Motion',
+  title: 'Basic Vent Adjustments',
   track: 'Foundations',
-  estimated_minutes: 15,
+  estimated_minutes: 14,
   briefing: {
-    tagline: 'P = V/C + R·flow + PEEP. The spine of every breath.',
+    tagline: 'Move the knobs. Watch the screen change.',
     overview:
-      "The equation of motion is the one piece of physiology that ties everything together. Pressure equals (volume divided by compliance) plus (flow times resistance) plus PEEP. That's it. Stretching the lungs costs pressure. Pushing gas through airways costs pressure. PEEP is the baseline. If you understand which term is doing the work in any given breath, you can predict what every ventilator change will do before you make it.",
+      "Once you can read the ventilator (M1, M2), the next thing to learn is what each knob actually does to the screen. Four basic adjustments — tidal volume, respiratory rate, PEEP, and FiO2 — cover most of what you'll do at the bedside. You'll make each change one at a time and watch how the measured values respond. No physiology theory yet — just the basic cause-and-effect between every control and every readout.",
     what_youll_do: [
-      'The elastic component depends on lung stiffness. The resistive component depends on airway narrowness.',
-      "Faster inspiratory flow raises peak pressure but doesn't change plateau.",
-      'Every alarm, every waveform shape, every mode decision routes back to this equation eventually.',
+      'Raise the tidal volume. Watch PIP rise. Watch Vte rise to match.',
+      'Raise the rate. Watch minute ventilation rise.',
+      "Raise PEEP. Watch PIP rise in parallel with it — they're additive.",
+      'Raise FiO2. Watch the waveform NOT change. FiO2 is its own lever.',
     ],
   },
 
   visible_learning_objectives: [
-    'State the equation of motion: P = V/C + R·flow + PEEP.',
-    'Predict the effect of compliance, resistance, and flow in isolation on PIP and Pplat.',
-    'Use the peak-plateau gap as the bedside test for resistance vs compliance.',
+    'Identify which readout responds to each of the four basic controls.',
+    'Predict the effect of changing tidal volume, rate, PEEP, or FiO2 in isolation.',
+    'Recognize that FiO2 affects gas concentration, not pressure/volume readings.',
   ],
 
   primer_questions: [
     {
       id: 'M3-P1',
-      prompt: 'The equation of motion in its bedside form is:',
+      prompt: 'Which of these is a SET value (something the clinician orders), not a measured value?',
       options: [
-        { label: 'P = V/C + R·flow + PEEP', is_correct: true, explanation: 'The three independent contributions to airway pressure.' },
-        { label: 'P = V·C + R/flow + PEEP', is_correct: false, explanation: "Compliance is in the denominator; you'd never see this combination." },
-        { label: 'PIP = Pplat = R·flow', is_correct: false, explanation: 'PIP and Pplat are not the same except under zero flow.' },
-        { label: 'PIP = Pplat + PEEP', is_correct: false, explanation: 'PIP − Pplat is the resistance contribution, not PEEP.' },
+        { label: 'PIP (peak inspiratory pressure)', is_correct: false, explanation: 'PIP is measured — what the system actually generates each breath. Depends on compliance and resistance.' },
+        { label: 'Set tidal volume (Vt)', is_correct: true, explanation: 'You order it; the vent delivers it (in volume-control modes). Distinct from Vte, which is the measured volume coming back out.' },
+        { label: 'Vte (exhaled tidal volume)', is_correct: false, explanation: 'Vte is measured. It should match your set Vt closely in VCV, but it\'s a separate readout.' },
+        { label: 'Total PEEP', is_correct: false, explanation: 'Total PEEP is measured. Equals set PEEP plus any auto-PEEP.' },
       ],
     },
     {
       id: 'M3-P2',
-      prompt: 'You see PIP 38, Pplat 22, PEEP 5. The driving pressure is:',
+      prompt: 'You raise the set tidal volume from 400 to 500 mL. At constant compliance and resistance, what happens to PIP?',
       options: [
-        { label: '16', is_correct: false, explanation: "That's PIP − Pplat — the resistance contribution, not the driving pressure." },
-        { label: '17', is_correct: true, explanation: 'Driving pressure = Pplat − PEEP = 22 − 5 = 17. Book Ch. 8.' },
-        { label: '22', is_correct: false, explanation: "That's Pplat alone." },
-        { label: '38', is_correct: false, explanation: "That's PIP alone." },
+        { label: 'PIP falls — bigger Vt is easier to deliver.', is_correct: false, explanation: 'Backwards. More volume means more pressure needed to deliver it.' },
+        { label: 'PIP rises.', is_correct: true, explanation: 'More volume into the same compliance means a higher alveolar pressure, and a higher peak. Book Ch. 1.' },
+        { label: 'PIP is unchanged.', is_correct: false, explanation: 'PIP scales with Vt. Same compliance + bigger Vt = higher PIP.' },
+        { label: 'PIP becomes unstable.', is_correct: false, explanation: 'Not unstable — predictably higher.' },
       ],
     },
     {
       id: 'M3-P3',
-      prompt: 'A high PIP with a normal Pplat tells you:',
+      prompt: 'You raise the set respiratory rate from 12 to 18. What happens to minute ventilation (MVe)?',
       options: [
-        { label: 'Compliance is low — the lungs are stiff.', is_correct: false, explanation: 'That raises both pressures together.' },
-        { label: 'Resistance is high — something in the airways is the problem.', is_correct: true, explanation: 'Book Ch. 2: kinked tube, mucus, bronchospasm. Look upstream.' },
-        { label: 'PEEP is too high.', is_correct: false, explanation: 'PEEP raises both pressures.' },
-        { label: 'The vent is broken.', is_correct: false, explanation: "You haven't ruled out the patient yet." },
+        { label: 'MVe falls.', is_correct: false, explanation: 'More breaths per minute moves more air per minute.' },
+        { label: 'MVe rises.', is_correct: true, explanation: 'MVe = Vte × measured rate. More breaths = more total air per minute. Often used to clear extra CO2.' },
+        { label: 'MVe is unchanged because Vt is the same.', is_correct: false, explanation: 'MVe depends on BOTH rate and Vt. Holding Vt and raising rate raises MVe.' },
+        { label: 'MVe drops because each breath is smaller.', is_correct: false, explanation: 'Set Vt is unchanged. Rate is going up. MVe rises.' },
       ],
     },
   ],
 
   scenario: {
-    preset_id: 'M3_eom_baseline_vcv',
+    preset_id: 'M3_basic_knobs_vcv',
     preset: {
-      // Slightly higher Vt (500) than M1/M2 so baseline PIP/Pplat are big
-      // enough to make changes obvious. Compliance 50 (mildly reduced),
-      // resistance 10 (normal) so the baseline gap is small.
-      // PIN: tidalVolume 500 — DO NOT CHANGE. Smaller Vt makes the parallel
-      // rise too subtle. iTime 1.0 baseline gives the flow-term step room
-      // to move.
+      // Healthy-ish patient, mid-range starting values so every adjustment
+      // in either direction is comfortable. Compliance + resistance LOCKED
+      // (this is a knob tour, not physiology).
       mode: 'VCV',
-      settings: { tidalVolume: 500, respiratoryRate: 14, peep: 5, fiO2: 40, iTime: 1.0 },
-      patient: { compliance: 50, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
+      settings: { tidalVolume: 400, respiratoryRate: 12, peep: 5, fiO2: 40, iTime: 1.0 },
+      patient: { compliance: 60, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
-    // The three terms of the equation, exactly. Mode/Vt/rate/PEEP/FiO2
-    // stay locked — this module isolates physiology, not titration.
-    unlocked_controls: ['compliance', 'resistance', 'iTime'],
-    visible_readouts: ['pip', 'plat', 'drivingPressure', 'vte', 'mve'],
-    visible_waveforms: ['pressure_time', 'flow_time'],
+    unlocked_controls: ['tidalVolume', 'respiratoryRate', 'peep', 'fiO2'],
+    visible_readouts: ['pip', 'plat', 'vte', 'mve', 'totalPeep', 'actualRate', 'ieRatio'],
+    visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
+  /**
+   * A6 sequential walk-through. Each step:
+   *  - reveals one direction at a time on the TaskCard,
+   *  - waits for the learner to make the change,
+   *  - shows an "observation" prose block + "Next →" button,
+   *  - then advances. The final "Finish →" satisfies the objective.
+   *
+   * Per-step manipulation thresholds are intentionally modest so any
+   * sensible adjustment in the right direction counts (the lesson is
+   * cause-and-effect, not hitting a precise target).
+   */
   hidden_objective: {
     kind: 'compound',
-    sequence: 'any_order',
-    reset_between: true,
+    sequence: 'strict',
+    reset_between: false,
+    present_one_at_a_time: true,
+    observations: [
+      "PIP rose. So did Vte (the measured exhaled volume). The vent had to push harder to deliver the bigger breath, and the same volume came back out. The peak pressure is a measurement — you didn't change it directly, but it followed your tidal-volume order.",
+      "Minute ventilation (MVe) climbed. The set respiratory rate is the *minimum* the vent will deliver, so raising it pushes more breaths per minute through the lungs. The I:E ratio also tightened because each breath now has less time before the next one.",
+      "PIP rose by about the same amount you raised PEEP. They're additive: every cmH2O you add to the floor shows up at the peak too. Total PEEP equals what you set — there's no auto-PEEP in this stable patient.",
+      "Nothing on the waveform changed. FiO2 is the fraction of oxygen in the gas the vent delivers — it changes the inspired gas mixture, not the pressure or volume profile. It's an independent lever from everything else you just touched.",
+    ],
     children: [
-      // Step 1 — compliance ↓ → parallel rise (gap unchanged)
+      // Step 1 — raise Vt by ≥ 100 mL → watch PIP + Vte rise.
       {
         kind: 'manipulation',
-        control: 'compliance',
-        condition: { type: 'delta_pct', direction: 'decrease', min_pct: 30 },
-        require_acknowledgment: {
-          question: 'You decreased compliance. What happened to the peak-to-plateau gap?',
-          options: [
-            { label: 'Unchanged — both PIP and Pplat rose by roughly the same amount', is_correct: true, explanation: "Right. Compliance is in the V/C term — it raises *alveolar* pressure. Resistance didn't change, so the gap (which reflects resistance) didn't change." },
-            { label: 'Widened — PIP rose more than Pplat', is_correct: false, explanation: "That's the resistance signature. Compliance changes affect both pressures equally." },
-            { label: 'Narrowed — Pplat rose more than PIP', is_correct: false, explanation: 'Physically impossible — Pplat is always ≤ PIP (since PIP = Pplat + resistance term).' },
-          ],
-        },
+        control: 'tidalVolume',
+        condition: { type: 'delta_pct', direction: 'increase', min_pct: 20 },
       },
-      // Step 2 — resistance ↑ → gap widens
+      // Step 2 — raise rate by ≥ 4 bpm → watch MVe rise.
       {
         kind: 'manipulation',
-        control: 'resistance',
-        // Baseline resistance 10 → need ≥18 to make the gap obvious on the
-        // waveform (book Ch. 15: gap > 5 = resistance is elevated).
-        condition: { type: 'delta_pct', direction: 'increase', min_pct: 80 },
-        require_acknowledgment: {
-          question: 'You raised resistance. Which pressure moved more?',
-          options: [
-            { label: 'PIP rose more than Pplat — the gap widened', is_correct: true, explanation: 'Right. Resistance lives only in the R·flow term. That adds to PIP but disappears when flow stops, so Pplat barely moves.' },
-            { label: 'Both rose equally', is_correct: false, explanation: "That's what compliance does. Resistance is asymmetric." },
-            { label: 'Pplat rose more than PIP', is_correct: false, explanation: 'Cannot happen. Pplat is always ≤ PIP.' },
-          ],
-        },
+        control: 'respiratoryRate',
+        condition: { type: 'delta_pct', direction: 'increase', min_pct: 30 },
       },
-      // Step 3 — shorter Ti → higher flow → peak rises only
+      // Step 3 — raise PEEP by ≥ 3 cmH2O → watch PIP rise in parallel.
       {
         kind: 'manipulation',
-        control: 'iTime',
-        // At baseline iTime 1.0 and rate 14, flow ~30 L/min. At iTime 0.7,
-        // flow rises to ~43 L/min — gap should grow ~3 cmH2O, visible.
-        condition: { type: 'absolute', operator: '<=', value: 0.7 },
-        require_acknowledgment: {
-          question: 'You shortened I-time. Same Vt delivered faster (higher flow). What happens to PIP vs Pplat?',
-          options: [
-            { label: "PIP rises; Pplat doesn't change much", is_correct: true, explanation: 'Right. Flow only shows up in the R·flow term. Squeeze the same volume through the same airways faster, and the airway resistance contribution is larger. Pplat is alveolar pressure after flow stops — same Vt, same compliance → same Pplat.' },
-            { label: 'Both rise', is_correct: false, explanation: 'Pplat depends on compliance and Vt, neither of which changed.' },
-            { label: 'Both fall', is_correct: false, explanation: 'Faster flow raises peak pressure, not lowers it.' },
-          ],
-        },
+        control: 'peep',
+        condition: { type: 'delta_pct', direction: 'increase', min_pct: 50 },
+      },
+      // Step 4 — change FiO2 → watch nothing happen on the waveform.
+      {
+        kind: 'manipulation',
+        control: 'fiO2',
+        condition: { type: 'any_change' },
       },
     ],
   },
@@ -141,150 +142,128 @@ export const M3: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "Three numbers shape every peak airway pressure on every ventilator in the world. **Volume divided by compliance** — what the alveoli demand. **Resistance times flow** — what the airways extract. **PEEP** — what you started above zero. The vent doesn't care which one moved. The peak-plateau gap is how you tell them apart.",
+        "Every ventilator has four basic knobs. **Tidal volume** sets how big each breath is. **Rate** sets how many breaths per minute. **PEEP** sets the floor of pressure at end-expiration. **FiO2** sets how much oxygen is in the gas. That's most of the bedside dial-turning in plain volume-control ventilation.",
     },
     {
       kind: 'callout',
-      tone: 'warn',
+      tone: 'info',
       markdown:
-        "If you don't perform inspiratory holds, you don't have Pplat. Without Pplat, you can't tell compliance from resistance — and you don't know what you're fixing.",
+        "Three of these knobs change something you can see on the pressure or flow waveform. One of them — FiO2 — doesn't change the waveform at all; it changes the gas concentration. That's a useful early instinct: not every knob talks to every readout.",
     },
     {
-      kind: 'predict_observe',
-      awaits_control: 'compliance',
-      predict:
-        'If you halve the compliance (50 → 25), what happens to PIP, Pplat, and the gap between them?',
-      observe:
-        "Both PIP and Pplat rise by roughly the same amount. The gap stays the same — because the resistance term didn't change.",
+      kind: 'prose',
+      markdown:
+        "**Vt and PIP travel together.** Bigger Vt at the same compliance means a higher peak pressure. The vent has to push harder. Measured Vte should match your set Vt closely (unless there's a leak).",
     },
     {
-      kind: 'predict_observe',
-      awaits_control: 'resistance',
-      predict:
-        'If you double the resistance (10 → 20), what happens to PIP, Pplat, and the gap?',
-      observe:
-        'PIP rises; Pplat barely moves. The gap widens. That gap *is* the resistance contribution — the R·flow term made visible.',
+      kind: 'prose',
+      markdown:
+        "**Rate and minute ventilation travel together.** More breaths per minute = more total air per minute = more CO2 cleared. The I:E ratio tightens (less expiratory time per breath) as you raise rate at a fixed I-time.",
     },
     {
-      kind: 'figure',
-      caption: 'Compliance ↓ versus Resistance ↑ — the two waveforms side by side.',
-      ascii:
-        'compliance ↓                          resistance ↑\n' +
-        '\n' +
-        '   PIP ┤ ╱‾‾‾‾┐   ← hold              PIP ┤ ╱‾‾‾‾┐  ← hold\n' +
-        '   Pplat╲    │                            │      ╲\n' +
-        '       │    └──                       Pplat╲╲    └────\n' +
-        '       │                                  ─┴──\n' +
-        '       │                                   │\n' +
-        '       └──── time ───→                     └──── time ───→\n' +
-        '  PIP↑, Pplat↑, GAP UNCHANGED        PIP↑↑, Pplat ≈ same, GAP WIDE',
+      kind: 'prose',
+      markdown:
+        "**PEEP raises the floor — and the peak.** Every cmH2O you add to PEEP shows up at the peak as well. They're additive because PEEP is the third term in the equation of motion (you'll see that explicitly in the Physiology track).",
     },
     {
-      kind: 'formative',
-      question: 'PIP 42, Pplat 28, PEEP 5. The peak-plateau gap is 14 cmH2O. Most likely:',
-      options: [
-        { label: 'Severe ARDS', is_correct: false },
-        { label: 'High airway resistance — kinked tube, mucus plug, bronchospasm. The gap is the giveaway.', is_correct: true },
-        { label: 'Auto-PEEP', is_correct: false },
-        { label: 'Normal physiology', is_correct: false },
-      ],
-      answer:
-        'Gap >5 is high. PIP − Pplat = 14 means the airway resistance contribution is huge. Pplat 28 with PEEP 5 gives driving pressure 23 — also elevated, but the *signature* finding is the wide gap. Look upstream: tube, secretions, bronchospasm. Severe ARDS would raise both pressures with a normal gap.',
+      kind: 'prose',
+      markdown:
+        "**FiO2 is independent.** Changing it doesn't move PIP, Pplat, MVe, or any pressure readout. It changes what the patient is breathing, not how. Treat it as its own lever.",
     },
   ],
 
   hint_ladder: {
-    tier1: 'Three independent experiments. Move one knob at a time and then answer the question about the gap.',
-    tier2: 'Compliance moves both pressures equally. Resistance moves only the peak. Flow (I-time) moves only the peak.',
-    tier3: { hint_text: 'Use "Show me" to run the current step\'s manipulation, then reset.', demonstration: { control: 'compliance', target_value: 30 } },
+    tier1: 'Read the current step. It tells you exactly which control to change.',
+    tier2: 'Use the +/− buttons on the named control. The change can be small — the sim just wants to see motion in the right direction.',
+    tier3: { hint_text: 'For step 1, raise tidal volume from 400 to about 500.', demonstration: { control: 'tidalVolume', target_value: 500 } },
   },
 
   summative_quiz: [
     {
       id: 'M3-Q1',
-      prompt: 'PIP 35, Pplat 32, PEEP 5. The bedside problem most likely is:',
+      prompt: 'You raise tidal volume from 400 to 500 mL at constant compliance. The expected change in PIP is:',
       options: [
-        { label: 'High airway resistance', is_correct: false, explanation: 'Gap is only 3 — normal.' },
-        { label: 'Low compliance (high alveolar pressure, narrow gap)', is_correct: true, explanation: 'The plateau is high; the gap is normal. The alveoli are stiff.' },
-        { label: 'Auto-PEEP', is_correct: false, explanation: "Doesn't show on the PIP-Pplat gap." },
-        { label: 'Volume undershoot', is_correct: false, explanation: "That's a Vte finding, not a pressure finding." },
+        { label: 'PIP falls', is_correct: false, explanation: 'More volume requires more pressure to deliver, not less.' },
+        { label: 'PIP rises', is_correct: true, explanation: 'Same compliance, bigger Vt → higher peak pressure. You can predict this without measuring.' },
+        { label: 'PIP is unchanged', is_correct: false, explanation: 'PIP scales with Vt.' },
+        { label: 'PIP becomes negative', is_correct: false, explanation: 'Peak airway pressure is always positive during a delivered breath.' },
       ],
     },
     {
       id: 'M3-Q2',
-      prompt: 'You raise the inspiratory flow rate (or shorten I-time — same thing). Which pressure changes the most?',
+      prompt: 'You raise the respiratory rate from 12 to 20 at constant Vt. The expected change in MVe is:',
       options: [
-        { label: 'PIP', is_correct: true, explanation: 'Flow lives in the resistance term — peak only.' },
-        { label: 'Pplat', is_correct: false, explanation: 'Pplat is set by Vt and compliance, neither of which changed.' },
-        { label: 'PEEP', is_correct: false, explanation: 'PEEP is your setting.' },
-        { label: "None — flow doesn't affect any pressure", is_correct: false, explanation: 'Flow is half of the resistance term.' },
+        { label: 'MVe falls because each breath is smaller', is_correct: false, explanation: 'Set Vt is unchanged. Rate went up. MVe must rise.' },
+        { label: 'MVe rises', is_correct: true, explanation: 'MVe = Vte × measured rate. Roughly +66% more breaths per minute → roughly +66% MVe.' },
+        { label: 'MVe is unchanged', is_correct: false, explanation: 'Only true if Vt were dropping in compensation; it isn\'t.' },
+        { label: 'MVe oscillates', is_correct: false, explanation: 'Not unstable — predictably higher.' },
       ],
     },
     {
       id: 'M3-Q3',
-      prompt: 'The driving pressure (Pplat − PEEP) is most directly an index of:',
+      prompt: 'You raise PEEP from 5 to 10. PIP was 22. The expected new PIP is approximately:',
       options: [
-        { label: 'Resistance', is_correct: false, explanation: 'Resistance is PIP − Pplat.' },
-        { label: "Compliance — specifically, the cost of getting your Vt into the patient's lungs", is_correct: true, explanation: 'Amato 2015; book Ch. 8. It "indexes" Vt to the patient\'s actual compliance.' },
-        { label: 'The set rate', is_correct: false, explanation: "Rate doesn't appear." },
-        { label: 'FiO2', is_correct: false, explanation: "Doesn't appear either." },
+        { label: 'About 27', is_correct: true, explanation: 'PEEP raises the floor; PIP rises by roughly the same amount. They\'re additive. Book Ch. 1.' },
+        { label: 'About 17', is_correct: false, explanation: 'PEEP doesn\'t lower PIP — it raises it.' },
+        { label: 'Unchanged at 22', is_correct: false, explanation: 'PEEP and PIP both share the baseline. Raise the baseline; the peak follows.' },
+        { label: 'About 44 (double)', is_correct: false, explanation: 'PEEP is additive, not multiplicative.' },
       ],
     },
     {
       id: 'M3-Q4',
-      prompt: 'Static compliance for a patient on Vt 500, Pplat 25, PEEP 5 is:',
+      prompt: 'You change FiO2 from 40% to 60%. The pressure and flow waveforms are:',
       options: [
-        { label: '20 mL/cmH2O', is_correct: false, explanation: "That's 500/25 — used PIP, not (Pplat − PEEP)." },
-        { label: '25 mL/cmH2O', is_correct: true, explanation: 'Vt / (Pplat − PEEP) = 500 / (25 − 5) = 500/20 = 25.' },
-        { label: '100 mL/cmH2O', is_correct: false, explanation: 'Normal off the vent, not this patient.' },
-        { label: 'Cannot calculate without PIP', is_correct: false, explanation: 'Static compliance uses Pplat by design — PIP is for *dynamic* compliance.' },
+        { label: 'Unchanged', is_correct: true, explanation: 'FiO2 changes the gas mixture the vent delivers — not the volume or pressure profile of each breath. The waveform is identical.' },
+        { label: 'Higher in amplitude', is_correct: false, explanation: 'Waveform amplitude is set by Vt and compliance, not FiO2.' },
+        { label: 'Lower in amplitude', is_correct: false, explanation: 'Same reason — FiO2 is independent of the pressure curve.' },
+        { label: 'Inverted', is_correct: false, explanation: 'Nothing about FiO2 inverts the waveform.' },
       ],
     },
     {
       id: 'M3-Q5',
-      prompt: 'Owens\'s bedside test for "is this a resistance problem or a lung problem?" is:',
+      prompt: 'PIP just jumped from 22 to 32 while everything else stayed the same. Of the four basic controls, the most likely one you just changed is:',
       options: [
-        { label: 'Get an arterial blood gas', is_correct: false, explanation: "Doesn't distinguish these." },
-        { label: 'Perform an inspiratory hold and look at the peak-plateau gap', is_correct: true, explanation: 'Book Ch. 2. Gap > 5 → resistance. Gap normal → lung.' },
-        { label: 'Disconnect the patient from the vent', is_correct: false, explanation: "That's a different test (DOPE)." },
-        { label: 'Raise the PEEP', is_correct: false, explanation: "Doesn't help diagnostically." },
+        { label: 'FiO2 (you raised it)', is_correct: false, explanation: 'FiO2 doesn\'t move PIP at all.' },
+        { label: 'Vt (you raised it) — or PEEP (you raised it)', is_correct: true, explanation: 'Both move PIP in the same direction. Vt scales it; PEEP adds to it. Look at Vte and total PEEP to tell which one.' },
+        { label: 'Rate (you lowered it)', is_correct: false, explanation: 'Rate changes MVe and I:E — not PIP per breath at a fixed Vt.' },
+        { label: 'None of the above could do this', is_correct: false, explanation: 'Vt or PEEP could do it cleanly.' },
       ],
     },
   ],
 
   explore_card: {
     patient_context:
-      "Same stable patient. You're going to perturb him three ways and watch the equation work. None of these are dangerous in the sim; the point is the *shape* of the response.",
+      "Stable patient, healthy lungs, on routine volume-control settings. There's no clinical fire here — your job is just to explore which knob talks to which readout. The compliance and resistance are locked; everything else is yours to move.",
     unlocked_controls_description: [
-      { name: 'Compliance · 20–80', description: 'how stiff or compliant the respiratory system is.' },
-      { name: 'Resistance · 5–35', description: 'how much the airways and tube oppose flow.' },
-      { name: 'I-time · 0.5–1.5', description: 'how long inspiration takes. Shorter Ti = higher peak flow.' },
+      { name: 'Tidal volume (set Vt) · 350–600 mL', description: 'volume per breath. Move it; watch PIP and Vte respond.' },
+      { name: 'Rate · 8–24 breaths/min', description: 'breaths per minute. Move it; watch MVe and I:E respond.' },
+      { name: 'PEEP · 0–18 cmH2O', description: 'end-expiratory floor. Move it; watch PIP rise in parallel.' },
+      { name: 'FiO2 · 21–100%', description: 'fraction of inspired oxygen. Move it; watch nothing else change.' },
     ],
     readouts_description: [
-      { name: 'PIP, Pplat, gap (PIP − Pplat)', description: 'the three numbers you need to read the equation.' },
+      { name: 'PIP, Pplat, Vte', description: 'the per-breath pressure and volume readings.' },
+      { name: 'MVe, actual rate, I:E', description: 'the per-minute and breath-timing readings.' },
+      { name: 'Total PEEP', description: 'the measured floor — should equal set PEEP unless there\'s auto-PEEP.' },
     ],
     suggestions: [
-      'Drop compliance from 50 to 25. PIP and Pplat both rise about the same amount. Gap unchanged.',
-      'Raise resistance from 10 to 25. PIP shoots up; Pplat barely moves. Gap widens.',
-      'Shorten I-time from 1.0 to 0.5. PIP rises, Pplat unchanged. Gap widens — because faster flow means more resistance contribution.',
-      'Combine: drop compliance AND raise resistance. Both pressures rise, AND the gap widens. Two stories — treat them differently.',
+      'Try raising Vt from 400 to 550 in two clicks. Watch PIP. Watch Vte.',
+      "Try cutting the rate from 12 to 8. Minute ventilation drops. The I:E ratio loosens because there's more time between breaths.",
+      'Try raising PEEP from 5 to 12. PIP rises by about 7. Total PEEP rises with it.',
+      "Try changing FiO2. Nothing on the waveform moves. That's the point.",
     ],
   },
 
   user_facing_task:
-    "Make three changes to this patient — one to compliance, one to resistance, one to I-time. After each, you'll be asked what happened to the peak-plateau gap. The sim resets between changes so each is a clean experiment.",
-  success_criteria_display: [
-    'Drop compliance by 30% — explain the effect on the gap.',
-    'Raise resistance by 80% — explain the effect on the gap.',
-    'Shorten I-time to ≤ 0.7 s — explain the effect on the gap.',
-  ],
+    "Four basic adjustments, one at a time. After each change, you'll see exactly what happened on the screen and click Next to go to the next adjustment.",
+  // success_criteria_display intentionally omitted — the sequential UI
+  // surfaces ONE step at a time. The full list isn't shown.
   task_framing_style: 'A',
 
   key_points: [
-    'P = V/C + R·flow + PEEP. Three independent terms.',
-    'Compliance ↓ → PIP and Pplat both rise. Gap unchanged.',
-    'Resistance ↑ → PIP rises *more than* Pplat. Gap widens.',
-    'Flow ↑ (shorter Ti) → PIP rises; Pplat doesn\'t. Gap widens.',
-    'Driving pressure = Pplat − PEEP. The lung-protective ceiling is 15.',
+    'Vt and PIP travel together — bigger breath, higher peak.',
+    'Rate and MVe travel together — more breaths, more minute ventilation.',
+    'PEEP raises the floor AND the peak — they\'re additive.',
+    'FiO2 is an independent lever — it changes gas concentration, not pressure or volume.',
+    'Read every change you make. The readout that changes is the one your knob talks to.',
   ],
 };

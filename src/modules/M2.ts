@@ -223,25 +223,30 @@ export const M2: ModuleConfig = {
     tier3: { hint_text: 'Use "Show me" to auto-fill the next correct click with its explanation.' },
   },
 
+  // C3: M2 summative refocused on terminology — "what is each term?" —
+  // not physiology. The two compliance questions belong in M4/M5
+  // (Physiology track) and have been pulled. New Q1/Q2/Q5 cover minute
+  // ventilation, PEEP, and PIP as definitions. Q3 (set vs actual rate)
+  // and Q4 (MVe formula) survive — they're on-topic for vocabulary.
   summative_quiz: [
     {
       id: 'M2-Q1',
-      prompt: 'Static compliance of the respiratory system is calculated at the bedside as:',
+      prompt: 'Minute ventilation (MVe) is best defined as:',
       options: [
-        { label: 'Vt ÷ (PIP − PEEP)', is_correct: false, explanation: "That's *dynamic* compliance — uses PIP and includes resistance." },
-        { label: 'Vt ÷ (Pplat − PEEP)', is_correct: true, explanation: 'Uses Pplat — flow has stopped, so resistance is out of the equation.' },
-        { label: 'PIP × rate', is_correct: false, explanation: 'Means nothing physiologically.' },
-        { label: 'Pplat × Vte', is_correct: false, explanation: 'Wrong shape.' },
+        { label: 'The total volume of air moved in and out of the lungs per minute.', is_correct: true, explanation: 'Specifically: Vte × measured rate. The "amount of air per minute" — what determines CO2 clearance. Book Ch. 1.' },
+        { label: 'The pressure required to deliver one breath.', is_correct: false, explanation: "That's driving pressure, not a volume." },
+        { label: 'The volume of one tidal breath.', is_correct: false, explanation: "That's tidal volume (Vt). MVe is volume PER MINUTE, not per breath." },
+        { label: 'The oxygen concentration delivered to the patient.', is_correct: false, explanation: "That's FiO2 — gas composition, not air volume." },
       ],
     },
     {
       id: 'M2-Q2',
-      prompt: 'Normal respiratory system compliance for a ventilated adult is around:',
+      prompt: 'PEEP refers to:',
       options: [
-        { label: '25 mL/cmH2O', is_correct: false, explanation: "That's moderate-severe ARDS." },
-        { label: '70–80 mL/cmH2O', is_correct: true, explanation: 'Owens, Commandment I. Healthy people off the vent are closer to 100.' },
-        { label: '200 mL/cmH2O', is_correct: false, explanation: "That's lung-alone or chest-wall-alone in normals — the two in parallel give ~100." },
-        { label: 'There is no normal — it depends entirely on body weight.', is_correct: false, explanation: 'PBW matters, but the ballpark is well-known.' },
+        { label: 'The peak pressure measured during inspiration.', is_correct: false, explanation: "That's PIP — peak inspiratory pressure. PEEP is end-EXPIRATORY pressure." },
+        { label: 'The pressure floor held at end-expiration — set by the clinician.', is_correct: true, explanation: 'Positive end-expiratory pressure. Keeps alveoli open between breaths. Book Ch. 1, Ch. 12.' },
+        { label: 'The patient\'s own respiratory effort.', is_correct: false, explanation: "Patient effort is captured by trigger and spontaneous rate, not PEEP." },
+        { label: 'The volume delivered each breath.', is_correct: false, explanation: "That's tidal volume." },
       ],
     },
     {
@@ -266,12 +271,12 @@ export const M2: ModuleConfig = {
     },
     {
       id: 'M2-Q5',
-      prompt: 'I:E ratio 1:5 on a patient with COPD means:',
+      prompt: 'PIP (peak inspiratory pressure) is best described as:',
       options: [
-        { label: 'The expiratory time is very long — good for letting trapped air escape.', is_correct: true, explanation: 'Long Te is the whole point of obstructive-disease ventilation (book Ch. 1, Ch. 15).' },
-        { label: 'The patient is hyperventilating.', is_correct: false, explanation: "I:E ratio isn't about minute ventilation." },
-        { label: 'The PEEP needs to be raised.', is_correct: false, explanation: "Doesn't follow from the ratio." },
-        { label: 'The inspiratory time is dangerously short.', is_correct: false, explanation: 'Short Ti is intentional here — gives exhalation room.' },
+        { label: 'The highest pressure measured in the airway during a delivered breath.', is_correct: true, explanation: 'You read PIP; you do not set it. It rises with higher Vt, lower compliance, or higher resistance. Book Ch. 1, Ch. 2.' },
+        { label: 'The pressure ordered by the clinician.', is_correct: false, explanation: 'You order Vt or PINSP — not PIP. PIP is a measurement the vent reports each breath.' },
+        { label: 'The pressure at the end of inspiration once flow has stopped.', is_correct: false, explanation: "That's PLATEAU pressure (Pplat) — measured during an inspiratory hold, no flow." },
+        { label: 'The end-expiratory baseline pressure.', is_correct: false, explanation: "That's PEEP — the bottom of the breath, not the top." },
       ],
     },
   ],

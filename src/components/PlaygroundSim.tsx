@@ -3,6 +3,7 @@ import {
   Activity, User, Pause, Play, X, Plus, Minus, BookOpen, Lock,
 } from 'lucide-react';
 import AlertContainer from './AlertContainer';
+import { READOUT_DESC, CONTROL_DESC } from '../shell/glossary';
 import { DEFAULT_PATIENT, DEFAULT_SETTINGS, P_ATM, P_H2O, R_QUOTIENT, HUFNER_NUMBER, O2_PLASMA_SOLUBILITY } from '../sim/constants';
 import type { ScenarioHarness } from '../harness/ScenarioHarness';
 import type { ControlName, SimPreset } from '../shell/types';
@@ -144,6 +145,11 @@ const NumericCard = ({
   /** B1: brief sky-blue halo to highlight which numbers a just-changed
    *  control actually affects. Auto-cleared by the parent. */
   flash = false,
+  /** A5: optional hover-tooltip from the glossary. The parent passes the
+   *  description string for this readout; we attach as a native `title`
+   *  so it renders without extra UI machinery. Suppressed during click-
+   *  target mode (parent decides whether to pass it). */
+  tooltip,
 }: any) => {
   const flashCls = flash
     ? 'bg-sky-50 border-sky-400 ring-2 ring-sky-300/70 shadow-md'
@@ -154,6 +160,7 @@ const NumericCard = ({
       <button
         type="button"
         onClick={onClick}
+        title={tooltip}
         className={`${baseCls} text-left cursor-pointer hover:bg-zinc-50 hover:border-zinc-300`}
       >
         <div className="flex justify-between leading-none">
@@ -170,7 +177,7 @@ const NumericCard = ({
     );
   }
   return (
-    <div className={baseCls}>
+    <div className={baseCls} title={tooltip}>
       <div className="flex justify-between leading-none">
         <span className="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">{label}</span>
         {sub && <span className="text-[8px] font-bold text-zinc-400">{sub}</span>}
@@ -192,6 +199,9 @@ const ControlBox = ({
    *  unambiguous. Visual appearance is identical to a normal control so the
    *  answer isn't given away. */
   onRecognitionClick,
+  /** A5: hover-tooltip from the glossary. Suppressed when the parent is
+   *  in click-target recognition mode to avoid revealing the answer. */
+  tooltip,
 }: any) => {
   const timerRef = useRef<any>(null);
   const intervalRef = useRef<any>(null);
@@ -216,7 +226,8 @@ const ControlBox = ({
   if (onRecognitionClick) {
     // Click-target mode: the WHOLE box is a button. No visual cue — the
     // learner shouldn't be able to spot the candidates by looking. Stepper
-    // +/− are visible but inert so the click is unambiguous.
+    // +/− are visible but inert so the click is unambiguous. Tooltip is
+    // intentionally NOT applied in click-target mode (would reveal answer).
     return (
       <button
         type="button"
@@ -240,7 +251,7 @@ const ControlBox = ({
     );
   }
   return (
-    <div className={`flex flex-col gap-0.5 ${className}`}>
+    <div className={`flex flex-col gap-0.5 ${className}`} title={tooltip}>
       <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider text-center">{label}</span>
       <div className="flex items-center bg-zinc-100 border border-zinc-300 rounded-lg p-0.5 shadow-inner hover:border-sky-300 transition-all">
         <div className="flex-1 text-center px-1">
@@ -374,8 +385,11 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   // Shorthand for NumericCard call sites. Returns `onClick` for any readout
   // (clickable) when click-mode is on, looking up the configured target for
   // proper labelling. Unmapped tiles still fire with their on-screen label.
+  // A5: also returns a glossary `tooltip` string — suppressed when in
+  // click-target recognition mode so the answer isn't revealed.
   const recogPropsForReadout = (name: string, fallbackLabel: string) => {
-    if (!recognitionClickMode) return {};
+    const tooltip = recognitionClickMode ? undefined : READOUT_DESC[name];
+    if (!recognitionClickMode) return { tooltip };
     const hit = recognitionMap.get(`readout:${name}`);
     return {
       onClick: () => onRecognitionElementClick?.(
@@ -386,7 +400,8 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     };
   };
   const recogPropsForControl = (name: string, fallbackLabel: string) => {
-    if (!recognitionClickMode) return {};
+    const tooltip = recognitionClickMode ? undefined : CONTROL_DESC[name];
+    if (!recognitionClickMode) return { tooltip };
     const hit = recognitionMap.get(`control:${name}`);
     return {
       onRecognitionClick: () => onRecognitionElementClick?.(

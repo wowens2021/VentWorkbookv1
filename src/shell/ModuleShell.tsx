@@ -33,7 +33,8 @@ interface Props {
 
 // Score math moved to ./scoring.ts per MASTER_SHELL_v3 §9 — a pure module
 // is testable and prevents anti-pattern A10 (drift between debrief renders).
-import { computeTotalScore } from './scoring';
+import { computeTotalScore, isPassing, PASSING_THRESHOLD } from './scoring';
+import { READOUT_DESC, CONTROL_DESC } from './glossary';
 
 /**
  * C1: small RAF-driven count-up hook so the debrief score animates from 0
@@ -153,6 +154,47 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     persistProgress({ module_id: module.id, started_at: prior?.started_at ?? new Date().toISOString() });
   }, [module.id]);
 
+  // ── Active engagement timer (A1) ──
+  // Accumulates only while the tab is visible, the learner is mid-module,
+  // and they haven't gone idle for > 5 min. Replaces the prior naïve
+  // `objective_satisfied_at − task_started_at` which spanned days across
+  // sessions and produced "1506 min" debrief readings.
+  const IDLE_THRESHOLD_MS = 5 * 60 * 1000;
+  const lastActiveMsRef = useRef(Date.now());
+  const accumulatedSecRef = useRef(prior?.time_active_sec ?? 0);
+  useEffect(() => {
+    // Tick every 5 s; only add the interval if the tab is visible and the
+    // last user-action was < IDLE_THRESHOLD_MS ago.
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      const sinceLast = Date.now() - lastActiveMsRef.current;
+      if (sinceLast > IDLE_THRESHOLD_MS) return;
+      accumulatedSecRef.current += 5;
+    }, 5000);
+    return () => clearInterval(id);
+  }, [module.id]);
+  // Flush on every persistProgress call by wrapping it. We expose a helper
+  // that other code paths use rather than calling the underlying persist
+  // directly with time.
+  const flushActiveTime = () => {
+    persistProgress({
+      module_id: module.id,
+      time_active_sec: accumulatedSecRef.current,
+      last_active_at: new Date().toISOString(),
+    });
+  };
+  // Flush on tab unload + on phase change so the persisted value is fresh.
+  useEffect(() => {
+    const beforeunload = () => flushActiveTime();
+    window.addEventListener('beforeunload', beforeunload);
+    return () => {
+      flushActiveTime();
+      window.removeEventListener('beforeunload', beforeunload);
+    };
+  }, [module.id]);
+  // Bump `lastActiveMsRef` on any interaction the learner takes.
+  const markActive = () => { lastActiveMsRef.current = Date.now(); };
+
   // ── One-time intro briefing splash ──
   // Shown when the learner first enters the module, before any phase starts.
   // Acknowledgment is persisted so resuming or navigating back doesn't show
@@ -242,6 +284,12 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
   const [now, setNow] = useState(Date.now());
   const idleMs = now - lastInteractMs;
 
+  // A1: every interaction also bumps the active-time idle gate so the
+  // engagement-second accumulator keeps running.
+  useEffect(() => {
+    lastActiveMsRef.current = lastInteractMs;
+  }, [lastInteractMs]);
+
   useEffect(() => {
     if (phase !== 'try-it' || objectiveSatisfied) return;
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -264,6 +312,43 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     const id = setTimeout(() => setStepToast(null), 3000);
     return () => clearTimeout(id);
   }, [stepToast]);
+
+  /**
+   * A6: sequential-mode state. When a module's hidden_objective has
+   * `present_one_at_a_time` set, the TaskCard shows ONE step at a time
+   * with an observation block + "Next →" between steps. The tracker
+   * is held at the just-completed step until the learner advances.
+   *
+   * `seqAdvancedThrough` is the highest step index the learner has
+   * clicked "Next" past (-1 before any advance). The currently
+   * highlighted step is `seqAdvancedThrough + 1`.
+   *
+   * When the FINAL step fires, the compound's onSatisfied would
+   * normally fire setObjectiveSatisfied(true) immediately, jumping the
+   * learner straight to the "Task complete" screen without seeing the
+   * final observation. We defer that via `seqPendingFinish` and let
+   * the final "Finish →" click do the transition.
+   */
+  const sequentialMode =
+    module.hidden_objective?.kind === 'compound' &&
+    (module.hidden_objective as any).present_one_at_a_time === true;
+  const sequentialObservations: string[] =
+    sequentialMode
+      ? ((module.hidden_objective as any).observations as string[] | undefined) ?? []
+      : [];
+  const sequentialTotal =
+    sequentialMode && module.hidden_objective?.kind === 'compound'
+      ? module.hidden_objective.children.length
+      : 0;
+  const [seqAdvancedThrough, setSeqAdvancedThrough] = useState(-1);
+  const seqPendingFinishRef = useRef(false);
+  // Reset the cursor when the phase re-enters try-it.
+  useEffect(() => {
+    if (phase === 'try-it' && sequentialMode) {
+      setSeqAdvancedThrough(-1);
+      seqPendingFinishRef.current = false;
+    }
+  }, [phase, sequentialMode]);
 
   // (Phase hero banner removed — was too intrusive. The slide-in
   // animation on workbookContent already conveys motion. The
@@ -417,7 +502,14 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     };
 
     tracker.start(ctx, () => {
-      setObjectiveSatisfied(true);
+      // A6: in sequential mode, hold off the objectiveSatisfied transition
+      // until the learner clicks the final "Finish →" — otherwise they'd
+      // skip the observation prose for the last step.
+      if (sequentialMode) {
+        seqPendingFinishRef.current = true;
+      } else {
+        setObjectiveSatisfied(true);
+      }
       // The whole compound is done — clear both the recognition question
       // banner (driven by activePrompt) and any in-flight click-feedback
       // popup so neither lingers into the debrief phase.
@@ -635,18 +727,28 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
   };
 
   const advanceFromDebrief = (score: number, answers: any[]) => {
-    // Compute the composite total score and persist alongside the quiz result.
-    const cyAnswers =
+    // A2: best-attempt-wins. Re-read the latest persisted record (so a
+    // retake doesn't lose earlier check-yourself answers) and only commit
+    // the new quiz_score / answers if it BEATS the prior best.
+    const latest = loadProgress(module.id);
+    const priorBest = latest?.quiz_best_score ?? latest?.quiz_score;
+    const isImprovement = priorBest === undefined || score > priorBest;
+    const bestScore = isImprovement ? score : priorBest!;
+    const bestAnswers = isImprovement ? answers : (latest?.quiz_answers ?? answers);
+
+    const cyAnswers: { question_id: string; selected_label: string; is_correct: boolean }[] =
       Array.from(checkYourselfAnswersRef.current.values()).length > 0
         ? Array.from(checkYourselfAnswersRef.current.values())
-        : prior?.check_yourself_answers ?? [];
+        : latest?.check_yourself_answers ?? [];
     const merged = {
-      primer_score: prior?.primer_score,
+      primer_score: latest?.primer_score,
       primer_total: module.primer_questions.length,
-      quiz_score: score,
+      // Score the BEST attempt against the rest of the formula so a retake
+      // with a higher quiz raises the total too.
+      quiz_score: bestScore,
       quiz_total: module.summative_quiz.length,
-      hint_tiers_triggered: prior?.hint_tiers_triggered ?? 0,
-      reset_to_start_clicks: prior?.reset_to_start_clicks ?? resetClicksRef.current,
+      hint_tiers_triggered: latest?.hint_tiers_triggered ?? 0,
+      reset_to_start_clicks: latest?.reset_to_start_clicks ?? resetClicksRef.current,
       check_yourself_correct: cyAnswers.filter(a => a.is_correct).length,
       check_yourself_total: formativeBlocks.length,
     };
@@ -654,12 +756,46 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     persistProgress({
       module_id: module.id,
       quiz_submitted_at: new Date().toISOString(),
-      quiz_score: score,
-      quiz_answers: answers,
+      quiz_score: bestScore,
+      quiz_best_score: bestScore,
+      quiz_attempts: (latest?.quiz_attempts ?? 0) + 1,
+      quiz_answers: bestAnswers,
       total_score_percent: total.percent,
       total_score_letter: total.letter,
     });
     setQuizSubmitted(true);
+  };
+
+  /**
+   * A2: "Retake the module" CTA, shown when the learner scored below the
+   * passing threshold on the debrief. Clears the summative + primer state
+   * so the learner runs the assessment portions again, but PRESERVES
+   * exploration, objective, and check-yourself progress so they don't
+   * have to redo the live-sim task. Best-attempt-wins is enforced in
+   * advanceFromDebrief above — if the retake is lower, the prior score
+   * stays put.
+   */
+  const handleRetake = () => {
+    // Wipe the summative + primer phase markers but keep task/objective/CY.
+    const latest = loadProgress(module.id);
+    persistProgress({
+      module_id: module.id,
+      // Force the learner back through the primer + summative; KEEP the
+      // best-score history so the gate respects best-attempt-wins.
+      primer_completed_at: undefined as any,
+      primer_score: undefined as any,
+      primer_answers: undefined as any,
+      quiz_submitted_at: undefined as any,
+      // quiz_best_score and quiz_attempts intentionally retained.
+      total_score_percent: undefined as any,
+      total_score_letter: undefined as any,
+    });
+    setQuizSubmitted(false);
+    // Send the learner back to the primer; the new primer attempt is
+    // graded fresh and its score is what feeds the next computeTotalScore.
+    setPhase('primer');
+    void latest;
+    flashHero('primer');
   };
 
   /**
@@ -782,6 +918,32 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
               onRedo={onRedoTask}
               outcomeProgress={outcomeProgress}
               activeDirection={activePrompt?.question}
+              sequential={
+                sequentialMode
+                  ? {
+                      activeIndex: Math.min(seqAdvancedThrough + 1, sequentialTotal - 1),
+                      totalSteps: sequentialTotal,
+                      observation:
+                        childStates[seqAdvancedThrough + 1]
+                          ? sequentialObservations[seqAdvancedThrough + 1] ?? null
+                          : null,
+                      onAdvanceStep: () => {
+                        const justFinished = seqAdvancedThrough + 1;
+                        // Bump cursor.
+                        setSeqAdvancedThrough(justFinished);
+                        // If that was the final step, fire the completion now.
+                        if (justFinished >= sequentialTotal - 1 && seqPendingFinishRef.current) {
+                          seqPendingFinishRef.current = false;
+                          setObjectiveSatisfied(true);
+                          persistProgress({
+                            module_id: module.id,
+                            objective_satisfied_at: new Date().toISOString(),
+                          });
+                        }
+                      },
+                    }
+                  : undefined
+              }
             />
           </div>
         </div>
@@ -911,12 +1073,12 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                 const taskSec = rec?.time_to_objective_sec;
                 const fmtSec = (s?: number) =>
                   s === undefined ? '—' : s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
-                // Total session time from started_at → quiz_submitted_at if both present.
-                const totalSec = rec?.started_at && rec?.quiz_submitted_at
-                  ? Math.max(0, Math.round(
-                      (new Date(rec.quiz_submitted_at).getTime() - new Date(rec.started_at).getTime()) / 1000
-                    ))
-                  : undefined;
+                // A1: total module time is now ACTIVE engagement seconds —
+                // accumulated only while the tab is visible and the learner
+                // is not idle. Replaces the prior wall-clock between started_at
+                // and quiz_submitted_at, which could span days across sessions
+                // (the "1506 min" bug).
+                const totalSec = rec?.time_active_sec ?? accumulatedSecRef.current;
                 return (
                   <div className="bg-white border border-stone-200 rounded-xl p-5 mb-5">
                     <div className="flex items-baseline justify-between mb-1">
@@ -938,22 +1100,26 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                     </div>
 
                     {/* Component breakdown — each row shows the detail, the
-                        points earned, the max points, and a progress bar. */}
+                        points earned, the max points, and a progress bar.
+                        (?) tooltips explain the bonus categories that
+                        previously read as opaque ("Reset Usage Bonus"). */}
                     <div className="space-y-3">
                       <BreakdownRow
-                        label="Primer questions"
+                        label="Primer"
                         detail={`${primerScore} of ${primerTotal} correct`}
                         points={bd.primerPts}
                         max={30}
+                        help="Three multiple-choice questions before the read phase. Each is worth 10 points."
                       />
                       <BreakdownRow
                         label="Knowledge check"
                         detail={`${quizScore} of ${quizTotal} correct`}
                         points={bd.quizPts}
                         max={50}
+                        help="The summative quiz at the end of the module. Each question is worth 10 points."
                       />
                       <BreakdownRow
-                        label="Hint usage bonus"
+                        label="Stayed independent"
                         detail={
                           hintTiers === 0 ? 'No hints engaged — full bonus'
                           : hintTiers === 1 ? 'One tier of hints engaged — partial bonus'
@@ -961,9 +1127,10 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                         }
                         points={bd.hintBonus}
                         max={10}
+                        help="Bonus for completing the task without opening the hint ladder. Full 10 points for zero hints, partial for one tier, none beyond that."
                       />
                       <BreakdownRow
-                        label="Reset usage bonus"
+                        label="Stayed on task"
                         detail={
                           resets === 0 ? 'No resets — full bonus'
                           : resets === 1 ? 'One reset — partial bonus'
@@ -971,13 +1138,15 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                         }
                         points={bd.resetBonus}
                         max={10}
+                        help='Bonus for completing the task without clicking "Reset to start." Full 10 points for zero resets, partial for one, none beyond that.'
                       />
                       {cyTotal > 0 && (
                         <BreakdownRow
-                          label="Check yourself bonus"
+                          label="Self-check questions"
                           detail={`${cyCorrect} of ${cyTotal} correct between the read and the sim`}
                           points={bd.checkYourselfBonus}
                           max={5}
+                          help="Inline formative questions that appear in the middle of the read phase. Up to 5 bonus points (1 per correct answer, scaled)."
                         />
                       )}
                     </div>
@@ -1011,51 +1180,79 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
 
               <ReviewCard keyPoints={module.key_points} />
 
-              {/* C3 + C4: reordered actions — Next module is the primary
-                  forward path, "Up next" microcopy below sets expectations,
-                  Return home is a tertiary text link, Restart is buried in a
-                  small secondary affordance below. */}
+              {/* A2: pass / retake gate at 80%. Below threshold the
+                  primary action becomes "Retake the module" and the
+                  forward path demotes to a text link — no hard lockout. */}
               <div className="mt-5">
-                {/* C4: "Up next" one-liner above the primary button. */}
-                {onNext && nextModule && (
+                {/* Pass-state banner */}
+                {!isPassing(total.percent) && (
+                  <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+                    <div className="text-[11px] font-black uppercase tracking-widest text-amber-700 mb-1">
+                      Below passing
+                    </div>
+                    <p className="text-[13px] text-amber-900 leading-snug">
+                      A score of {PASSING_THRESHOLD}% is the bar for this module. You scored {total.percent}%. Retake to lock in a better score — best attempt wins. You can move on without retaking, but the next module is easier with this one solid.
+                    </p>
+                  </div>
+                )}
+
+                {/* "Up next" micro-line — only when passing AND there's a next */}
+                {isPassing(total.percent) && onNext && nextModule && (
                   <div className="mb-2 text-[12px] text-zinc-600">
                     <span className="font-bold text-zinc-500 uppercase tracking-wider text-[10px] mr-1.5">Up next ·</span>
                     <span className="font-bold text-zinc-800">{nextModule.id} — {nextModule.title}</span>
                     <span className="text-zinc-400"> · {nextModule.estimated_minutes} min</span>
                   </div>
                 )}
-                {!onNext && (
+                {isPassing(total.percent) && !onNext && (
                   <div className="mb-2 text-[12px] text-zinc-600 italic">
                     You've reached the end of the track. Pick another module from the home page.
                   </div>
                 )}
 
-                {/* C3: primary Next-module CTA in track color. */}
-                {onNext ? (
+                {/* Primary CTA — Retake (below threshold) or Continue (passing). */}
+                {!isPassing(total.percent) ? (
+                  <button
+                    onClick={handleRetake}
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-3 bg-brand-olive hover:bg-brand-olive-hover text-white rounded-lg text-[14px] font-bold transition shadow-sm"
+                  >
+                    <RotateCcw size={14} /> Retake the module
+                  </button>
+                ) : onNext ? (
                   <button
                     onClick={onNext}
-                    className={`w-full flex items-center justify-center gap-1.5 px-4 py-3 ${trackTone(module.track).bg} ${trackTone(module.track).bgHover} ${trackTone(module.track).fgOnSolid} rounded-lg text-[14px] font-bold transition shadow-sm`}
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-3 bg-brand-olive hover:bg-brand-olive-hover text-white rounded-lg text-[14px] font-bold transition shadow-sm"
                   >
                     Continue to {nextModule?.id ?? 'the next module'} <ChevronRight size={14} />
                   </button>
                 ) : (
                   <button
                     onClick={() => (onHome ?? onBack)()}
-                    className={`w-full flex items-center justify-center gap-1.5 px-4 py-3 ${trackTone(module.track).bg} ${trackTone(module.track).bgHover} ${trackTone(module.track).fgOnSolid} rounded-lg text-[14px] font-bold transition shadow-sm`}
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-3 bg-brand-olive hover:bg-brand-olive-hover text-white rounded-lg text-[14px] font-bold transition shadow-sm"
                   >
                     <Home size={14} /> Return home
                   </button>
                 )}
 
-                {/* Tertiary row: Return home (text link) + buried Restart. */}
+                {/* Tertiary row. Below-threshold: a secondary "Move on anyway"
+                    link plus the Restart link; passing: Return home + Restart. */}
                 <div className="mt-3 flex items-center justify-between text-[12px]">
-                  {onNext && (
+                  {!isPassing(total.percent) && onNext ? (
                     <button
-                      onClick={() => (onHome ?? onBack)()}
+                      onClick={onNext}
                       className="flex items-center gap-1 text-zinc-500 hover:text-zinc-800 font-bold transition"
                     >
-                      <Home size={12} /> Return home
+                      Move on anyway → {nextModule?.id}
                     </button>
+                  ) : (
+                    onNext && (
+                      <button
+                        onClick={() => (onHome ?? onBack)()}
+                        className="flex items-center gap-1 text-zinc-500 hover:text-zinc-800 font-bold transition"
+                      >
+                        <Home size={12} /> Return home
+                      </button>
+                    )
                   )}
                   <button
                     onClick={handleRestart}
@@ -1081,28 +1278,8 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
    * popup. Keeps the schema lean — module configs only need to spell out
    * targets they want a *specific* explanation for.
    */
-  const READOUT_DESC: Record<string, string> = {
-    pip: 'peak inspiratory pressure (cmH2O)',
-    plat: 'plateau pressure (cmH2O)',
-    drivingPressure: 'driving pressure (cmH2O)',
-    mve: 'minute ventilation (L/min)',
-    vte: 'expired tidal volume per breath (mL)',
-    totalPeep: 'total PEEP (cmH2O)',
-    autoPeep: 'auto-PEEP / air trapping (cmH2O)',
-    actualRate: 'the measured respiratory rate (bpm)',
-    ieRatio: 'the inspiration : expiration ratio',
-    rsbi: 'rapid shallow breathing index',
-  };
-  const CONTROL_DESC: Record<string, string> = {
-    respiratoryRate: 'the set respiratory rate (bpm)',
-    tidalVolume: 'the set tidal volume (mL)',
-    pInsp: 'the set inspiratory pressure (cmH2O)',
-    psLevel: 'the pressure-support level (cmH2O)',
-    iTime: 'the set inspiratory time (sec)',
-    peep: 'the set PEEP (cmH2O)',
-    fiO2: 'the set FiO2 (%)',
-    endInspiratoryPercent: 'the expiratory-trigger threshold (%)',
-  };
+  // A5: lookups extracted to ./glossary so the sim's hover tooltips and
+  // the wrong-click feedback path share a single source.
 
   /**
    * Click handler for recognition click-target mode.
@@ -1387,7 +1564,11 @@ const BreakdownRow: React.FC<{
   detail: string;
   points: number;
   max: number;
-}> = ({ label, detail, points, max }) => {
+  /** A3: optional plain-English explanation of what this row rewards. Shown
+   *  in the browser-native tooltip on the (?) icon so the learner can see
+   *  *why* points exist for it (e.g. "stayed on task without resetting"). */
+  help?: string;
+}> = ({ label, detail, points, max, help }) => {
   const pct = max > 0 ? Math.max(0, Math.min(100, (points / max) * 100)) : 0;
   const barColor =
     pct >= 90 ? 'bg-emerald-500' :
@@ -1397,7 +1578,17 @@ const BreakdownRow: React.FC<{
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1">
-        <span className="text-[12.5px] font-bold text-zinc-800">{label}</span>
+        <span className="text-[12.5px] font-bold text-zinc-800 flex items-center gap-1.5">
+          {label}
+          {help && (
+            <span
+              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-stone-200 text-stone-600 text-[9px] font-bold cursor-help"
+              title={help}
+            >
+              ?
+            </span>
+          )}
+        </span>
         <span className="text-[12px] font-mono">
           <span className="text-zinc-900 font-bold">{points}</span>
           <span className="text-zinc-400"> / {max} pts</span>
