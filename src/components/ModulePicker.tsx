@@ -20,10 +20,13 @@ const trackToDifficulty: Record<Track, Difficulty> = {
   Synthesis: 'ADVANCED',
 };
 
+// Difficulty pills sit inside the green/cream library palette: olive for
+// "beginner / safe to start," gold for "intermediate," and ink/red for
+// "expert level." All three pair with the cover's racing green.
 const difficultyClasses: Record<Difficulty, string> = {
-  BEGINNER: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  INTERMEDIATE: 'bg-blue-100 text-blue-800 border-blue-200',
-  ADVANCED: 'bg-rose-100 text-rose-800 border-rose-200',
+  BEGINNER: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  INTERMEDIATE: 'bg-amber-50 text-amber-800 border-amber-200',
+  ADVANCED: 'bg-red-50 text-red-900 border-red-200',
 };
 
 type Status = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
@@ -35,9 +38,12 @@ function statusOf(p: ProgressRecord | null): Status {
   return 'NOT_STARTED';
 }
 
+// Status pills: NOT_STARTED stays neutral stone; IN_PROGRESS adopts the
+// brand olive (was amber); COMPLETED keeps emerald to match the brand
+// green family.
 const statusClasses: Record<Status, string> = {
   NOT_STARTED: 'bg-stone-100 text-stone-600 border-stone-200',
-  IN_PROGRESS: 'bg-amber-100 text-amber-800 border-amber-200',
+  IN_PROGRESS: 'bg-brand-olive/10 text-brand-olive border-brand-olive/30',
   COMPLETED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
 };
 
@@ -223,7 +229,7 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                           {complete}/{mods.length}
                         </span>
                         {inProgress > 0 && (
-                          <span className="text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                          <span className="text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-brand-olive/10 text-brand-olive border border-brand-olive/20">
                             {inProgress} in progress
                           </span>
                         )}
@@ -264,7 +270,7 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                         <article
                           key={mod.id}
                           className={`bg-white border rounded-xl px-4 py-3 shadow-sm hover:shadow transition flex items-center gap-3 ${
-                            status === 'IN_PROGRESS' ? 'border-amber-300' : 'border-stone-200 hover:border-stone-300'
+                            status === 'IN_PROGRESS' ? 'border-brand-olive/40' : 'border-stone-200 hover:border-stone-300'
                           }`}
                         >
                           {/* Module id + small pills column */}
@@ -300,9 +306,9 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                           {/* Progress (in-progress only) */}
                           {status === 'IN_PROGRESS' && (
                             <div className="hidden md:flex flex-col items-end shrink-0 w-[70px]">
-                              <span className="font-display text-base font-semibold text-amber-700 leading-none">{pct}%</span>
+                              <span className="font-display text-base font-semibold text-brand-olive leading-none">{pct}%</span>
                               <div className="mt-1 h-1 w-14 bg-stone-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-amber-500" style={{ width: `${pct}%` }} />
+                                <div className="h-full bg-brand-olive" style={{ width: `${pct}%` }} />
                               </div>
                             </div>
                           )}
@@ -316,12 +322,16 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                             <div className="hidden md:block shrink-0 w-[70px]" />
                           )}
 
-                          {/* CTA */}
+                          {/* CTA — Resume keeps an outlined olive treatment so
+                              "in progress" still pops without breaking the
+                              green/cream palette. Start uses the track's
+                              solid colour. Review is an outline in the track
+                              colour. */}
                           <button
                             onClick={() => onPickModule(mod)}
                             className={`shrink-0 px-4 py-2 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition w-[110px] ${
                               status === 'IN_PROGRESS'
-                                ? 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
+                                ? 'bg-brand-olive/10 text-brand-olive border border-brand-olive/40 hover:bg-brand-olive/20'
                                 : status === 'COMPLETED'
                                   ? 'bg-white border hover:bg-stone-50'
                                   : `${tone.bg} ${tone.bgHover} ${tone.fgOnSolid}`

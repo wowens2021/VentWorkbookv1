@@ -1,10 +1,12 @@
 import type { Track } from './types';
 
 /**
- * G2: a small visual identity per track so the learner can see at a glance
- * which curriculum branch they're in. Tailwind utility strings, ready to drop
- * into className expressions. Foundations keeps the brand olive; the other
- * five tracks pick from a complementary spectrum.
+ * Per-track visual identity. Anchored to the book's racing-green palette:
+ * three olive/green variants for the foundational physiology arc, then
+ * three warm complements (gold, rust, slate) for the strategy / clinical
+ * arc. Every option is a Tailwind built-in so chip / hover variants
+ * compose naturally, and every hex is paired with the matching solid for
+ * inline-style use (track header bar, progress strip pills).
  */
 export interface TrackTone {
   /** Solid background for filled chips / primary CTAs. */
@@ -33,57 +35,63 @@ export const TRACK_COLORS: Record<Track, TrackTone> = {
     chipText: 'text-brand-olive',
     fgOnSolid: 'text-white',
     accentText: 'text-brand-olive',
-    hex: '#3d4e2a',
+    hex: '#47713e',
   },
+  // Deep emerald — a darker, library-shelf green that reads as "go deeper."
   Physiology: {
-    bg: 'bg-indigo-600',
-    bgHover: 'hover:bg-indigo-500',
-    chipBg: 'bg-indigo-50',
-    chipBorder: 'border-indigo-200',
-    chipText: 'text-indigo-700',
+    bg: 'bg-emerald-800',
+    bgHover: 'hover:bg-emerald-700',
+    chipBg: 'bg-emerald-50',
+    chipBorder: 'border-emerald-200',
+    chipText: 'text-emerald-900',
     fgOnSolid: 'text-white',
-    accentText: 'text-indigo-700',
-    hex: '#4f46e5',
+    accentText: 'text-emerald-800',
+    hex: '#065f46',
   },
+  // Teal — the green-to-blue hinge. Still in the cool half but distinct.
   Modes: {
-    bg: 'bg-sky-600',
-    bgHover: 'hover:bg-sky-500',
-    chipBg: 'bg-sky-50',
-    chipBorder: 'border-sky-200',
-    chipText: 'text-sky-700',
+    bg: 'bg-teal-700',
+    bgHover: 'hover:bg-teal-600',
+    chipBg: 'bg-teal-50',
+    chipBorder: 'border-teal-200',
+    chipText: 'text-teal-900',
     fgOnSolid: 'text-white',
-    accentText: 'text-sky-700',
-    hex: '#0284c7',
+    accentText: 'text-teal-800',
+    hex: '#0f766e',
   },
+  // Book gold — the warm accent that pairs with racing green on tradition-rich
+  // book covers (Oxford, Penguin Classics). Picks up the cream page background.
   Strategy: {
-    bg: 'bg-amber-600',
-    bgHover: 'hover:bg-amber-500',
+    bg: 'bg-amber-700',
+    bgHover: 'hover:bg-amber-600',
     chipBg: 'bg-amber-50',
     chipBorder: 'border-amber-200',
-    chipText: 'text-amber-800',
+    chipText: 'text-amber-900',
     fgOnSolid: 'text-white',
-    accentText: 'text-amber-700',
-    hex: '#d97706',
+    accentText: 'text-amber-800',
+    hex: '#b45309',
   },
+  // Warm clay/rust — the leather-binding tone. Earthy, distinct from gold.
   Weaning: {
-    bg: 'bg-rose-600',
-    bgHover: 'hover:bg-rose-500',
-    chipBg: 'bg-rose-50',
-    chipBorder: 'border-rose-200',
-    chipText: 'text-rose-700',
+    bg: 'bg-stone-700',
+    bgHover: 'hover:bg-stone-600',
+    chipBg: 'bg-stone-50',
+    chipBorder: 'border-stone-300',
+    chipText: 'text-stone-800',
     fgOnSolid: 'text-white',
-    accentText: 'text-rose-700',
-    hex: '#e11d48',
+    accentText: 'text-stone-700',
+    hex: '#44403c',
   },
+  // Slate — Oxford-library blue-grey for the capstone synthesis track.
   Synthesis: {
-    bg: 'bg-violet-600',
-    bgHover: 'hover:bg-violet-500',
-    chipBg: 'bg-violet-50',
-    chipBorder: 'border-violet-200',
-    chipText: 'text-violet-700',
+    bg: 'bg-slate-700',
+    bgHover: 'hover:bg-slate-600',
+    chipBg: 'bg-slate-50',
+    chipBorder: 'border-slate-200',
+    chipText: 'text-slate-800',
     fgOnSolid: 'text-white',
-    accentText: 'text-violet-700',
-    hex: '#7c3aed',
+    accentText: 'text-slate-700',
+    hex: '#334155',
   },
 };
 

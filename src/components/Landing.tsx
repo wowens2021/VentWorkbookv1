@@ -198,7 +198,7 @@ const ContinueRow: React.FC<{ mod: ModuleConfig; percent: number; onClick: () =>
     className="w-full text-left bg-white border border-stone-200 hover:border-brand-olive rounded-xl px-5 py-3.5 shadow-sm hover:shadow transition flex items-center gap-4"
   >
     <div className="flex items-center gap-2 shrink-0 w-32">
-      <span className="text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+      <span className="text-[9px] font-black uppercase tracking-widest text-brand-olive bg-brand-olive/10 border border-brand-olive/20 px-1.5 py-0.5 rounded">
         In progress
       </span>
     </div>
@@ -211,7 +211,7 @@ const ContinueRow: React.FC<{ mod: ModuleConfig; percent: number; onClick: () =>
     </div>
     <div className="shrink-0 flex items-center gap-1.5 w-24">
       <div className="h-1.5 flex-1 bg-stone-100 rounded-full overflow-hidden">
-        <div className="h-full bg-amber-500" style={{ width: `${percent}%` }} />
+        <div className="h-full bg-brand-olive" style={{ width: `${percent}%` }} />
       </div>
       <span className="text-[11px] font-bold text-stone-700">{percent}%</span>
     </div>
