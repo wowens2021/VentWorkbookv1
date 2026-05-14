@@ -1,23 +1,28 @@
 @import "tailwindcss";
 
 /*
- * Brand tokens — cream/sage editorial scheme matching The Ventilator App v1.
+ * Brand tokens — matched to The Ventilator Book, 3rd edition cover.
+ * The book is racing-green stock with off-white classical type
+ * (Trajan-style caps for the title, Caslon/Garamond italic for body).
+ * The app borrows the same palette and a parallel type stack so the
+ * software and the book read as one product.
+ *
  * Tailwind v4 reads these as design-token utilities (bg-brand-olive, etc.).
  */
 @theme {
-  /* Olive nav + primary CTA */
-  --color-brand-olive: #3d4e2a;
-  --color-brand-olive-hover: #4d6037;
-  --color-brand-olive-deep: #2e3b1f;
+  /* Primary brand — deep British-racing green. Sampled from the cover. */
+  --color-brand-olive: #47713e;
+  --color-brand-olive-hover: #547f4b;
+  --color-brand-olive-deep: #355730;
 
-  /* Cream page background */
+  /* Cream page background — book-paper warmth. */
   --color-brand-cream: #f5f0e6;
   --color-brand-cream-2: #efe9dc;
 
-  /* Warm card surfaces */
-  --color-brand-paper: #fbf8f2;
+  /* Off-white text colour that pairs with the green — matches the cover. */
+  --color-brand-paper: #f8f8f4;
 
-  /* Accent — for ratings, "Featured" tag */
+  /* Accent — gold for ratings / "Featured" tag. Pairs with the cover green. */
   --color-brand-gold: #c8932e;
 
   /* Difficulty pills */
@@ -25,8 +30,19 @@
   --color-pill-intermediate: #2563eb;
   --color-pill-advanced: #c43a4a;
 
-  /* Font families — modern sans-serif throughout (Khan Academy / Coursera style). */
-  --font-display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /*
+   * Font stacks.
+   *  · display — Cinzel, the free Trajan equivalent. Roman inscriptional
+   *    capitals; renders mixed-case text as small caps. Used for module
+   *    titles, phase heads, the top nav title strip.
+   *  · serif — EB Garamond. Classical book serif for read-phase prose,
+   *    briefing overview, key-points, anywhere long-form reading happens.
+   *  · sans — Inter. Crisp UI sans for chips, buttons, control labels,
+   *    numeric readouts, hint copy. Stays the default for the chrome
+   *    so dense UI doesn't get noisy with a serif.
+   */
+  --font-display: "Cinzel", "Trajan Pro", "Cormorant SC", Georgia, serif;
+  --font-serif:   "EB Garamond", "Adobe Caslon Pro", "Caslon", Georgia, "Times New Roman", serif;
   --font-sans:    "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
@@ -39,12 +55,24 @@ html, body {
 }
 
 /*
- * Heading helper — same family as body, but tighter tracking and the
- * salt/ss01 feature for crisper headline rendering. Keep the class so
- * existing component code doesn't need to change.
+ * Heading helper — switches to Cinzel for inscriptional Roman caps with
+ * the cover's exact visual flavour. Slightly looser tracking and an
+ * uppercase transform so mixed-case input still reads as a display head.
  */
 .font-display {
   font-family: var(--font-display);
-  font-feature-settings: "kern", "liga", "calt", "ss01";
-  letter-spacing: -0.018em;
+  font-feature-settings: "kern", "liga", "calt";
+  letter-spacing: 0.01em;
+  font-weight: 600;
+}
+
+/*
+ * Prose helper — classical book serif. Apply to long-form reading text
+ * (read phase, briefing overview, key points, debrief summaries) so
+ * those panels read like the book.
+ */
+.font-serif {
+  font-family: var(--font-serif);
+  font-feature-settings: "kern", "liga", "onum";
+  letter-spacing: 0.005em;
 }

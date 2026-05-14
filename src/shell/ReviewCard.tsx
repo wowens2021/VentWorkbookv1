@@ -21,8 +21,8 @@ const ReviewCard: React.FC<Props> = ({ keyPoints, onReopenReplay }) => {
         <div className="px-4 pb-4">
           <ul className="space-y-2">
             {keyPoints.map((pt, i) => (
-              <li key={i} className="text-[12px] text-zinc-700 leading-relaxed flex items-start gap-2">
-                <span className="text-emerald-600 font-black">•</span>
+              <li key={i} className="font-serif text-[14px] text-zinc-700 leading-relaxed flex items-start gap-2">
+                <span className="text-brand-olive font-black">•</span>
                 <span>{pt}</span>
               </li>
             ))}

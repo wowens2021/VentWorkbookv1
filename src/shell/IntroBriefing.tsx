@@ -80,7 +80,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
                 What's this about
               </span>
             </div>
-            <p className="text-[15px] text-zinc-700 leading-relaxed">{overview}</p>
+            <p className="font-serif text-[16px] text-zinc-700 leading-relaxed">{overview}</p>
           </section>
 
           {/* What you'll do */}

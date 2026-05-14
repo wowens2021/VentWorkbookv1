@@ -26,7 +26,7 @@ const renderInline = (md: string): React.ReactNode => {
 };
 
 const Block: React.FC<{ block: ContentBlock; harness?: ScenarioHarness }> = ({ block, harness }) => {
-  if (block.kind === 'prose') return <div>{renderInline(block.markdown)}</div>;
+  if (block.kind === 'prose') return <div className="font-serif text-[16px] leading-relaxed text-zinc-800">{renderInline(block.markdown)}</div>;
 
   if (block.kind === 'figure') {
     return (
