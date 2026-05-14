@@ -216,31 +216,31 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                       <Layers size={18} strokeWidth={2.25} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
+                      <div className="flex items-center gap-2.5 mb-1">
                         <h2
-                          className="font-display text-lg font-semibold text-stone-900 leading-none"
+                          className="text-[17px] font-semibold text-stone-900 leading-none tracking-tight"
                         >
                           {track}
                         </h2>
                         <span
-                          className="text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
-                          style={{ backgroundColor: `${tone.hex}1a`, color: tone.hex }}
+                          className="text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums px-2 py-0.5 rounded"
+                          style={{ backgroundColor: `${tone.hex}14`, color: tone.hex }}
                         >
                           {complete}/{mods.length}
                         </span>
                         {inProgress > 0 && (
-                          <span className="text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-brand-olive/10 text-brand-olive border border-brand-olive/20">
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] px-2 py-0.5 rounded bg-brand-olive/10 text-brand-olive border border-brand-olive/25">
                             {inProgress} in progress
                           </span>
                         )}
                       </div>
-                      <p className="text-[12px] text-stone-600 leading-snug truncate">
+                      <p className="text-[12.5px] text-stone-500 leading-snug truncate">
                         {TRACK_BLURB[track]}
                       </p>
                     </div>
                     {/* Track-level progress bar */}
                     <div className="hidden md:flex flex-col items-end shrink-0 w-[140px]">
-                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1 w-full">
+                      <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-500 mb-1.5 w-full tabular-nums">
                         <span>Progress</span>
                         <span>{trackPct}%</span>
                       </div>
@@ -269,74 +269,76 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                       return (
                         <article
                           key={mod.id}
-                          className={`bg-white border rounded-xl px-4 py-3 shadow-sm hover:shadow transition flex items-center gap-3 ${
+                          className={`bg-white border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md transition flex items-center gap-4 ${
                             status === 'IN_PROGRESS' ? 'border-brand-olive/40' : 'border-stone-200 hover:border-stone-300'
                           }`}
                         >
-                          {/* Module id + small pills column */}
-                          <div className="shrink-0 w-[80px] hidden md:flex flex-col gap-1">
-                            <div className="text-[10px] font-mono font-bold text-stone-500">
+                          {/* Module id + minutes — quieter mono column, modern. */}
+                          <div className="shrink-0 w-[64px] hidden md:flex flex-col items-start gap-0.5">
+                            <span className="text-[11px] font-mono font-semibold tracking-wider text-stone-700">
                               {mod.id}
-                            </div>
-                            <div className="text-[10px] text-stone-400">
+                            </span>
+                            <span className="text-[10px] text-stone-400 tabular-nums">
                               {mod.estimated_minutes} min
-                            </div>
+                            </span>
                           </div>
 
                           {/* Status + difficulty pills */}
                           <div className="flex flex-col gap-1 shrink-0 w-[112px]">
-                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border text-center ${statusClasses[status]}`}>
+                            <span className={`text-[9px] font-bold uppercase tracking-[0.12em] px-2 py-0.5 rounded border text-center ${statusClasses[status]}`}>
                               {statusLabel[status]}
                             </span>
-                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border text-center ${difficultyClasses[difficulty]}`}>
+                            <span className={`text-[9px] font-bold uppercase tracking-[0.12em] px-2 py-0.5 rounded border text-center ${difficultyClasses[difficulty]}`}>
                               {difficulty}
                             </span>
                           </div>
 
-                          {/* Title + tagline */}
+                          {/* Title + tagline — modern, no italics; tagline reads
+                              as supporting copy in a quieter stone tone. */}
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-display text-base font-semibold text-stone-900 leading-snug mb-0.5 truncate">
+                            <h3 className="text-[15px] font-semibold text-stone-900 leading-tight mb-1 truncate tracking-tight">
                               {mod.title}
                             </h3>
-                            <p className="text-[12px] text-stone-600 leading-snug line-clamp-1 italic">
+                            <p className="text-[13px] text-stone-500 leading-snug line-clamp-1">
                               {mod.briefing?.tagline ?? mod.visible_learning_objectives[0]}
                             </p>
                           </div>
 
                           {/* Progress (in-progress only) */}
                           {status === 'IN_PROGRESS' && (
-                            <div className="hidden md:flex flex-col items-end shrink-0 w-[70px]">
-                              <span className="font-display text-base font-semibold text-brand-olive leading-none">{pct}%</span>
-                              <div className="mt-1 h-1 w-14 bg-stone-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-brand-olive" style={{ width: `${pct}%` }} />
+                            <div className="hidden md:flex flex-col items-end shrink-0 w-[72px]">
+                              <span className="text-[15px] font-semibold text-brand-olive leading-none tabular-nums">
+                                {pct}%
+                              </span>
+                              <div className="mt-1.5 h-1 w-16 bg-stone-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-brand-olive transition-[width]" style={{ width: `${pct}%` }} />
                               </div>
                             </div>
                           )}
                           {status === 'COMPLETED' && (
-                            <div className="hidden md:flex items-center gap-1 shrink-0 w-[70px] justify-end">
-                              <Check size={14} className="text-emerald-600" />
-                              <span className="text-[11px] font-bold text-emerald-700">100%</span>
+                            <div className="hidden md:flex items-center gap-1.5 shrink-0 w-[72px] justify-end">
+                              <Check size={14} className="text-brand-olive" strokeWidth={3} />
+                              <span className="text-[12px] font-semibold text-brand-olive tabular-nums">100%</span>
                             </div>
                           )}
                           {status === 'NOT_STARTED' && (
                             <div className="hidden md:block shrink-0 w-[70px]" />
                           )}
 
-                          {/* CTA — Resume keeps an outlined olive treatment so
-                              "in progress" still pops without breaking the
-                              green/cream palette. Start uses the track's
-                              solid colour. Review is an outline in the track
-                              colour. */}
+                          {/* CTA — primary action is ALWAYS the brand racing
+                              green, regardless of track. Track identity
+                              shows through icon + accent text up top; the
+                              "Start" button is the single product green so
+                              the dashboard reads as one product. */}
                           <button
                             onClick={() => onPickModule(mod)}
                             className={`shrink-0 px-4 py-2 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition w-[110px] ${
                               status === 'IN_PROGRESS'
                                 ? 'bg-brand-olive/10 text-brand-olive border border-brand-olive/40 hover:bg-brand-olive/20'
                                 : status === 'COMPLETED'
-                                  ? 'bg-white border hover:bg-stone-50'
-                                  : `${tone.bg} ${tone.bgHover} ${tone.fgOnSolid}`
+                                  ? 'bg-white border border-brand-olive text-brand-olive hover:bg-brand-olive/5'
+                                  : 'bg-brand-olive hover:bg-brand-olive-hover text-white shadow-sm'
                             }`}
-                            style={status === 'COMPLETED' ? { color: tone.hex, borderColor: tone.hex } : undefined}
                           >
                             {status === 'IN_PROGRESS' ? <RotateCcw size={12} /> : status === 'COMPLETED' ? <ArrowRight size={12} /> : <Play size={11} fill="currentColor" />}
                             {status === 'IN_PROGRESS' ? 'Resume' : status === 'COMPLETED' ? 'Review' : 'Start'}

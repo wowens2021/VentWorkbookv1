@@ -37,27 +37,28 @@ export const TRACK_COLORS: Record<Track, TrackTone> = {
     accentText: 'text-brand-olive',
     hex: '#47713e',
   },
-  // Deep emerald — a darker, library-shelf green that reads as "go deeper."
+  // The two other "green" tracks now share the racing-green primary so the
+  // dashboard reads as one product. Differentiation comes from track name
+  // and icon, not chroma.
   Physiology: {
-    bg: 'bg-emerald-800',
-    bgHover: 'hover:bg-emerald-700',
-    chipBg: 'bg-emerald-50',
-    chipBorder: 'border-emerald-200',
-    chipText: 'text-emerald-900',
+    bg: 'bg-brand-olive',
+    bgHover: 'hover:bg-brand-olive-hover',
+    chipBg: 'bg-brand-olive/10',
+    chipBorder: 'border-brand-olive/25',
+    chipText: 'text-brand-olive',
     fgOnSolid: 'text-white',
-    accentText: 'text-emerald-800',
-    hex: '#065f46',
+    accentText: 'text-brand-olive',
+    hex: '#47713e',
   },
-  // Teal — the green-to-blue hinge. Still in the cool half but distinct.
   Modes: {
-    bg: 'bg-teal-700',
-    bgHover: 'hover:bg-teal-600',
-    chipBg: 'bg-teal-50',
-    chipBorder: 'border-teal-200',
-    chipText: 'text-teal-900',
+    bg: 'bg-brand-olive',
+    bgHover: 'hover:bg-brand-olive-hover',
+    chipBg: 'bg-brand-olive/10',
+    chipBorder: 'border-brand-olive/25',
+    chipText: 'text-brand-olive',
     fgOnSolid: 'text-white',
-    accentText: 'text-teal-800',
-    hex: '#0f766e',
+    accentText: 'text-brand-olive',
+    hex: '#47713e',
   },
   // Book gold — the warm accent that pairs with racing green on tradition-rich
   // book covers (Oxford, Penguin Classics). Picks up the cream page background.
