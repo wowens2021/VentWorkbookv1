@@ -1299,7 +1299,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   // ── Render ──
   return (
     <div
-      className="flex flex-col h-full text-zinc-900 font-sans overflow-hidden select-none bg-gradient-to-br from-brand-olive/[0.08] via-stone-50 to-brand-olive/[0.10]"
+      className="flex flex-col h-full text-zinc-900 font-sans overflow-hidden select-none bg-gradient-to-br from-brand-olive/25 via-brand-olive/15 to-brand-olive/30"
       onMouseMove={e => {
         if (isDragging && isFrozen && waveformContainerRef.current) {
           const rect = waveformContainerRef.current.getBoundingClientRect();
