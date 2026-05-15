@@ -1295,7 +1295,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
   }
 
   return (
-    <div className="flex flex-col h-screen bg-brand-cream text-zinc-900 font-sans overflow-hidden select-none">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-brand-olive/[0.05] via-brand-cream to-brand-olive/[0.10] text-zinc-900 font-sans overflow-hidden select-none">
       {/* Top nav — track-colored brand strip with a sticky learn-tagline. */}
       {(() => {
         const tone = trackTone(module.track);

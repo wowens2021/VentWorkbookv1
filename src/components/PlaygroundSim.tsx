@@ -1299,7 +1299,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   // ── Render ──
   return (
     <div
-      className="flex flex-col h-full bg-stone-100 text-zinc-900 font-sans overflow-hidden select-none"
+      className="flex flex-col h-full text-zinc-900 font-sans overflow-hidden select-none bg-gradient-to-br from-brand-olive/[0.08] via-stone-50 to-brand-olive/[0.10]"
       onMouseMove={e => {
         if (isDragging && isFrozen && waveformContainerRef.current) {
           const rect = waveformContainerRef.current.getBoundingClientRect();
@@ -1421,10 +1421,12 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           {/* Measured values strip — moved to TOP.
               Playground mode lays the 11 cards out in a single horizontal row
               (full available width); module mode keeps the 6-column wrap. */}
-          <div className="bg-white rounded-xl border border-emerald-200 p-2 shadow-sm shrink-0">
-            <div className="flex items-center gap-1 mb-1.5 text-emerald-600 px-1">
-              <Activity size={11} />
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Measured Values</span>
+          <div className="bg-white rounded-xl border-2 border-brand-olive/25 p-2 shadow-md ring-1 ring-brand-olive/10 shrink-0">
+            <div className="flex items-center gap-1.5 mb-1.5 px-1">
+              <div className="w-5 h-5 rounded-md bg-brand-olive flex items-center justify-center">
+                <Activity size={11} className="text-white" strokeWidth={2.5} />
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-brand-olive">Measured Values</span>
             </div>
             <div className={`grid gap-1 ${playgroundMode ? 'grid-cols-12' : 'grid-cols-6'}`}>
               <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" flash={flashSet.has('actualRate')} {...recogPropsForReadout('actualRate', 'RR')} />
@@ -1445,8 +1447,9 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
             </div>
           </div>
 
-          {/* Waveforms — slightly compact gap, smaller relative height */}
-          <div className="flex-1 flex flex-col gap-1.5 overflow-hidden relative min-h-0">
+          {/* Waveforms — wrapped in an olive-trimmed card so the panel
+              reads as a single instrument rather than three loose tiles. */}
+          <div className="flex-1 flex flex-col gap-1.5 overflow-hidden relative min-h-0 bg-white rounded-xl border-2 border-brand-olive/25 p-2 shadow-md ring-1 ring-brand-olive/10">
             <WaveformPanel title="Airway Pressure" dataKey="pressure" unit="cmH2O" segmentedPaths={pressurePaths} bounds={pressureBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} isHoldActive={!!activeHoldType} showZeroLine isFrozen={isFrozen} />
             <WaveformPanel title="Flow Rate" dataKey="flow" unit="L/min" segmentedPaths={flowPaths} bounds={flowBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} showZeroLine isFrozen={isFrozen} />
             <WaveformPanel title="Volume" dataKey="volume" unit="mL" segmentedPaths={volumePaths} bounds={volumeBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} showZeroLine isFrozen={isFrozen} />
@@ -1469,8 +1472,8 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
             )}
           </div>
 
-          {/* Ventilator controls — tightened padding */}
-          <div className="bg-white shrink-0 rounded-xl border border-zinc-200 p-2 shadow-2xl">
+          {/* Ventilator controls — olive-trimmed card to match the rest. */}
+          <div className="bg-white shrink-0 rounded-xl border-2 border-brand-olive/25 p-2 shadow-md ring-1 ring-brand-olive/10">
             {/* Mode + hold buttons */}
             <div className={`flex items-center gap-2 mb-2 ${flashControlSet.has('mode') ? 'bg-sky-50 ring-2 ring-sky-300/70 border-sky-400' : 'bg-zinc-50 border-zinc-200'} p-1 rounded-lg border transition`}>
               <div className="flex items-center gap-1">

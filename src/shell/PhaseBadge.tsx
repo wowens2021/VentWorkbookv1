@@ -30,8 +30,8 @@ interface Props {
 const PhaseBadge: React.FC<Props> = ({ phase, completedPhases, onJumpToPhase, accentHex }) => {
   const currentIdx = PHASE_ORDER.indexOf(phase);
   return (
-    <div className="bg-white border-b border-zinc-200 px-4 py-2 flex items-center gap-1.5 shrink-0">
-      <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500 mr-2">
+    <div className="bg-gradient-to-r from-brand-olive/[0.06] via-white to-brand-olive/[0.06] border-b-2 border-brand-olive/20 px-4 py-2 flex items-center gap-1.5 shrink-0">
+      <span className="text-[11px] font-black uppercase tracking-widest text-brand-olive mr-2">
         {currentIdx + 1} of {PHASE_ORDER.length} — {PHASE_LABEL[phase]}
       </span>
       <div className="flex items-center gap-1 ml-auto">
