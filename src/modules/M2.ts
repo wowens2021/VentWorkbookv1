@@ -182,12 +182,33 @@ export const M2: ModuleConfig = {
         "Set values are **orders**. Measured values are **reports**. The vent doesn't decide; it executes. If the report doesn't match the order — leak, fight, or broken sensor.",
     },
     {
-      kind: 'predict_observe',
+      // v3.2 §0.6 — legacy predict_observe converted.
+      kind: 'predict_mcq',
       awaits_control: 'iTime',
       predict:
-        'If you shorten the I-time from 1.0 s to 0.6 s at a rate of 14, what happens to the I:E ratio readout?',
+        'You shorten the I-time from 1.0 s to 0.6 s at a rate of 14. What happens to the I:E ratio readout?',
+      options: [
+        { label: 'I:E lengthens — more expiratory time per breath.', is_correct: true },
+        { label: 'I:E shortens — less expiratory time per breath.', is_correct: false, explanation: 'Backwards — shorter Ti gives MORE expiratory time within each breath cycle, so I:E lengthens (e.g. 1:3 → 1:6).' },
+        { label: 'I:E is unchanged — only the rate changes I:E.', is_correct: false, explanation: 'Rate AND I-time both move I:E. Drop Ti at constant rate, and expiratory time within each breath grows.' },
+        { label: 'I:E inverts (1:E becomes E:1).', is_correct: false, explanation: 'Inverse I:E (I > E) happens at very long Ti relative to rate, not the opposite.' },
+      ],
       observe:
         'I:E lengthens — from about 1:3 to about 1:6. Less time inhaling, more time exhaling per breath. Obstructive patients would thank you.',
+    },
+    // v3.2 §0.7 — new predict_mcq grounding set-vs-measured terminology.
+    {
+      kind: 'predict_mcq',
+      predict:
+        'You see "set Vt 450, Vte 360" on a VCV vent. Other settings are unchanged. Most likely:',
+      options: [
+        { label: "The patient's lungs absorbed 90 mL.", is_correct: false, explanation: "Gas exchange across the alveolar membrane is a tiny fraction of tidal volume and the flow sensor doesn't see it." },
+        { label: 'A leak — circuit, cuff, or fistula.', is_correct: true },
+        { label: 'The patient is breathing harder than the vent.', is_correct: false, explanation: "In VCV the vent guarantees the inspiratory volume; patient effort doesn't change Vte downward." },
+        { label: 'The display is malfunctioning.', is_correct: false, explanation: 'Display malfunction is a diagnosis of exclusion.' },
+      ],
+      observe:
+        'In VCV, set Vt is delivered into the circuit. If the exhaled volume is short, the gas escaped somewhere — cuff leak, circuit disconnect, bronchopleural fistula. The set/measured gap is the first place to look.',
     },
     {
       kind: 'figure',

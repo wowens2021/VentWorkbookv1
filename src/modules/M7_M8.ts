@@ -124,10 +124,16 @@ export const M7: ModuleConfig = {
       markdown: "In VCV, the tidal volume is your variable. The pressure is whatever it needs to be. That's the deal.",
     },
     {
-      kind: 'predict_observe',
+      kind: 'predict_mcq',
       awaits_control: 'tidalVolume',
       predict:
-        "You're at Vt 500 right now. Move it to 430 (6 mL/kg). What happens to plat and driving pressure?",
+        "You're at Vt 500. You move it to 430 (6 mL/kg PBW for this patient). What happens to plat and driving pressure?",
+      options: [
+        { label: 'Both fall by the same amount.', is_correct: true },
+        { label: 'Plat falls, but driving pressure stays the same.', is_correct: false, explanation: 'Driving pressure = Pplat − PEEP. PEEP didn\'t change, so DP moves by the same amount as Pplat.' },
+        { label: 'PIP falls but Pplat is unchanged.', is_correct: false, explanation: 'Pplat is the alveolar pressure that responds directly to Vt at fixed compliance.' },
+        { label: 'Both rise — smaller breaths need more pressure.', is_correct: false, explanation: 'Backwards — smaller volume through the same compliance generates less pressure.' },
+      ],
       observe:
         "Plat falls by about 2; driving pressure falls by the same amount. Vt is the lever — for this patient's compliance, the lung-protective range comes free once you lower the order.",
     },
@@ -354,9 +360,16 @@ export const M8: ModuleConfig = {
       markdown: 'PINSP is the rise above PEEP. If PINSP is 18 and PEEP is 8, total peak airway pressure is 26.',
     },
     {
-      kind: 'predict_observe',
+      kind: 'predict_mcq',
       awaits_control: 'compliance',
-      predict: "You'll drop compliance from 35 to 18. What happens to Vt?",
+      predict: "You drop compliance from 35 to 18 at constant PINSP. What happens to delivered Vt?",
+      options: [
+        { label: 'Vt falls roughly in proportion to the compliance drop.', is_correct: true },
+        { label: 'Vt is unchanged — PCV guarantees the volume.', is_correct: false, explanation: 'PCV guarantees PRESSURE. Vt is the dependent variable. As compliance falls, the same pressure delivers less volume.' },
+        { label: 'Vt rises — stiffer lungs accept more volume per pressure.', is_correct: false, explanation: 'Backwards. Stiffer lungs need MORE pressure per unit volume.' },
+        { label: 'PIP rises to compensate — the vent adapts.', is_correct: false, explanation: "That's PRVC, not PCV. PCV holds PINSP fixed; Vt drifts silently downward.",
+        },
+      ],
       observe:
         "Vt falls roughly in proportion. This is the failure mode of PCV in worsening ARDS — the patient gets less and less ventilation as he gets sicker, and you won't see a PIP alarm fire.",
     },

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  v3.2 §3.3 M11 — Clip 1: Ineffective triggering.
+  Three mandatory breaths. Between breaths 2 and 3, two small negative
+  pressure dips with tiny negative flow blips: the patient pulling but
+  not generating enough delta-P (vs auto-PEEP) to trigger a breath.
+  Coords:
+    pY(p) = 160 - p*3.5      (p in cmH2O, 0-40)
+    fY(f) = 260 - f          (f in L/min, ±60)
+    tX(t) = 60 + t*120       (t in seconds, 0-6)
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360"
+     role="img" aria-label="Ventilator waveform with ineffective trigger attempts"
+     font-family="ui-sans-serif, system-ui, -apple-system, Inter, sans-serif">
+  <!-- Background -->
+  <rect width="800" height="360" fill="#f5f0e6"/>
+
+  <!-- Gridlines: vertical 1-second ticks -->
+  <g stroke="#d6d3d1" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="60"  y1="20"  x2="60"  y2="320"/>
+    <line x1="180" y1="20"  x2="180" y2="320"/>
+    <line x1="300" y1="20"  x2="300" y2="320"/>
+    <line x1="420" y1="20"  x2="420" y2="320"/>
+    <line x1="540" y1="20"  x2="540" y2="320"/>
+    <line x1="660" y1="20"  x2="660" y2="320"/>
+    <line x1="780" y1="20"  x2="780" y2="320"/>
+  </g>
+
+  <!-- Pressure panel: 0 baseline (solid), 30 guide (dashed) -->
+  <line x1="60" y1="160" x2="780" y2="160" stroke="#a8a29e" stroke-width="1"/>
+  <line x1="60" y1="55"  x2="780" y2="55"  stroke="#a8a29e" stroke-width="1" stroke-dasharray="4 4"/>
+  <!-- Flow panel: zero (solid) -->
+  <line x1="60" y1="260" x2="780" y2="260" stroke="#a8a29e" stroke-width="1.5"/>
+
+  <!-- Panel headers -->
+  <text x="65" y="15" font-size="10" fill="#57534e">Airway Pressure (cmH2O)</text>
+  <text x="65" y="195" font-size="10" fill="#57534e">Flow (L/min)</text>
+
+  <!-- Pressure axis labels -->
+  <g font-size="10" fill="#57534e" text-anchor="end">
+    <text x="55" y="163">0</text>
+    <text x="55" y="128">10</text>
+    <text x="55" y="93">20</text>
+    <text x="55" y="58">30</text>
+    <text x="55" y="23">40</text>
+  </g>
+  <!-- Flow axis labels -->
+  <g font-size="10" fill="#57534e" text-anchor="end">
+    <text x="55" y="203">60</text>
+    <text x="55" y="233">30</text>
+    <text x="55" y="263">0</text>
+    <text x="55" y="293">-30</text>
+    <text x="55" y="323">-60</text>
+  </g>
+
+  <!-- Pressure trace -->
+  <polyline fill="none" stroke="#3b82f6" stroke-width="2"
+    points="
+      60,142.5
+      96,142.5
+      180,72.5
+      204,72.5
+      228,142.5
+      336,142.5
+      420,72.5
+      444,72.5
+      468,142.5
+      504,142.5
+      510,153
+      522,142.5
+      546,142.5
+      552,153
+      564,142.5
+      576,142.5
+      660,72.5
+      684,72.5
+      708,142.5
+      780,142.5
+    "/>
+
+  <!-- Flow trace: square positive insp, decelerating negative exp -->
+  <polyline fill="none" stroke="#3b82f6" stroke-width="2"
+    points="
+      60,260
+      96,260
+      100,230
+      180,230
+      184,260
+      188,290
+      228,265
+      336,260
+      420,230
+      444,230
+      448,260
+      452,290
+      468,265
+      504,260
+      508,265
+      516,268
+      524,260
+      546,260
+      550,265
+      558,268
+      566,260
+      576,260
+      660,230
+      684,230
+      688,260
+      692,290
+      708,265
+      780,260
+    "/>
+
+  <!-- Annotation arrows: pointing at the two failed-trigger dips -->
+  <g stroke="#0284c7" fill="#0284c7" stroke-width="1.5">
+    <!-- Arrow 1 -->
+    <line x1="516" y1="200" x2="516" y2="153"/>
+    <polygon points="516,153 511,144 521,144"/>
+    <!-- Arrow 2 -->
+    <line x1="558" y1="210" x2="558" y2="153"/>
+    <polygon points="558,153 553,144 563,144"/>
+  </g>
+  <!-- Annotation caption -->
+  <rect x="486" y="178" width="120" height="22" rx="4" fill="#fef3c7" stroke="#b45309"/>
+  <text x="546" y="193" font-size="11" font-weight="700" fill="#92400e" text-anchor="middle">
+    trigger attempt — no breath
+  </text>
+
+  <!-- Time axis label strip -->
+  <g font-size="10" fill="#57534e" text-anchor="middle">
+    <text x="60"  y="350">0 s</text>
+    <text x="180" y="350">1 s</text>
+    <text x="300" y="350">2 s</text>
+    <text x="420" y="350">3 s</text>
+    <text x="540" y="350">4 s</text>
+    <text x="660" y="350">5 s</text>
+    <text x="780" y="350">6 s</text>
+  </g>
+</svg>

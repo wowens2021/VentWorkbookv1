@@ -135,14 +135,26 @@ export const M15: ModuleConfig = {
         'ARDSnet table for FiO2 0.70: PEEP 10–14',
     },
     {
-      kind: 'predict_observe',
-      predict: 'You\'re going to drop Vt from 600 to 430. What happens to plateau and driving pressure?',
+      kind: 'predict_mcq',
+      predict: 'You\'re going to drop Vt from 600 to 430 (6 mL/kg PBW). What happens to plateau, driving pressure, and PaCO2?',
+      options: [
+        { label: 'Plateau falls, driving pressure falls, PaCO2 rises.', is_correct: true },
+        { label: 'All three fall — smaller breaths reduce CO2 production.', is_correct: false, explanation: 'Less alveolar ventilation = LESS CO2 cleared. PaCO2 rises.' },
+        { label: 'Plateau and DP rise; PaCO2 falls.', is_correct: false, explanation: 'Backwards on the mechanics. Smaller Vt at fixed compliance generates lower plat.' },
+        { label: 'Nothing changes — Vt is delivered the same either way.', is_correct: false, explanation: 'Vt is the lever for plat and DP and MV.' },
+      ],
       observe: 'Plateau falls. Driving pressure falls. PaCO2 rises — that\'s expected. The recipe asks for it. Compensate with rate if MV gets too low; otherwise hold and let the patient autoregulate.',
       awaits_control: 'tidalVolume',
     },
     {
-      kind: 'predict_observe',
-      predict: 'Now raise PEEP from 5 to 10. What happens to PaO2?',
+      kind: 'predict_mcq',
+      predict: 'Now you raise PEEP from 5 to 10 at the same FiO2. What happens to PaO2?',
+      options: [
+        { label: 'Climbs as alveoli recruit.', is_correct: true },
+        { label: 'Unchanged — PEEP doesn\'t affect oxygenation directly.', is_correct: false, explanation: 'PEEP recruits alveoli and reduces shunt fraction — its primary use IS oxygenation.' },
+        { label: 'Falls — PEEP overdistends.', is_correct: false, explanation: 'Overdistension is a risk at PEEP >16-18; here you\'re climbing from 5 to 10 — recruitment dominates.' },
+        { label: 'Climbs, but only if you also raise FiO2.', is_correct: false, explanation: 'PEEP works at any FiO2 — recruitment doesn\'t require additional O2.' },
+      ],
       observe: 'PaO2 climbs as the under-recruited alveoli come back online. Once PaO2 has a buffer, you can drop FiO2 toward 0.50–0.60.',
       awaits_control: 'peep',
     },
@@ -370,9 +382,14 @@ export const M16: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
+  // v3.2 §6 — disconnect-the-vent recognition promoted from formative-only
+  // to graded skill. Strict sequence so the bedside escalation question
+  // surfaces after the learner has stabilized the patient (mode, Vt, RR,
+  // PEEP drop), not before — recreating the rhythm of the real bedside
+  // crash that follows a successful re-titration.
   hidden_objective: {
     kind: 'compound',
-    sequence: 'any_order',
+    sequence: 'strict',
     children: [
       {
         kind: 'manipulation',
@@ -397,6 +414,42 @@ export const M16: ModuleConfig = {
         },
         sustain_breaths: 5,
       },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M16-disconnect',
+          trigger: { kind: 'on_load' },
+          question:
+            "Your asthmatic is now stable on VCV, rate 12, PEEP 0. Auto-PEEP is 1. Suddenly his BP drops from 110/70 to 60/35. Measured auto-PEEP jumps to 16. What's the FIRST action?",
+          options: [
+            {
+              label: 'Disconnect from the vent for 10–15 seconds.',
+              is_correct: true,
+              explanation:
+                "Trapped gas is compressing his venous return. Letting the chest fall is the immediate fix — faster than any drug. Then sort out the rate / Te. This is the maneuver that reverses peri-arrest in seconds.",
+            },
+            {
+              label: 'Push norepinephrine.',
+              is_correct: false,
+              explanation:
+                "Treats the symptom, not the cause. The trapped air is still there. Pressors won't fix mechanical compression of the right atrium.",
+            },
+            {
+              label: 'Fluid bolus.',
+              is_correct: false,
+              explanation:
+                "Same issue. Fluids treat hypovolemic hypotension; this is mechanical compression.",
+            },
+            {
+              label: 'Raise PEEP to splint open airways.',
+              is_correct: false,
+              explanation:
+                "In asthma, applied PEEP worsens trapping. Don't reflex into PEEP without knowing whether the patient is asthma or COPD.",
+            },
+          ],
+          max_attempts: 2,
+        },
+      },
     ],
   },
 
@@ -416,16 +469,43 @@ export const M16: ModuleConfig = {
         '   autoPEEP 8                         autoPEEP 2',
     },
     {
-      kind: 'predict_observe',
-      predict: 'Lower rate from 22 to 12 in a trapped patient. What happens to auto-PEEP?',
+      kind: 'predict_mcq',
+      predict: 'You lower rate from 22 to 12 in a trapped patient with R=35, Ti=1.0. What happens to auto-PEEP?',
+      options: [
+        { label: 'Falls — longer expiratory time lets the lungs empty.', is_correct: true },
+        { label: 'Rises — slower rate gives more time for trapping.', is_correct: false, explanation: 'Backwards. Slower rate = MORE expiratory time per breath = the lungs finally empty.' },
+        { label: 'Unchanged — auto-PEEP is set by resistance, not rate.', is_correct: false, explanation: 'Both matter. Resistance sets HOW FAST the lung empties; rate sets HOW LONG you give it.' },
+        { label: 'Falls only if you also drop the Vt.', is_correct: false, explanation: 'Rate alone is enough — and is the dominant lever in obstructive disease.' },
+      ],
       observe: 'Auto-PEEP falls from 8 to ~2. The expiratory time doubled and the lungs finally emptied between breaths. The CO2 will rise. That\'s the price.',
       awaits_control: 'respiratoryRate',
     },
     {
-      kind: 'predict_observe',
-      predict: 'Drop PEEP from 8 to 0 in this asthmatic. What happens to total PEEP and BP?',
+      kind: 'predict_mcq',
+      predict: 'You drop PEEP from 8 to 0 in this asthmatic. What happens to total PEEP and BP?',
+      options: [
+        { label: 'Total PEEP falls toward auto-PEEP only; BP stabilizes.', is_correct: true },
+        { label: 'Total PEEP unchanged — auto-PEEP rises to fill the gap.', is_correct: false, explanation: 'Auto-PEEP is set by mechanics + time, not by your applied PEEP setting. Lowering applied PEEP removes the additive insult.' },
+        { label: 'BP falls — losing PEEP collapses alveoli.', is_correct: false, explanation: 'In asthma the issue is trapped air, not collapsed alveoli. Removing applied PEEP REDUCES the intrathoracic burden.' },
+        { label: 'Nothing changes — PEEP and BP are independent.', is_correct: false, explanation: 'They\'re not independent at high PEEP — intrathoracic pressure compresses venous return.' },
+      ],
       observe: 'Total PEEP falls toward auto-PEEP only. BP stabilizes — the extra externally applied PEEP was adding insult.',
       awaits_control: 'peep',
+    },
+    // v3.2 §0.7 — predict_mcq grounding the disconnect maneuver before the
+    // live recognition prompt added in §6.
+    {
+      kind: 'predict_mcq',
+      predict:
+        'A trapped asthmatic with measured auto-PEEP of 14 cmH2O suddenly drops his BP from 110/70 to 65/40. Single best first action?',
+      options: [
+        { label: 'Push a fluid bolus.', is_correct: false, explanation: 'Fluids treat the symptom; the air trapped in his chest is still compressing venous return.' },
+        { label: 'Norepinephrine.', is_correct: false, explanation: "Same problem. Pressors won't fix mechanical compression of the right atrium." },
+        { label: 'Disconnect him from the vent for 10–15 seconds.', is_correct: true },
+        { label: 'Raise the PEEP to splint open the airways.', is_correct: false, explanation: 'In asthma, applied PEEP worsens trapping. This is the classic wrong reflex.' },
+      ],
+      observe:
+        'Trapped gas is mechanically compressing his venous return. The fastest fix is to let the chest fall — disconnect, let him exhale for ten seconds, then resume with a slower rate. This is one of the few bedside maneuvers that reliably reverses a peri-arrest situation in seconds.',
     },
     { kind: 'callout', tone: 'warn', markdown: 'Permissive hypercapnia in asthma: pH ≥7.10 is acceptable. The PaCO2 will rise (often to 60–80). That\'s the price of letting the patient exhale. If BP crashes on a trapped patient, disconnect from the vent for 10–15 seconds — let the chest fall.' },
   ],
@@ -515,13 +595,15 @@ export const M16: ModuleConfig = {
       'Stay on PCV at PINSP 22, rate 12: Vt collapses as resistance climbs. Dangerous.',
     ],
   },
-  user_facing_task: 'Rescue the trapped asthmatic. Your patient is in status asthmaticus and was placed on PCV with PEEP 8 and rate 22. He\'s air-trapping. Switch to VCV, set Vt 7–8 mL/kg PBW, drop rate to 10–14, drop PEEP to ZEEP. Hold the new state for 5 breaths.',
+  // v3.2 §6 — task framing extended to include the recognition step.
+  user_facing_task: 'Rescue the trapped asthmatic. Switch to VCV with lung-protective Vt, drop the rate to 10–14, drop PEEP to ZEEP. Hold the new state for 5 breaths. Then — when the patient starts to crash from the trapped air — answer the bedside question.',
   success_criteria_display: [
     'Mode switched to VCV.',
     'Tidal volume set 530–620 mL (7–8 mL/kg PBW).',
     'Respiratory rate set 10–14.',
     'PEEP ≤3.',
     'Auto-PEEP ≤2, sustained 5 breaths.',
+    'Correctly identify the first action for the crashing trapped patient.',
   ],
   task_framing_style: 'B',
 

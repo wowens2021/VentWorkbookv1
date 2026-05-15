@@ -525,6 +525,41 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     }));
   }, [harness, mode, settings, patient, dataPoints]);
 
+  // ── v3.2 §9 — perturbation subscription ──
+  // Scripted recognition perturbations (M19 DOPES) shallow-merge over the
+  // current settings/patient. When the perturbation clears (on satisfied
+  // or reset_between), restore baseline preset values. We keep a ref of
+  // the baseline so successive perturbations don't compound.
+  const baselineSettingsRef = useRef(initialPreset?.settings);
+  const baselinePatientRef = useRef(initialPreset?.patient);
+  useEffect(() => {
+    if (!harness) return;
+    const off = harness.onPerturbation(p => {
+      if (p) {
+        // Apply on top of current state. Saves the current values so we
+        // can restore them when the perturbation clears.
+        if (p.settings) setSettings(s => ({ ...s, ...p.settings }));
+        if (p.patient) setPatient(pt => ({ ...pt, ...p.patient }));
+      } else {
+        // Restore baseline preset values (also runs after resetToPreset,
+        // which fires its own reset listener — idempotent).
+        if (baselineSettingsRef.current) {
+          setSettings(s => ({ ...s, ...baselineSettingsRef.current }));
+        }
+        if (baselinePatientRef.current) {
+          setPatient(pt => ({ ...pt, ...baselinePatientRef.current }));
+        }
+      }
+    });
+    // Apply any perturbation that was active before this mount.
+    const current = harness.currentPerturbation();
+    if (current) {
+      if (current.settings) setSettings(s => ({ ...s, ...current.settings }));
+      if (current.patient) setPatient(pt => ({ ...pt, ...current.patient }));
+    }
+    return off;
+  }, [harness]);
+
   const [metrics, setMetrics] = useState({
     pip: 0, plat: 0, drivingPressure: 0, map: 0,
     mve: 6.5, mveSpont: 1.2, totalPeep: 5, vte: 440,
@@ -633,11 +668,20 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     // Oxygenation (§9.6, §15.5)
     const P_AO2 = ((P_ATM - P_H2O) * (settings.fiO2 / 100)) - (PaCO2 / R_QUOTIENT);
 
-    // Shunt fraction from compliance (§15.5 shunt_factor table)
-    let baselineShunt = 0.05;
-    if (patient.compliance < 20) baselineShunt = 0.40;
-    else if (patient.compliance < 35) baselineShunt = 0.30;
-    else if (patient.compliance < 55) baselineShunt = 0.15;
+    // v3.2 §1.3 — `patient.shuntFraction`, when set, overrides the
+    // compliance-based ladder below. The ladder remains as a default so
+    // pre-v3.2 modules keep working; M5 (and any future module that
+    // scripts shunt directly) sets `patient.shuntFraction` so the lesson
+    // doesn't conflate "stiff lung" with "shunt." See spec §15.5
+    // shunt_factor table for the original mapping.
+    let baselineShunt =
+      (patient as { shuntFraction?: number }).shuntFraction ??
+      (
+        patient.compliance < 20 ? 0.40 :
+        patient.compliance < 35 ? 0.30 :
+        patient.compliance < 55 ? 0.15 :
+        0.05
+      );
 
     const peepRecruitment = Math.min(13, Math.max(0, settings.peep - 5));
     const Qs_Qt = Math.max(0.02, Math.min(0.80, baselineShunt - peepRecruitment * 0.018));
@@ -678,6 +722,19 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     // Base excess — Van Slyke approximation (§9.5)
     const be = Math.round(((HCO3 - 24) + 16.2 * (final_pH - 7.40)) * 10) / 10;
 
+    // v3.2 §4.3 — derived SBP. SBP falls as PEEP overshoots and CO drops,
+    // so the M13 tracker can gate on `sbp ≥ 95`. The math is intentionally
+    // simple — we want visible feedback when the learner pushes PEEP too
+    // high, not faithful hemodynamics. v3.2 §9.5 also reads this for
+    // M19's pneumothorax perturbation.
+    const baselineSbp = (patient as { bpSys?: number }).bpSys ?? 120;
+    const co_factor = Math.max(0.3, Math.min(1.0, CO / 5.0));
+    const sbp = Math.round(baselineSbp * co_factor);
+    // v3.2 §9.6 — apply scripted perturbation params on top of computed values.
+    const leak = (patient as { leak_mL_per_breath?: number }).leak_mL_per_breath ?? 0;
+    const etco2_attenuation = (patient as { etco2_loss_fraction?: number }).etco2_loss_fraction ?? 0;
+    const etco2_displayed = Math.round(etco2 * (1 - etco2_attenuation));
+
     return {
       ph: final_pH.toFixed(2),
       paco2: Math.round(PaCO2),
@@ -686,12 +743,14 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       spo2: Math.round(SpO2),
       pfRatio: Math.round(PaO2 / (settings.fiO2 / 100)),
       be,
-      etco2,
+      etco2: etco2_displayed,
       effectiveAutoPeep,
       effectiveP_mean: mean_alveolar_pressure,
       calculated_co: CO,
       do2: Math.round(DO2),
       aAGradient: Math.round(aAGradient),
+      sbp,
+      leak_mL_per_breath: leak,
     };
   }, [
     metrics.mve, metrics.totalPeep, metrics.pip, metrics.actualRate, metrics.vte,
@@ -736,6 +795,12 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         fio2: settings.fiO2,
         peep: settings.peep,
         tidalVolumeSet: settings.tidalVolume,
+        // v3.2 §4 — surface SBP so M13 (and others) can gate on hemodynamic
+        // marginality, not just oxygenation. v3.2 §9 — ETCO2 perturbation
+        // attenuation: M19 displacement reads 0 here as the disconnect
+        // signature.
+        sbp: abg.sbp,
+        etco2: abg.etco2,
       },
       timestamp: Date.now(),
     });
@@ -1016,7 +1081,12 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           pendingInspRef.current = false;
         }
         setMetrics(m => {
-          const newVte = Math.round((vAtEndOfInspRef.current - trappedVolumeAtBreathStartRef.current) * 1000);
+          let newVte = Math.round((vAtEndOfInspRef.current - trappedVolumeAtBreathStartRef.current) * 1000);
+          // v3.2 §9.6 — leak subtracts mL/breath from Vte. Capped at 0; if
+          // the configured leak exceeds delivered volume (e.g. displacement
+          // with 9999), Vte stays at zero — the disconnect signature.
+          const leak = (patient as { leak_mL_per_breath?: number }).leak_mL_per_breath ?? 0;
+          if (leak > 0) newVte = Math.max(0, newVte - leak);
           const totalMve = (newVte * m.actualRate) / 1000;
           const mveSpontContrib = isPatientTriggeredRef.current ? (newVte * patient.spontaneousRate) / 1000 : m.mveSpont;
           return { ...m, pip: Math.round(currentBreathPeakPressureRef.current), vte: newVte, isLastSpont: isPatientTriggeredRef.current, mve: totalMve, mveSpont: mveSpontContrib };
@@ -1296,7 +1366,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               <Activity size={11} />
               <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none">Measured Values</span>
             </div>
-            <div className={`grid gap-1 ${playgroundMode ? 'grid-cols-11' : 'grid-cols-6'}`}>
+            <div className={`grid gap-1 ${playgroundMode ? 'grid-cols-12' : 'grid-cols-6'}`}>
               <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" flash={flashSet.has('actualRate')} {...recogPropsForReadout('actualRate', 'RR')} />
               <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" flash={flashSet.has('ieRatio')} {...recogPropsForReadout('ieRatio', 'I:E')} />
               <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" flash={flashSet.has('pip')} {...recogPropsForReadout('pip', 'PIP')} />
@@ -1308,6 +1378,10 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" flash={flashSet.has('totalPeep')} {...recogPropsForReadout('totalPeep', 'tPEEP')} />
               <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" flash={flashSet.has('autoPeep')} {...recogPropsForReadout('autoPeep', 'autoPEEP')} />
               <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-600' : rsbiValue > 80 ? 'text-amber-600' : 'text-emerald-600'} flash={flashSet.has('rsbi')} {...recogPropsForReadout('rsbi', 'RSBI')} />
+              {/* v3.2 §4 — SBP. Falls when CO drops; flashes rose under 95 to flag overshoot PEEP on a marginal patient (M13). */}
+              <NumericCard label="SBP" value={abg.sbp} unit="mmHg" color={abg.sbp < 95 ? 'text-rose-600 animate-pulse' : 'text-zinc-900'} flash={flashSet.has('sbp')} {...recogPropsForReadout('sbp', 'SBP')} />
+              {/* v3.2 §9.6 — ETCO2 at the mouth. Goes to 0 on displacement (M19 S1). */}
+              <NumericCard label="ETCO2" value={abg.etco2} unit="mmHg" color={abg.etco2 <= 0 ? 'text-rose-600 animate-pulse' : 'text-zinc-900'} flash={flashSet.has('etco2')} {...recogPropsForReadout('etco2', 'ETCO2')} />
             </div>
           </div>
 

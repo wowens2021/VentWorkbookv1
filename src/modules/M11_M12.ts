@@ -95,56 +95,62 @@ export const M11: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
+  // v3.2 §3 — recognition now drives off SVG clips, not prose vignettes.
+  // Each prompt embeds a static waveform (authored in /public/clips) and
+  // the question prose is a short clinical anchor, not a description of
+  // the trace. Distractors are *other recognizable patterns* so the
+  // wrong-answer feedback teaches the contrast.
   hidden_objective: {
     kind: 'compound',
     sequence: 'any_order',
     children: [
-      // TODO(M11-clips): clip file clips/dyssyn_ineffective.svg
-      // The trace text in the question describes what the clip will
-      // show once authored; until then, the description IS the trace.
       {
         kind: 'recognition',
         prompt: {
-          prompt_id: 'M11-s1',
+          prompt_id: 'M11-ineffective',
           trigger: { kind: 'on_load' },
-          question: '65 yo with COPD on VCV. Auto-PEEP measured 9 cmH2O. The pressure trace shows small downward deflections (patient effort) with no delivered breath after them. What pattern is this?',
+          clip_src: '/clips/dyssyn_ineffective.svg',
+          question:
+            '65 yo on VCV. Auto-PEEP measured 9 cmH2O. The waveform above is recorded over 6 seconds. What pattern is this?',
           options: [
-            { label: 'Ineffective triggering', is_correct: true },
-            { label: 'Normal breathing', is_correct: false },
-            { label: 'Double triggering', is_correct: false },
-            { label: 'Auto-cycling', is_correct: false },
+            { label: 'Ineffective triggering', is_correct: true, explanation: 'Two small pressure dips between mandatory breaths with no delivered tidal volume — the patient is pulling but can\'t overcome auto-PEEP plus the trigger threshold.' },
+            { label: 'Double triggering', is_correct: false, explanation: 'Double triggering shows two breaths stacked back-to-back with no expiration between them — not present here.' },
+            { label: 'Flow starvation', is_correct: false, explanation: 'Flow starvation scoops the inspiratory pressure DOWN during a delivered breath. Here the dips are between mandatory breaths, with no inspiratory flow.' },
+            { label: 'Normal breathing with sigh breaths', is_correct: false, explanation: 'Sigh breaths are larger volumes intentionally delivered by the vent, not failed trigger attempts.' },
           ],
           max_attempts: 2,
         },
       },
-      // TODO(M11-clips): clip file clips/dyssyn_double.svg
       {
         kind: 'recognition',
         prompt: {
-          prompt_id: 'M11-s2',
+          prompt_id: 'M11-double',
           trigger: { kind: 'on_load' },
-          question: '35 yo ARDS on VCV Vt 400 (6 mL/kg), strong respiratory drive. The pressure trace shows two breaths delivered back-to-back with no expiration between them. What pattern is this?',
+          clip_src: '/clips/dyssyn_double.svg',
+          question:
+            '35 yo ARDS on VCV Vt 400 (6 mL/kg), strong respiratory drive. The waveform above is recorded over 6 seconds. What pattern is this?',
           options: [
-            { label: 'Double triggering', is_correct: true },
-            { label: 'Normal breathing', is_correct: false },
-            { label: 'Ineffective triggering', is_correct: false },
-            { label: 'Flow starvation', is_correct: false },
+            { label: 'Double triggering', is_correct: true, explanation: 'A second breath stacked on top of an incompletely exhaled first breath. The peak pressure of breath B is higher because the lung hadn\'t fully emptied. Common in low-Vt ARDS with strong drive.' },
+            { label: 'Ineffective triggering', is_correct: false, explanation: 'Ineffective triggering would show patient pressure dips with NO delivered breath. Here breaths are clearly delivered — back-to-back.' },
+            { label: 'Flow starvation', is_correct: false, explanation: 'Flow starvation scoops the pressure DOWN during a single breath. Here the issue is two breaths fused together, not a pulled-down profile.' },
+            { label: 'Auto-cycling from a circuit leak', is_correct: false, explanation: 'Auto-cycling produces many machine breaths from circuit noise without patient effort. Here the stacked pair follows visible spontaneous drive.' },
           ],
           max_attempts: 2,
         },
       },
-      // TODO(M11-clips): clip file clips/dyssyn_starvation.svg
       {
         kind: 'recognition',
         prompt: {
-          prompt_id: 'M11-s3',
+          prompt_id: 'M11-starvation',
           trigger: { kind: 'on_load' },
-          question: '50 yo asthma on PRVC, visible air hunger. The pressure trace scoops downward during inspiration — the patient is pulling against the vent. What pattern is this?',
+          clip_src: '/clips/dyssyn_starvation.svg',
+          question:
+            '50 yo asthma on VCV with visible air hunger. The waveform above is recorded over 6 seconds. What pattern is this?',
           options: [
-            { label: 'Flow starvation', is_correct: true },
-            { label: 'Normal breathing', is_correct: false },
-            { label: 'Too-long I-time', is_correct: false },
-            { label: 'Double triggering', is_correct: false },
+            { label: 'Flow starvation', is_correct: true, explanation: 'The pressure trace scoops downward early in inspiration on breaths 2 and 3 — the patient is pulling harder than the set flow can supply. The flow stays constant (no compensation in VCV); that contrast is the diagnostic.' },
+            { label: 'Bronchospasm raising resistance', is_correct: false, explanation: 'Bronchospasm would push PIP UP, not scoop it down. The PIP-plateau gap would widen on every breath.' },
+            { label: 'Ineffective triggering', is_correct: false, explanation: 'Ineffective triggering happens between mandatory breaths, not during them. This is happening WITHIN delivered breaths.' },
+            { label: 'Too-long I-time', is_correct: false, explanation: 'A too-long I-time would extend the inspiratory plateau but not scoop the pressure down.' },
           ],
           max_attempts: 2,
         },
@@ -155,14 +161,53 @@ export const M11: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**The patient is telling you something.** Owens groups dyssynchronies into three buckets — bad triggering, bad assistance, bad termination — and within those, five common patterns recur in the ICU. The waveform tells you which one.' },
     { kind: 'callout', tone: 'tip', markdown: 'The DOPES rule-out comes first. Then read the waveform.' },
+    // v3.2 §0.7 — predict_mcq anchoring the diagnostic-not-sedation reflex
+    // before the pattern atlas. Recognition modules get a predict_mcq early.
+    {
+      kind: 'predict_mcq',
+      predict:
+        "A vented patient looks uncomfortable. The bedside reflex is to push sedation. According to Owens, the correct first sequence is:",
+      options: [
+        { label: "Sedate first, troubleshoot if the sedation doesn't work.", is_correct: false, explanation: 'Sedation buries the diagnostic information you need.' },
+        { label: 'Bag off the vent, run DOPES, then read the waveform.', is_correct: true },
+        { label: 'Switch modes (try APRV) to see if the patient is more comfortable.', is_correct: false, explanation: 'Mode-switching without a diagnosis is gambling.' },
+        { label: 'Increase the FiO2 — discomfort is usually hypoxia.', is_correct: false, explanation: 'Discomfort on the vent is more commonly synchrony than oxygenation; FiO2 is the wrong axis.' },
+      ],
+      observe:
+        'The patient is telling you something. Disconnect first to rule out the vent. Then DOPES (displacement / obstruction / pneumothorax / equipment / stacking). Only after those are clean do you assume dyssynchrony and read the waveform.',
+    },
+    // v3.2 §3.6 — pattern atlas. Five clips, each labeled in its caption.
+    // The recognition prompts in the Try-It show the same clips with NO
+    // label so the learner identifies them. Reverse triggering and
+    // premature cycling are reference-only (not in the recognition pool).
     {
       kind: 'figure',
-      caption: 'Three patterns, three signatures on the pressure waveform.',
-      ascii: 'Ineffective triggering:    ___ ↘ ___ ↘ ___   (small dips, no breath)\nDouble triggering:        |‾|‾|     |‾|‾|     (two stacked, no exhalation)\nFlow starvation:          ╲___╱     ╲___╱     (scooped downward during insp)',
+      caption: 'Ineffective triggering — patient effort (downward pressure dip + tiny negative-flow blip) with no delivered breath.',
+      src: '/clips/dyssyn_ineffective.svg',
     },
     { kind: 'prose', markdown: '**Ineffective triggering.** A small dip in pressure with no delivered breath. The patient tried; the vent didn\'t see it. Auto-PEEP is the most common cause — the patient has to overcome the trapped pressure before crossing trigger. Weak drive is the next cause.' },
+    {
+      kind: 'figure',
+      caption: 'Double triggering — one Vt delivered, no exhalation, a second Vt stacked on top. Peak rises because the lung never emptied.',
+      src: '/clips/dyssyn_double.svg',
+    },
     { kind: 'prose', markdown: '**Double triggering.** One Vt delivered, no exhalation, a second Vt stacked. The patient wanted more than the vent set. Classic in lung-protective Vt with strong respiratory drive.' },
+    {
+      kind: 'figure',
+      caption: 'Flow starvation — inspiratory pressure scoops downward as the patient pulls harder than the set flow; flow stays constant (VCV does not compensate).',
+      src: '/clips/dyssyn_starvation.svg',
+    },
     { kind: 'prose', markdown: '**Flow starvation.** During inspiration the pressure waveform scoops downward — the patient is pulling harder than the set flow can supply. VC-specific. Either raise the inspiratory flow or switch to a flow-variable mode.' },
+    {
+      kind: 'figure',
+      caption: 'Reverse triggering (reference) — a mandatory breath is delivered, then the diaphragm contracts a beat later: a brief pressure dip mid-expiration. Common in deeply sedated ARDS.',
+      src: '/clips/dyssyn_reverse.svg',
+    },
+    {
+      kind: 'figure',
+      caption: 'Premature cycling (reference) — on PSV the vent terminates inspiration while the patient is still pulling. Pressure drops while inspiratory flow is still positive.',
+      src: '/clips/dyssyn_cycling.svg',
+    },
     { kind: 'callout', tone: 'warn', markdown: 'Each pattern has a different fix. Sedation "fixes" all of them by silencing the patient — which is exactly what you don\'t want until you\'ve corrected the mismatch.' },
   ],
 
@@ -241,7 +286,10 @@ export const M11: ModuleConfig = {
       'When the task starts, three vignettes will describe the waveform. Match each to its name.',
     ],
   },
-  user_facing_task: 'Recognize the dyssynchrony pattern. Three patients in a row. For each, look at the waveform clip and the bedside context, and select the dyssynchrony pattern. You must get all three correct in one pass.',
+  // v3.2 §3.7 — clip-first framing. Wrong answers explain what THAT
+  // pattern would have shown, so the module teaches recognition by
+  // contrast.
+  user_facing_task: 'Recognize the dyssynchrony pattern. Three waveform clips, one patient context per clip. For each, look at the clip and the bedside vignette, and pick the pattern. You must get all three correct in one pass — wrong answers explain what *that* pattern would have shown.',
   // success_criteria_display omitted — shell auto-derives from the three
   // recognition questions so the checklist matches the prompt wording exactly.
   task_framing_style: 'C',
@@ -369,10 +417,30 @@ export const M12: ModuleConfig = {
     { kind: 'prose', markdown: '**SIMV looks like A/C with extra rules.** The vent delivers a fixed number of mandatory breaths per minute — at the set Vt or PINSP. Between mandatory breaths, the patient can breathe spontaneously. But unlike A/C, those spontaneous breaths are not automatically supported. The patient pulls whatever volume he can pull, and that\'s what he gets.' },
     { kind: 'callout', tone: 'info', markdown: 'In SIMV, the mandatory breaths are A/C-like. The spontaneous breaths are PSV-like — but only if you\'ve set a PS.' },
     {
-      kind: 'predict_observe',
-      predict: 'You\'re about to add PS 12 to a patient pulling 160 mL spontaneous breaths. What happens to the spontaneous Vt?',
+      kind: 'predict_mcq',
+      predict: 'You\'re about to add PS 12 to a patient pulling 160 mL spontaneous breaths between mandatory breaths. What happens to the spontaneous Vt?',
+      options: [
+        { label: 'Climbs into the 400s — PS makes the spontaneous breaths effective.', is_correct: true },
+        { label: 'Unchanged — PS only affects mandatory breaths in SIMV.', is_correct: false, explanation: 'Backwards. In SIMV, the MANDATORY breaths are fully set (Vt and rate); PS is added to the SPONTANEOUS ones.' },
+        { label: 'Drops — PS confuses the patient\'s drive.', is_correct: false, explanation: 'PS doesn\'t suppress drive; it augments the breath the patient is already triggering.' },
+        { label: 'Falls because mandatory breaths now dominate.', is_correct: false, explanation: 'Mandatory rate is unchanged. The spontaneous breaths get bigger; the mandatory breaths stay the same size.' },
+      ],
       observe: 'Spontaneous Vt climbs into the 400s. The patient was working, just not effectively. Now the breaths actually move air.',
       awaits_control: 'psLevel',
+    },
+    // v3.2 §0.7 — new predict_mcq grounding the SIMV failure mode.
+    {
+      kind: 'predict_mcq',
+      predict:
+        'A patient on SIMV (rate 10, Vt 450, PS 0) has actual rate 28, spontaneous Vt 160. Over the next few hours, the most likely outcome without intervention is:',
+      options: [
+        { label: 'The patient self-weans and gets extubated.', is_correct: false, explanation: "Sub-dead-space breaths don't ventilate; he's working without effect." },
+        { label: 'Respiratory muscle fatigue and rising PaCO2.', is_correct: true },
+        { label: 'Adequate gas exchange because MVe looks acceptable.', is_correct: false, explanation: 'MVe = total volume per minute, not alveolar ventilation. Spontaneous breaths at 160 mL are mostly dead space.' },
+        { label: 'Reduced auto-PEEP from the high spontaneous rate.', is_correct: false, explanation: 'High RR with short Te tends to cause trapping, not relieve it.' },
+      ],
+      observe:
+        'The mandatory breaths are doing the alveolar work. The spontaneous breaths are wasted effort — sub-dead-space, all of it work, none of it ventilation. Over hours this fatigues the diaphragm and the PaCO2 climbs. The fix is PS, not mode change.',
     },
     { kind: 'callout', tone: 'warn', markdown: 'SIMV was sold as a weaning mode. It isn\'t. The daily SBT is. SIMV is fine — pay attention to the work of breathing.' },
   ],

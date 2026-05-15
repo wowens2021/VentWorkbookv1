@@ -33,6 +33,8 @@ export const READOUT_DESC: Record<string, string> = {
   peep: 'positive end-expiratory pressure — the set floor (cmH2O)',
   tidalVolumeSet: 'set tidal volume — the volume you ordered (mL)',
   meanAirwayPressure: 'mean airway pressure across the breath cycle (cmH2O)',
+  sbp: 'systolic blood pressure (mmHg) — drops with overshoot PEEP if hemodynamically marginal',
+  etco2: 'end-tidal CO2 — the value at the mouth (mmHg); loss-of-signal flags disconnect',
 };
 
 export const CONTROL_DESC: Record<string, string> = {

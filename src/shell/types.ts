@@ -38,7 +38,41 @@ export type ContentBlock =
       /** When set, the "Observe" half auto-reveals the first time the learner
        *  changes the named control on the sim during the read phase — turning
        *  the block from a click-to-reveal nudge into a genuine interactive
-       *  prediction. The legacy "Then observe →" button remains as a fallback. */
+       *  prediction. The legacy "Then observe →" button remains as a fallback.
+       *
+       *  DEPRECATED (v3.2 §0): use `predict_mcq` for new authoring. Existing
+       *  predict_observe blocks render as a click-to-reveal nudge as before;
+       *  new predict_mcq blocks render as a gated multiple-choice question
+       *  that must be answered correctly before the "observe" half reveals.
+       */
+      awaits_control?: ControlName;
+    }
+  | {
+      /**
+       * Per v3.2 §0: a gated multiple-choice prediction. The learner must
+       * commit to an answer; a wrong answer reveals the option's
+       * `explanation` and leaves the others enabled; a correct answer
+       * reveals the `observe` prose and marks the block satisfied.
+       *
+       * The ReadPane gates its "Continue" CTA on ALL predict_mcq blocks
+       * in the module being satisfied (per v3.2 §0.3). Disabled-CTA copy:
+       * "Answer N more predictions to continue."
+       *
+       * Telemetry: per-block attempts persisted to
+       * ProgressRecord.predict_mcq_attempts for dashboard signal only;
+       * does not affect the score.
+       */
+      kind: 'predict_mcq';
+      /** The prediction question — forward question, not statement. */
+      predict: string;
+      /** 3-4 options; exactly one must have is_correct: true. */
+      options: { label: string; is_correct: boolean; explanation?: string }[];
+      /** Revealed only after the correct option is picked. */
+      observe: string;
+      /** Optional alternative unlock: changing the named control on the
+       *  live sim also marks the block satisfied (without requiring an
+       *  MCQ answer). Use sparingly — only when the manipulation IS the
+       *  prediction. The MCQ stays visible and answerable. */
       awaits_control?: ControlName;
     };
 
@@ -52,7 +86,7 @@ export type ControlName =
 export type ReadoutName =
   | 'pip' | 'plat' | 'drivingPressure' | 'mve' | 'vte' | 'totalPeep' | 'autoPeep'
   | 'actualRate' | 'ieRatio' | 'rsbi' | 'ph' | 'paco2' | 'pao2' | 'spo2' | 'hco3'
-  | 'fio2' | 'peep' | 'tidalVolumeSet' | 'meanAirwayPressure';
+  | 'fio2' | 'peep' | 'tidalVolumeSet' | 'meanAirwayPressure' | 'sbp' | 'etco2';
 
 export type WaveformName = 'pressure_time' | 'flow_time' | 'volume_time';
 
@@ -75,6 +109,23 @@ export interface SimPreset {
     deadSpaceFraction: number;
     gender: 'M' | 'F';
     heightInches: number;
+    /**
+     * v3.2 §1.3 — scripted intrapulmonary shunt fraction (0–1). When set,
+     * overrides the default compliance-based shunt ladder so a module
+     * can teach shunt without conflating it with stiff-lung mechanics.
+     * Used by M5 (scripted ARDS shunt) and M19's pneumothorax perturbation.
+     */
+    shuntFraction: number;
+    /**
+     * v3.2 §9.6 — sim parameters for M19 scripted perturbations.
+     * `leak_mL_per_breath` is subtracted from Vte each breath (capped at
+     * Vt — Vte can\'t go negative). `etco2_loss_fraction` is multiplied
+     * against the computed ETCO2 (1.0 = no signal). `bpSys` is the
+     * baseline systolic for the M13 SBP guardrail.
+     */
+    leak_mL_per_breath: number;
+    etco2_loss_fraction: number;
+    bpSys: number;
   }>;
 }
 
@@ -149,11 +200,53 @@ export interface InlinePromptConfig {
     is_correct: boolean;
     explanation?: string;
   }>;
+  /**
+   * v3.2 §3 — path to a static SVG clip (relative to `/public`) shown
+   * above the question text. Used by M11's dyssynchrony recognition so
+   * the prompt is genuine pattern-recognition rather than text-matching.
+   * RecognitionPrompt renders the clip when set; otherwise the prompt
+   * is prose-only as before.
+   */
+  clip_src?: string;
+}
+
+/**
+ * Per v3.2 §9 — a one-shot sim state override applied for the duration of
+ * a recognition prompt. Used by M19's DOPES scenarios: before the prompt
+ * presents, the perturbation is applied; on satisfaction (or when the
+ * compound's `reset_between` fires), it's cleared. Settings and patient
+ * overrides shallow-merge over the preset.
+ */
+export interface PerturbationSpec {
+  id: string;
+  settings?: Partial<{
+    tidalVolume: number;
+    pInsp: number;
+    respiratoryRate: number;
+    peep: number;
+    iTime: number;
+    fiO2: number;
+  }>;
+  patient?: Partial<{
+    compliance: number;
+    resistance: number;
+    shuntFraction: number;
+    leak_mL_per_breath: number;
+    etco2_loss_fraction: number;
+    bpSys: number;
+  }>;
 }
 
 export interface RecognitionTrackerConfig {
   kind: 'recognition';
   prompt: InlinePromptConfig;
+  /**
+   * v3.2 §9 — applied to the sim before the prompt is presented. Cleared
+   * on `satisfied` or when the parent compound's `reset_between` fires.
+   * Lets a recognition prompt teach pattern recognition off live sim
+   * deltas rather than off prose vignettes.
+   */
+  perturbation?: PerturbationSpec;
 }
 
 export interface CompoundTrackerConfig {
@@ -327,4 +420,18 @@ export interface ProgressRecord {
   quiz_attempts?: number;
   /** Highest summative score the learner has earned on this module. */
   quiz_best_score?: number;
+
+  /**
+   * Per v3.2 §0.4: per-block telemetry for gated predict_mcq blocks in the
+   * read phase. Records the attempt history for dashboard signal only —
+   * does NOT affect the composite score.
+   */
+  predict_mcq_attempts?: {
+    /** {moduleId}-PM{idx+1}, derived from the predict_mcq block's position. */
+    block_id: string;
+    /** Total clicks recorded until the correct option was selected. */
+    attempts: number;
+    /** Ordered history of selected option labels. */
+    selected_labels: string[];
+  }[];
 }

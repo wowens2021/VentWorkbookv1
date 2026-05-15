@@ -144,18 +144,30 @@ export const M4: ModuleConfig = {
         'Compute compliance at the bedside every shift: **Vt / (Pplat − PEEP)**. Watch the trend. A patient whose compliance falls from 35 to 25 over a day is heading toward more PEEP, more sedation, and prone positioning.',
     },
     {
-      kind: 'predict_observe',
+      kind: 'predict_mcq',
       awaits_control: 'compliance',
       predict:
-        "You'll drop this man's compliance from 45 to 25 (the kind of crash you'd see if he aspirated). What rises more — PIP or Pplat?",
+        "You're about to drop this patient's compliance from 45 to 25 (an aspiration-pattern crash). PIP and Pplat both rise — by how much do they differ?",
+      options: [
+        { label: 'Both rise by about the same amount; the gap is unchanged.', is_correct: true },
+        { label: 'PIP rises more than Pplat — the gap widens.', is_correct: false, explanation: "That's the resistance signature, not compliance. Resistance lives in the R·flow term, which only appears in the peak." },
+        { label: 'Pplat rises more than PIP — the gap shrinks.', is_correct: false, explanation: 'Physically impossible — Pplat is always ≤ PIP (PIP = Pplat + the resistance contribution).' },
+        { label: 'Neither moves — compliance is a property of the patient, not the vent display.', is_correct: false, explanation: "Compliance drives the V/C term in the equation of motion; falling compliance directly raises plat (and PIP carries plat's rise upward)." },
+      ],
       observe:
         "Both rose by about 7. The gap (PIP − Pplat) didn't budge, because the airways didn't change. That's the lung-side signature.",
     },
     {
-      kind: 'predict_observe',
+      kind: 'predict_mcq',
       awaits_control: 'resistance',
       predict:
-        "Now you'll spike his resistance from 12 to 28 (a mucus plug). What's different this time?",
+        "Now you'll spike his resistance from 12 to 28 (a mucus plug). How does the pressure response differ from the compliance case above?",
+      options: [
+        { label: 'PIP rises more than Pplat — the gap widens.', is_correct: true },
+        { label: 'Both rise equally — same as compliance.', is_correct: false, explanation: "That's the compliance signature. Resistance is asymmetric — it loads PIP but not Pplat (because resistance only matters while flow is moving)." },
+        { label: 'Pplat rises more than PIP — the gap shrinks.', is_correct: false, explanation: 'Cannot happen. Pplat is always ≤ PIP.' },
+        { label: 'Neither moves — the vent compensates for changing resistance.', is_correct: false, explanation: "In VCV, the vent delivers the set Vt regardless of resistance; the cost shows up as higher PIP." },
+      ],
       observe:
         'PIP shot up. Pplat barely moved. The gap blew open. This is the bedside resistance signature.',
     },

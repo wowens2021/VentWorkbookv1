@@ -83,18 +83,27 @@ export const M13: ModuleConfig = {
     preset: {
       mode: 'VCV',
       settings: { tidalVolume: 430, respiratoryRate: 18, peep: 5, fiO2: 70, iTime: 1.0 },
-      patient: { compliance: 32, resistance: 11, spontaneousRate: 0, heightInches: 70, gender: 'M' },
+      // v3.2 §4 — marginal baseline SBP 105: enough headroom for PEEP 10–12
+      // (the sweet-spot recruit), but PEEP 18+ drops CO enough to break the
+      // SBP ≥ 95 guardrail. Teaches "PEEP titration is bounded by hemodynamics."
+      patient: { compliance: 32, resistance: 11, spontaneousRate: 0, heightInches: 70, gender: 'M', bpSys: 105 },
     },
     unlocked_controls: ['peep', 'fiO2'],
-    visible_readouts: ['pip', 'plat', 'drivingPressure', 'spo2', 'pao2', 'fio2', 'peep'],
+    visible_readouts: ['pip', 'plat', 'drivingPressure', 'spo2', 'pao2', 'fio2', 'peep', 'sbp'],
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
+  // v3.2 §4 — PEEP must lift PaO2 ≥ 65 AND keep SBP ≥ 95. Overshoot PEEP
+  // tanks venous return on a marginal patient (baseline SBP 105 here),
+  // so the success criterion is a hemodynamic-respecting recruitment,
+  // not just an oxygenation hit. The SBP card flashes rose under 95 to
+  // make the trade-off visible while exploring.
   hidden_objective: {
     kind: 'outcome',
     readouts: {
       peep: { operator: '>=', value: 10 },
       pao2: { operator: '>=', value: 65 },
+      sbp: { operator: '>=', value: 95 },
     },
     sustain_breaths: 5,
   },
@@ -117,9 +126,20 @@ export const M13: ModuleConfig = {
         ' 1.00 |  18–24',
     },
     {
-      kind: 'predict_observe',
-      predict: 'You\'re going to raise PEEP from 5 to 12 at FiO2 0.70. What happens to PaO2?',
-      observe: 'PaO2 climbs as alveoli recruit and shunt fraction falls. The lung was under-recruited at PEEP 5 — the LIP on its compliance curve hadn\'t been crossed yet.',
+      // v3.2 §4.6 — overshoot-BP predict_mcq replaces the simple PEEP→PaO2
+      // demo. The SBP guardrail now appears in the live tracker so this
+      // teaching has consequence.
+      kind: 'predict_mcq',
+      predict:
+        "You're going to raise PEEP from 5 to 18 in this patient. What's the most likely BP response?",
+      options: [
+        { label: 'BP rises — PEEP improves cardiac output by reducing LV afterload.', is_correct: false, explanation: 'That\'s true at modest PEEP in failing LVs. At PEEP 18 in a euvolemic patient, the dominant effect is reduced venous return.' },
+        { label: 'BP unchanged.', is_correct: false, explanation: 'At this magnitude, intrathoracic pressure changes start to matter.' },
+        { label: 'BP falls.', is_correct: true },
+        { label: 'Depends on the FiO2.', is_correct: false, explanation: 'FiO2 doesn\'t drive hemodynamics here.' },
+      ],
+      observe:
+        'At PEEP 18, intrathoracic pressure crowds the right atrium, venous return falls, cardiac output falls, and SBP drops. The recruitment benefit (PaO2 climbs to 92) is real, but you\'ve overshot the safe ceiling. The SBP readout above is the live signal — watch it as you titrate.',
       awaits_control: 'peep',
     },
     { kind: 'callout', tone: 'warn', markdown: 'PEEP-induced hypotension is real but rare below 10–12. If BP drops at PEEP 8 in a previously stable patient, suspect hypovolemia — fluid bolus first.' },
@@ -328,10 +348,34 @@ export const M14: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**Two mechanisms matter.** Shunt: blood flows past alveoli that aren\'t ventilated. No amount of FiO2 in the rest of the lung helps the blood that bypassed it. The fix is *recruitment* — open those alveoli. V/Q mismatch: alveoli are ventilated, just poorly matched. FiO2 fixes this.' },
     { kind: 'callout', tone: 'info', markdown: 'The clue for shunt: high FiO2, low PaO2. The clue for V/Q mismatch: PaO2 rises smoothly with FiO2.' },
+    // v3.2 §5.3 — new predict_mcq covering the four-lever escalation ladder
+    // (FiO2 → PEEP → mean airway pressure → prone). Lives before the existing
+    // PEEP recruitment block so the learner has the ladder framing before
+    // the PEEP demo.
     {
-      kind: 'predict_observe',
-      predict: 'You\'re going to raise PEEP from 8 to 14 at FiO2 1.0. The patient has a P/F of 65 — pure shunt. What happens to PaO2?',
-      observe: 'PaO2 climbs from 65 to over 100. The lung was recruitable; PEEP did what FiO2 couldn\'t. Now lower FiO2 to 0.60 — PaO2 settles in the 70s and you\'re back to a non-toxic O2 dose.',
+      kind: 'predict_mcq',
+      predict:
+        'A patient has refractory hypoxemia despite FiO2 0.8 and PEEP 12. Which is the next step on Owens\'s escalation ladder?',
+      options: [
+        { label: 'Switch from VCV to PCV.', is_correct: false, explanation: 'Mode change doesn\'t move the ladder; same lungs, same compliance, same shunt.' },
+        { label: 'Increase mean airway pressure — longer inspiratory time, or APRV.', is_correct: true },
+        { label: 'Add a paralytic.', is_correct: false, explanation: 'Paralysis helps if dyssynchrony is the issue, but it\'s not a primary oxygenation lever in Owens\'s ladder.' },
+        { label: 'Add inhaled nitric oxide.', is_correct: false, explanation: 'INO is a rescue therapy below the four-lever ladder, not part of it.' },
+      ],
+      observe:
+        'The four levers in order: FiO2 → PEEP → mean airway pressure → prone. Each has a ceiling. You\'re hitting the PEEP ceiling here (PaO2 still inadequate, hemodynamics getting marginal). The next move is mean airway pressure — longer Ti, IRV, or APRV — which raises alveolar recruitment time without raising PEEP further. Prone comes after that.',
+    },
+    {
+      // v3.2 §5.5 — legacy predict_observe converted.
+      kind: 'predict_mcq',
+      predict: 'This patient has a P/F of 65 (PaO2 65 on FiO2 1.0) — refractory hypoxemia. You raise PEEP from 8 to 14 with FiO2 unchanged. What happens to PaO2?',
+      options: [
+        { label: 'Unchanged — the patient is already on max O2.', is_correct: false, explanation: "That's the FiO2-resistance fingerprint of shunt, which doesn't predict the PEEP response." },
+        { label: 'Climbs as alveoli recruit.', is_correct: true },
+        { label: 'Falls — PEEP overdistends.', is_correct: false, explanation: 'Overdistension is a real risk above ~18 in this patient, but at 14 you\'re still in the recruitment zone.' },
+        { label: 'Hard to predict.', is_correct: false, explanation: 'The lung is recruitable; the prediction is straightforward.' },
+      ],
+      observe: 'PaO2 climbs from 65 to over 100 as PEEP recruits the previously collapsed alveoli. The shunt fraction falls. Now you can drop FiO2 to 0.50–0.60 and PaO2 settles in the 70s — back to non-toxic O2 with a safe buffer.',
       awaits_control: 'peep',
     },
     { kind: 'callout', tone: 'warn', markdown: 'SaO2 88% is acceptable if cardiac output and Hb are OK. The shape of the oxyhemoglobin curve means PaO2 only has to be ~56 to give SaO2 88. Don\'t chase a PaO2 of 100 with FiO2 1.0 when 60 on 0.6 will do.' },
@@ -383,15 +427,19 @@ export const M14: ModuleConfig = {
       explanation: 'The full equation. SaO2 matters more than PaO2 because dissolved O2 is a small fraction of total content. Book Ch. 5.',
     },
     {
+      // v3.2 §5 — Q4 replaced with a ladder-of-escalation question. The
+      // learner has already maxed FiO2 and seated PEEP at the ARDSnet
+      // upper-PEEP row; mean Paw is high. The remaining rung on the
+      // oxygenation ladder before ECMO is prone positioning (PROSEVA).
       id: 'M14-Q4',
-      prompt: 'In a patient with 30% shunt, increasing FiO2 from 0.60 to 1.0 will:',
+      prompt: 'Day 2 of severe ARDS. FiO2 1.0, PEEP 14, mean Paw 22 cmH2O, PaO2 55, plateau 28. You\'ve already optimized FiO2 and PEEP. Driving pressure is 14. What is the next intervention?',
       options: [
-        { label: 'Substantially improve PaO2', is_correct: false },
-        { label: 'Have minimal effect on PaO2', is_correct: true },
-        { label: 'Lower PaCO2', is_correct: false },
-        { label: 'Improve V/Q matching', is_correct: false },
+        { label: 'Push PEEP to 18–20 cmH2O', is_correct: false, explanation: 'You\'re already on the upper end of the ARDSnet table; pushing higher mostly buys overdistension and driving pressure, not recruitment. The ladder calls for prone first.' },
+        { label: 'Prone position', is_correct: true, explanation: 'PROSEVA: prone positioning for ≥16 h/day in moderate-to-severe ARDS (P/F < 150 on FiO2 ≥ 0.6, PEEP ≥ 5) cuts mortality. This is the next rung on the ladder before ECMO.' },
+        { label: 'Switch to APRV', is_correct: false, explanation: 'APRV can recruit, but the trial data is weaker than prone and the dyssynchrony risk is high. Prone is the better-evidenced next move.' },
+        { label: 'Start inhaled nitric oxide', is_correct: false, explanation: 'iNO improves oxygenation transiently but has no mortality benefit and is expensive. Reserve for refractory shunt or RV failure; not the next standard rung.' },
       ],
-      explanation: 'Shunt is FiO2-resistant. The shunted blood never sees the alveolar gas. Book Ch. 4.',
+      explanation: 'The oxygenation ladder: FiO2 → PEEP → mean airway pressure → prone → NMBA → ECMO. With FiO2 1.0 and high PEEP already, prone is the next evidence-based step (PROSEVA). Book Ch. 17.',
     },
     {
       id: 'M14-Q5',

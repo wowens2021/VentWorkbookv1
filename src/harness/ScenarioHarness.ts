@@ -4,7 +4,7 @@
 // for state; the harness normalizes its events and dispatches to subscribers.
 
 import type {
-  Scenario, ControlName, ReadoutName, InlinePromptConfig,
+  Scenario, ControlName, ReadoutName, InlinePromptConfig, PerturbationSpec,
 } from '../shell/types';
 import type { HarnessEvent } from '../trackers';
 
@@ -14,6 +14,9 @@ export class ScenarioHarness {
   private subscribers: Subscriber[] = [];
   private promptListeners: ((prompt: InlinePromptConfig) => void)[] = [];
   private resetListeners: (() => void)[] = [];
+  // v3.2 §9 — perturbation channel. PlaygroundSim subscribes; trackers push.
+  private perturbationListeners: ((p: PerturbationSpec | null) => void)[] = [];
+  private activePerturbation: PerturbationSpec | null = null;
   private snapshotProvider: (() => any) | null = null;
   private resetProvider: (() => void) | null = null;
 
@@ -48,12 +51,40 @@ export class ScenarioHarness {
 
   snapshot(): any { return this.snapshotProvider?.() ?? null; }
   resetToPreset() {
+    // v3.2 §9.3 — resetting the sim always clears any active perturbation
+    // so the next baseline reflects the preset, not the last scripted
+    // state. Compounds with `reset_between` rely on this for M19.
+    this.clearPerturbations();
     this.resetProvider?.();
     this.resetListeners.forEach(l => l());
   }
   onReset(fn: () => void): () => void {
     this.resetListeners.push(fn);
     return () => { this.resetListeners = this.resetListeners.filter(l => l !== fn); };
+  }
+
+  // ── v3.2 §9 perturbation channel ──
+  /**
+   * Apply a scripted state override on top of the current preset. The sim
+   * subscribes via `onPerturbation` and re-merges its `settings`/`patient`
+   * state. Replaces any previous perturbation (one active at a time).
+   */
+  applyPerturbation(p: PerturbationSpec) {
+    this.activePerturbation = p;
+    this.perturbationListeners.forEach(l => l(p));
+  }
+  /** Restore baseline preset values. Called by `resetToPreset` and by
+   *  trackers on `satisfied`. */
+  clearPerturbations() {
+    if (!this.activePerturbation) return;
+    this.activePerturbation = null;
+    this.perturbationListeners.forEach(l => l(null));
+  }
+  /** Current active perturbation (for sim mount-time sync). */
+  currentPerturbation(): PerturbationSpec | null { return this.activePerturbation; }
+  onPerturbation(fn: (p: PerturbationSpec | null) => void): () => void {
+    this.perturbationListeners.push(fn);
+    return () => { this.perturbationListeners = this.perturbationListeners.filter(l => l !== fn); };
   }
 
   // ── Inline recognition prompts ──

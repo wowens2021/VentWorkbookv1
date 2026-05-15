@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  v3.2 §3.3 M11 — Clip 3: Flow starvation.
+  Three VCV breaths with constant inspiratory flow. The pressure trace
+  on breaths 2 and 3 dips *down* (scoops) early in inspiration as the
+  patient pulls harder than the set flow can supply. Flow stays at the
+  set constant value — no compensation in VCV. The flow / pressure
+  contrast is the diagnostic.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360"
+     role="img" aria-label="Ventilator waveform with flow starvation pattern"
+     font-family="ui-sans-serif, system-ui, -apple-system, Inter, sans-serif">
+  <rect width="800" height="360" fill="#f5f0e6"/>
+
+  <g stroke="#d6d3d1" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="60"  y1="20"  x2="60"  y2="320"/>
+    <line x1="180" y1="20"  x2="180" y2="320"/>
+    <line x1="300" y1="20"  x2="300" y2="320"/>
+    <line x1="420" y1="20"  x2="420" y2="320"/>
+    <line x1="540" y1="20"  x2="540" y2="320"/>
+    <line x1="660" y1="20"  x2="660" y2="320"/>
+    <line x1="780" y1="20"  x2="780" y2="320"/>
+  </g>
+  <line x1="60" y1="160" x2="780" y2="160" stroke="#a8a29e" stroke-width="1"/>
+  <line x1="60" y1="55"  x2="780" y2="55"  stroke="#a8a29e" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="60" y1="260" x2="780" y2="260" stroke="#a8a29e" stroke-width="1.5"/>
+
+  <text x="65" y="15" font-size="10" fill="#57534e">Airway Pressure (cmH2O)</text>
+  <text x="65" y="195" font-size="10" fill="#57534e">Flow (L/min)</text>
+  <g font-size="10" fill="#57534e" text-anchor="end">
+    <text x="55" y="163">0</text><text x="55" y="128">10</text>
+    <text x="55" y="93">20</text><text x="55" y="58">30</text>
+    <text x="55" y="23">40</text>
+  </g>
+  <g font-size="10" fill="#57534e" text-anchor="end">
+    <text x="55" y="203">60</text><text x="55" y="233">30</text>
+    <text x="55" y="263">0</text><text x="55" y="293">-30</text>
+    <text x="55" y="323">-60</text>
+  </g>
+
+  <!-- Pressure trace.
+       Breath 1: normal smooth rise to 28 (y=62) over 1s.
+       Breath 2: SCOOPED — early in inspiration pressure drops to ~10
+                 (y=125) before recovering to ~22 (y=83).
+       Breath 3: same scoop pattern.
+       Each breath is 1s inspiration + 1s expiration. Cycle 2s. -->
+  <polyline fill="none" stroke="#3b82f6" stroke-width="2"
+    points="
+      60,142.5
+      96,142.5
+      120,90
+      168,67
+      192,62
+      216,142.5
+      300,142.5
+      324,142.5
+      348,125
+      372,118
+      408,90
+      432,83
+      444,142.5
+      540,142.5
+      564,142.5
+      588,125
+      612,118
+      648,90
+      672,83
+      684,142.5
+      780,142.5
+    "/>
+
+  <!-- Flow trace: constant positive during inspiration in all three
+       breaths. No scoop here — that's the diagnostic contrast. -->
+  <polyline fill="none" stroke="#3b82f6" stroke-width="2"
+    points="
+      60,260
+      96,260
+      100,230
+      216,230
+      220,260
+      224,290
+      300,265
+      324,260
+      328,230
+      444,230
+      448,260
+      452,290
+      540,265
+      564,260
+      568,230
+      684,230
+      688,260
+      692,290
+      780,265
+    "/>
+
+  <!-- Annotation: arrow to the scoop on the third breath -->
+  <g stroke="#0284c7" fill="#0284c7" stroke-width="1.5">
+    <line x1="600" y1="180" x2="600" y2="130"/>
+    <polygon points="600,123 595,135 605,135"/>
+  </g>
+  <rect x="520" y="183" width="160" height="22" rx="4" fill="#fef3c7" stroke="#b45309"/>
+  <text x="600" y="198" font-size="11" font-weight="700" fill="#92400e" text-anchor="middle">
+    scoop — pulling against vent
+  </text>
+
+  <g font-size="10" fill="#57534e" text-anchor="middle">
+    <text x="60"  y="350">0 s</text><text x="180" y="350">1 s</text>
+    <text x="300" y="350">2 s</text><text x="420" y="350">3 s</text>
+    <text x="540" y="350">4 s</text><text x="660" y="350">5 s</text>
+    <text x="780" y="350">6 s</text>
+  </g>
+</svg>

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Target, Clock, ChevronRight } from 'lucide-react';
-import ContentBlocks from './ContentBlocks';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Target, Clock, ChevronRight, Lock } from 'lucide-react';
+import ContentBlocks, { type PredictMcqStatus } from './ContentBlocks';
 import type { ModuleConfig } from './types';
 import type { ScenarioHarness } from '../harness/ScenarioHarness';
 
@@ -12,6 +12,10 @@ interface Props {
   onAdvance: () => void;
   /** Brand-track tint colors so the CTA matches the rest of the in-module chrome. */
   trackAccent?: { bg: string; bgHover: string };
+  /** Per v3.2 §0.4: per-block telemetry callback. ReadPane forwards every
+   *  predict_mcq status change up to ModuleShell so attempts can be
+   *  persisted. */
+  onPredictMcqStatusChange?: (s: PredictMcqStatus) => void;
 }
 
 /**
@@ -22,9 +26,32 @@ interface Props {
  *   - the existing bottom-of-content CTA for fast scrollers, so both
  *     interaction styles are covered.
  */
-const ReadPane: React.FC<Props> = ({ module, harness, ctaLabel, onAdvance, trackAccent }) => {
+const ReadPane: React.FC<Props> = ({
+  module,
+  harness,
+  ctaLabel,
+  onAdvance,
+  trackAccent,
+  onPredictMcqStatusChange,
+}) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrolledFar, setScrolledFar] = useState(false);
+
+  // Per v3.2 §0.3: gate the bottom CTA on every predict_mcq block being
+  // satisfied. We count expected MCQs from the module config and track
+  // satisfaction by block_id reported up from ContentBlocks.
+  const expectedMcq = useMemo(
+    () => module.content_blocks.filter(b => b.kind === 'predict_mcq').length,
+    [module.content_blocks],
+  );
+  const [mcqStatus, setMcqStatus] = useState<Record<string, boolean>>({});
+  const handleMcqStatus = (s: PredictMcqStatus) => {
+    setMcqStatus(prev => (prev[s.block_id] === s.satisfied ? prev : { ...prev, [s.block_id]: s.satisfied }));
+    onPredictMcqStatusChange?.(s);
+  };
+  const satisfiedMcq = Object.values(mcqStatus).filter(Boolean).length;
+  const mcqsRemaining = Math.max(0, expectedMcq - satisfiedMcq);
+  const ctaDisabled = mcqsRemaining > 0;
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -74,7 +101,12 @@ const ReadPane: React.FC<Props> = ({ module, harness, ctaLabel, onAdvance, track
           </div>
         </div>
 
-        <ContentBlocks blocks={module.content_blocks} harness={harness} />
+        <ContentBlocks
+          blocks={module.content_blocks}
+          harness={harness}
+          moduleId={module.id}
+          onMcqStatusChange={handleMcqStatus}
+        />
 
         {/* Tail spacer so the sticky CTA (below) doesn't overlap the last
             content block. There used to be a second inline CTA here too;
@@ -84,12 +116,29 @@ const ReadPane: React.FC<Props> = ({ module, harness, ctaLabel, onAdvance, track
       </div>
 
       {/* Single sticky CTA — fades in once the learner has scrolled past ~70 %.
-          One button only, no duplicate at the end of content. */}
+          One button only, no duplicate at the end of content.
+          v3.2 §0.3: when predict_mcq blocks are unanswered, the CTA is
+          disabled with a count of remaining predictions; no time/score
+          penalty, unlimited attempts. */}
       {scrolledFar && (
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-3 pt-2 bg-gradient-to-t from-white via-white/95 to-white/0 pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {ctaDisabled && (
+            <div className="pointer-events-auto mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+              <Lock size={12} className="text-amber-700 shrink-0" />
+              <span className="text-[12px] font-semibold text-amber-900 leading-snug">
+                Answer {mcqsRemaining} more prediction{mcqsRemaining === 1 ? '' : 's'} above to continue.
+              </span>
+            </div>
+          )}
           <button
             onClick={onAdvance}
-            className={`pointer-events-auto w-full px-4 py-2.5 ${bgClass} ${bgHoverClass} text-white text-sm font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-lg`}
+            disabled={ctaDisabled}
+            title={ctaDisabled ? 'Answer the predictions above to continue.' : undefined}
+            className={`pointer-events-auto w-full px-4 py-2.5 ${
+              ctaDisabled
+                ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                : `${bgClass} ${bgHoverClass} text-white shadow-lg`
+            } text-sm font-bold rounded-lg transition flex items-center justify-center gap-1.5`}
           >
             {ctaLabel} <ChevronRight size={14} />
           </button>

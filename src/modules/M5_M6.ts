@@ -73,74 +73,62 @@ export const M5: ModuleConfig = {
     },
   ],
 
+  // v3.2 §1: re-authored. The patient has a SCRIPTED 30% shunt (not a
+  // compliance-driven proxy), so we don't teach contradictory mental
+  // models across M4/M5. Compliance stays at 50 (locked); the learner
+  // manipulates only FiO2 and PEEP and watches FiO2 fail / PEEP succeed.
   scenario: {
-    preset_id: 'M5_gas_exchange_baseline',
+    preset_id: 'M5_shunt_baseline',
     preset: {
       mode: 'VCV',
       settings: { tidalVolume: 450, respiratoryRate: 14, peep: 5, fiO2: 40, iTime: 1.0 },
-      patient: { compliance: 50, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
+      patient: {
+        compliance: 50,         // PINNED — normal lung mechanics
+        resistance: 10,
+        spontaneousRate: 0,
+        shuntFraction: 0.30,    // PINNED — scripted ARDS-pattern shunt
+        gender: 'M',
+        heightInches: 70,
+      },
     },
-    // compliance = shunt proxy in this sim. rate drives dead-space ratio.
-    unlocked_controls: ['compliance', 'respiratoryRate', 'fiO2', 'peep'],
-    visible_readouts: ['pip', 'plat', 'spo2', 'pao2', 'paco2'],
+    // compliance is LOCKED in v3.2 — the learner doesn't manipulate physiology here.
+    unlocked_controls: ['fiO2', 'peep', 'respiratoryRate'],
+    visible_readouts: ['pip', 'plat', 'spo2', 'pao2', 'paco2', 'fio2', 'peep'],
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Two compound-strict children. Step 1: induce "shunt" (compliance ↓),
-  // try to fix with FiO2 (fails), acknowledge. Step 2: induce dead-space
-  // (rate ↑), watch PaCO2 paradoxically rise, acknowledge.
+  // Per v3.2 §1.5 — two strict-ordered children. Step 1: push FiO2 high,
+  // see it fail. Step 2: raise PEEP, see SpO2 climb back. No
+  // reset_between — Step 2 builds on Step 1's escalation.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
-    reset_between: true,
+    reset_between: false,
     children: [
       {
-        // Step 1: shunt — compliance ≤ 25, then FiO2 ≥ 90, then ack.
-        kind: 'compound',
-        sequence: 'strict',
-        reset_between: false,
-        children: [
-          {
-            kind: 'manipulation',
-            control: 'compliance',
-            condition: { type: 'absolute', operator: '<=', value: 25 },
-          },
-          {
-            kind: 'manipulation',
-            control: 'fiO2',
-            // FiO2 stored as % in this sim — 90 = 0.90.
-            condition: { type: 'absolute', operator: '>=', value: 90 },
-            require_acknowledgment: {
-              question: 'You cranked FiO2 to 90%. The SpO2 barely moved. Best explanation?',
-              options: [
-                { label: "Shunt — the blood goes past alveoli that have no air in them. Adding more oxygen to the rest doesn't fix that blood.", is_correct: true, explanation: "Shunt is the FiO2-resistant cause of hypoxemia. The fix is to *open* the closed alveoli — that's PEEP, not FiO2." },
-                { label: 'V/Q mismatch — needs more FiO2', is_correct: false, explanation: "V/Q mismatch *responds* to FiO2 — you'd have seen the SpO2 climb. Failure to respond is the bedside test for shunt." },
-                { label: 'Dead space — needs higher rate', is_correct: false, explanation: 'Dead space causes hypercapnia, not refractory hypoxemia.' },
-              ],
-            },
-          },
-        ],
+        kind: 'manipulation',
+        control: 'fiO2',
+        condition: { type: 'absolute', operator: '>=', value: 90 },
+        require_acknowledgment: {
+          question: "FiO2 is now at 90%. SpO2 barely moved from baseline. Best explanation?",
+          options: [
+            { label: "Shunt — blood passes alveoli with no air in them. Adding O2 to the rest doesn't fix that blood.", is_correct: true, explanation: "The FiO2-resistance is the bedside test for shunt. The fix is to open the closed alveoli, which means PEEP, not more O2." },
+            { label: 'V/Q mismatch — needs more FiO2 still.', is_correct: false, explanation: 'V/Q mismatch RESPONDS to FiO2. Failure to respond is the diagnostic finding for shunt.' },
+            { label: 'Dead space — needs a higher rate.', is_correct: false, explanation: "Dead space causes hypercapnia, not refractory hypoxemia. Look at the PaCO2 — it's fine." },
+          ],
+        },
       },
+      // Step 2 is an outcome, not a manipulation — because the learning
+      // point is "PEEP works," not "click the PEEP knob." A learner who
+      // raises PEEP but SpO2 doesn't climb sees the chip count their
+      // breaths-in-range and self-corrects upward.
       {
-        // Step 2: dead-space — rate ≥ 30, then ack.
-        kind: 'compound',
-        sequence: 'strict',
-        reset_between: false,
-        children: [
-          {
-            kind: 'manipulation',
-            control: 'respiratoryRate',
-            condition: { type: 'absolute', operator: '>=', value: 30 },
-            require_acknowledgment: {
-              question: 'You cranked rate to 30. MVe went up. PaCO2 went *up* too, not down. Best explanation?',
-              options: [
-                { label: 'Dead-space ventilation rose proportionally — same minute volume, less of it is alveolar', is_correct: true, explanation: "Anatomic dead space is ~150 mL per breath. At rate 30, you're wasting 4.5 L/min of dead-space ventilation. The patient is hyperventilating air past his own dead space." },
-                { label: 'The vent is malfunctioning', is_correct: false, explanation: 'No — this is exactly what the physiology predicts.' },
-                { label: 'PEEP needs to come up', is_correct: false, explanation: "PEEP doesn't change dead-space ratio. The fix is *bigger* breaths, slower rate." },
-              ],
-            },
-          },
-        ],
+        kind: 'outcome',
+        readouts: {
+          peep: { operator: '>=', value: 12 },
+          spo2: { operator: '>=', value: 92 },
+        },
+        sustain_breaths: 5,
       },
     ],
   },
@@ -157,21 +145,35 @@ export const M5: ModuleConfig = {
       markdown:
         "The clean test for shunt: if 100% oxygen doesn't fix the hypoxemia, it's shunt. The fix is to **open the alveoli** — PEEP, recruitment, prone.",
     },
+    // v3.2 §1.6 — M5 is re-authored. The compliance-drop block becomes
+    // an FiO2-response prediction (consistent with the scripted shunt
+    // model in §1.3).
     {
-      kind: 'predict_observe',
-      awaits_control: 'compliance',
+      kind: 'predict_mcq',
       predict:
-        "You'll drop compliance into the ARDS range to simulate flooded alveoli. SpO2 will fall. If you now crank FiO2 to 100%, will it come back?",
+        "This patient has a 30% shunt — about a third of his pulmonary blood flow is passing alveoli that have no air in them. He's on FiO2 0.6 and his PaO2 is 65. If you bump FiO2 from 0.6 → 1.0 the SpO2 will move:",
+      options: [
+        { label: 'Up sharply — more O2 always helps.', is_correct: false, explanation: 'For the shunted blood, more alveolar O2 changes nothing — the blood never sees the alveoli.' },
+        { label: 'Up a little, mostly from V/Q-improvement.', is_correct: false, explanation: "There's no V/Q mismatch here, only fixed shunt; the modest gain you might see is from the non-shunted blood already being near-saturated." },
+        { label: 'Barely.', is_correct: true },
+        { label: 'Down — high FiO2 worsens shunt.', is_correct: false, explanation: "FiO2 doesn't worsen shunt mechanically; it just doesn't improve it." },
+      ],
       observe:
-        "SpO2 barely budged. Shunt is FiO2-resistant. PEEP would help; FiO2 won't.",
+        "Shunted blood doesn't touch alveolar gas. Adding more oxygen to the alveoli the patient is already ventilating doesn't help the blood bypassing them. This is the FiO2-resistance fingerprint of shunt and why the four-lever escalation ladder (FiO2 → PEEP → mean Paw → prone) puts FiO2 first only because it's easy, not because it's effective.",
     },
     {
-      kind: 'predict_observe',
+      kind: 'predict_mcq',
       awaits_control: 'respiratoryRate',
       predict:
-        'This patient is breathing at rate 14, Vt 450, MVe ~6.3 L/min. Bump the rate to 30. Predict the PaCO2 direction.',
+        'You raise the rate from 14 to 30 in this patient. MVe goes up. What happens to PaCO2?',
+      options: [
+        { label: 'Falls — more minute ventilation clears more CO2.', is_correct: false, explanation: 'MVe rose, but most of the added volume is dead-space ventilation, not alveolar. Total CO2 clearance went down.' },
+        { label: 'Stays the same.', is_correct: false, explanation: 'Total alveolar ventilation actually drops because the proportion of dead space climbs.' },
+        { label: 'Rises.', is_correct: true },
+        { label: 'Depends on the PaO2.', is_correct: false, explanation: 'CO2 and O2 are decoupled in this context.' },
+      ],
       observe:
-        'PaCO2 went *up*. At rate 30, anatomic dead-space ventilation is 30 × 150 = 4.5 L/min — most of the minute volume is wasted. *Slow the rate; bigger breaths.*',
+        'Anatomic dead space is ~150 mL per breath. At rate 30 with Vt 450, that\'s 4.5 L/min of dead-space ventilation — most of his MVe. The patient is hyperventilating air through his own dead space without moving much alveolar volume. The fix is bigger breaths, slower rate.',
     },
     {
       kind: 'callout',
@@ -272,11 +274,12 @@ export const M5: ModuleConfig = {
     ],
   },
 
+  // v3.2 §1.7 — re-authored to describe the scripted shunt directly.
   user_facing_task:
-    "Induce shunt, then induce dead space. Two short experiments. First, induce shunt (drop the compliance) and try to fix the SpO2 with FiO2 alone — and see why it doesn't work. Then induce dead-space (high rate) and see why the PaCO2 paradoxically rises.",
+    "This patient has a 30% shunt — a third of his pulmonary blood flow is passing unventilated alveoli. He's on FiO2 0.40 and PaO2 is in the 60s. Step 1: try fixing the SpO2 with FiO2 alone — push it to 90%+ and watch what happens. Step 2: now recruit by raising PEEP to ≥ 12 and hold SpO2 ≥ 92% for five breaths.",
   success_criteria_display: [
-    "Crash compliance to ≤ 25, then push FiO2 to ≥ 90% — explain why SpO2 didn't fix.",
-    'Push rate to ≥ 30 — explain why PaCO2 went up despite the bigger minute ventilation.',
+    'Push FiO2 to ≥ 90% — answer the prompt about why SpO2 didn\'t respond.',
+    'Raise PEEP to ≥ 12, hold SpO2 ≥ 92% for 5 breaths.',
   ],
   task_framing_style: 'A',
 
@@ -414,18 +417,30 @@ export const M6: ModuleConfig = {
         "In **severe asthma**, applied PEEP makes hyperinflation *worse*. In **COPD**, modest applied PEEP (75–85% of measured auto-PEEP) helps. Don't reflex into PEEP without knowing which one you have.",
     },
     {
-      kind: 'predict_observe',
+      kind: 'predict_mcq',
       awaits_control: 'respiratoryRate',
       predict:
-        'This patient is on rate 18 with mild resistance. If you raise rate to 28, what happens to auto-PEEP?',
+        'This patient is on rate 18 with mild resistance. You raise rate to 28. What happens to auto-PEEP?',
+      options: [
+        { label: 'Climbs — less expiratory time per breath.', is_correct: true },
+        { label: "Falls — the vent has more chances to push trapped air out.", is_correct: false, explanation: 'Backwards. Higher rate compresses expiratory time. The lungs have LESS time to empty, not more.' },
+        { label: 'Unchanged — auto-PEEP only depends on resistance.', is_correct: false, explanation: 'Resistance × expiratory-time-constant sets the rate of emptying; rate sets the expiratory time available. Both matter.' },
+        { label: 'Auto-PEEP turns negative.', is_correct: false, explanation: 'Auto-PEEP is end-expiratory positive pressure that exceeds set PEEP. It can\'t go negative.' },
+      ],
       observe:
         'It climbs. Less time between breaths → less time to exhale. The flow trace tells the story before the number does.',
     },
     {
-      kind: 'predict_observe',
+      kind: 'predict_mcq',
       awaits_control: 'iTime',
       predict:
-        'Now shorten I-time from 1.0 to 0.6 at the same rate. Predict the auto-PEEP direction.',
+        'Now shorten I-time from 1.0 to 0.6 at the same rate. Auto-PEEP:',
+      options: [
+        { label: 'Falls — slightly. Longer expiratory time helps, but rate is the bigger lever.', is_correct: true },
+        { label: 'Falls — dramatically. Shorter Ti dominates.', is_correct: false, explanation: 'It helps a little. The dominant relief lever for auto-PEEP is RATE, not Ti.' },
+        { label: 'Rises — shorter Ti means faster flow, which traps more.', is_correct: false, explanation: 'Faster flow raises peak pressure, not trapped end-expiratory pressure.' },
+        { label: 'Unchanged — Ti is independent of trapping.', is_correct: false, explanation: 'Ti and Te split the breath cycle; shortening Ti lengthens Te.' },
+      ],
       observe:
         'It falls — but only slightly. Longer expiratory time helps, but the dominant lever is *rate*.',
     },

@@ -248,12 +248,34 @@ export const M1: ModuleConfig = {
         'The vent is **support, not cure**. It buys time. The illness is treated by everything else you\'re doing — antibiotics, fluids, source control, time.',
     },
     {
-      kind: 'predict_observe',
+      // v3.2 §0.6 conversion of legacy predict_observe to predict_mcq.
+      kind: 'predict_mcq',
       awaits_control: 'tidalVolume',
       predict:
-        'If you raise the set tidal volume from 450 to 600, will the PIP go up or down — and how do you know it\'ll change at all?',
+        'If you raise the set tidal volume from 450 to 600 at constant compliance, what happens to PIP?',
+      options: [
+        { label: 'PIP rises — same compliance, more volume to deliver.', is_correct: true },
+        { label: 'PIP falls — bigger Vt is easier to deliver.', is_correct: false, explanation: 'Backwards. More volume needs more pressure, not less.' },
+        { label: 'PIP is unchanged — Vt and PIP are independent.', is_correct: false, explanation: 'They\'re not — PIP scales with Vt at fixed compliance.' },
+        { label: 'PIP rises only if compliance also drops.', is_correct: false, explanation: 'PIP rises with Vt alone; a compliance drop would compound it, but it isn\'t a precondition.' },
+      ],
       observe:
         'PIP rose because the system has to push more air through a finite compliance every breath. The Vte readout now reads about 600 too — that\'s how you check the order got delivered.',
+    },
+    // v3.2 §0.7 — new predict_mcq grounding the type-of-respiratory-failure
+    // teaching before the formative block below.
+    {
+      kind: 'predict_mcq',
+      predict:
+        "A 72-year-old has PaCO2 78, pH 7.21, PaO2 62 on 4 L. She's somnolent. Which option best names the deficit?",
+      options: [
+        { label: 'Type I — failing to oxygenate.', is_correct: false, explanation: 'Type I requires low PaO2 with a normal or low PaCO2; her PaO2 is 62, marginal, and the dominant problem is the markedly elevated PaCO2 with acidemia.' },
+        { label: 'Type II — failing to ventilate.', is_correct: true },
+        { label: "Airway protection problem — she's somnolent.", is_correct: false, explanation: 'Somnolence here is a *consequence* of CO2 narcosis, not an independent airway problem. The fix is restoring ventilation, not a tube for airway alone.' },
+        { label: 'Type IV — shock-driven respiratory failure.', is_correct: false, explanation: "There's no shock named in the prompt; the diaphragm isn't competing with cardiac output." },
+      ],
+      observe:
+        "The dominant signal is the CO2 — markedly elevated with acidemia. Type II by definition. Naming this correctly is what saves you from reaching for a non-rebreather (which fixes oxygenation, the lesser problem) when the patient actually needs ventilatory support.",
     },
     {
       kind: 'formative',

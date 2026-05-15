@@ -170,6 +170,22 @@ export const M3: ModuleConfig = {
       markdown:
         "**FiO2 is independent.** Changing it doesn't move PIP, Pplat, MVe, or any pressure readout. It changes what the patient is breathing, not how. Treat it as its own lever.",
     },
+    // v3.2 §0.6 — M3 currently uses sequential observations in the Try-It;
+    // this gated MCQ anchors the four-knob mental model before the
+    // walk-through.
+    {
+      kind: 'predict_mcq',
+      predict:
+        "Of these four basic ventilator knobs, which one's adjustment does NOT directly change anything on the pressure or flow waveform?",
+      options: [
+        { label: 'Tidal volume.', is_correct: false, explanation: 'Vt drives PIP and Vte directly — that\'s a visible waveform change every breath.' },
+        { label: 'Rate.', is_correct: false, explanation: 'Rate changes the spacing of breaths on the time axis and shrinks the I:E ratio — visible immediately.' },
+        { label: 'PEEP.', is_correct: false, explanation: 'PEEP raises the floor and the peak of the pressure trace together — a parallel shift.' },
+        { label: 'FiO2.', is_correct: true },
+      ],
+      observe:
+        "FiO2 changes the gas mixture the vent delivers — it doesn't move the pressure or volume profile. The waveform is identical whether FiO2 is 30% or 100%. Treat it as its own independent lever.",
+    },
   ],
 
   hint_ladder: {

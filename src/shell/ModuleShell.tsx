@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BookOpen, Clock, ChevronRight, Trophy, Home, RotateCcw, Check, X } from 'lucide-react';
-import type { ModuleConfig, InlinePromptConfig, ExploreCardConfig } from './types';
+import type { ModuleConfig, InlinePromptConfig, ExploreCardConfig, PerturbationSpec } from './types';
 import PrimerQuiz from './PrimerQuiz';
 import CheckYourselfPage from './CheckYourselfPage';
 import IntroBriefing from './IntroBriefing';
@@ -499,6 +499,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
       onOutcomeProgress: (
         p: { current: number; target: number; label?: string } | null,
       ) => setOutcomeProgress(p),
+      // v3.2 §9 — route scripted perturbations through the harness so
+      // PlaygroundSim (which subscribes via onPerturbation) re-merges its
+      // settings/patient state. M19 uses this to script DOPES decompensations.
+      applyPerturbation: (p: PerturbationSpec) => harness.applyPerturbation(p),
+      clearPerturbations: () => harness.clearPerturbations(),
     };
 
     tracker.start(ctx, () => {
@@ -866,6 +871,27 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
           harness={harness}
           ctaLabel={ctaLabel}
           onAdvance={advanceFromRead}
+          onPredictMcqStatusChange={(s) => {
+            // v3.2 §0.4: persist per-block attempts for dashboard telemetry.
+            // Best-effort merge — only write to localStorage on completion to
+            // avoid hammering writes on every option click.
+            if (!s.satisfied) return;
+            const latest = loadProgress(module.id);
+            const prev = (latest?.predict_mcq_attempts ?? []).filter(
+              p => p.block_id !== s.block_id,
+            );
+            persistProgress({
+              module_id: module.id,
+              predict_mcq_attempts: [
+                ...prev,
+                {
+                  block_id: s.block_id,
+                  attempts: s.attempts,
+                  selected_labels: s.selected_labels,
+                },
+              ],
+            });
+          }}
         />
       );
     }

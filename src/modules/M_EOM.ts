@@ -142,18 +142,30 @@ export const M_EOM: ModuleConfig = {
         "If you don't perform inspiratory holds, you don't have Pplat. Without Pplat, you can't tell compliance from resistance — and you don't know what you're fixing.",
     },
     {
-      kind: 'predict_observe',
+      kind: 'predict_mcq',
       awaits_control: 'compliance',
       predict:
-        'If you halve the compliance (50 → 25), what happens to PIP, Pplat, and the gap between them?',
+        'You halve compliance (50 → 25) at constant resistance and flow. What does the gap (PIP − Pplat) do?',
+      options: [
+        { label: 'Both PIP and Pplat rise by roughly the same amount; the gap is unchanged.', is_correct: true },
+        { label: 'PIP rises more than Pplat; the gap widens.', is_correct: false, explanation: 'That\'s the resistance signature — the R·flow term sits in PIP only.' },
+        { label: 'Pplat rises but PIP stays put.', is_correct: false, explanation: 'Pplat is the alveolar number that compliance directly hits; PIP carries it upward. They move together for a compliance change.' },
+        { label: 'Neither moves; compliance is a property of the patient, not the display.', is_correct: false, explanation: 'Compliance is the V/C term in the equation of motion — it shows up immediately on the pressure trace.' },
+      ],
       observe:
         "Both PIP and Pplat rise by roughly the same amount. The gap stays the same — because the resistance term didn't change.",
     },
     {
-      kind: 'predict_observe',
+      kind: 'predict_mcq',
       awaits_control: 'resistance',
       predict:
-        'If you double the resistance (10 → 20), what happens to PIP, Pplat, and the gap?',
+        'Now you double resistance (10 → 20) at constant compliance and flow. What happens to PIP, Pplat, and the gap?',
+      options: [
+        { label: 'PIP rises; Pplat barely moves; the gap widens.', is_correct: true },
+        { label: 'PIP and Pplat both rise equally; the gap is unchanged.', is_correct: false, explanation: 'That\'s the compliance signature, not resistance.' },
+        { label: 'Pplat rises more than PIP.', is_correct: false, explanation: 'Pplat is always ≤ PIP (PIP includes the R·flow term).' },
+        { label: 'Nothing moves — resistance only affects exhalation.', is_correct: false, explanation: 'Resistance also opposes the inspiratory gas flow; that opposition shows up in PIP.' },
+      ],
       observe:
         'PIP rises; Pplat barely moves. The gap widens. That gap *is* the resistance contribution — the R·flow term made visible.',
     },

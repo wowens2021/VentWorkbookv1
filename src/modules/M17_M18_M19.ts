@@ -11,7 +11,7 @@ import type { ModuleConfig } from '../shell/types';
  *
  * Adaptation: the spec wants free-form RSBI entry; the engine only supports
  * recognition multiple-choice, so RSBI is presented as a 4-option pick
- * whose options bracket the correct value (RR 18 / Vt 0.38 ≈ 47). The
+ * whose options bracket the correct value (RR 22 / Vt 0.32 ≈ 69 per v3.2 §7). The
  * pre-criteria step and the pass/fail decision are each their own
  * recognition. All three required, in order.
  *
@@ -79,7 +79,10 @@ export const M17: ModuleConfig = {
     preset: {
       mode: 'PSV',
       settings: { psLevel: 7, peep: 5, fiO2: 40 },
-      patient: { compliance: 60, resistance: 12, spontaneousRate: 18, heightInches: 70, gender: 'M' },
+      // v3.2 §7 — bedside numbers now force a real division: RR 22, Vt 320,
+      // RSBI 22 ÷ 0.32 = 68.75 ≈ 69. Distractors 55, 62, 76 are all within
+      // plausible RSBI range so the learner can't pick by magnitude alone.
+      patient: { compliance: 60, resistance: 12, spontaneousRate: 22, heightInches: 70, gender: 'M' },
     },
     unlocked_controls: [],
     visible_readouts: ['actualRate', 'vte', 'rsbi', 'spo2', 'mve'],
@@ -108,14 +111,17 @@ export const M17: ModuleConfig = {
       {
         kind: 'recognition',
         prompt: {
+          // v3.2 §7.4 — tighter distractors so magnitude estimation alone
+          // can't pick the right answer. All four options sit in the
+          // plausible RSBI range; the learner must actually divide.
           prompt_id: 'M17-rsbi-calc',
           trigger: { kind: 'on_load' },
-          question: 'At 30 minutes on CPAP 5 / PS 7 / FiO2 40%: RR 18, spontaneous Vt 380 mL, SpO2 95%, HR 88, BP 124/72. RSBI is approximately:',
+          question: 'At 30 minutes on CPAP 5 / PS 7 / FiO2 40%: RR 22, spontaneous Vt 320 mL, SpO2 95%, HR 88, BP 124/72. RSBI is approximately:',
           options: [
-            { label: '12', is_correct: false, explanation: 'Off — wrong direction.' },
-            { label: '47', is_correct: true, explanation: '18 ÷ 0.38 = 47. Well under the threshold.' },
-            { label: '85', is_correct: false, explanation: 'Higher than the actual RSBI here.' },
-            { label: '110', is_correct: false, explanation: 'Would suggest failure — this RSBI is much lower.' },
+            { label: '55', is_correct: false, explanation: 'Closer to 22 ÷ 0.40 — you used the wrong Vt or shifted a decimal.' },
+            { label: '62', is_correct: false, explanation: 'Close, but not the right division. Recompute: 22 ÷ 0.32.' },
+            { label: '69', is_correct: true, explanation: '22 ÷ 0.32 = 68.75 ≈ 69. Below 80 on PSV — passes Owens\'s threshold.' },
+            { label: '76', is_correct: false, explanation: 'Higher than the actual RSBI here. Recompute: 22 ÷ 0.32.' },
           ],
           max_attempts: 2,
         },
@@ -123,9 +129,11 @@ export const M17: ModuleConfig = {
       {
         kind: 'recognition',
         prompt: {
+          // v3.2 §7.7 — RSBI value updated from 47 to 69 to match the new
+          // bedside numbers. Options unchanged.
           prompt_id: 'M17-decision',
           trigger: { kind: 'on_load' },
-          question: 'RSBI 47, comfortable, no abort criteria triggered. The next step is:',
+          question: 'RSBI 69, comfortable, no abort criteria triggered. The next step is:',
           options: [
             { label: 'Repeat the SBT in 12 hours', is_correct: false, explanation: 'Repeating a passed SBT delays liberation without adding information.' },
             { label: 'Extubate', is_correct: true, explanation: 'SBT pre-screen passed, RSBI well below threshold, no abort criteria. The bedside test agrees. Book Ch. 22.' },
@@ -141,6 +149,22 @@ export const M17: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**Liberation, not weaning.** Most ventilated patients don\'t need a gradual reduction in support. They need a daily assessment: today, are they ready? The bedside test is the SBT. Run it. Compute the RSBI. Decide. The discipline of asking *every day* is what makes the algorithm work.' },
     { kind: 'callout', tone: 'info', markdown: 'Pre-SBT screen (all 5): FiO2 ≤50%, PEEP ≤8, follows commands, hemodynamically stable, not a difficult airway. Then run the trial — CPAP 5 / PS 7 / FiO2 unchanged — for 30 to 60 minutes.' },
+    // v3.2 §0.7 — predict_mcq grounding the RSBI math before the live
+    // decision in the Try-It. Per v3.2 §7 the bedside numbers are
+    // RR 22, Vt 320, RSBI 69.
+    {
+      kind: 'predict_mcq',
+      predict:
+        'A patient on PSV with PS 7 has RR 22, spontaneous Vt 320 mL. Approximately what is the RSBI?',
+      options: [
+        { label: '52', is_correct: false, explanation: 'That would be RR/Vt with Vt in mL, not L.' },
+        { label: '69', is_correct: true },
+        { label: '7', is_correct: false, explanation: 'Vt(L) / RR, inverse.' },
+        { label: '110', is_correct: false, explanation: 'Close to the Yang–Tobin failure threshold; would suggest not ready.' },
+      ],
+      observe:
+        'RSBI = RR ÷ Vt(L) = 22 ÷ 0.32 = 68.75 ≈ 69. Below 80 on PSV — passes Owens\'s threshold. Now look at the patient (accessory muscle use, diaphoresis, mental status) before extubating. The number alone is never the answer.',
+    },
     {
       kind: 'figure',
       caption: 'Owens\'s SBT protocol reproduced.',
@@ -166,8 +190,8 @@ export const M17: ModuleConfig = {
 
   hint_ladder: {
     tier1: 'Pre-criteria first. Then RSBI. Then look at the patient.',
-    tier2: 'RSBI = RR divided by Vt in liters. 18 ÷ 0.38.',
-    tier3: { hint_text: 'RSBI ≈ 47, well below 80. Extubate.' },
+    tier2: 'RSBI = RR divided by Vt in liters. 22 ÷ 0.32.',
+    tier3: { hint_text: 'RSBI ≈ 69, below 80. Extubate.' },
   },
 
   summative_quiz: [
@@ -232,16 +256,16 @@ export const M17: ModuleConfig = {
     patient_context: 'Post-pneumonia, day 5, awake, follows commands. Yesterday on FiO2 40% / PEEP 8. Today, RT set up an SBT — CPAP 5 / PS 7 / FiO2 40%. You\'re reading the data at the 30-minute mark.',
     unlocked_controls_description: [],
     readouts_description: [
-      { name: 'RR 18, spontaneous Vt 380 mL', description: 'the inputs for RSBI.' },
+      { name: 'RR 22, spontaneous Vt 320 mL', description: 'the inputs for RSBI — divide them, in your head, before you commit.' },
       { name: 'SpO2 95%, HR 88, BP 124/72', description: 'no abort criteria triggered.' },
     ],
     suggestions: [
       'Anchor on the pre-criteria. If those aren\'t met, the SBT shouldn\'t have started.',
-      'Compute RSBI in your head: 18 ÷ 0.38.',
+      'Compute RSBI in your head: 22 ÷ 0.32.',
       'Then look at the patient. Comfortable? Working hard? The number agrees with the bedside?',
     ],
   },
-  user_facing_task: 'Read the bedside data and decide. Your patient finished a 30-minute SBT on CPAP 5 / PS 7 / FiO2 40%. At the 30-minute mark: RR 18, spontaneous Vt 380 mL, SpO2 95%, HR 88, BP 124/72. Check pre-criteria. Compute RSBI. Decide.',
+  user_facing_task: 'Read the bedside data and decide. Your patient finished a 30-minute SBT on CPAP 5 / PS 7 / FiO2 40%. At the 30-minute mark: RR 22, spontaneous Vt 320 mL, SpO2 95%, HR 88, BP 124/72. Check pre-criteria. Compute RSBI in your head. Decide.',
   // success_criteria_display omitted — shell auto-derives from the three
   // recognition prompts so the checklist matches the questions verbatim.
   task_framing_style: 'C',
@@ -356,7 +380,9 @@ export const M18: ModuleConfig = {
         prompt: {
           prompt_id: 'M18-s1-cuff-leak',
           trigger: { kind: 'on_load' },
-          question: '62 yo male, intubated 7 days for pneumonia. SBT passed. Cuff leak test shows 80 mL. Best decision?',
+          // v3.2 §8.4 — explicitly frame as Owens's recommendation so the
+          // learner trained on a different default knows what's being asked.
+          question: '62 yo male, intubated 7 days for pneumonia. SBT passed. Cuff leak test shows 80 mL. Per Owens\'s framework, the best decision is:',
           options: [
             { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: true, explanation: 'Cuff leak <110 mL is a positive screen for upper-airway edema. Steroids 24 hours, then recheck. Book Ch. 23.' },
             { label: 'Extubate with NIPPV standby', is_correct: false, explanation: 'NIPPV doesn\'t treat upper-airway obstruction — it pushes air past obstruction, not through it.' },
@@ -371,7 +397,7 @@ export const M18: ModuleConfig = {
         prompt: {
           prompt_id: 'M18-s2-cardiogenic',
           trigger: { kind: 'on_load' },
-          question: '70 yo with HFrEF, EF 25%, intubated for pulmonary edema. SBT on PSV passed. Best decision?',
+          question: '70 yo with HFrEF, EF 25%, intubated for pulmonary edema. SBT on PSV passed. Per Owens\'s framework, the best decision is:',
           options: [
             { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: false, explanation: 'No airway-edema risk in this scenario — the failure mode is cardiogenic, not upper-airway.' },
             { label: 'Extubate with NIPPV standby', is_correct: true, explanation: 'Cardiogenic post-extubation risk. Prophylactic NIPPV reduces re-intubation in high-risk patients (HFrEF, COPD).' },
@@ -384,14 +410,39 @@ export const M18: ModuleConfig = {
       {
         kind: 'recognition',
         prompt: {
+          // v3.2 §8 — full reframe. The question now asks what Owens
+          // recommends (a defensible answerable question), names the
+          // recommendation as Owens-specific in the correct-option
+          // explanation, and acknowledges the "GCS ≥ 10" rule as the
+          // conventional teaching rather than wrong. Citations: Coplin et
+          // al. 2000 (Neurology) and Manno et al. 2008 (Mayo Clinic Proc).
           prompt_id: 'M18-s3-mental-status',
           trigger: { kind: 'on_load' },
-          question: '35 yo s/p TBI, GCS 9, no other reason to be intubated. FiO2 35%, PEEP 5, RSBI 50, manageable secretions. Best decision?',
+          question:
+            '35 yo s/p TBI, GCS 9, no other reason to be intubated. FiO2 35%, PEEP 5, RSBI 50, manageable secretions. Per Owens\'s framework, the recommended decision is:',
           options: [
-            { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: false, explanation: 'No airway-edema indication.' },
-            { label: 'Extubate with NIPPV standby', is_correct: false, explanation: 'No cardiogenic indication; brain-injured patients can tolerate extubation directly when O2 needs are low.' },
-            { label: 'Extubate per brain-injury data', is_correct: true, explanation: 'Brain-injured patients with low oxygen requirement and no apnea do better with early extubation despite mental status. This is counter-intuitive and well-supported by the data Owens cites. Do not require GCS ≥10 as a gate. Book Ch. 22.' },
-            { label: 'Back to A/C — not ready', is_correct: false, explanation: 'Pre-screen passes — gas exchange is fine and there\'s no other reason to be intubated. The mental status alone isn\'t the gate.' },
+            {
+              label: 'Delay 24h; IV steroids; recheck cuff leak.',
+              is_correct: false,
+              explanation: "No airway-edema indication — the cuff leak isn't the issue here.",
+            },
+            {
+              label: 'Extubate with NIPPV standby.',
+              is_correct: false,
+              explanation: "No cardiogenic indication. Brain-injured patients with low O2 needs don't have a clear NIPPV indication.",
+            },
+            {
+              label: 'Extubate — Owens recommends early extubation in brain-injured patients with low oxygen requirement, despite GCS.',
+              is_correct: true,
+              explanation:
+                "This is the counter-intuitive call. Owens cites data (Coplin et al., 2000; Manno et al., 2008) showing brain-injured patients with low O2 needs (FiO2 ≤ 40, PEEP ≤ 5) and no high secretion burden do better extubated than held for GCS to improve. The standard 'wait for GCS ≥ 10' rule delays liberation without benefit in this subgroup. This recommendation is Owens-specific; check your institution's protocol — some still require GCS ≥ 10.",
+            },
+            {
+              label: 'Back to A/C — not ready, GCS too low.',
+              is_correct: false,
+              explanation:
+                "The conventional answer — and what many institutions still teach. Owens's reading of the data is that this delays liberation unnecessarily for brain-injured patients with low O2 needs.",
+            },
           ],
           max_attempts: 2,
         },
@@ -401,7 +452,7 @@ export const M18: ModuleConfig = {
         prompt: {
           prompt_id: 'M18-s4-failed-screen',
           trigger: { kind: 'on_load' },
-          question: '60 yo with severe COPD, FiO2 0.50, PEEP 10, RR 30, RSBI 130. Best decision?',
+          question: '60 yo with severe COPD, FiO2 0.50, PEEP 10, RR 30, RSBI 130. Per Owens\'s framework, the best decision is:',
           options: [
             { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: false, explanation: 'Cuff leak isn\'t the problem — pre-screen and SBT both fail.' },
             { label: 'Extubate with NIPPV standby', is_correct: false, explanation: 'Patient hasn\'t passed pre-screen or SBT. NIPPV after a failed SBT is rescue, not standby.' },
@@ -417,6 +468,21 @@ export const M18: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**Passing the SBT is necessary but not sufficient.** Three pillars must hold: the reason for intubation has resolved, gas exchange is adequate without high pressure support, and the cardiovascular system can handle the work of breathing.' },
     { kind: 'callout', tone: 'info', markdown: 'Cuff leak test: deflate the cuff, measure expiratory Vt over six breaths, take the average of the three lowest, subtract from the inspired Vt. Difference <110 mL is concerning.' },
+    // v3.2 §0.7 — predict_mcq grounding the cuff-leak gate before the live
+    // four-scenario triage.
+    {
+      kind: 'predict_mcq',
+      predict:
+        'A patient passes the SBT pre-screen, RSBI 60, no abort criteria, but the cuff leak is 70 mL. Best decision?',
+      options: [
+        { label: 'Extubate — SBT criteria met.', is_correct: false, explanation: 'Cuff leak <110 mL is a positive screen for upper-airway edema; the SBT doesn\'t measure that.' },
+        { label: 'Extubate with NIPPV standby.', is_correct: false, explanation: 'NIPPV pushes air past obstruction, it doesn\'t open the obstruction. Upper-airway edema is the wrong indication.' },
+        { label: 'Delay 24 hours, give IV steroids, recheck cuff leak.', is_correct: true },
+        { label: 'Re-intubate now to a smaller tube.', is_correct: false, explanation: 'He\'s still intubated; the question is about the post-extubation period, not the current tube.' },
+      ],
+      observe:
+        'SBT pre-criteria are necessary, not sufficient. Cuff leak is a separate gate testing for upper-airway edema. Steroids 24 hours, then recheck. Re-intubation within 72 hours of failure doubles mortality — the bar to extubate is high.',
+    },
     {
       kind: 'figure',
       caption: 'Four mechanisms of extubation failure — and the mitigation for each.',
@@ -613,15 +679,18 @@ export const M19: ModuleConfig = {
       patient: { compliance: 40, resistance: 12, spontaneousRate: 0, heightInches: 70, gender: 'M' },
     },
     unlocked_controls: [],
-    visible_readouts: ['pip', 'plat', 'vte', 'mve', 'autoPeep'],
+    // v3.2 §9 — etco2 and sbp surfaced so the scripted perturbations have
+    // visible signals (displacement → ETCO2 0; pneumothorax → SBP drop).
+    visible_readouts: ['pip', 'plat', 'vte', 'mve', 'autoPeep', 'etco2', 'sbp'],
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
-  // Spec §16 v3.1: `reset_between: true` is mandatory. The compound
-  // resets the sim to baseline between scenarios so the second prompt
-  // doesn't inherit the first's perturbation state. Even though the
-  // current sim doesn't render live perturbations, setting the flag now
-  // keeps the contract correct for the future scripted-overlay system.
+  // v3.2 §9 — DOPES now drives off live scripted sim perturbations rather
+  // than verbal vignettes. Each child applies a one-shot patient/settings
+  // override via the perturbation API before its prompt presents; the
+  // compound's `reset_between: true` clears the perturbation and resets
+  // baseline between scenarios. Same five options on every prompt so the
+  // learner picks among the actual diagnostic set each time.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
@@ -629,80 +698,98 @@ export const M19: ModuleConfig = {
     children: [
       {
         kind: 'recognition',
+        // Displacement: full Vt loss + ETCO2 → 0. The disconnect signature.
+        perturbation: {
+          id: 'displacement',
+          patient: { leak_mL_per_breath: 9999, etco2_loss_fraction: 1.0 },
+        },
         prompt: {
           prompt_id: 'M19-s1-displacement',
           trigger: { kind: 'on_load' },
-          question: 'Scenario 1/5. Sudden drop in returned tidal volume. ETCO2 waveform lost. No chest rise. Most likely cause?',
+          question:
+            'The sim has just been perturbed. Read the readouts and waveforms. What pattern is this?',
           options: [
-            { label: 'Displacement (tube out / esophageal)', is_correct: true },
-            { label: 'Obstruction (mucus plug)', is_correct: false },
-            { label: 'Pneumothorax', is_correct: false },
-            { label: 'Equipment leak', is_correct: false },
-            { label: 'Stacking / auto-PEEP', is_correct: false },
+            { label: 'Displacement (tube out or esophageal)', is_correct: true, explanation: 'Vte → 0 and ETCO2 → 0 is the disconnect signature. Confirm with capnography and direct laryngoscopy.' },
+            { label: 'Obstruction', is_correct: false, explanation: 'Obstruction would push PIP up against a steady plateau, and ETCO2 would shark-fin rather than disappear.' },
+            { label: 'Pneumothorax', is_correct: false, explanation: 'Pneumothorax would raise PIP AND plateau and drop SBP, not zero out the ETCO2.' },
+            { label: 'Equipment leak', is_correct: false, explanation: 'A leak shows a Vt gap (delivered > returned) but not a flat ETCO2 — gas is still moving past the sensor.' },
+            { label: 'Stacking', is_correct: false, explanation: 'Stacking pushes autoPEEP up and keeps ETCO2 visible — there\'s still gas exchange, just trapped.' },
           ],
           max_attempts: 2,
         },
       },
       {
         kind: 'recognition',
+        // Obstruction: resistance spike. PIP rises, plateau unchanged.
+        perturbation: { id: 'obstruction', patient: { resistance: 40 } },
         prompt: {
           prompt_id: 'M19-s2-obstruction',
           trigger: { kind: 'on_load' },
-          question: 'Scenario 2/5. PIP rises from 28 to 45 over a few breaths. Plateau is unchanged at 23. ETCO2 takes on a shark-fin shape. Most likely cause?',
+          question:
+            'The sim has just been perturbed. Read the readouts and waveforms. What pattern is this?',
           options: [
-            { label: 'Displacement', is_correct: false },
-            { label: 'Obstruction (mucus / bronchospasm)', is_correct: true },
-            { label: 'Pneumothorax', is_correct: false },
-            { label: 'Equipment leak', is_correct: false },
-            { label: 'Stacking', is_correct: false },
+            { label: 'Displacement', is_correct: false, explanation: 'Displacement zeros out Vte and ETCO2. The Vt here is unchanged — the gap to the plateau is the clue.' },
+            { label: 'Obstruction (mucus, bronchospasm, kink)', is_correct: true, explanation: 'PIP rises because R·flow rose. Plateau is unchanged because compliance is fine. The widening PIP–plateau gap is the resistance signature.' },
+            { label: 'Pneumothorax', is_correct: false, explanation: 'Pneumothorax raises plateau in parallel with PIP. Plateau is unchanged here.' },
+            { label: 'Equipment leak', is_correct: false, explanation: 'A leak doesn\'t raise PIP — it lowers Vte.' },
+            { label: 'Stacking', is_correct: false, explanation: 'Stacking shows as autoPEEP rising, not a discrete PIP jump on the breath cycle.' },
           ],
           max_attempts: 2,
         },
       },
       {
         kind: 'recognition',
+        // Pneumothorax: compliance drop AND SBP fall.
+        perturbation: { id: 'pneumothorax', patient: { compliance: 12, bpSys: 75 } },
         prompt: {
           prompt_id: 'M19-s3-pneumothorax',
           trigger: { kind: 'on_load' },
-          question: 'Scenario 3/5. PIP rises from 28 to 42 AND plateau rises from 22 to 36. BP drops 25 mmHg. SpO2 falls. Breath sounds asymmetric. Most likely cause?',
+          question:
+            'The sim has just been perturbed. Read the readouts and waveforms. What pattern is this?',
           options: [
-            { label: 'Displacement', is_correct: false },
-            { label: 'Obstruction', is_correct: false },
-            { label: 'Tension pneumothorax', is_correct: true },
-            { label: 'Equipment leak', is_correct: false },
-            { label: 'Stacking', is_correct: false },
+            { label: 'Displacement', is_correct: false, explanation: 'Displacement would zero out ETCO2. Here gas is still moving.' },
+            { label: 'Obstruction', is_correct: false, explanation: 'Obstruction leaves plateau alone. Both PIP and plateau rose here — that\'s compliance.' },
+            { label: 'Tension pneumothorax', is_correct: true, explanation: 'PIP and plateau rose in parallel (compliance crashed) AND SBP fell (venous return compressed). Asymmetric breath sounds at the bedside seal it.' },
+            { label: 'Equipment leak', is_correct: false, explanation: 'A leak doesn\'t raise plateau or drop BP.' },
+            { label: 'Stacking', is_correct: false, explanation: 'Stacking is auto-PEEP-driven; plateau wouldn\'t jump like this on a single breath.' },
           ],
           max_attempts: 2,
         },
       },
       {
         kind: 'recognition',
+        // Equipment leak: 150 mL/breath of returned-Vt loss without affecting other signals.
+        perturbation: { id: 'equipment', patient: { leak_mL_per_breath: 150 } },
         prompt: {
           prompt_id: 'M19-s4-equipment',
           trigger: { kind: 'on_load' },
-          question: 'Scenario 4/5. Delivered Vt 450, returned Vt only 300. Circuit pressure drops mid-breath. Low pressure alarm. Most likely cause?',
+          question:
+            'The sim has just been perturbed. Read the readouts and waveforms. What pattern is this?',
           options: [
-            { label: 'Displacement', is_correct: false },
-            { label: 'Obstruction', is_correct: false },
-            { label: 'Pneumothorax', is_correct: false },
-            { label: 'Equipment leak (circuit / cuff)', is_correct: true },
-            { label: 'Stacking', is_correct: false },
+            { label: 'Displacement', is_correct: false, explanation: 'Displacement zeros out Vte. Here Vte is reduced but not zero, and ETCO2 is preserved — gas is moving past the sensor.' },
+            { label: 'Obstruction', is_correct: false, explanation: 'Obstruction raises PIP. PIP is unchanged here.' },
+            { label: 'Pneumothorax', is_correct: false, explanation: 'Pneumothorax raises plateau and drops BP. Neither happened.' },
+            { label: 'Equipment leak (circuit or cuff)', is_correct: true, explanation: 'Delivered Vt is set; returned Vt is short by a persistent gap. The cuff or the circuit is leaking. Check the pilot balloon and the connections.' },
+            { label: 'Stacking', is_correct: false, explanation: 'Stacking drives autoPEEP up, not Vte down.' },
           ],
           max_attempts: 2,
         },
       },
       {
         kind: 'recognition',
+        // Stacking: rate pushed up to 28 → expiratory time too short for R=12.
+        perturbation: { id: 'stacking', settings: { respiratoryRate: 28 } },
         prompt: {
           prompt_id: 'M19-s5-stacking',
           trigger: { kind: 'on_load' },
-          question: 'Scenario 5/5. Auto-PEEP rises to 8. BP drops 15 mmHg. Expiratory flow doesn\'t return to zero before the next breath. Chest looks hyperinflated. Most likely cause?',
+          question:
+            'The sim has just been perturbed. Read the readouts and waveforms. What pattern is this?',
           options: [
-            { label: 'Displacement', is_correct: false },
-            { label: 'Obstruction', is_correct: false },
-            { label: 'Pneumothorax', is_correct: false },
-            { label: 'Equipment leak', is_correct: false },
-            { label: 'Stacking (auto-PEEP / dynamic hyperinflation)', is_correct: true },
+            { label: 'Displacement', is_correct: false, explanation: 'Displacement zeros out ETCO2. ETCO2 is preserved here.' },
+            { label: 'Obstruction', is_correct: false, explanation: 'Obstruction is a discrete resistance jump. Here the rate is too fast for full exhalation — the trapping is rate-driven.' },
+            { label: 'Pneumothorax', is_correct: false, explanation: 'No parallel PIP+plateau rise; no sudden BP fall from compression.' },
+            { label: 'Equipment leak', is_correct: false, explanation: 'A leak doesn\'t cause auto-PEEP — it loses gas.' },
+            { label: 'Stacking (auto-PEEP / dynamic hyperinflation)', is_correct: true, explanation: 'Expiratory flow doesn\'t return to zero before the next breath because the rate is too fast for the patient\'s expiratory time. Slow the rate, lengthen Te, or disconnect briefly to let the chest fall.' },
           ],
           max_attempts: 2,
         },
@@ -713,6 +800,21 @@ export const M19: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**The mnemonic is DOPES.** Displacement, Obstruction, Pneumothorax, Equipment, Stacking. The very first physical action is to disconnect from the vent and bag. If the patient improves, it was the vent or the circuit. If he doesn\'t, it\'s a patient problem. Then read the waveform.' },
     { kind: 'callout', tone: 'info', markdown: 'The pressure pattern divides the differential. High PIP + high plat = lung. High PIP + normal plat = airway. Lost ETCO2 waveform = displacement (full) or massive obstruction. Shark-fin ETCO2 = partial obstruction.' },
+    // v3.2 §0.7 — predict_mcq anchoring the first-move before the recognition
+    // chain runs.
+    {
+      kind: 'predict_mcq',
+      predict:
+        'A vented patient suddenly decompensates. Before you read the waveform, the single most useful action is:',
+      options: [
+        { label: 'Increase FiO2 to 1.0.', is_correct: false, explanation: 'Reflex, not diagnostic. Helps with one type of problem and obscures the rest.' },
+        { label: 'Push more sedation.', is_correct: false, explanation: 'Buries the diagnostic information you need.' },
+        { label: 'Disconnect from the vent and bag.', is_correct: true },
+        { label: 'Get a stat chest X-ray.', is_correct: false, explanation: 'Useful eventually, not first. The X-ray takes minutes; the bag tells you in seconds whether the problem is the vent or the patient.' },
+      ],
+      observe:
+        'Disconnecting separates vent problems from patient problems in seconds. If the patient improves on the bag, the problem is in the circuit or the vent settings. If he doesn\'t, you have a patient problem and now you read the waveform to localize it.',
+    },
     {
       kind: 'figure',
       caption: 'Five DOPES patterns, side by side.',
@@ -791,12 +893,13 @@ export const M19: ModuleConfig = {
   ],
 
   explore_card: {
-    patient_context: 'This is the bedside rapid-response module. You\'ll be called to five deteriorations in a row. The vent will alarm, the waveforms will change, and you\'ll be asked what\'s going on. The sim is currently showing a normal, stable patient as your baseline.',
+    // v3.2 §9.9 — bedside rapid-response with live sim perturbations.
+    patient_context: "This is the bedside rapid-response module. You'll be called to five decompensations in a row — the sim will perturb itself between scenarios. The sim is currently showing a normal, stable patient as your baseline.",
     unlocked_controls_description: [],
     readouts_description: [
       { name: 'Baseline pressures', description: 'PIP ~28, plat ~22 — small gap.' },
       { name: 'Vte ≈ delivered', description: 'circuit intact, no leak.' },
-      { name: 'No alarms', description: 'normal — every case starts here and then diverges.' },
+      { name: 'ETCO2, SBP', description: 'wired so disconnect (ETCO2 → 0) and pneumothorax (SBP drop) are visible signatures.' },
     ],
     suggestions: [
       'Memorize what normal looks like — every scenario diverges from this baseline.',
@@ -804,7 +907,8 @@ export const M19: ModuleConfig = {
       'The patterns are diagnostic, not subtle. If two signals point at the same row, that\'s usually your answer.',
     ],
   },
-  user_facing_task: 'Five decompensations in a row. For each, identify the pattern: D / O / P / E / S. Get all five right.',
+  // v3.2 §9.10 — explicit live-perturbation framing.
+  user_facing_task: 'Five decompensations in a row. The sim perturbs itself between scenarios — read the readouts and the waveforms each time, then pick the pattern from the same five options. Get all five right to complete the module.',
   // success_criteria_display omitted — shell auto-derives from the five
   // recognition prompts so each scenario ticks off in order as it's solved.
   task_framing_style: 'C',

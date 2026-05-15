@@ -14,6 +14,7 @@ import type {
   ReadoutName,
   ControlName,
   InlinePromptConfig,
+  PerturbationSpec,
 } from '../shell/types';
 
 // ── Events emitted by the harness ──
@@ -43,6 +44,14 @@ export interface TrackerContext {
    * outcome-tracker child active, or it has just fired `satisfied`).
    */
   onOutcomeProgress?(progress: { current: number; target: number; label?: string } | null): void;
+  /**
+   * v3.2 §9 — scripted sim-state override. RecognitionTracker calls
+   * `applyPerturbation` from `start()` when its config has a perturbation
+   * field, and `clearPerturbations` when satisfied. The harness routes both
+   * to PlaygroundSim.
+   */
+  applyPerturbation?(p: PerturbationSpec): void;
+  clearPerturbations?(): void;
 }
 
 export interface Tracker {
@@ -225,6 +234,13 @@ export class RecognitionTracker implements Tracker {
   start(ctx: TrackerContext, onSatisfied: () => void) {
     this.ctx = ctx;
     this.onSatisfied = onSatisfied;
+    // v3.2 §9 — apply scripted sim state BEFORE presenting the prompt so
+    // the readouts shown to the learner reflect the perturbation. The
+    // CompoundTracker's reset_between fires resetToPreset() which in turn
+    // calls clearPerturbations(), so the next child starts from baseline.
+    if (this.cfg.perturbation) {
+      ctx.applyPerturbation?.(this.cfg.perturbation);
+    }
     if (this.cfg.prompt.trigger.kind === 'on_load') {
       this.present();
     }
@@ -255,6 +271,12 @@ export class RecognitionTracker implements Tracker {
       this.attempts++;
       if (ev.is_correct) {
         this.satisfied = true;
+        // v3.2 §9 — clear the perturbation as soon as the learner names the
+        // pattern, even if the parent compound has no reset_between (e.g.
+        // standalone recognition trackers). Cheap and idempotent.
+        if (this.cfg.perturbation) {
+          this.ctx?.clearPerturbations?.();
+        }
         this.onSatisfied?.();
       }
     }

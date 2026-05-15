@@ -30,14 +30,17 @@ export const M9: ModuleConfig = {
   title: 'PRVC and Dual-Control Ventilation',
   track: 'Modes',
   estimated_minutes: 20,
+  // v3.2 §2.3 — briefing rewritten. The module is now "watch the algorithm
+  // work" not "recognize and respond to dyssynchrony." The yo-yo failure
+  // mode is read-only.
   briefing: {
-    tagline: 'Volume target. Pressure-limited. Mind the failure modes.',
+    tagline: 'Volume target. Pressure-limited. Watch the algorithm work.',
     overview:
-      "PRVC tries to give you the predictability of volume control with the safety of pressure control. You set a volume target, the vent picks the pressure to hit it, and adjusts breath by breath when mechanics shift. In this module you'll see the adaptive loop work as designed — drop compliance and watch PIP climb to keep Vt on target. The known failure mode (the \"yo-yo\" in awake patients with strong drive, where the algorithm reads the patient's effort as the vent doing its job and quietly drops support) is described in the prose but isn't rendered by the current sim. Recognize the pattern in the read section, then watch the adaptive logic do its correct job on the sim.",
+      "PRVC tries to give you the predictability of volume control with the safety of pressure control. You set a volume target; the vent picks the pressure to hit it, breath by breath. In this module you'll induce a sudden drop in compliance and watch the algorithm ramp the inspiratory pressure up over a few breaths to keep delivered volume on target. You'll also read about a specific failure mode — the yo-yo in awake patients with strong drive — that the simulator doesn't render but that you'll see at the bedside.",
     what_youll_do: [
       'PRVC adjusts pressure breath by breath to hit a volume target.',
       "It's pressure-limited, so peaks can't run away.",
-      'The sim demonstrates the loop working as designed. The yo-yo failure mode is read-only — recognize the pattern in the prose; the current sim can\'t render it.',
+      "The yo-yo failure mode is read-only — you'll learn the pattern in the read phase, not on the sim.",
     ],
   },
 
@@ -105,6 +108,9 @@ export const M9: ModuleConfig = {
   // in this sim). The proxy: drop compliance, watch the adaptive PI ramp
   // PIP up over several breaths (the M9 visual cue from MASTER_SHELL_v3 §6
   // flashes PIP each adaptive step), then a recognition consolidates.
+  // v3.2 §2.4 — strip the recognition-question child. The predict_mcq in
+  // the read phase already gates the learning; the live module just needs
+  // the manipulation + outcome to show the algorithm working.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
@@ -117,23 +123,8 @@ export const M9: ModuleConfig = {
       },
       {
         kind: 'outcome',
-        readouts: { pip: { operator: '>=', value: 20 } },
+        readouts: { pip: { operator: '>=', value: 22 } },
         sustain_breaths: 4,
-      },
-      {
-        kind: 'recognition',
-        prompt: {
-          prompt_id: 'M9-summary',
-          trigger: { kind: 'on_load' },
-          question: 'You dropped compliance. Over the next several breaths, what did the ventilator do?',
-          options: [
-            { label: 'Increased delivered pressure to maintain the volume target', is_correct: true, explanation: "PRVC sensed that Vt was falling and ramped PINSP up breath by breath. That's the adaptive-control loop working as designed." },
-            { label: 'Decreased delivered pressure', is_correct: false, explanation: "Only happens when delivered Vt exceeds the target — opposite direction." },
-            { label: 'Switched modes', is_correct: false, explanation: 'No automatic mode switching in PRVC.' },
-            { label: 'Nothing automatic happened', is_correct: false, explanation: 'The PIP flashes on every adaptive step. You saw the algorithm work.' },
-          ],
-          max_attempts: 2,
-        },
       },
     ],
   },
@@ -150,12 +141,19 @@ export const M9: ModuleConfig = {
       markdown: "PRVC is a pressure-control mode for people who don't like pressure-control. It's the same delivery pattern; it just has a closed-loop volume target on top.",
     },
     {
-      kind: 'predict_observe',
+      // v3.2 §2.5 — predict_mcq covers the correct algorithm behavior.
+      kind: 'predict_mcq',
       awaits_control: 'compliance',
       predict:
-        "Drop compliance from 30 to 18 (a sudden ARDS-like worsening). Predict: what does the vent's PINSP do over the next 4–5 breaths?",
+        "You drop this patient's compliance from 30 to 18 — a sudden ARDS-like worsening. Over the next several breaths the vent will:",
+      options: [
+        { label: 'Hold PIP constant; Vt will fall.', is_correct: false, explanation: "That's PCV. PRVC adjusts pressure to keep volume on target." },
+        { label: 'Hold Vt constant; PIP will rise breath by breath.', is_correct: true },
+        { label: 'Switch to volume-control automatically.', is_correct: false, explanation: "PRVC doesn't mode-switch; it adapts within its own mode." },
+        { label: 'Nothing — the breath-by-breath adjustments are too small to see.', is_correct: false, explanation: "The adjustments are visible. You'll see PIP halos flash each adaptive step." },
+      ],
       observe:
-        "PINSP ramps up over several breaths — you'll see the PIP halo flash each step. The vent is keeping Vt at 450 by giving the lungs more pressure. The adaptive loop is working.",
+        "PRVC senses Vt drift and corrects PINSP to compensate. With sudden worsening compliance, the algorithm ramps PINSP up over 4-5 breaths, holding Vt at target. You see the algorithm work in real time. This is what closed-loop control looks like when conditions stay stable.",
     },
     {
       kind: 'callout',
@@ -164,13 +162,13 @@ export const M9: ModuleConfig = {
         'The fix for PRVC dyssynchrony is **not** to add sedation. The fix is to switch to a non-adaptive mode (VCV or PCV) and then address why the patient was agitated.',
     },
     {
-      // Fix 8: be honest about what the sim demonstrates vs. what the prose
-      // describes. The yo-yo requires patient drive perturbing the volume
-      // measurement, which this sim doesn't model.
+      // v3.2 §2.5 — yo-yo callout replaces the (now-removed) recognition
+      // child as the place this failure mode lives. The sim shows the
+      // algorithm working; the prose shows how it breaks at the bedside.
       kind: 'callout',
-      tone: 'info',
+      tone: 'warn',
       markdown:
-        "The sim demonstrates the adaptive loop in stable conditions. The yo-yo behavior requires patient effort perturbing the volume measurement, which the current sim doesn't model.",
+        "**The yo-yo: the sim can't show you this, but the bedside will.** In an awake patient with strong drive, the algorithm misreads the patient's effort as 'compliance improved' and lowers PINSP. The next breath is therefore smaller, the algorithm reads 'compliance worsened,' and ramps PINSP back up. Over 30-60 seconds you see the PINSP cycle visibly: 12 → 22 → 12 → 22, while Vt stays on target. The patient is uncomfortable. The fix is to switch to a non-adaptive mode (VCV or PCV) and address why the patient is agitated. Not sedation — sedation buries the diagnostic information.",
     },
   ],
 
@@ -253,12 +251,12 @@ export const M9: ModuleConfig = {
     ],
   },
 
+  // v3.2 §2.6 — re-framed as "watch the algorithm." No recognition child.
   user_facing_task:
-    "Recognize and respond to PRVC dyssynchrony. Drop the patient's compliance into the ARDS range and watch what the ventilator does — without changing anything else. After 4–5 breaths the PIP will have visibly climbed: that's the adaptive loop working as designed. Answer what you saw. Note: this scenario requires the simulator to render an adaptive PINSP oscillation. If you don't see the swing, the pattern is fully described in the read phase; the test of recognition here is whether you respond by switching out of PRVC.",
+    "Watch the algorithm. Drop this patient's compliance into the ARDS range and wait. Over four to five breaths the inspiratory pressure will climb as PRVC keeps Vt on target. You'll see the PIP halo flash each adaptive step. No other intervention needed — your job is to observe.",
   success_criteria_display: [
-    "Reduce compliance by at least 40%.",
-    'Wait several breaths and watch the PIP trend (you\'ll see halos flash each adaptive step).',
-    'Identify what the ventilator did in response.',
+    'Reduce compliance by at least 40%.',
+    'Wait for PIP to climb to ≥ 22 cmH2O, sustained 4 breaths.',
   ],
   task_framing_style: 'A',
 
@@ -405,12 +403,35 @@ export const M10: ModuleConfig = {
       markdown: 'There is no rate in PSV. The number on the screen labeled RR is whatever the patient is doing.',
     },
     {
-      kind: 'predict_observe',
+      // v3.2 §0.6 — legacy predict_observe conversion (the existing PS18→24
+      // exploration).
+      kind: 'predict_mcq',
       awaits_control: 'psLevel',
       predict:
         "Raise PS from 18 to 24. What happens to the patient's spontaneous Vt and RR?",
+      options: [
+        { label: 'Vt rises, RR falls — bigger boosted breaths, less work between them.', is_correct: true },
+        { label: 'Vt rises, RR rises too — more support drives more breaths.', is_correct: false, explanation: 'Backwards. More support per breath lets the patient slow down and ride bigger volumes.' },
+        { label: 'Vt unchanged — PSV doesn\'t scale linearly with PS.', is_correct: false, explanation: 'At fixed compliance, Vt ≈ PS × C. Doubling-ish the PS roughly doubles the Vt.' },
+        { label: 'RR climbs because more pressure feels uncomfortable.', is_correct: false, explanation: 'The patient comfort signal is the opposite — over-supported patients slow down.' },
+      ],
       observe:
         'Vt rises (each boosted breath is larger), and his rate falls (he can ride the boosted breaths longer between efforts).',
+    },
+    // v3.2 §0.7 — new predict_mcq grounding the "patient is the readout"
+    // teaching with a clear too-low-PS vignette.
+    {
+      kind: 'predict_mcq',
+      predict:
+        'A patient on PSV with PS 14 has RR 28, spontaneous Vt 280, visible accessory muscle use, and SpO2 96%. Best next move?',
+      options: [
+        { label: "Add sedation — he's anxious.", is_correct: false, explanation: "Sedation reduces drive, which lowers Vt further; the tachypnea isn't anxiety, it's hypoventilation compensation." },
+        { label: 'Lower PS to 8 to prepare for SBT.', is_correct: false, explanation: 'Wrong direction; PS 8 is the threshold for passing an SBT, not the rescue for an under-supported patient.' },
+        { label: 'Raise PS to 18.', is_correct: true },
+        { label: 'Switch to PRVC.', is_correct: false, explanation: 'Same support level in a different package; the issue is that the support level is too low, not that the mode is wrong.' },
+      ],
+      observe:
+        'Tachypneic, shallow, accessory muscles. He\'s working too hard at this support level. More PS will deepen each breath and slow the rate. Recheck after 5 minutes; target spontaneous RR 14-24, Vt 6-8 mL/kg.',
     },
     {
       kind: 'callout',

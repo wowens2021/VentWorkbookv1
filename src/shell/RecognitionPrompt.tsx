@@ -53,11 +53,23 @@ const RecognitionPrompt: React.FC<Props> = ({ prompt, onResponse, onContinue, on
   const correctOpt = prompt.options.find(o => o.is_correct);
 
   return (
-    <div className="bg-white border border-sky-300 rounded-xl shadow-2xl p-4 max-w-md w-full">
+    <div className={`bg-white border border-sky-300 rounded-xl shadow-2xl p-4 ${prompt.clip_src ? 'max-w-2xl' : 'max-w-md'} w-full`}>
       <div className="flex items-center gap-2 mb-3">
         <HelpCircle size={14} className="text-sky-600" />
         <span className="text-[10px] font-black uppercase tracking-widest text-sky-700">Quick check</span>
       </div>
+      {/* v3.2 §3 — render the dyssynchrony clip above the prompt. The clip
+          is the primary diagnostic content; the question prose anchors it
+          in a clinical context. */}
+      {prompt.clip_src && (
+        <div className="mb-3 rounded-lg border border-zinc-200 overflow-hidden bg-[#f5f0e6]">
+          <img
+            src={prompt.clip_src}
+            alt="Ventilator waveform clip"
+            className="w-full h-auto block"
+          />
+        </div>
+      )}
       <p className="text-sm font-bold text-zinc-900 mb-3 leading-snug">{prompt.question}</p>
       <div className="space-y-1.5">
         {prompt.options.map((opt, i) => {
