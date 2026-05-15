@@ -121,18 +121,19 @@ export const M15: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**ARDSnet is the most studied recipe in critical care.** VCV with 6 mL/kg PBW, plat ≤30, PEEP/FiO2 by the table, SpO2 88–94, permissive hypercapnia. The components have not changed since 2000.' },
     { kind: 'callout', tone: 'info', markdown: 'PBW is calculated from height and gender, not actual weight. A 70-inch man has a PBW of ~73 kg regardless of whether he weighs 60 kg or 130 kg. The lung doesn\'t grow with obesity.' },
+    // Novice-pass §15.1 — interactive PBW widget so the learner builds
+    // the math habit, not just sees this patient's answer.
     {
-      kind: 'figure',
-      caption: 'The recipe at a glance — and what the math wants for this patient.',
-      ascii:
-        'PBW (M, 70 in) ≈ 73 kg\n' +
-        '6 mL/kg PBW    ≈ 438 mL\n' +
-        'Compliance     = 32 mL/cmH2O\n' +
-        '\n' +
-        'At Vt 600 (start):  DP = 600/32 = 18.75  ← over Amato 15\n' +
-        'At Vt 430, PEEP 10: plat = 23.4, DP = 13.4 ← in target\n' +
-        '\n' +
-        'ARDSnet table for FiO2 0.70: PEEP 10–14',
+      kind: 'pbw_widget',
+      label: 'Compute the target Vt yourself',
+      default_height_inches: 70,
+      default_sex: 'M',
+    },
+    {
+      kind: 'callout',
+      tone: 'tip',
+      markdown:
+        "For this scenario's patient (70 inches, male): PBW ≈ 73 kg, 6 mL/kg ≈ **438 mL**. Compliance is 32. At Vt 600 (current), driving pressure ≈ 19 — over the Amato 15 ceiling. At Vt 430 with PEEP 10, plat ≈ 23 and DP ≈ 13. That's the recipe target.",
     },
     {
       kind: 'predict_mcq',
@@ -159,6 +160,22 @@ export const M15: ModuleConfig = {
       awaits_control: 'peep',
     },
     { kind: 'callout', tone: 'warn', markdown: 'Permissive hypercapnia: pH ≥7.15–7.20 is acceptable. The exception is elevated ICP — hypercapnia causes cerebral vasodilation.' },
+    // Novice-pass §15.3 — dramatize the permissive-hypercapnia teaching
+    // with a predict_mcq. The novice's reflex on rising PaCO2 is "raise
+    // the rate" — exactly what makes ARDS worse.
+    {
+      kind: 'predict_mcq',
+      predict:
+        'You just dropped Vt to 6 mL/kg as the recipe asks. ABG comes back: PaCO2 climbing from 38 to 55, pH 7.28. What do you do?',
+      options: [
+        { label: 'Raise the rate from 18 to 26 to clear more CO2.', is_correct: false, explanation: "The reflex answer. Wrong here — the recipe is intentionally accepting permissive hypercapnia in exchange for lung-protective Vt. Raising rate fights the recipe and risks auto-PEEP." },
+        { label: "Raise the Vt back to 500 — pH 7.28 isn't safe.", is_correct: false, explanation: "pH 7.28 IS safe in ARDS. The threshold is 7.15–7.20. Raising Vt undoes the entire protective strategy." },
+        { label: 'Watch it. The recipe asks for this.', is_correct: true, explanation: 'Permissive hypercapnia is the deliberate trade for lung protection. As long as pH ≥ 7.15–7.20 (and no contraindication like elevated ICP), accept the higher PaCO2 and the lower pH. The lung wins.' },
+        { label: 'Switch to PCV — more comfort with rising CO2.', is_correct: false, explanation: "Mode change doesn't fix the underlying physiology. You'd still face the same trade." },
+      ],
+      observe:
+        'The recipe is *designed* to produce permissive hypercapnia. Resisting the rise undoes the protective strategy. The exception is elevated ICP — there hypercapnia is harmful and you keep PaCO2 35–40 at the cost of higher Vt.',
+    },
     // Per spec §12 v3.1 — pedagogically central formative.
     {
       kind: 'formative',
@@ -455,7 +472,25 @@ export const M16: ModuleConfig = {
 
   content_blocks: [
     { kind: 'prose', markdown: '**Obstructive disease — asthma and COPD — flips the ventilation problem upside down.** The lungs aren\'t stiff; the airways are narrow. The patient can get air in. He can\'t get it out. Tidal volume isn\'t the danger. Trapping is. Trapped gas compresses venous return, drops blood pressure, and in severe cases causes pneumothorax.' },
+    // Novice-pass §16.2 — explicit contrast with M15. A novice fresh
+    // off the ARDS module is primed for "smaller breath." Reset that
+    // here so they don't undershoot Vt.
+    {
+      kind: 'callout',
+      tone: 'tip',
+      markdown:
+        "**Coming straight from M15?** M15 said 6 mL/kg PBW because the *lungs* were the problem. Here we're saying **7–8 mL/kg** PBW. Why? Because the *airways* are the problem, not the lungs. The alveoli want a normal-sized breath; they just need time to let it out. Different disease, different recipe.",
+    },
     { kind: 'callout', tone: 'info', markdown: 'The obstructive recipe: VCV, 7–8 mL/kg PBW, rate 10–14, I:E 1:3 to 1:5, constant flow, ZEEP for asthma / modest PEEP for COPD.' },
+    // Novice-pass §16.1 — early disconnect-maneuver warn callout. The
+    // predict_mcq later in the read deepens this; the recognition tracker
+    // tests it; the read-phase teaching anchors all of them.
+    {
+      kind: 'callout',
+      tone: 'warn',
+      markdown:
+        "**Life-saving move to memorize now.** If you ever see a severe obstructive patient losing blood pressure on the vent, the first move is to *disconnect them from the vent* and let them exhale to atmosphere. This is faster and safer than adjusting any setting — trapped air is mechanically compressing venous return; opening the circuit is the fastest decompression. You'll practice this in a moment.",
+    },
     {
       kind: 'figure',
       caption: 'Same patient, two settings. The flow waveform is the diagnostic.',

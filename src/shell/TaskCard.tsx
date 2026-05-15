@@ -24,7 +24,15 @@ interface Props {
    * Rendered as a "Holding 3 of 5 breaths…" chip so the learner sees that
    * their adjustments ARE working, even before satisfaction fires.
    */
-  outcomeProgress?: { current: number; target: number; label?: string } | null;
+  outcomeProgress?: {
+    current: number;
+    target: number;
+    label?: string;
+    /** Novice-pass §15.2: per-criterion live status. Each entry says whether
+     *  one specific readout is currently passing, so a novice holding 4 of 5
+     *  knows which one is the bottleneck. */
+    byReadout?: { name: string; current: number | boolean; threshold: number | boolean; operator: string; passing: boolean }[];
+  } | null;
   /**
    * The currently-active recognition prompt question, surfaced as a
    * "Direction" line directly above the success criteria. Mirrors the
@@ -32,6 +40,13 @@ interface Props {
    * instruction in both places. Omitted when no prompt is active.
    */
   activeDirection?: string;
+  /**
+   * Novice-pass §2.3: when the learner has accumulated ≥ 3 wrong clicks
+   * on the current click-target prompt, surface a "Show me the answer"
+   * affordance alongside the Direction banner. Clicking it flashes the
+   * correct on-sim target via the existing flashReadouts pipeline.
+   */
+  onShowMeAnswer?: () => void;
   /**
    * A6: when set, the TaskCard shows exactly ONE active step (rather
    * than the full criteria list), and once that step lands shows an
@@ -69,6 +84,7 @@ const TaskCard: React.FC<Props> = ({
   onRedo,
   outcomeProgress,
   activeDirection,
+  onShowMeAnswer,
   sequential,
 }) => {
   if (objectiveSatisfied) {
@@ -148,11 +164,13 @@ const TaskCard: React.FC<Props> = ({
                   {sequential.observation}
                 </p>
               </div>
+              {/* Novice-pass §3.2 — dominant forward CTA. Full-width, large,
+                  animated entry so a novice scanning the screen cannot miss it. */}
               <button
                 onClick={sequential.onAdvanceStep}
-                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-olive hover:bg-brand-olive-hover text-white rounded-full text-[12px] font-bold transition shadow-sm"
+                className="mt-3 w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-brand-olive hover:bg-brand-olive-hover text-white rounded-lg text-[15px] font-black uppercase tracking-wide transition shadow-lg ring-2 ring-brand-olive/30 animate-in fade-in slide-in-from-bottom-2 duration-500"
               >
-                {sequential.activeIndex + 1 < sequential.totalSteps ? 'Next →' : 'Finish →'}
+                {sequential.activeIndex + 1 < sequential.totalSteps ? 'Next step →' : 'Finish →'}
               </button>
             </>
           )}
@@ -167,6 +185,15 @@ const TaskCard: React.FC<Props> = ({
           <p className="text-[14px] font-semibold text-sky-900 leading-snug">
             {activeDirection}
           </p>
+          {onShowMeAnswer && (
+            <button
+              type="button"
+              onClick={onShowMeAnswer}
+              className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-bold text-sky-700 hover:text-sky-900 underline underline-offset-2 decoration-dotted"
+            >
+              Show me the answer →
+            </button>
+          )}
         </section>
       )}
 
@@ -246,6 +273,30 @@ const TaskCard: React.FC<Props> = ({
               />
             </div>
           </div>
+          {/* Novice-pass §15.2: per-readout pass/fail strip. Pairs the
+              "Holding X of Y" chip with explicit "which criterion is
+              breaking the streak" feedback so a learner doesn't spin. */}
+          {outcomeProgress.byReadout && outcomeProgress.byReadout.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {outcomeProgress.byReadout.map(r => (
+                <span
+                  key={r.name}
+                  className={`text-[10.5px] font-mono font-bold px-1.5 py-0.5 rounded border ${
+                    r.passing
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                      : 'bg-rose-50 border-rose-300 text-rose-800'
+                  }`}
+                >
+                  {r.name} {typeof r.current === 'number' ? r.current.toFixed(0) : String(r.current)}
+                  <span className="opacity-60">
+                    {' '}
+                    ({r.operator} {String(r.threshold)})
+                  </span>
+                  {r.passing ? ' ✓' : ' ✗'}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

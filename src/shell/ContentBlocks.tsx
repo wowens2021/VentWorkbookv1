@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Info, AlertTriangle, Lightbulb, Sparkles, Check } from 'lucide-react';
 import type { ContentBlock, ControlName } from './types';
 import type { ScenarioHarness } from '../harness/ScenarioHarness';
+import PBWWidget from './PBWWidget';
 
 const renderInline = (md: string): React.ReactNode => {
   // Minimal markdown: **bold**, `code`, and newlines → <p>
@@ -83,6 +84,15 @@ const Block: React.FC<{
         harness={harness}
         blockId={blockIdForMcq ?? 'PM'}
         onStatusChange={onMcqStatusChange}
+      />
+    );
+  }
+  if (block.kind === 'pbw_widget') {
+    return (
+      <PBWWidget
+        defaultHeightInches={block.default_height_inches}
+        defaultSex={block.default_sex}
+        label={block.label}
       />
     );
   }

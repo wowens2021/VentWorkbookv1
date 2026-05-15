@@ -17,8 +17,11 @@ export const M_EOM: ModuleConfig = {
   title: 'The Equation of Motion',
   track: 'Physiology',
   estimated_minutes: 15,
+  // Novice-pass §EOM.1 — gloss the equation in plain language alongside
+  // the symbols so a novice doesn't see naked math before the read teaches
+  // the terms.
   briefing: {
-    tagline: 'P = V/C + R·flow + PEEP. The spine of every breath.',
+    tagline: 'P = V/C + R·flow + PEEP — pressure = volume/compliance + resistance·flow + PEEP.',
     overview:
       "The equation of motion is the one piece of physiology that ties everything together. Pressure equals (volume divided by compliance) plus (flow times resistance) plus PEEP. That's it. Stretching the lungs costs pressure. Pushing gas through airways costs pressure. PEEP is the baseline. If you understand which term is doing the work in any given breath, you can predict what every ventilator change will do before you make it.",
     what_youll_do: [
@@ -113,17 +116,45 @@ export const M_EOM: ModuleConfig = {
           ],
         },
       },
+      // Novice-pass §EOM.2 — replace the iTime experiment (whose
+      // waveform delta is viscerally subtle) with a combined
+      // compliance + resistance change that rewards the integration the
+      // module is trying to build. The recognition prompt asks the
+      // learner to attribute the two simultaneous signatures.
       {
-        kind: 'manipulation',
-        control: 'iTime',
-        condition: { type: 'absolute', operator: '<=', value: 0.7 },
-        require_acknowledgment: {
-          question: 'You shortened I-time. Same Vt delivered faster (higher flow). What happens to PIP vs Pplat?',
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M-EOM-combined',
+          trigger: { kind: 'on_load' },
+          question:
+            "Now do both: drop compliance another 10 points AND raise resistance another 10 points (move both sliders simultaneously). Then look at the waveform. What did you just see?",
           options: [
-            { label: "PIP rises; Pplat doesn't change much", is_correct: true, explanation: 'Flow only shows up in the R·flow term. Squeeze the same volume through the same airways faster, and the airway resistance contribution is larger. Pplat is alveolar pressure after flow stops — same Vt, same compliance → same Pplat.' },
-            { label: 'Both rise', is_correct: false, explanation: 'Pplat depends on compliance and Vt, neither of which changed.' },
-            { label: 'Both fall', is_correct: false, explanation: 'Faster flow raises peak pressure, not lowers it.' },
+            {
+              label: 'Both pressures rose AND the gap widened — compliance pushed Pplat up, resistance widened PIP–Pplat.',
+              is_correct: true,
+              explanation:
+                "Exactly the integration the equation predicts. Two terms changed at once: V/C pushed alveolar pressure up (Pplat rose), and R·flow pushed the resistance contribution up (PIP rose more). At the bedside this looks like ARDS + bronchospasm on the same patient — both fixes are needed.",
+            },
+            {
+              label: 'Only the gap widened — Pplat is unchanged.',
+              is_correct: false,
+              explanation:
+                "Pplat IS changed when compliance changes. Only when you move resistance in isolation does Pplat stay flat.",
+            },
+            {
+              label: 'Both pressures rose by the same amount (no gap change).',
+              is_correct: false,
+              explanation:
+                "That's the pure-compliance signature. Adding resistance on top widens the gap. Both happened here.",
+            },
+            {
+              label: 'PIP fell because the changes cancel out.',
+              is_correct: false,
+              explanation:
+                "Compliance and resistance both push PIP UP independently. They don't cancel — they add.",
+            },
           ],
+          max_attempts: 2,
         },
       },
     ],
@@ -244,13 +275,15 @@ export const M_EOM: ModuleConfig = {
         { label: 'Cannot calculate without PIP', is_correct: false, explanation: 'Static compliance uses Pplat by design — PIP is for *dynamic* compliance.' },
       ],
     },
+    // Novice-pass §EOM.3 — drop the attribution; novices don't yet know
+    // who Owens is. Test the concept directly.
     {
       id: 'M-EOM-Q5',
-      prompt: 'Owens\'s bedside test for "is this a resistance problem or a lung problem?" is:',
+      prompt: 'The bedside test for *is this a resistance problem or a lung problem?* is:',
       options: [
         { label: 'Get an arterial blood gas', is_correct: false, explanation: "Doesn't distinguish these." },
-        { label: 'Perform an inspiratory hold and look at the peak-plateau gap', is_correct: true, explanation: 'Book Ch. 2. Gap > 5 → resistance. Gap normal → lung.' },
-        { label: 'Disconnect the patient from the vent', is_correct: false, explanation: "That's a different test (DOPE)." },
+        { label: 'Perform an inspiratory hold and look at the peak-plateau gap', is_correct: true, explanation: 'Book Ch. 2. Gap > 5 cmH2O → resistance is the problem. Gap normal but Pplat high → compliance (the lung) is the problem.' },
+        { label: 'Disconnect the patient from the vent', is_correct: false, explanation: "That's a different test (DOPES troubleshooting algorithm)." },
         { label: 'Raise the PEEP', is_correct: false, explanation: "Doesn't help diagnostically." },
       ],
     },

@@ -111,19 +111,18 @@ export const M13: ModuleConfig = {
   content_blocks: [
     { kind: 'prose', markdown: '**PEEP is the splint.** The lung has a functional residual capacity — a reservoir of air that maintains gas exchange even when you\'re not actively breathing. ARDS and pulmonary edema collapse that reservoir. PEEP rebuilds it. Three jobs: recruit collapsed alveoli, hold FRC against the next breath\'s exhalation, and (in failing LV) reduce afterload by lifting pleural pressure.' },
     { kind: 'callout', tone: 'info', markdown: 'Initial PEEP by CXR: clear → 5; scattered infiltrates → 10; diffuse dense → 15; whiteout → 20.' },
+    // Novice-pass §13.1 — replace ASCII with a real graphic.
     {
       kind: 'figure',
-      caption: 'ARDSnet Lower PEEP/FiO2 table — the standard starting ladder.',
-      ascii:
-        ' FiO2 |  PEEP\n' +
-        ' 0.30 |   5\n' +
-        ' 0.40 |   5–8\n' +
-        ' 0.50 |   8–10\n' +
-        ' 0.60 |  10\n' +
-        ' 0.70 |  10–14   ← you are here\n' +
-        ' 0.80 |  14\n' +
-        ' 0.90 |  14–18\n' +
-        ' 1.00 |  18–24',
+      caption: 'ARDSnet Lower PEEP/FiO2 table — the standard starting ladder. As FiO2 climbs, PEEP climbs with it. The bottom rows (olive) signal "watch the SBP."',
+      src: '/figures/ardsnet_lower_peep.svg',
+    },
+    // Novice-pass §13.2 — explicit SBP-guardrail teaching block so the
+    // learner connects the flashing SBP card to "PEEP overshot."
+    {
+      kind: 'prose',
+      markdown:
+        "**Watch the SBP card as you climb PEEP.** Below 95, the card flashes red. That's the floor — PEEP is helping the lungs but starting to hurt circulation. When you see that flash, you've gone one click too far. Back PEEP off until the flash stops, then accept the slightly lower PaO2 as the trade.",
     },
     {
       // v3.2 §4.6 — overshoot-BP predict_mcq replaces the simple PEEP→PaO2
@@ -230,8 +229,12 @@ export const M13: ModuleConfig = {
   },
   user_facing_task: 'Set PEEP/FiO2 from the ARDSnet table. Your patient is on PEEP 5, FiO2 0.70, and PaO2 is 58. CXR shows scattered bilateral infiltrates. Use the ARDSnet Lower PEEP/FiO2 table to climb the ladder until PaO2 is in the 65–90 range.',
   success_criteria_display: [
+    // Novice-pass §13.3 — SBP is in the tracker but was missing from
+    // the user-visible criteria list, so a learner who tanked BP saw
+    // the chip stall without knowing why.
     'PEEP raised to ≥10 cmH2O.',
     'PaO2 sustained ≥65 mmHg for five breaths.',
+    'SBP held ≥95 mmHg throughout — don\'t overshoot.',
   ],
   task_framing_style: 'B',
 
@@ -335,14 +338,41 @@ export const M14: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
+  // Novice-pass §14.1 — extend the outcome with a recognition step that
+  // forces the learner to make the escalation decision once. The four-
+  // lever ladder is taught as a list but never practiced as a decision
+  // without this.
   hidden_objective: {
-    kind: 'outcome',
-    readouts: {
-      fio2: { operator: '<=', value: 60 },
-      peep: { operator: '>=', value: 12 },
-      spo2: { operator: '>=', value: 88 },
-    },
-    sustain_breaths: 5,
+    kind: 'compound',
+    sequence: 'strict',
+    reset_between: false,
+    children: [
+      {
+        kind: 'outcome',
+        readouts: {
+          fio2: { operator: '<=', value: 60 },
+          peep: { operator: '>=', value: 12 },
+          spo2: { operator: '>=', value: 88 },
+        },
+        sustain_breaths: 5,
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M14-escalation',
+          trigger: { kind: 'on_load' },
+          question:
+            "Imagine a sicker version of this patient: FiO2 0.8, PEEP 12, mean Paw 22, PaO2 stuck at 55. You've climbed the first two rungs of the ladder. What's the next evidence-based move?",
+          options: [
+            { label: 'Push PEEP from 12 to 18.', is_correct: false, explanation: 'You\'re hitting the PEEP ceiling — going higher mostly buys overdistension and a falling SBP, not recruitment.' },
+            { label: 'Prone position the patient.', is_correct: true, explanation: 'PROSEVA: for moderate-to-severe ARDS (P/F < 150 on FiO2 ≥ 0.6, PEEP ≥ 5), prone positioning for ≥ 16 h/day cuts mortality. This is the next rung after FiO2 and PEEP.' },
+            { label: 'Add inhaled nitric oxide.', is_correct: false, explanation: 'iNO transiently improves oxygenation but has no mortality benefit. Reserve for refractory shunt or RV failure after prone has been tried.' },
+            { label: 'Stay the course and recheck in 4 hours.', is_correct: false, explanation: 'P/F < 70 doesn\'t reward patience. Escalate.' },
+          ],
+          max_attempts: 2,
+        },
+      },
+    ],
   },
 
   content_blocks: [

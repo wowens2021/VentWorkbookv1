@@ -3,6 +3,16 @@ import type { ModuleConfig } from '../shell/types';
 /**
  * MODULE M9 — PRVC and Dual-Control Ventilation
  *
+ * Novice-pass §9.3 — CURRICULUM REVIEW CANDIDATE. M9 covers a mode many
+ * novices will never see in their training hospital, and the yo-yo
+ * failure mode (the most interesting content) is currently read-only.
+ * Two acceptable resolutions when a curriculum review happens:
+ *   (a) Fold this content into M8 as a 5-minute "adaptive variant"
+ *       section, so dual-control gets named but doesn't own a module.
+ *   (b) Relabel M9 as an optional / advanced-track module.
+ * Do not delete this module in the per-module pass — surface the flag
+ * here so the decision isn't lost.
+ *
  * Track: Modes · Archetype: outcome with sandbox exploration · 20 min
  * Anchor chapters: VB Ch. 9
  *
@@ -199,14 +209,17 @@ export const M9: ModuleConfig = {
         { label: 'A weaning candidate', is_correct: false, explanation: 'Possibly — but PSV is the answer for weaning, not PRVC.' },
       ],
     },
+    // Novice-pass §9.2 — the original Q3 asked the learner to recognize
+    // a PINSP-cycling pattern the sim never shows. Replaced with a
+    // simpler concept check the read content directly teaches.
     {
       id: 'M9-Q3',
-      prompt: 'A PRVC patient shows Vt of 500 ± 30 mL, but PINSP cycling between 12 and 22. The correct response is:',
+      prompt: 'In PRVC, the vent automatically adjusts which setting breath-to-breath to keep the tidal volume on target?',
       options: [
-        { label: 'Add sedation', is_correct: false, explanation: 'Treats the symptom only.' },
-        { label: 'Increase the Vt target', is_correct: false, explanation: "Doesn't address the loop oscillation." },
-        { label: 'Switch to VCV or PCV; then evaluate the patient for the cause of the air hunger', is_correct: true, explanation: 'Book Ch. 9.' },
-        { label: 'Raise the FiO2', is_correct: false, explanation: 'Unrelated.' },
+        { label: 'PEEP', is_correct: false, explanation: 'PEEP is set by the clinician in PRVC, same as in any mode.' },
+        { label: 'Inspiratory pressure (PINSP).', is_correct: true, explanation: 'PRVC modulates inspiratory pressure breath-to-breath. As compliance worsens, PINSP climbs to keep Vt on target. As compliance improves, PINSP falls. Book Ch. 9.' },
+        { label: 'Respiratory rate.', is_correct: false, explanation: 'Set by the clinician in PRVC.' },
+        { label: 'FiO2.', is_correct: false, explanation: 'Set by the clinician. PRVC adjusts pressure, not gas composition.' },
       ],
     },
     {
@@ -363,7 +376,10 @@ export const M10: ModuleConfig = {
       settings: { psLevel: 18, peep: 5, fiO2: 40, endInspiratoryPercent: 25 },
       patient: { compliance: 55, resistance: 10, spontaneousRate: 12, gender: 'M', heightInches: 70 },
     },
-    unlocked_controls: ['psLevel', 'peep', 'fiO2', 'endInspiratoryPercent'],
+    // Novice-pass §10.3 — End-Insp % is unexplained at this stage and
+    // distracts from PS titration. Lock it for M10; introduce it in a
+    // later module when it has its own teaching beat.
+    unlocked_controls: ['psLevel', 'peep', 'fiO2'],
     visible_readouts: ['pip', 'vte', 'actualRate', 'mve'],
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
@@ -380,11 +396,25 @@ export const M10: ModuleConfig = {
         control: 'psLevel',
         condition: { type: 'range', min: 10, max: 14 },
       },
+      // Novice-pass §10.2 — the original criterion let a learner pass
+      // with Vt as low as 280 if they slammed PS down to single-digit
+      // territory. Add a lower bound so the range matches the
+      // 6–8 mL/kg PBW target the primer teaches (~380–470 for this
+      // 73-kg PBW patient).
       {
         kind: 'outcome',
         readouts: {
           actualRate: { operator: '>=', value: 14 },
           vte: { operator: '<=', value: 480 },
+        },
+        sustain_breaths: 5,
+      },
+      // Paired lower-bound check so the criterion is a true range, not
+      // an upper-only ceiling.
+      {
+        kind: 'outcome',
+        readouts: {
+          vte: { operator: '>=', value: 380 },
         },
         sustain_breaths: 5,
       },
@@ -397,10 +427,31 @@ export const M10: ModuleConfig = {
       markdown:
         "PSV is the **recovery mode**. The patient has a working brain and a working diaphragm, but his lungs or his strength aren't quite back to baseline. You set a pressure boost — typically 10–15 cmH2O above PEEP — and the patient does the rest. He breathes when he wants to; he breathes as much as he wants. The vent just makes each breath a little easier.",
     },
+    // Novice-pass §10.1 — promoted from buried footnote. The single most
+    // dangerous thing about PSV is that it has NO SET RATE: an apneic
+    // patient on PSV gets zero breaths. A novice who doesn't internalize
+    // this can kill a patient. Make it the structural climax.
+    {
+      kind: 'callout',
+      tone: 'warn',
+      markdown:
+        "**PSV requires a patient who can breathe.** There is NO set rate in PSV. If the patient stops breathing — sedation deepens, the brain stops driving, the diaphragm fatigues — **PSV delivers nothing.** The vent will alarm, eventually, but the patient is apneic in the meantime.",
+    },
+    {
+      kind: 'prose',
+      markdown:
+        "**Concrete example:** imagine a post-op patient on PSV 10 / PEEP 5 / FiO2 40%. Comfortable, breathing 18/min, Vt 450. The team gives 4 mg of IV morphine for pain. Five minutes later the respiratory drive softens — he's now breathing 8/min with Vt 250. Ten minutes later he's apneic. The vent is set to PSV. **It is doing nothing.** He needs A/C, fast. If you'd put him on A/C from the start, the sedation would have been silently absorbed.",
+    },
+    {
+      kind: 'callout',
+      tone: 'warn',
+      markdown:
+        "**PSV is wrong for:** the paralyzed, the deeply sedated, the shocked, the unreliable-drive patient (post-arrest, brain injury, opioids on board). These patients need A/C — a *guaranteed* rate.",
+    },
     {
       kind: 'callout',
       tone: 'info',
-      markdown: 'There is no rate in PSV. The number on the screen labeled RR is whatever the patient is doing.',
+      markdown: 'The number on the screen labeled RR in PSV is whatever the patient is doing — not what you set, because you can\'t set it.',
     },
     {
       // v3.2 §0.6 — legacy predict_observe conversion (the existing PS18→24

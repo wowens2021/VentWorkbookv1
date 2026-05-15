@@ -65,36 +65,39 @@ export const M1: ModuleConfig = {
         },
       ],
     },
-    // B2: refocused on the type of respiratory failure (set-vs-measured
-    // belongs in M2 Vocabulary).
+    // Novice-pass §1.1: reframe in plain language — "what's failing,
+    // oxygenation or ventilation" — BEFORE the read teaches the
+    // Type-I/Type-II vocabulary. The vocabulary lives in a dedicated
+    // read block; the summative is the first place those labels are
+    // tested.
     {
       id: 'M1-P2',
       prompt:
-        '68-year-old with severe pneumonia. On a 100% non-rebreather his PaO2 is 55 mmHg, PaCO2 36, pH 7.42, alert and conversing. Which type of respiratory failure is this?',
+        '68-year-old with severe pneumonia. On a 100% non-rebreather his PaO2 is 55 mmHg, PaCO2 36, pH 7.42, alert and conversing. Which is failing in this patient — oxygenation or ventilation?',
       options: [
         {
-          label: 'Type I — hypoxemic respiratory failure.',
+          label: 'Oxygenation is failing.',
           is_correct: true,
           explanation:
-            'Low PaO2 with a normal-to-low PaCO2 = Type I (hypoxemic) failure. The lung is failing at oxygenation, not at clearing CO2. Book Ch. 4.',
+            'PaO2 of 55 even on 100% O2 means the lung cannot get enough O2 into the blood — oxygenation failure. His CO2 is normal (36) and he\'s alert and talking, so ventilation is fine. We\'ll attach the textbook label ("Type I") in the read phase.',
         },
         {
-          label: 'Type II — hypercapnic respiratory failure.',
+          label: 'Ventilation is failing.',
           is_correct: false,
           explanation:
-            'Type II requires an elevated PaCO2 (> 45) with acidemia. His PaCO2 is normal. Ventilation is fine; oxygenation is the problem.',
+            'Ventilation = clearing CO2. His PaCO2 is 36 (normal) and his pH is 7.42 (normal). Ventilation is fine here. The problem is getting O2 across.',
         },
         {
-          label: 'Type III — perioperative atelectasis.',
+          label: 'Both are failing.',
           is_correct: false,
           explanation:
-            'Type III is the post-op picture (FRC drop, atelectasis). Not the right setting here.',
+            'For both to fail we\'d expect a low PaO2 AND a high PaCO2 with acidemia. PaCO2 is normal here.',
         },
         {
-          label: 'Type IV — shock-related respiratory failure.',
+          label: 'Neither — these vitals are normal.',
           is_correct: false,
           explanation:
-            'Type IV is the patient who is intubated because shock has the diaphragm consuming too much of the cardiac output. He\'s talking — not in shock.',
+            'A PaO2 of 55 on 100% O2 is severely abnormal. Normal PaO2 on room air is 80–100. On 100% O2 we\'d expect >300 in a healthy lung.',
         },
       ],
     },
@@ -262,8 +265,24 @@ export const M1: ModuleConfig = {
       observe:
         'PIP rose because the system has to push more air through a finite compliance every breath. The Vte readout now reads about 600 too — that\'s how you check the order got delivered.',
     },
-    // v3.2 §0.7 — new predict_mcq grounding the type-of-respiratory-failure
-    // teaching before the formative block below.
+    // Novice-pass §1.2 — teach the Type-I / Type-II vocabulary explicitly
+    // BEFORE asking the learner to apply the labels. The primer Q2 has
+    // already pushed them to commit to "oxygenation failing" vs
+    // "ventilation failing" in plain English; here we attach the textbook
+    // names.
+    {
+      kind: 'prose',
+      markdown:
+        '**The textbook names.** When you see "the lung is failing at oxygenation" — low PaO2, normal CO2 — that\'s **Type I (hypoxemic) respiratory failure**. When you see "the lung is failing at clearing CO2" — high PaCO2, acid pH — that\'s **Type II (hypercapnic) respiratory failure**. Type III is post-op atelectasis. Type IV is shock-driven. You\'ll mostly deal with Type I and Type II.',
+    },
+    {
+      kind: 'callout',
+      tone: 'tip',
+      markdown:
+        'Quick rule: **low O2 → Type I. High CO2 → Type II.** The two are not mutually exclusive — a tired Type-I patient eventually becomes Type-II.',
+    },
+    // Novice-pass §1.2 + v3.2 §0.7 — practice applying the Type-II label
+    // BEFORE the summative.
     {
       kind: 'predict_mcq',
       predict:
@@ -381,7 +400,7 @@ export const M1: ModuleConfig = {
     patient_context:
       "58-year-old man, intubated for pneumonia an hour ago. He's stable now: SpO2 96%, BP fine, no agitation. The vent is doing exactly what was ordered. Your job for the next two minutes is just to read the display.",
     unlocked_controls_description: [
-      { name: 'Tidal volume (set Vt) · 350–600 mL', description: "the volume of air you're ordering per breath. Lung-protective range is 6–8 mL/kg PBW." },
+      { name: 'Tidal volume (set Vt) · 350–600 mL', description: "the volume of air you're ordering per breath. Lung-protective range is 6–8 mL/kg PBW (predicted body weight — calculated from height and sex, not actual weight). You'll see PBW computed in M7." },
       { name: 'Rate · 8–24 breaths/min', description: 'the minimum rate. The patient can trigger above this.' },
       { name: 'PEEP · 0–18 cmH2O', description: 'the end-expiratory floor.' },
       { name: 'FiO2 · 21–100%', description: 'fraction of inspired oxygen.' },

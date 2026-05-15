@@ -134,16 +134,43 @@ export const M5: ModuleConfig = {
   },
 
   content_blocks: [
+    // Novice-pass §5.1 + §5.2 — split shunt and V/Q mismatch into separate
+    // read blocks, and drop the four-cause framing the sim doesn't deliver
+    // on. The sim demonstrates shunt (FiO2-resistant) and dead space
+    // (rate-up effect on PaCO2). Frame the module as "two failure modes
+    // that respond to different fixes."
     {
       kind: 'prose',
       markdown:
-        "Patients get hypoxemic for four reasons that matter. Three are airway problems (**shunt, V/Q mismatch, hypoventilation**); one is a perfusion problem (**dead space**). The bedside tests for each are different. The fix for each is different. You can't reach for FiO2 as a hammer for everything — it only works on V/Q.",
+        "There are two ways oxygenation can fail that you'll see at the bedside often. They respond to **different fixes** — that's why distinguishing them matters.",
+    },
+    {
+      kind: 'prose',
+      markdown:
+        "**(1) Shunt.** Blood passes through the lung but never touches air — usually because the alveoli are collapsed, filled with pus, or filled with fluid (ARDS, pneumonia, pulmonary edema). No matter how much oxygen you add to the gas the *other* alveoli see, the shunted blood never sees it.",
     },
     {
       kind: 'callout',
       tone: 'info',
       markdown:
-        "The clean test for shunt: if 100% oxygen doesn't fix the hypoxemia, it's shunt. The fix is to **open the alveoli** — PEEP, recruitment, prone.",
+        "**Bedside test for shunt:** if cranking FiO2 to 100% doesn't fix the hypoxemia, it's shunt. **The fix is to open the alveoli** — PEEP, recruitment, prone positioning. FiO2 alone is the wrong hammer.",
+    },
+    {
+      kind: 'prose',
+      markdown:
+        "**(2) V/Q mismatch.** Air gets to some alveoli more than blood does, or blood reaches some alveoli more than air does. The lung is a mosaic of well-matched and poorly-matched units. Unlike shunt, this DOES respond to FiO2 — even a poorly-ventilated alveolus, given enough oxygen, can saturate the blood passing it.",
+    },
+    {
+      kind: 'callout',
+      tone: 'info',
+      markdown:
+        "**Bedside test for V/Q mismatch:** raising FiO2 lifts the SpO2 substantially. The fix is FiO2 first (it works), then treat the underlying mismatch — bronchodilators, secretion clearance, position changes.",
+    },
+    {
+      kind: 'callout',
+      tone: 'tip',
+      markdown:
+        "Same hypoxemic patient, two different lung pictures, two different fixes. The bedside FiO2 challenge is the cheapest way to tell them apart.",
     },
     // v3.2 §1.6 — M5 is re-authored. The compliance-drop block becomes
     // an FiO2-response prediction (consistent with the scripted shunt
@@ -222,14 +249,16 @@ export const M5: ModuleConfig = {
         { label: '300 mL', is_correct: false, explanation: "That's tidal-volume territory in a small adult." },
       ],
     },
+    // Novice-pass §5.3 — VD/VT ratio isn't taught in the read. Replaced
+    // with an accessible dead-space question in clinical language.
     {
       id: 'M5-Q3',
-      prompt: 'VD/VT ratio > 0.6 most strongly suggests:',
+      prompt: 'A vented patient suddenly has PaCO2 climb from 40 to 55 while ETCO2 falls from 35 to 18. Most likely cause?',
       options: [
-        { label: 'Hypoventilation', is_correct: false, explanation: 'Different problem.' },
-        { label: 'Shunt', is_correct: false, explanation: 'Shunt is the opposite (perfused, not ventilated).' },
-        { label: 'Large dead-space fraction — think PE, low CO, severe hyperinflation', is_correct: true, explanation: 'Normal VD/VT ≤ 0.3 (book Ch. 4).' },
-        { label: 'Normal physiology', is_correct: false, explanation: 'Normal is ≤ 0.3.' },
+        { label: 'Hypoventilation — the vent is delivering less air.', is_correct: false, explanation: 'Pure hypoventilation pushes BOTH numbers up together; here ETCO2 is going down, opposite direction.' },
+        { label: 'Shunt — V/Q has worsened.', is_correct: false, explanation: 'Shunt affects oxygenation, not CO2. Both PaCO2 and ETCO2 would normally stay roughly aligned with shunt.' },
+        { label: 'A new pulmonary embolus — dead space ventilation has jumped.', is_correct: true, explanation: 'PE creates ventilated alveoli with no blood flow. PaCO2 rises (the blood still has its CO2), ETCO2 falls (the air leaving the mouth never picked it up). The widening gap IS the signature. Book Ch. 7.' },
+        { label: 'Sensor error.', is_correct: false, explanation: 'Always a possibility, but the pattern here is too clean — and the consequences too serious — to assume artifact first.' },
       ],
     },
     {
@@ -385,7 +414,9 @@ export const M6: ModuleConfig = {
   },
 
   // Step 1: induce auto-PEEP ≥ 4. Step 2: resolve auto-PEEP ≤ 1.5 for
-  // 5 breaths. NO reset_between — the two steps form a single narrative.
+  // 5 breaths. Step 3 (novice-pass §6.3): recognition prompt — the
+  // disconnect maneuver is the most important novice-life-saving teaching
+  // and should be practiced, not just read.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
@@ -401,6 +432,40 @@ export const M6: ModuleConfig = {
         readouts: { autoPeep: { operator: '<=', value: 1.5 } },
         sustain_breaths: 5,
       },
+      // Novice-pass §6.3 — disconnect-the-vent practice.
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M6-disconnect',
+          trigger: { kind: 'on_load' },
+          question:
+            "Imagine you'd been a little slower. The patient's auto-PEEP had climbed to 16 cmH2O and his BP dropped from 110/70 to 60/35. What's the FIRST action?",
+          options: [
+            {
+              label: 'Disconnect from the vent for 10–15 seconds and let his chest fall.',
+              is_correct: true,
+              explanation:
+                "Trapped gas is mechanically compressing his venous return — the chest is full and the right atrium can't fill. Disconnecting lets him exhale fully to atmosphere; BP returns in seconds. Then you fix the rate. This is the single most life-saving move in obstructive vent emergencies.",
+            },
+            {
+              label: 'Push a 1 L fluid bolus.',
+              is_correct: false,
+              explanation: 'Fluids treat hypovolemic hypotension. This is mechanical compression — the air in his chest is the problem.',
+            },
+            {
+              label: 'Start norepinephrine.',
+              is_correct: false,
+              explanation: "Pressors won't unsqueeze the right atrium. The trapped air is still there compressing it.",
+            },
+            {
+              label: 'Raise the PEEP to splint his airways.',
+              is_correct: false,
+              explanation: "In a trapping patient, applied PEEP usually worsens the trapping. And the bedside problem is that he's about to arrest — that's not the time to titrate.",
+            },
+          ],
+          max_attempts: 2,
+        },
+      },
     ],
   },
 
@@ -410,11 +475,44 @@ export const M6: ModuleConfig = {
       markdown:
         "Auto-PEEP is the airway problem that won't show up on the peak pressure. It hides in the end-expiratory part of the cycle — the part nobody looks at unless they know to. **Watch the flow waveform.** If it doesn't get back to zero before the next breath fires, you have trapped air.",
     },
+    // Novice-pass §6.1 — expanded asthma-vs-COPD PEEP teaching with two
+    // concrete bedside scenarios.
+    {
+      kind: 'prose',
+      markdown:
+        "**Asthma:** the obstruction is *inflammatory* — swollen, inflamed airways that don't reopen with pressure. Imagine a 28-year-old in status asthmaticus, intubated, with auto-PEEP of 14. You raise applied PEEP from 0 to 8 hoping to help. **What happens?** Total PEEP just adds — now it's 22. Venous return drops further. BP falls. The airways are still inflamed. *Takeaway: in asthma, PEEP is harmful — don't reflex into it.*",
+    },
+    {
+      kind: 'prose',
+      markdown:
+        "**COPD:** the obstruction is *floppy-airway* disease — small airways collapse during expiration like a wet straw closing on itself. A small amount of applied PEEP can *splint them open*, letting more air out. Imagine a 70-year-old COPD exacerbation on the vent with auto-PEEP 10. You set applied PEEP to 7–8 (about 75% of auto-PEEP). The airways stay open longer in expiration. Trapping eases. *Takeaway: in COPD, modest PEEP at 75–85% of measured auto-PEEP can help — but never exceed the auto-PEEP number.*",
+    },
     {
       kind: 'callout',
       tone: 'warn',
       markdown:
-        "In **severe asthma**, applied PEEP makes hyperinflation *worse*. In **COPD**, modest applied PEEP (75–85% of measured auto-PEEP) helps. Don't reflex into PEEP without knowing which one you have.",
+        "**One sentence to memorize:** asthma → no PEEP. COPD → modest PEEP. Don't apply PEEP without first deciding which one you have.",
+    },
+    // Novice-pass §6.2 — promote the counter-intuitive "raising the rate
+    // makes CO2 worse" insight from buried summative explanation to a
+    // dedicated read block + predict_mcq before the auto-PEEP demo.
+    {
+      kind: 'prose',
+      markdown:
+        "**The counter-intuitive part.** In a trapping patient, what most clinicians try when CO2 starts climbing is to *raise the respiratory rate* — give more breaths per minute, clear more CO2. The mechanism: higher rate → less expiratory time per breath → less air leaving each cycle → more trapping → more dead space → and crucially, **less actually-alveolar volume per breath**. The patient is hyperventilating air through his own dead space without exchanging more CO2. PaCO2 goes UP.",
+    },
+    {
+      kind: 'predict_mcq',
+      predict:
+        "A trapping COPD patient has PaCO2 of 60. You raise the rate from 14 to 24. After 10 minutes, the next ABG shows PaCO2 of:",
+      options: [
+        { label: 'Lower — more breaths cleared more CO2.', is_correct: false, explanation: 'The reflex answer. Wrong in a trapping patient because most of the added MVe is dead-space ventilation, not alveolar.' },
+        { label: 'About the same.', is_correct: false, explanation: 'It worsened. The added trapping shrinks alveolar volume per breath even as total MVe rose.' },
+        { label: 'Higher.', is_correct: true },
+        { label: 'Cannot predict without knowing the FiO2.', is_correct: false, explanation: 'CO2 clearance is a ventilation question, not an oxygenation question.' },
+      ],
+      observe:
+        "PaCO2 rises in a trapping patient when rate goes up. The fix is the opposite direction: slow the rate, lengthen expiration, accept the hypercapnia.",
     },
     {
       kind: 'predict_mcq',

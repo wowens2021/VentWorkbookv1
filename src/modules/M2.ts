@@ -63,14 +63,16 @@ export const M2: ModuleConfig = {
   ],
 
   primer_questions: [
+    // Novice-pass §2.2 — compliance is an M4 concept. Replace with a
+    // vocabulary-recognition question matching what M2 actually teaches.
     {
       id: 'M2-P1',
-      prompt: 'Compliance, in the simplest form, is:',
+      prompt: 'Of these four things on the vent display, which one is something *you set*, not something the patient produces?',
       options: [
-        { label: 'Change in volume divided by change in pressure.', is_correct: true, explanation: 'Owens, Commandment I. Normal respiratory-system compliance is ~100 mL/cmH2O off the vent and 70–80 on it.' },
-        { label: 'Change in pressure divided by change in volume.', is_correct: false, explanation: "That's elastance — the reciprocal." },
-        { label: 'The same as airway resistance.', is_correct: false, explanation: 'Compliance is a property of the lung-and-chest-wall system; resistance is a property of the airways.' },
-        { label: 'A reading on the vent display labeled "C".', is_correct: false, explanation: 'Most vents don\'t display compliance directly. You compute it: Vt / (Pplat − PEEP).' },
+        { label: 'PEEP — the end-expiratory floor.', is_correct: true, explanation: 'PEEP is a knob — an order. The vent maintains it. The four set parameters in volume control are Vt, rate, PEEP, and FiO2.' },
+        { label: 'PIP — the peak airway pressure.', is_correct: false, explanation: "PIP is *measured*. It rises and falls with the patient's compliance and resistance." },
+        { label: 'Vte — the exhaled tidal volume.', is_correct: false, explanation: 'Vte is *measured* on exhalation. The set tidal volume (Vt) is the order; Vte is the report.' },
+        { label: 'MVe — minute ventilation.', is_correct: false, explanation: 'MVe is derived from Vte × actual rate. Measured, not set.' },
       ],
     },
     {
@@ -210,19 +212,14 @@ export const M2: ModuleConfig = {
       observe:
         'In VCV, set Vt is delivered into the circuit. If the exhaled volume is short, the gas escaped somewhere — cuff leak, circuit disconnect, bronchopleural fistula. The set/measured gap is the first place to look.',
     },
+    // Novice-pass §2.1 — replace the ASCII figure with a labeled SVG. The
+    // figure shows ONE breath cycle with PIP / Pplat / PEEP arrows and
+    // explicit captions, so a learner reading the module for the first
+    // time sees the three landmarks in the order they happen.
     {
       kind: 'figure',
-      caption: 'PIP is the peak; Pplat is the alveolar reading you only see when flow stops.',
-      ascii:
-        'Pressure ↑\n' +
-        '         |        ┌─── PIP\n' +
-        '         |       ╱│\n' +
-        '         |      ╱ │  ┌── Pplat (after inspiratory hold)\n' +
-        '         |     ╱  └──┤\n' +
-        '         |    ╱      │\n' +
-        '         |   ╱       │\n' +
-        '         |__/        └─── PEEP\n' +
-        '         +─── insp ─────── hold ── exp ─→ time',
+      caption: 'One breath cycle. PIP is the peak; Pplat is the held pressure (only visible during an inspiratory hold); PEEP is the floor between breaths.',
+      src: '/figures/pip_pplat_peep.svg',
     },
     {
       kind: 'formative',

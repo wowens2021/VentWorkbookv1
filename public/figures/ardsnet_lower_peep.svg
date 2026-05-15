@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Novice-pass §13.1 — ARDSnet Lower-PEEP table as a real graphic (replaces
+  the ASCII ladder in M13). Two-column grid: FiO2 left, PEEP right. The
+  bottom rows are filled in deeper olive to show "as you climb FiO2, climb
+  PEEP." A live "you-are-here" marker can be overlaid via JSX positioning
+  in the future; for this pass the static graphic is the primary teaching.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480"
+     role="img" aria-label="ARDSnet Lower-PEEP/FiO2 titration table"
+     font-family="ui-sans-serif, system-ui, -apple-system, Inter, sans-serif">
+  <rect width="720" height="480" fill="#f5f0e6"/>
+
+  <!-- Title -->
+  <text x="360" y="32" font-size="18" font-weight="800" fill="#1c1917" text-anchor="middle">
+    ARDSnet — Lower-PEEP titration table
+  </text>
+  <text x="360" y="52" font-size="12" fill="#57534e" text-anchor="middle" font-style="italic">
+    Hypoxemia is shunt-driven. Climb PEEP as you climb FiO2.
+  </text>
+
+  <!-- Headers -->
+  <rect x="80"  y="74" width="280" height="34" rx="6" fill="#1c1917"/>
+  <rect x="360" y="74" width="280" height="34" rx="6" fill="#1c1917"/>
+  <text x="220" y="97" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">FiO2 (%)</text>
+  <text x="500" y="97" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">PEEP (cmH2O)</text>
+
+  <!--
+    Rows. Color gets progressively deeper olive as PEEP climbs, so a
+    novice reads the gradient and gets the "as one climbs the other
+    climbs" gestalt without doing arithmetic.
+
+    Geometry: y origin 112, each row 28px tall, 17 rows total.
+  -->
+  <g font-size="14" font-family="ui-sans-serif" text-anchor="middle">
+    <!-- Row 1: 30 / 5 -->
+    <rect x="80" y="112" width="560" height="28" fill="#fbfaf7" stroke="#d6d3d1"/>
+    <text x="220" y="131" fill="#1c1917">30</text>
+    <text x="500" y="131" fill="#1c1917">5</text>
+    <!-- Row 2: 40 / 5 -->
+    <rect x="80" y="140" width="560" height="28" fill="#f5f0e6" stroke="#d6d3d1"/>
+    <text x="220" y="159" fill="#1c1917">40</text>
+    <text x="500" y="159" fill="#1c1917">5</text>
+    <!-- Row 3: 40 / 8 -->
+    <rect x="80" y="168" width="560" height="28" fill="#f5f0e6" stroke="#d6d3d1"/>
+    <text x="220" y="187" fill="#1c1917">40</text>
+    <text x="500" y="187" fill="#1c1917">8</text>
+    <!-- Row 4: 50 / 8 -->
+    <rect x="80" y="196" width="560" height="28" fill="#eee8d5" stroke="#d6d3d1"/>
+    <text x="220" y="215" fill="#1c1917">50</text>
+    <text x="500" y="215" fill="#1c1917">8</text>
+    <!-- Row 5: 50 / 10 -->
+    <rect x="80" y="224" width="560" height="28" fill="#eee8d5" stroke="#d6d3d1"/>
+    <text x="220" y="243" fill="#1c1917">50</text>
+    <text x="500" y="243" fill="#1c1917">10</text>
+    <!-- Row 6: 60 / 10 -->
+    <rect x="80" y="252" width="560" height="28" fill="#e0d7be" stroke="#d6d3d1"/>
+    <text x="220" y="271" fill="#1c1917">60</text>
+    <text x="500" y="271" fill="#1c1917">10</text>
+    <!-- Row 7: 70 / 10 -->
+    <rect x="80" y="280" width="560" height="28" fill="#cdc298" stroke="#d6d3d1"/>
+    <text x="220" y="299" fill="#1c1917">70</text>
+    <text x="500" y="299" fill="#1c1917">10</text>
+    <!-- Row 8: 70 / 12 -->
+    <rect x="80" y="308" width="560" height="28" fill="#cdc298" stroke="#d6d3d1"/>
+    <text x="220" y="327" fill="#1c1917">70</text>
+    <text x="500" y="327" fill="#1c1917">12</text>
+    <!-- Row 9: 70 / 14 -->
+    <rect x="80" y="336" width="560" height="28" fill="#b0a479" stroke="#d6d3d1"/>
+    <text x="220" y="355" fill="#1c1917">70</text>
+    <text x="500" y="355" fill="#1c1917">14</text>
+    <!-- Row 10: 80 / 14 -->
+    <rect x="80" y="364" width="560" height="28" fill="#94895f" stroke="#d6d3d1"/>
+    <text x="220" y="383" fill="#ffffff">80</text>
+    <text x="500" y="383" fill="#ffffff">14</text>
+    <!-- Row 11: 90 / 14-18 -->
+    <rect x="80" y="392" width="560" height="28" fill="#6b6135" stroke="#d6d3d1"/>
+    <text x="220" y="411" fill="#ffffff">90</text>
+    <text x="500" y="411" fill="#ffffff">14–18</text>
+    <!-- Row 12: 100 / 18-24 -->
+    <rect x="80" y="420" width="560" height="28" fill="#47713e" stroke="#d6d3d1"/>
+    <text x="220" y="439" fill="#ffffff">100</text>
+    <text x="500" y="439" fill="#ffffff">18–24</text>
+  </g>
+
+  <!-- Vertical divider -->
+  <line x1="360" y1="112" x2="360" y2="448" stroke="#1c1917" stroke-width="1.5"/>
+
+  <text x="360" y="470" font-size="11" fill="#57534e" text-anchor="middle" font-style="italic">
+    Note: PEEP &gt; 14 in the bottom rows is olive — significant hemodynamic effect; check SBP.
+  </text>
+</svg>

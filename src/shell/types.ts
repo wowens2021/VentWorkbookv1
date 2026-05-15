@@ -74,6 +74,22 @@ export type ContentBlock =
        *  MCQ answer). Use sparingly — only when the manipulation IS the
        *  prediction. The MCQ stays visible and answerable. */
       awaits_control?: ControlName;
+    }
+  | {
+      /**
+       * Per novice-pass §7.1, §15.1: interactive PBW calculator. Lets a
+       * learner plug in height + sex and see the Devine formula expanded
+       * step-by-step, plus a 4/6/8 mL/kg PBW target table. Reusable
+       * component shared across M7, M15, and any future module that
+       * references PBW.
+       */
+      kind: 'pbw_widget';
+      /** Optional inline header above the widget. */
+      label?: string;
+      /** Defaults to the scenario's patient height. */
+      default_height_inches?: number;
+      /** Defaults to the scenario's patient sex. */
+      default_sex?: 'M' | 'F';
     };
 
 // ── Scenario / sim configuration ──

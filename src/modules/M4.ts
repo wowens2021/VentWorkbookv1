@@ -229,14 +229,16 @@ export const M4: ModuleConfig = {
         { label: 'Bronchospasm.', is_correct: false, explanation: "That's resistance, not compliance." },
       ],
     },
+    // Novice-pass §4.3 — driving-pressure titration belongs in M7/M15.
+    // Replace with the gap-signature interpretation M4 actually teaches.
     {
       id: 'M4-Q3',
-      prompt: 'A 70 kg PBW patient is on Vt 420 (6 mL/kg), Pplat 30, PEEP 10. Driving pressure is 20. The next move:',
+      prompt: 'You do an inspiratory hold. PIP reads 42. Pplat reads 20. PEEP is 5. What does the gap tell you?',
       options: [
-        { label: "Leave it — Pplat is 30, that's the safe limit.", is_correct: false, explanation: 'DP of 20 is over the lung-protective ceiling (15) even when Pplat is at the limit (Amato 2015).' },
-        { label: 'Lower Vt to bring driving pressure down to ≤ 15.', is_correct: true, explanation: 'Vt is the lever; the lungs are small. Book Ch. 8.' },
-        { label: 'Raise PEEP — that lowers driving pressure.', is_correct: false, explanation: 'DP = Pplat − PEEP; raising PEEP without lowering Pplat just raises Pplat too.' },
-        { label: 'Add a paralytic.', is_correct: false, explanation: "Doesn't change mechanics directly." },
+        { label: 'Resistance is high — airway problem (mucus, bronchospasm, kinked tube).', is_correct: true, explanation: 'PIP – Pplat = 22, far above the normal < 5. The flow term (R × flow) is enormous; that\'s the resistance signature. Book Ch. 2.' },
+        { label: 'Compliance is low — lung problem (ARDS, edema, pneumothorax).', is_correct: false, explanation: 'A compliance problem pushes Pplat UP. Pplat here is only 20 (driving pressure 15) — the lung itself looks acceptable.' },
+        { label: 'Both — the gap is wide AND the plateau is high.', is_correct: false, explanation: 'Plateau is 20, not high. If the plateau were 30+ on top of the wide gap, it would be both.' },
+        { label: 'Neither — those are normal numbers.', is_correct: false, explanation: 'Normal PIP–Pplat is < 5 cmH2O. A gap of 22 is a striking abnormality.' },
       ],
     },
     {
@@ -262,11 +264,14 @@ export const M4: ModuleConfig = {
   ],
 
   explore_card: {
+    // Novice-pass §4.1: explicit "compliance isn't really a knob" framing.
+    // Novice-pass §4.2: zone labels so a learner reading "set compliance to 28"
+    // has a clinical anchor for what that means.
     patient_context:
-      '65-year-old woman, intubated for pneumonia. Right now her lungs are mildly involved. The next two minutes simulate what happens when she gets worse — either lung-wise or airway-wise.',
+      "65-year-old woman, intubated for pneumonia. Right now her lungs are mildly involved. The next two minutes simulate what happens when she gets worse — either lung-wise or airway-wise.\n\n**Note on the compliance slider:** in real life you can't 'set' a patient's compliance — it's a property of their lungs. On this simulator the slider lets you make their lungs stiffer or floppier on demand, so you can see what each one does to the screen.\n\n**Compliance zones to know:** Normal 60–80 · Mild ARDS 40–60 · Moderate 28–40 · Severe ≤ 28. The success criterion (≤ 28) is the severe-ARDS threshold.",
     unlocked_controls_description: [
-      { name: 'Compliance · 20–80', description: "the system's overall stiffness." },
-      { name: 'Resistance · 5–35', description: 'airway opposition to flow.' },
+      { name: 'Compliance · 20–80', description: "the system's overall stiffness. Normal 60–80 · Mild ARDS 40–60 · Moderate 28–40 · Severe ≤ 28." },
+      { name: 'Resistance · 5–35', description: 'airway opposition to flow. Healthy intubated 5–10 · Mild bronchospasm 15–20 · Severe ≥ 25.' },
       { name: 'PEEP · 0–18', description: 'useful to confirm PEEP raises both pressures additively (third-term demo).' },
     ],
     readouts_description: [

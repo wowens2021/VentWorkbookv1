@@ -108,26 +108,32 @@ export const M3: ModuleConfig = {
       "PIP rose. So did Vte (the measured exhaled volume). The vent had to push harder to deliver the bigger breath, and the same volume came back out. The peak pressure is a measurement — you didn't change it directly, but it followed your tidal-volume order.",
       "Minute ventilation (MVe) climbed. The set respiratory rate is the *minimum* the vent will deliver, so raising it pushes more breaths per minute through the lungs. The I:E ratio also tightened because each breath now has less time before the next one.",
       "PIP rose by about the same amount you raised PEEP. They're additive: every cmH2O you add to the floor shows up at the peak too. Total PEEP equals what you set — there's no auto-PEEP in this stable patient.",
-      "Nothing on the waveform changed. FiO2 is the fraction of oxygen in the gas the vent delivers — it changes the inspired gas mixture, not the pressure or volume profile. It's an independent lever from everything else you just touched.",
+      // Novice-pass §3.3 — closing synthesis appended to the FiO2-step
+      // observation so the module doesn't end abruptly.
+      "Nothing on the waveform changed. FiO2 is the fraction of oxygen in the gas the vent delivers — it changes the inspired gas mixture, not the pressure or volume profile.\n\n**You just learned:** three of these four knobs change the pressure or volume waveform. FiO2 is the odd one out — it changes what the lungs *receive* without changing how the breath is *delivered*. The next module digs into the lung itself — compliance and resistance — and shows why those same four knobs feel different in a sick lung than a healthy one.",
     ],
     children: [
-      // Step 1 — raise Vt by ≥ 100 mL → watch PIP + Vte rise.
+      // Novice-pass §3.1 — relaxed thresholds. The old 20/30/50% gates
+      // were invisible: a learner who nudged Vt 400→460 (15%) saw
+      // nothing and assumed the sim was broken. 10% bypasses tiny
+      // accidental movements but still fires on a deliberate adjustment.
+      // Step 1 — raise Vt by ≥ 10% → watch PIP + Vte rise.
       {
         kind: 'manipulation',
         control: 'tidalVolume',
-        condition: { type: 'delta_pct', direction: 'increase', min_pct: 20 },
+        condition: { type: 'delta_pct', direction: 'increase', min_pct: 10 },
       },
-      // Step 2 — raise rate by ≥ 4 bpm → watch MVe rise.
+      // Step 2 — raise rate by ≥ 10% → watch MVe rise.
       {
         kind: 'manipulation',
         control: 'respiratoryRate',
-        condition: { type: 'delta_pct', direction: 'increase', min_pct: 30 },
+        condition: { type: 'delta_pct', direction: 'increase', min_pct: 10 },
       },
-      // Step 3 — raise PEEP by ≥ 3 cmH2O → watch PIP rise in parallel.
+      // Step 3 — raise PEEP by ≥ 10% → watch PIP rise in parallel.
       {
         kind: 'manipulation',
         control: 'peep',
-        condition: { type: 'delta_pct', direction: 'increase', min_pct: 50 },
+        condition: { type: 'delta_pct', direction: 'increase', min_pct: 10 },
       },
       // Step 4 — change FiO2 → watch nothing happen on the waveform.
       {

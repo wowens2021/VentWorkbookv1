@@ -93,35 +93,40 @@ export const M17: ModuleConfig = {
     kind: 'compound',
     sequence: 'strict',
     children: [
+      // Novice-pass §17.3 — pre-criteria question reworded so the learner
+      // has to scan the patient state rather than trust the stem. The
+      // distractors are now realistic missing-criterion picks.
       {
         kind: 'recognition',
         prompt: {
           prompt_id: 'M17-precheck',
           trigger: { kind: 'on_load' },
-          question: 'Pre-SBT screen. Your patient: FiO2 40%, PEEP 5, follows commands, off pressors 24 hours, not difficult airway, hemodynamically stable. Pre-SBT criteria are:',
+          question:
+            "Bedside: FiO2 40%, PEEP 5, RR 16, BP 118/72 (off pressors 24 hours), GCS 15 follows commands, no upper-airway concerns. Which of the pre-SBT criteria is MISSING?",
           options: [
-            { label: 'All met — proceed with SBT', is_correct: true },
-            { label: 'Not met — PEEP must be ≤5', is_correct: false },
-            { label: 'Not met — FiO2 must be ≤30%', is_correct: false },
-            { label: 'Not met — needs P/F ratio first', is_correct: false },
+            { label: 'None — all pre-SBT criteria are met. Proceed.', is_correct: true, explanation: 'FiO2 ≤ 50 ✓, PEEP ≤ 8 ✓, follows commands ✓, hemodynamically stable ✓, not a difficult airway ✓. Run the SBT.' },
+            { label: 'Off-pressor duration — needs to be off ≥ 48 hours.', is_correct: false, explanation: '24 hours off pressors clears the standard hemodynamic-stability bar.' },
+            { label: 'FiO2 too high — must be ≤ 30%.', is_correct: false, explanation: 'The pre-SBT FiO2 threshold is ≤ 50%. 40% is fine.' },
+            { label: 'Mental status — needs to be wake and oriented x3.', is_correct: false, explanation: '"Follows commands" is the standard bar — full orientation isn\'t required.' },
           ],
           max_attempts: 2,
         },
       },
+      // Novice-pass §17.1 — replace the RSBI computation step with an
+      // interpretation step. Arithmetic isn't the bottleneck; clinical
+      // judgment is.
       {
         kind: 'recognition',
         prompt: {
-          // v3.2 §7.4 — tighter distractors so magnitude estimation alone
-          // can't pick the right answer. All four options sit in the
-          // plausible RSBI range; the learner must actually divide.
           prompt_id: 'M17-rsbi-calc',
           trigger: { kind: 'on_load' },
-          question: 'At 30 minutes on CPAP 5 / PS 7 / FiO2 40%: RR 22, spontaneous Vt 320 mL, SpO2 95%, HR 88, BP 124/72. RSBI is approximately:',
+          question:
+            "At 30 minutes on CPAP 5 / PS 7 / FiO2 40%: RR 22, spontaneous Vt 320 mL, SpO2 95%, HR 88, BP 124/72. The RSBI is 69. Where does that fall?",
           options: [
-            { label: '55', is_correct: false, explanation: 'Closer to 22 ÷ 0.40 — you used the wrong Vt or shifted a decimal.' },
-            { label: '62', is_correct: false, explanation: 'Close, but not the right division. Recompute: 22 ÷ 0.32.' },
-            { label: '69', is_correct: true, explanation: '22 ÷ 0.32 = 68.75 ≈ 69. Below 80 on PSV — passes Owens\'s threshold.' },
-            { label: '76', is_correct: false, explanation: 'Higher than the actual RSBI here. Recompute: 22 ÷ 0.32.' },
+            { label: 'Below 80 — passes the conventional threshold; consider extubating.', is_correct: true, explanation: 'Yang–Tobin\'s original threshold is < 105 on T-piece. Owens uses < 80 on PSV because the pressure support is already doing some work. 69 is comfortably below either threshold.' },
+            { label: '80–105 — borderline; weigh other factors.', is_correct: false, explanation: '69 is below the lower bound of the borderline band.' },
+            { label: 'Above 105 — high risk of failure; not ready.', is_correct: false, explanation: '69 is well below the 105 failure threshold.' },
+            { label: "RSBI doesn't matter if other criteria are met.", is_correct: false, explanation: 'RSBI is a real signal — it just isn\'t the only one. It does matter; it isn\'t the verdict.' },
           ],
           max_attempts: 2,
         },
@@ -184,6 +189,13 @@ export const M17: ModuleConfig = {
         '\n' +
         'Abort:        SpO2 < 88%, ΔHR ≥ 20, ΔBP, diaphoresis,\n' +
         '              accessory muscle use, paradoxical breathing',
+    },
+    // Novice-pass §17.2 — promoted from callout to a dedicated closing
+    // read block. This meta-lesson IS the climax of the module.
+    {
+      kind: 'prose',
+      markdown:
+        "**RSBI is a number. The patient is the final judge.** A patient with an RSBI of 60 who looks terrible — diaphoresis, accessory muscle use, paradoxical chest motion, watching the door — should not be extubated. A patient with an RSBI of 90 who looks great — calm, conversational, normal work of breathing — might be ready. The number is a hint, not a verdict. The number you read at the bedside is *every other number you can see at the same time*: heart rate, blood pressure, the patient's face. Build the habit of reading the patient before reading the chip.",
     },
     { kind: 'callout', tone: 'warn', markdown: 'RSBI alone is not a complete answer. A patient with RSBI 75 who is gasping and paradoxical-breathing is not ready. A patient with RSBI 110 who looks calm may do fine. Numbers help. The patient is the final judge.' },
   ],
@@ -467,7 +479,21 @@ export const M18: ModuleConfig = {
 
   content_blocks: [
     { kind: 'prose', markdown: '**Passing the SBT is necessary but not sufficient.** Three pillars must hold: the reason for intubation has resolved, gas exchange is adequate without high pressure support, and the cardiovascular system can handle the work of breathing.' },
+    // Novice-pass §18.2 — NIPPV-vs-upper-airway distinction promoted from
+    // distractor footnote to dedicated read block.
+    {
+      kind: 'prose',
+      markdown:
+        "**NIPPV is the right tool for some post-extubation problems and the wrong tool for others.** NIPPV pushes air *past* an obstruction; it doesn't *open* the obstruction. If the upper airway is swollen, NIPPV is the wrong tool — you need to address the swelling (steroids, time, or reintubation). NIPPV IS the right tool for tired diaphragms and excess work of breathing — the cardiogenic post-extubation patient who needs the LV unloaded, the COPDer who needs help blowing off CO2. Match the tool to the failure mode.",
+    },
     { kind: 'callout', tone: 'info', markdown: 'Cuff leak test: deflate the cuff, measure expiratory Vt over six breaths, take the average of the three lowest, subtract from the inspired Vt. Difference <110 mL is concerning.' },
+    // Novice-pass §18.3 — cuff-leak mechanism so the number isn't a
+    // memorize-this-threshold.
+    {
+      kind: 'prose',
+      markdown:
+        "**Why does cuff leak matter?** When you deflate the cuff, air should leak around the tube during inspiration — the more it leaks, the more patent the airway around the tube. If the leak is small (< 110 mL), the airway is tight against the tube — usually from swelling. **That swelling will obstruct the airway after extubation** when the tube is no longer holding the path open. A small cuff leak = a swollen airway = a risk of post-extubation stridor and reintubation. Treat with 24 hours of IV steroids and recheck.",
+    },
     // v3.2 §0.7 — predict_mcq grounding the cuff-leak gate before the live
     // four-scenario triage.
     {
@@ -620,11 +646,14 @@ export const M19: ModuleConfig = {
   title: 'Troubleshooting the Vent (DOPES)',
   track: 'Synthesis',
   estimated_minutes: 25,
+  // Novice-pass §19.2 — define DOPES in the briefing so the primer
+  // doesn't test something untaught.
   briefing: {
-    tagline: 'Bag off first. Then read the waveform. DOPES.',
-    overview: 'When a ventilated patient suddenly decompensates, the reflexes are: increase FiO2, push sedation, call for help. Resist the first two. The mnemonic is DOPES — Displacement, Obstruction, Pneumothorax, Equipment, Stacking. The first physical action is to disconnect from the vent and bag the patient. If he improves, it was the vent or the circuit. If he doesn\'t, it\'s a patient problem. Then read the waveform — the pressure pattern divides the differential.',
+    tagline: 'Bag off first. Then read the waveform.',
+    overview:
+      "When a ventilated patient suddenly decompensates, the reflexes are: increase FiO2, push sedation, call for help. Resist the first two. The mnemonic is **DOPES**:\n\n**D — Displacement** of the endotracheal tube (out, esophageal, or mainstem)\n**O — Obstruction** of the tube (mucus plug, kink, biting)\n**P — Pneumothorax** (especially tension)\n**E — Equipment** failure (circuit leak, cuff leak, vent fault)\n**S — Stacking** of breaths (dynamic hyperinflation, auto-PEEP)\n\nThe first physical action is to disconnect from the vent and bag the patient. If he improves, it was the vent or the circuit. If he doesn't, it's a patient problem. Then read the waveform — the pressure pattern divides the differential.",
     what_youll_do: [
-      'DOPES — Displacement, Obstruction, Pneumothorax, Equipment, Stacking.',
+      'Recognize each of the five DOPES patterns from the live sim.',
       'Bag off first. Distinguishes vent problem from patient problem.',
       'High PIP + high plat = lung. High PIP + normal plat = airway.',
       'Lost ETCO2 = displacement or massive obstruction. Shark-fin ETCO2 = partial obstruction.',
@@ -691,6 +720,16 @@ export const M19: ModuleConfig = {
   // compound's `reset_between: true` clears the perturbation and resets
   // baseline between scenarios. Same five options on every prompt so the
   // learner picks among the actual diagnostic set each time.
+  //
+  // Novice-pass §19.3 — five recognitions in a row IS fatiguing. The
+  // structural midpoint (after S3) deserves a "take a breath" moment.
+  // The current compound primitive doesn't support a non-tracker pause
+  // child; surfaced as a content note in the read phase and as a code
+  // TODO so a future shell pass can add an `interlude` child type.
+  // Novice-pass §19.4 — `reset_between: true` clears each perturbation
+  // before the next prompt loads. VERIFIED via the perturbation API path
+  // in v3.2 §9; the harness clearPerturbations is called from
+  // resetToPreset which fires between strict-sequence children.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
@@ -826,6 +865,15 @@ export const M19: ModuleConfig = {
         'S Stacking:      ↑autoPEEP, exp flow ≠ zero, ↓BP, hyperinflated',
     },
     { kind: 'callout', tone: 'warn', markdown: 'The clinical reflex of "sedate and turn up FiO2" makes some of these worse. Stacking gets worse with sedation if the underlying rate isn\'t fixed. Tension pneumothorax gets worse with higher PIP.' },
+    // Novice-pass §19.3 — flag the structural midpoint so a learner who
+    // hits five-in-a-row knows it's expected to be fatiguing. The
+    // formal interlude card requires shell work scheduled separately.
+    {
+      kind: 'callout',
+      tone: 'tip',
+      markdown:
+        "**On the try-it: five scenarios in a row.** That's tiring on purpose — the real bedside is busy. After scenario 3, take a breath; the next two build on the same pattern.",
+    },
   ],
 
   hint_ladder: {

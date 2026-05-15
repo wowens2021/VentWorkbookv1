@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Novice-pass §2.1 — labeled pressure-time figure for M2. Shows ONE breath
+  cycle with explicit callouts for PIP (peak), Pplat (held plateau), and
+  PEEP (baseline). High-contrast, no presupposed knowledge.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360"
+     role="img" aria-label="Pressure-time waveform with PIP, Pplat, and PEEP labels"
+     font-family="ui-sans-serif, system-ui, -apple-system, Inter, sans-serif">
+  <rect width="800" height="360" fill="#f5f0e6"/>
+
+  <!-- Gridlines: 1-second verticals -->
+  <g stroke="#d6d3d1" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="80"  y1="30"  x2="80"  y2="290"/>
+    <line x1="200" y1="30"  x2="200" y2="290"/>
+    <line x1="320" y1="30"  x2="320" y2="290"/>
+    <line x1="440" y1="30"  x2="440" y2="290"/>
+    <line x1="560" y1="30"  x2="560" y2="290"/>
+    <line x1="680" y1="30"  x2="680" y2="290"/>
+  </g>
+
+  <!-- Axes -->
+  <line x1="80" y1="290" x2="780" y2="290" stroke="#57534e" stroke-width="1.5"/>
+  <line x1="80" y1="30"  x2="80"  y2="290" stroke="#57534e" stroke-width="1.5"/>
+
+  <!-- Y-axis tick labels (cmH2O) -->
+  <g font-size="11" fill="#57534e" text-anchor="end">
+    <text x="74" y="293">0</text>
+    <text x="74" y="241">10</text>
+    <text x="74" y="189">20</text>
+    <text x="74" y="137">30</text>
+    <text x="74" y="85">40</text>
+  </g>
+  <text x="22" y="160" font-size="11" fill="#57534e" transform="rotate(-90 22 160)">Airway pressure (cmH2O)</text>
+
+  <!-- Time tick labels -->
+  <g font-size="11" fill="#57534e" text-anchor="middle">
+    <text x="200" y="312">1 s</text>
+    <text x="320" y="312">2 s</text>
+    <text x="440" y="312">3 s</text>
+    <text x="560" y="312">4 s</text>
+    <text x="680" y="312">5 s</text>
+  </g>
+
+  <!-- PEEP baseline reference (5 cmH2O = y=264) - dashed -->
+  <line x1="80" y1="264" x2="780" y2="264" stroke="#a8a29e" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!--
+    One breath cycle:
+      t=0 to 0.4: PEEP baseline at y=264 (5 cmH2O)
+      t=0.4 to 1.4: inspiratory rise to PIP 32 (y=124)
+      t=1.4 to 2.4: inspiratory hold — Pplat 24 (y=166)  [the held plateau]
+      t=2.4 to 3.4: expiration drop back to PEEP
+      t=3.4 to 5.0: PEEP baseline
+  -->
+  <polyline fill="none" stroke="#3b82f6" stroke-width="2.5" points="
+    80,264
+    128,264
+    180,154
+    248,124
+    272,124
+    296,166
+    368,166
+    400,200
+    488,264
+    780,264
+  "/>
+
+  <!-- PIP callout: peak at (248-272, 124) -->
+  <g>
+    <line x1="260" y1="124" x2="260" y2="58" stroke="#0284c7" stroke-width="1.5"/>
+    <polygon points="260,124 254,114 266,114" fill="#0284c7"/>
+    <rect x="170" y="35" width="180" height="32" rx="6" fill="#dbeafe" stroke="#0284c7" stroke-width="1.5"/>
+    <text x="260" y="50" font-size="12" font-weight="700" fill="#0c4a6e" text-anchor="middle">PIP — peak inspiratory</text>
+    <text x="260" y="63" font-size="11" fill="#0c4a6e" text-anchor="middle">highest pressure during the breath</text>
+  </g>
+
+  <!-- Pplat callout: held plateau at (296-368, 166) -->
+  <g>
+    <line x1="332" y1="166" x2="332" y2="240" stroke="#92400e" stroke-width="1.5"/>
+    <polygon points="332,166 326,176 338,176" fill="#92400e"/>
+    <rect x="220" y="241" width="230" height="34" rx="6" fill="#fef3c7" stroke="#92400e" stroke-width="1.5"/>
+    <text x="335" y="257" font-size="12" font-weight="700" fill="#78350f" text-anchor="middle">Pplat — pressure during hold</text>
+    <text x="335" y="270" font-size="11" fill="#78350f" text-anchor="middle">reflects lung stiffness, not flow</text>
+  </g>
+
+  <!-- PEEP callout: baseline at (550-700, 264) -->
+  <g>
+    <line x1="620" y1="264" x2="620" y2="195" stroke="#15803d" stroke-width="1.5"/>
+    <polygon points="620,264 614,254 626,254" fill="#15803d"/>
+    <rect x="500" y="170" width="240" height="32" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+    <text x="620" y="186" font-size="12" font-weight="700" fill="#14532d" text-anchor="middle">PEEP — the floor between breaths</text>
+    <text x="620" y="199" font-size="11" fill="#14532d" text-anchor="middle">keeps alveoli from collapsing</text>
+  </g>
+
+  <!-- Sequence annotation -->
+  <text x="430" y="345" font-size="11" fill="#57534e" text-anchor="middle" font-style="italic">
+    rise → hold (inspiratory pause) → release → baseline
+  </text>
+</svg>

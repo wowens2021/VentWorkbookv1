@@ -42,8 +42,19 @@ export interface TrackerContext {
    * ("3 of 5 breaths within range"). Fires on every sim_tick from the active
    * OutcomeTracker. Null means no in-flight progress (either there's no
    * outcome-tracker child active, or it has just fired `satisfied`).
+   *
+   * Per novice-pass §15.2: `byReadout` is the live per-criterion breakdown
+   * so TaskCard can render which specific readout is the bottleneck on a
+   * compound outcome.
    */
-  onOutcomeProgress?(progress: { current: number; target: number; label?: string } | null): void;
+  onOutcomeProgress?(
+    progress: {
+      current: number;
+      target: number;
+      label?: string;
+      byReadout?: { name: ReadoutName; current: number | boolean; threshold: number | boolean; operator: string; passing: boolean }[];
+    } | null,
+  ): void;
   /**
    * v3.2 §9 — scripted sim-state override. RecognitionTracker calls
    * `applyPerturbation` from `start()` when its config has a perturbation
@@ -196,14 +207,29 @@ export class OutcomeTracker implements Tracker {
   handle(ev: HarnessEvent) {
     if (this.satisfied || ev.type !== 'sim_tick') return;
     const target = this.cfg.sustain_breaths ?? 1;
-    if (readoutsSatisfied(ev.computed_readouts, this.cfg.readouts)) {
+    // Novice-pass §15.2: per-readout breakdown for the TaskCard chip strip.
+    // Each entry tells the learner WHICH specific criterion is failing.
+    const required = this.cfg.readouts;
+    const byReadout = (Object.keys(required) as ReadoutName[]).map(name => {
+      const cond = required[name]!;
+      const current = ev.computed_readouts[name];
+      const passing = current !== undefined && applyOp(current, cond.operator, cond.value);
+      return {
+        name,
+        current: current ?? 0,
+        threshold: cond.value,
+        operator: cond.operator,
+        passing,
+      };
+    });
+    const allPassing = byReadout.every(r => r.passing);
+    if (allPassing) {
       this.counter++;
-      // B2: announce per-breath progress so the shell can render
-      // "Holding 3 of 5 breaths…" before satisfaction fires.
       this.ctx?.onOutcomeProgress?.({
         current: Math.min(this.counter, target),
         target,
         label: 'breaths within target',
+        byReadout,
       });
       if (this.counter >= target) {
         this.satisfied = true;
@@ -211,10 +237,14 @@ export class OutcomeTracker implements Tracker {
         this.onSatisfied?.();
       }
     } else {
-      if (this.counter !== 0) {
-        // Drop to zero progress so the chip reflects that the run streak broke.
-        this.ctx?.onOutcomeProgress?.({ current: 0, target, label: 'breaths within target' });
-      }
+      // Even before the streak starts, surface which criteria are failing so
+      // the learner can target their adjustments.
+      this.ctx?.onOutcomeProgress?.({
+        current: 0,
+        target,
+        label: 'breaths within target',
+        byReadout,
+      });
       this.counter = 0;
     }
   }

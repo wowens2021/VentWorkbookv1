@@ -60,14 +60,17 @@ export const M7: ModuleConfig = {
         { label: 'The vent will reduce Vt to compensate.', is_correct: false, explanation: 'VCV does no such thing — dual-control modes do.' },
       ],
     },
+    // Novice-pass §7.2 — original Q3 was a multi-option mode-selection
+    // case the novice hasn't been taught. Replaced with a vocabulary
+    // check that builds directly on M2.
     {
       id: 'M7-P3',
-      prompt: 'Which patient is the textbook indication for VCV (volume A/C)?',
+      prompt: 'In VCV (volume A/C), which two things does the *clinician* set on each breath?',
       options: [
-        { label: 'A 70-kg post-arrest patient in shock on norepinephrine.', is_correct: true, explanation: 'Owens\'s rule for the shocked patient: the diaphragm shouldn\'t consume cardiac output while you\'re resuscitating. A/C guarantees minute ventilation and reliable Vt and does the work of breathing for the patient.' },
-        { label: 'A spontaneously breathing CHF patient with mild hypoxia.', is_correct: false, explanation: 'This patient may not need intubation at all; if intubated, dual-control or PSV is more comfortable.' },
-        { label: 'A 28-year-old status asthmaticus with severe bronchospasm.', is_correct: false, explanation: 'Partially right — VCV is the mode of choice for severe bronchospasm (Ch. 15), but VCV here is to control I:E ratio and prevent stacking, not "do all the work." A is the cleaner indication.' },
-        { label: 'A 50-year-old extubation candidate.', is_correct: false, explanation: 'PSV is the right answer here.' },
+        { label: 'Tidal volume and respiratory rate.', is_correct: true, explanation: 'In VCV you order the breath size (Vt) and the minimum rate. The vent delivers exactly that Vt and lets the airway pressure end up wherever it ends up.' },
+        { label: 'Peak pressure and respiratory rate.', is_correct: false, explanation: 'Peak pressure is *measured* in VCV — it floats with compliance and resistance. The clinician sets volume.' },
+        { label: 'Tidal volume and peak pressure.', is_correct: false, explanation: "In VCV you can't set both — one drives the other. Volume is the order; pressure is the consequence." },
+        { label: 'Peak pressure and plateau pressure.', is_correct: false, explanation: 'Both of those are measured. Plateau requires an inspiratory hold to even see.' },
       ],
     },
   ],
@@ -122,6 +125,25 @@ export const M7: ModuleConfig = {
       kind: 'callout',
       tone: 'info',
       markdown: "In VCV, the tidal volume is your variable. The pressure is whatever it needs to be. That's the deal.",
+    },
+    // Novice-pass §7.1 — interactive PBW worked example. Lets the
+    // novice see the Devine formula step-by-step and the 4/6/8 mL/kg
+    // target table for any height/sex.
+    {
+      kind: 'prose',
+      markdown:
+        "**Tidal volume scales to *predicted* body weight (PBW)**, not actual weight. Two patients of identical height — one obese, one cachectic — have the same target Vt because they have the same lung size.",
+    },
+    {
+      kind: 'pbw_widget',
+      label: 'PBW worked example',
+      default_height_inches: 70,
+      default_sex: 'M',
+    },
+    {
+      kind: 'callout',
+      tone: 'tip',
+      markdown: "For this scenario's patient (70 inches, male), PBW = 73 kg, so the lung-protective target is **438 mL** (6 mL/kg). The task chip's 410–470 range bakes in ±5%.",
     },
     {
       kind: 'predict_mcq',
@@ -249,6 +271,15 @@ export const M7: ModuleConfig = {
  * Track: Modes · Archetype: outcome (Style B with predict-observe) · 18 min
  * Anchor chapters: VB Ch. 9, Ch. 8
  *
+ * Novice-pass §8.3 — the "Vt halves when compliance halves" predict_mcq
+ * (M8-PM2 in this file) is the highest-quality teaching beat in the
+ * curriculum. CANDIDATES for adopting the same predict → manipulate →
+ * observe pattern in a later pass:
+ *   - M3 step 1 (raise Vt → predict PIP behavior)
+ *   - M4 compliance step (drop compliance → predict gap behavior)
+ *   - M7 lung-protective step (move Vt to target → predict plat behavior)
+ *   - M13 PEEP step (raise PEEP → predict PaO2 + SBP behavior)
+ *
  * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
  *   - compliance: 35 — at PINSP 18 this yields Vt ~430 mL (≈6 mL/kg PBW)
  *
@@ -304,14 +335,18 @@ export const M8: ModuleConfig = {
         { label: 'The ventilator reduces PINSP to compensate.', is_correct: false, explanation: 'Dual-control modes do this. PCV does not.' },
       ],
     },
+    // Novice-pass §8.2 — the PINSP-vs-driving-pressure question requires
+    // knowing Pplat is measurable in PCV, which the read teaches. Move
+    // to summative. Replace primer slot with a simpler vocabulary
+    // check: which variable does the clinician set in PCV?
     {
       id: 'M8-P3',
-      prompt: 'Which statement about PINSP versus driving pressure is correct?',
+      prompt: 'In PCV (pressure control), which two things does the *clinician* set on each breath?',
       options: [
-        { label: 'PINSP and driving pressure are the same thing.', is_correct: false, explanation: 'Common error.' },
-        { label: 'PINSP is the pressure rise above PEEP; driving pressure is plat minus PEEP, and requires a measurement.', is_correct: true, explanation: "Book Ch. 9. PINSP includes the resistance-overcoming pressure; DP doesn't." },
-        { label: 'PINSP is always higher than driving pressure.', is_correct: false, explanation: 'Mostly true, but not the cleanest answer — equality holds only when end-inspiratory flow has reached zero.' },
-        { label: 'Driving pressure cannot be measured in PCV.', is_correct: false, explanation: 'Common myth; an inspiratory hold gives you plat in PCV just as in VCV.' },
+        { label: 'Tidal volume and respiratory rate.', is_correct: false, explanation: "Tidal volume is *measured* in PCV — it floats based on the patient's compliance. The clinician sets pressure, not volume." },
+        { label: 'Inspiratory pressure (PINSP) and inspiratory time (I-time).', is_correct: true, explanation: "In PCV you set the pressure target each breath should reach and how long the breath should last. Tidal volume is whatever the patient's lung delivers at that pressure for that time." },
+        { label: 'Tidal volume and PEEP.', is_correct: false, explanation: 'PCV sets pressure, not volume.' },
+        { label: 'Peak pressure and plateau pressure.', is_correct: false, explanation: 'Plateau pressure is *measured*. PCV sets PINSP (the inspiratory pressure target).' },
       ],
     },
   ],
@@ -453,14 +488,17 @@ export const M8: ModuleConfig = {
   ],
 
   explore_card: {
-    patient_context: 'Same post-laparotomy septic patient as M7, but the attending placed him on PCV. Compliance 35.',
+    // Novice-pass §8.1 — explicit sandbox-vs-task framing so a novice
+    // doesn't think tuning compliance is part of completing the task.
+    patient_context:
+      "Same post-laparotomy septic patient as M7, but the attending placed him on PCV. Compliance 35.\n\n**Note on the compliance slider:** the compliance slider here is for exploration only — your task is to titrate PINSP. The slider lets you see how Vt responds when the lung changes (which it will, in real patients, hour by hour). You don't have to touch it to finish the module.",
     unlocked_controls_description: [
-      { name: 'PINSP · 8–30', description: 'rise above PEEP. Total peak = PINSP + PEEP.' },
+      { name: 'PINSP · 8–30', description: 'rise above PEEP. Total peak = PINSP + PEEP. ← This is what your task wants you to titrate.' },
       { name: 'Rate · 8–30', description: 'mandatory minimum.' },
       { name: 'PEEP · 0–18', description: 'end-expiratory floor.' },
       { name: 'FiO2 · 30–80%', description: 'inspired oxygen.' },
       { name: 'I-time · 0.6–1.5', description: 'how long the pressure is held.' },
-      { name: 'Compliance · 20–60', description: 'sandbox lever — drag it to see Vt swing.' },
+      { name: 'Compliance · 20–60', description: 'SANDBOX lever — explore-only. Drag it to see Vt swing; not part of the task.' },
     ],
     readouts_description: [
       { name: 'Vt (delivered), plat (after hold), peak pressure, MVe', description: 'the four numbers PCV makes you watch.' },

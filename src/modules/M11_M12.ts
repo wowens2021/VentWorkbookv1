@@ -51,13 +51,15 @@ export const M11: ModuleConfig = {
   ],
 
   primer_questions: [
+    // Novice-pass §11.3 — define DOPES inline on first appearance so a
+    // novice isn't expected to know the mnemonic before M19.
     {
       id: 'M11-P1',
       prompt: '"The patient is fighting the vent." The FIRST step is to:',
       options: [
-        { label: 'Increase sedation', is_correct: false, explanation: 'That\'s the reflex answer. It\'s also often the wrong one.' },
+        { label: 'Increase sedation', is_correct: false, explanation: 'That\'s the reflex answer. It\'s also often the wrong one — sedation buries the diagnostic information you need.' },
         { label: 'Increase neuromuscular blockade', is_correct: false, explanation: 'Paralyzing the patient buries the problem without fixing it.' },
-        { label: 'Bag the patient off the vent, then examine and check vent settings', is_correct: true, explanation: 'DOPES rule-out first, then read the waveform. Book Ch. 14.' },
+        { label: 'Bag the patient off the vent, then examine and check vent settings', is_correct: true, explanation: 'Bag off → run **DOPES** (the bedside checklist: **D**isplacement of the tube, **O**bstruction of the tube, **P**neumothorax, **E**quipment failure, **S**tacking / auto-PEEP) → then read the waveform. We\'ll come back to DOPES in detail in M19. Book Ch. 14.' },
         { label: 'Switch the mode to APRV', is_correct: false, explanation: 'Mode-switching without a diagnosis is gambling.' },
       ],
     },
@@ -198,15 +200,15 @@ export const M11: ModuleConfig = {
       src: '/clips/dyssyn_starvation.svg',
     },
     { kind: 'prose', markdown: '**Flow starvation.** During inspiration the pressure waveform scoops downward — the patient is pulling harder than the set flow can supply. VC-specific. Either raise the inspiratory flow or switch to a flow-variable mode.' },
+    // Novice-pass §11.2 — the three above are scored. Reverse and
+    // premature cycling are reference-only — collapsed into a single
+    // "further reading" callout so a novice isn't asked to absorb five
+    // patterns at once.
     {
-      kind: 'figure',
-      caption: 'Reverse triggering (reference) — a mandatory breath is delivered, then the diaphragm contracts a beat later: a brief pressure dip mid-expiration. Common in deeply sedated ARDS.',
-      src: '/clips/dyssyn_reverse.svg',
-    },
-    {
-      kind: 'figure',
-      caption: 'Premature cycling (reference) — on PSV the vent terminates inspiration while the patient is still pulling. Pressure drops while inspiratory flow is still positive.',
-      src: '/clips/dyssyn_cycling.svg',
+      kind: 'callout',
+      tone: 'tip',
+      markdown:
+        "**Further reading (not on the try-it).** Two more patterns exist that you may see at the bedside: **reverse triggering** (a mandatory breath provokes a delayed diaphragm contraction — pressure dip mid-expiration; common in deeply sedated ARDS) and **premature cycling** (PSV terminates inspiration while the patient is still pulling — pressure drops while flow is still positive). The three above are the ones to recognize first; come back to these once those are solid.",
     },
     { kind: 'callout', tone: 'warn', markdown: 'Each pattern has a different fix. Sedation "fixes" all of them by silencing the patient — which is exactly what you don\'t want until you\'ve corrected the mismatch.' },
   ],
@@ -333,9 +335,11 @@ export const M12: ModuleConfig = {
   title: 'SIMV and Hybrid Modes',
   track: 'Modes',
   estimated_minutes: 14,
+  // Novice-pass §12.3 — promote the "SIMV doesn't wean faster than SBT"
+  // finding to the headline. Otherwise novices file it as trivia.
   briefing: {
-    tagline: 'A hybrid mode worth knowing. Not the weaning mode it was sold as.',
-    overview: "SIMV looks like A/C with extra rules. The vent delivers a fixed number of mandatory breaths per minute. Between mandatory breaths, the patient can breathe spontaneously — but unlike A/C, those spontaneous breaths are not automatically supported. The patient pulls whatever they can pull, and that's what they get. The classic failure: a weak patient pulling 150 mL spontaneous breaths between mandatory breaths. That's barely more than anatomic dead space. The fix is pressure support, not switching modes.",
+    tagline: "SIMV doesn't wean patients faster than a daily SBT. That's the headline.",
+    overview: "SIMV looks like A/C with extra rules. The vent delivers a fixed number of mandatory breaths per minute. Between mandatory breaths, the patient can breathe spontaneously — but unlike A/C, those spontaneous breaths are not automatically supported. The classic failure: a weak patient pulling 150 mL spontaneous breaths between mandatory breaths — barely more than anatomic dead space. The fix is pressure support. The historical reason SIMV exists is that people once thought it accelerated weaning. It doesn't. The rest of this module is about *why* you'd ever still see it.",
     what_youll_do: [
       'In SIMV, mandatory breaths are A/C-like. Spontaneous breaths are PSV-like — but only if you set a PS.',
       'A weak patient with no PS pulls sub-dead-space spontaneous Vt. Wasted ventilation and fatigue.',
@@ -414,6 +418,14 @@ export const M12: ModuleConfig = {
   },
 
   content_blocks: [
+    // Novice-pass §12.1 — opening "why are we still teaching this" callout
+    // so a novice knows the educational intent up front.
+    {
+      kind: 'callout',
+      tone: 'tip',
+      markdown:
+        "**Why this module exists.** You'll see SIMV less and less in modern ICUs — many training hospitals have moved away from it entirely. But understanding *why* SIMV can fail teaches a deep principle about how to support spontaneous breaths. That's the educational point. Read the module for the principle, even if you never set the mode.",
+    },
     { kind: 'prose', markdown: '**SIMV looks like A/C with extra rules.** The vent delivers a fixed number of mandatory breaths per minute — at the set Vt or PINSP. Between mandatory breaths, the patient can breathe spontaneously. But unlike A/C, those spontaneous breaths are not automatically supported. The patient pulls whatever volume he can pull, and that\'s what he gets.' },
     { kind: 'callout', tone: 'info', markdown: 'In SIMV, the mandatory breaths are A/C-like. The spontaneous breaths are PSV-like — but only if you\'ve set a PS.' },
     {
@@ -527,7 +539,12 @@ export const M12: ModuleConfig = {
       'Raise PS to 18. Spontaneous Vt may overshoot — too much support has its own costs.',
     ],
   },
-  user_facing_task: 'Fix the SIMV setup. Your patient has spontaneous breaths between mandatory breaths, but the spontaneous Vt is only ~150 mL — barely more than dead space. Add pressure support so the spontaneous breaths are adequate.',
+  // Novice-pass §12.2 — honest framing of the Vte-chip limitation. The
+  // chip can't distinguish mandatory vs spontaneous Vt in mixed-mode
+  // SIMV, so the framing turns the ambiguity into the teaching point:
+  // "when the chip holds ≥ 320, BOTH are in target."
+  user_facing_task:
+    "Fix the SIMV setup. Your patient has spontaneous breaths between mandatory breaths, but the spontaneous Vt is only ~150 mL — barely more than dead space. As you add PS, watch the Vte chip rise. When it holds steady at or above 320, both the mandatory AND the spontaneous breaths are in target.",
   success_criteria_display: [
     'Pressure support set between 8 and 14 cmH2O.',
     'Delivered Vt sustained at ≥320 mL (~4.5 mL/kg PBW) for five breaths.',

@@ -91,6 +91,11 @@ const CONTROL_AFFINITY: Record<string, string[]> = {
   psLevel: ['vte', 'mve'],
   spontaneousRate: ['actualRate', 'mve', 'rsbi'],
   endInspiratoryPercent: ['vte', 'ieRatio'],
+  // Novice-pass §7.3 + §16.3 — flash plat/drivingPressure on INSP HOLD,
+  // and autoPEEP on EXP HOLD, so the learner SEES which readout the
+  // pause maneuver reveals.
+  inspiratory_pause: ['plat', 'drivingPressure'],
+  expiratory_pause: ['autoPeep', 'totalPeep'],
 };
 function readoutsRelatedToControl(controlName: string, trackerCfg: any): string[] {
   const fromOutcome = collectOutcomeReadouts(trackerCfg);
@@ -407,6 +412,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     return () => clearTimeout(id);
   }, [flashReadouts]);
 
+  // Novice-pass §2.3: per-prompt wrong-click count. After 3 wrong clicks on
+  // a single recognition prompt, a persistent "Show me the answer" link
+  // appears in the Direction banner that flashes the correct target.
+  const [wrongClicksByPrompt, setWrongClicksByPrompt] = useState<Record<string, number>>({});
+
   // B3: reset the no-progress streak whenever the tracker advances —
   // either an outcome counter ticked up, or a compound child fired.
   useEffect(() => {
@@ -434,6 +444,25 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
       childStatesDoneCountRef.current = 0;
     }
   }, [phase]);
+
+  // Novice-pass §16.3 — auto-PEEP delta watcher. Flashes the autoPEEP tile
+  // whenever the value moves by ≥ 1 cmH2O between ticks. Draws the novice's
+  // eye to the criterion M16 actually grades on.
+  const lastAutoPeepRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (phase !== 'try-it') return;
+    const off = harness.subscribe(ev => {
+      if (ev.type !== 'sim_tick') return;
+      const ap = ev.computed_readouts.autoPeep;
+      if (typeof ap !== 'number') return;
+      const last = lastAutoPeepRef.current;
+      lastAutoPeepRef.current = ap;
+      if (last !== null && Math.abs(ap - last) >= 1) {
+        setFlashReadouts(prev => Array.from(new Set([...prev, 'autoPeep'])));
+      }
+    });
+    return off;
+  }, [harness, phase]);
 
   // ── Global harness subscriber for engagement counting + B1 flash ──
   // Always subscribed; only the tracker is conditionally subscribed in Phase 4.
@@ -944,6 +973,24 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
               onRedo={onRedoTask}
               outcomeProgress={outcomeProgress}
               activeDirection={activePrompt?.question}
+              // Novice-pass §2.3: after 3 wrong clicks on this prompt,
+              // surface a "Show me the answer" link that flashes the
+              // correct on-sim target via the existing flash pipeline.
+              onShowMeAnswer={
+                activePrompt &&
+                isClickTargetMode &&
+                (wrongClicksByPrompt[activePrompt.prompt_id] ?? 0) >= 3
+                  ? () => {
+                      const correct = activePrompt.click_targets?.find(t => t.is_correct);
+                      if (correct?.element.kind === 'readout') {
+                        setFlashReadouts([correct.element.name]);
+                      } else if (correct?.element.kind === 'control') {
+                        // Reuse the same flash pipeline; control flash is best-effort.
+                        setFlashReadouts([correct.element.name]);
+                      }
+                    }
+                  : undefined
+              }
               sequential={
                 sequentialMode
                   ? {
@@ -1362,6 +1409,13 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
         is_correct: false,
         timestamp: Date.now(),
       });
+      // Novice-pass §2.3: bump the per-prompt wrong-click counter so the
+      // "Show me the answer" affordance can surface after 3 wrong clicks
+      // even if the learner never went idle.
+      setWrongClicksByPrompt(prev => ({
+        ...prev,
+        [activePrompt.prompt_id]: (prev[activePrompt.prompt_id] ?? 0) + 1,
+      }));
     }
     // For correct clicks, the emit is deferred until the learner clicks
     // "Continue →" in the popup.

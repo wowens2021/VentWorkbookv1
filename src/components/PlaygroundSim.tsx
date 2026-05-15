@@ -139,45 +139,62 @@ const MetricBox = ({ label, value, color }: { label: string; value: any; color: 
 
 const NumericCard = ({
   label, value, unit, color, sub = null,
-  /** When set, the card is clickable. Visual appearance is identical to a
-   *  non-clickable card so the recognition task isn't given away. */
   onClick,
-  /** B1: brief sky-blue halo to highlight which numbers a just-changed
-   *  control actually affects. Auto-cleared by the parent. */
   flash = false,
-  /** A5: optional hover-tooltip from the glossary. The parent passes the
-   *  description string for this readout; we attach as a native `title`
-   *  so it renders without extra UI machinery. Suppressed during click-
-   *  target mode (parent decides whether to pass it). */
   tooltip,
+  /** Novice-pass §2.4: ALWAYS-available glossary description. Surfaces as
+   *  a small "?" affordance in the top-right of the card. Clicking the
+   *  "?" stops propagation so it doesn't fire onClick (recognition
+   *  target). Click toggles a small popover; native browser title
+   *  attribute is the fallback. Available even in click-target mode. */
+  infoTooltip,
 }: any) => {
+  const [popoverOpen, setPopoverOpen] = React.useState(false);
   const flashCls = flash
     ? 'bg-sky-50 border-sky-400 ring-2 ring-sky-300/70 shadow-md'
     : 'bg-white border-zinc-200';
-  const baseCls = `rounded-md border px-1.5 py-1 flex flex-col justify-between shadow-sm transition ${flashCls}`;
-  if (onClick) {
-    return (
+  const baseCls = `rounded-md border px-1.5 py-1 flex flex-col justify-between shadow-sm transition relative ${flashCls}`;
+
+  const infoBadge = infoTooltip ? (
+    <>
       <button
         type="button"
-        onClick={onClick}
-        title={tooltip}
-        className={`${baseCls} text-left cursor-pointer hover:bg-zinc-50 hover:border-zinc-300`}
+        onClick={e => {
+          e.stopPropagation();
+          setPopoverOpen(v => !v);
+        }}
+        title={infoTooltip}
+        className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-zinc-200 hover:bg-sky-200 text-[8px] font-black text-zinc-600 flex items-center justify-center leading-none z-10"
+        aria-label={`What is ${label}?`}
       >
-        <div className="flex justify-between leading-none">
-          <span className="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">{label}</span>
-          {sub && <span className="text-[8px] font-bold text-zinc-400">{sub}</span>}
-        </div>
-        <div className="flex items-baseline gap-1">
-          <span className={`text-lg font-mono font-black tracking-tighter leading-none ${color}`}>
-            {typeof value === 'number' ? value.toFixed(0) : value}
-          </span>
-          <span className="text-[8px] text-zinc-500 uppercase font-black">{unit}</span>
-        </div>
+        ?
       </button>
-    );
-  }
-  return (
-    <div className={baseCls} title={tooltip}>
+      {popoverOpen && (
+        <div
+          className="absolute z-30 left-0 top-full mt-1 w-48 bg-white border border-zinc-300 rounded-md shadow-lg p-2 text-[11px] font-semibold text-zinc-700 leading-snug"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="text-[10px] font-black uppercase tracking-widest text-sky-700 mb-1">
+            {label}
+          </div>
+          {infoTooltip}
+          <button
+            type="button"
+            onClick={e => {
+              e.stopPropagation();
+              setPopoverOpen(false);
+            }}
+            className="mt-1.5 text-[10px] font-bold text-zinc-500 hover:text-zinc-800"
+          >
+            close
+          </button>
+        </div>
+      )}
+    </>
+  ) : null;
+
+  const inner = (
+    <>
       <div className="flex justify-between leading-none">
         <span className="text-[9px] font-black uppercase text-zinc-500 tracking-tighter">{label}</span>
         {sub && <span className="text-[8px] font-bold text-zinc-400">{sub}</span>}
@@ -188,6 +205,25 @@ const NumericCard = ({
         </span>
         <span className="text-[8px] text-zinc-500 uppercase font-black">{unit}</span>
       </div>
+      {infoBadge}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={tooltip}
+        className={`${baseCls} text-left cursor-pointer hover:bg-zinc-50 hover:border-zinc-300`}
+      >
+        {inner}
+      </button>
+    );
+  }
+  return (
+    <div className={baseCls} title={tooltip}>
+      {inner}
     </div>
   );
 };
@@ -385,13 +421,20 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   // Shorthand for NumericCard call sites. Returns `onClick` for any readout
   // (clickable) when click-mode is on, looking up the configured target for
   // proper labelling. Unmapped tiles still fire with their on-screen label.
-  // A5: also returns a glossary `tooltip` string — suppressed when in
-  // click-target recognition mode so the answer isn't revealed.
+  //
+  // Novice-pass §2.4: the glossary tooltip is now ALWAYS exposed via the
+  // info popover (the small "?" inside the card). Even in click-target
+  // recognition mode the popover surfaces — opening it does NOT count
+  // as a wrong click because the "?" stops propagation. The hover-title
+  // string is still suppressed in click-target mode so a passive hover
+  // doesn't reveal the answer; the explicit "?" click is the path.
   const recogPropsForReadout = (name: string, fallbackLabel: string) => {
     const tooltip = recognitionClickMode ? undefined : READOUT_DESC[name];
-    if (!recognitionClickMode) return { tooltip };
+    const infoTooltip = READOUT_DESC[name];
+    if (!recognitionClickMode) return { tooltip, infoTooltip };
     const hit = recognitionMap.get(`readout:${name}`);
     return {
+      infoTooltip,
       onClick: () => onRecognitionElementClick?.(
         hit?.label ?? fallbackLabel,
         hit?.isCorrect ?? false,
@@ -401,9 +444,11 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   };
   const recogPropsForControl = (name: string, fallbackLabel: string) => {
     const tooltip = recognitionClickMode ? undefined : CONTROL_DESC[name];
-    if (!recognitionClickMode) return { tooltip };
+    const infoTooltip = CONTROL_DESC[name];
+    if (!recognitionClickMode) return { tooltip, infoTooltip };
     const hit = recognitionMap.get(`control:${name}`);
     return {
+      infoTooltip,
       onRecognitionClick: () => onRecognitionElementClick?.(
         hit?.label ?? fallbackLabel,
         hit?.isCorrect ?? false,
@@ -1429,8 +1474,29 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                 ))}
               </div>
               <div className="flex items-center gap-1 ml-auto">
-                <button onClick={() => { pendingInspRef.current = true; }} disabled={isLocked('inspiratory_pause')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all border ${isLocked('inspiratory_pause') ? 'bg-zinc-100 border-zinc-300 text-zinc-400 cursor-not-allowed' : activeHoldType === 'INSP' ? 'bg-sky-600 border-sky-500 text-white shadow-md animate-pulse' : 'bg-sky-200 border-sky-300 text-sky-900 hover:bg-sky-300'}`}>INSP HOLD</button>
-                <button onClick={() => { pendingExpRef.current = true; }} disabled={isLocked('expiratory_pause')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all border ${isLocked('expiratory_pause') ? 'bg-zinc-100 border-zinc-300 text-zinc-400 cursor-not-allowed' : activeHoldType === 'EXP' ? 'bg-amber-600 border-amber-500 text-white shadow-md animate-pulse' : 'bg-amber-200 border-amber-300 text-amber-900 hover:bg-amber-300'}`}>EXP HOLD</button>
+                <button onClick={() => {
+                  pendingInspRef.current = true;
+                  // Novice-pass §7.3 — emit a synthetic control_changed so
+                  // ModuleShell's flash pipeline halos plat / DP. Gives the
+                  // novice a visible "this is what the hold REVEALED" cue.
+                  harness?.emit({
+                    type: 'control_changed',
+                    control: 'inspiratory_pause' as any,
+                    old_value: 0,
+                    new_value: 1,
+                    timestamp: Date.now(),
+                  });
+                }} disabled={isLocked('inspiratory_pause')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all border ${isLocked('inspiratory_pause') ? 'bg-zinc-100 border-zinc-300 text-zinc-400 cursor-not-allowed' : activeHoldType === 'INSP' ? 'bg-sky-600 border-sky-500 text-white shadow-md animate-pulse' : 'bg-sky-200 border-sky-300 text-sky-900 hover:bg-sky-300'}`}>INSP HOLD</button>
+                <button onClick={() => {
+                  pendingExpRef.current = true;
+                  harness?.emit({
+                    type: 'control_changed',
+                    control: 'expiratory_pause' as any,
+                    old_value: 0,
+                    new_value: 1,
+                    timestamp: Date.now(),
+                  });
+                }} disabled={isLocked('expiratory_pause')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all border ${isLocked('expiratory_pause') ? 'bg-zinc-100 border-zinc-300 text-zinc-400 cursor-not-allowed' : activeHoldType === 'EXP' ? 'bg-amber-600 border-amber-500 text-white shadow-md animate-pulse' : 'bg-amber-200 border-amber-300 text-amber-900 hover:bg-amber-300'}`}>EXP HOLD</button>
               </div>
             </div>
 

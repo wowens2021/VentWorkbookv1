@@ -99,4 +99,8 @@
     <text x="540" y="350">4 s</text><text x="660" y="350">5 s</text>
     <text x="780" y="350">6 s</text>
   </g>
+  <line stroke="#0284c7" stroke-width="2" opacity="0.55" y1="20" y2="320" x1="60" x2="60">
+    <animate attributeName="x1" from="60" to="780" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="x2" from="60" to="780" dur="6s" repeatCount="indefinite"/>
+  </line>
 </svg>
