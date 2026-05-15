@@ -18,7 +18,9 @@ import TaskCard from './TaskCard';
 import PlaygroundSim, { type SimInteractivity } from '../components/PlaygroundSim';
 import { ScenarioHarness } from '../harness/ScenarioHarness';
 import { buildTracker, type Tracker } from '../trackers';
-import { persistProgress, loadProgress, clearProgress } from '../persistence/progress';
+import { persistProgress, loadProgress } from '../persistence/progress';
+import { useEngagementTelemetry } from './useEngagementTelemetry';
+import { usePhaseFlow } from './usePhaseFlow';
 
 interface Props {
   module: ModuleConfig;
@@ -159,157 +161,117 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     persistProgress({ module_id: module.id, started_at: prior?.started_at ?? new Date().toISOString() });
   }, [module.id]);
 
-  // ── Active engagement timer (A1) ──
-  // Accumulates only while the tab is visible, the learner is mid-module,
-  // and they haven't gone idle for > 5 min. Replaces the prior naïve
-  // `objective_satisfied_at − task_started_at` which spanned days across
-  // sessions and produced "1506 min" debrief readings.
-  const IDLE_THRESHOLD_MS = 5 * 60 * 1000;
-  const lastActiveMsRef = useRef(Date.now());
-  const accumulatedSecRef = useRef(prior?.time_active_sec ?? 0);
-  useEffect(() => {
-    // Tick every 5 s; only add the interval if the tab is visible and the
-    // last user-action was < IDLE_THRESHOLD_MS ago.
-    const id = setInterval(() => {
-      if (document.hidden) return;
-      const sinceLast = Date.now() - lastActiveMsRef.current;
-      if (sinceLast > IDLE_THRESHOLD_MS) return;
-      accumulatedSecRef.current += 5;
-    }, 5000);
-    return () => clearInterval(id);
-  }, [module.id]);
-  // Flush on every persistProgress call by wrapping it. We expose a helper
-  // that other code paths use rather than calling the underlying persist
-  // directly with time.
-  const flushActiveTime = () => {
-    persistProgress({
-      module_id: module.id,
-      time_active_sec: accumulatedSecRef.current,
-      last_active_at: new Date().toISOString(),
-    });
-  };
-  // Flush on tab unload + on phase change so the persisted value is fresh.
-  useEffect(() => {
-    const beforeunload = () => flushActiveTime();
-    window.addEventListener('beforeunload', beforeunload);
-    return () => {
-      flushActiveTime();
-      window.removeEventListener('beforeunload', beforeunload);
-    };
-  }, [module.id]);
-  // Bump `lastActiveMsRef` on any interaction the learner takes.
-  const markActive = () => { lastActiveMsRef.current = Date.now(); };
-
-  // ── One-time intro briefing splash ──
-  // Shown when the learner first enters the module, before any phase starts.
-  // Acknowledgment is persisted so resuming or navigating back doesn't show
-  // it again. A Restart clears the ack alongside the rest of the progress.
-  const [briefingDone, setBriefingDone] = useState(!!prior?.briefing_acknowledged_at);
-  const acknowledgeBriefing = () => {
-    persistProgress({
-      module_id: module.id,
-      briefing_acknowledged_at: new Date().toISOString(),
-    });
-    setBriefingDone(true);
-  };
-
-  // ── Phase state machine (§1.4 — 5-phase model) ──
-  const initialPhase: Phase = prior?.quiz_submitted_at
-    ? 'debrief'
-    : prior?.objective_satisfied_at
-      ? 'debrief'
-      : prior?.task_started_at
-        ? 'try-it'
-        : prior?.exploration_started_at
-          ? 'explore'
-          : prior?.primer_completed_at
-            ? 'read'
-            : 'primer';
-  const [phase, setPhase] = useState<Phase>(initialPhase);
-  const [objectiveSatisfied, setObjectiveSatisfied] = useState(!!prior?.objective_satisfied_at);
-  const [quizSubmitted, setQuizSubmitted] = useState(!!prior?.quiz_submitted_at);
-
-  // Sub-phase within Read: 'prose' (the readable content) → 'check' (standalone
-  // MCQ "Check yourself" page) → advance to Explore. The check sub-phase is
-  // only entered if the module actually has formative content blocks; otherwise
-  // Read → Explore directly.
-  const formativeBlocks = useMemo(
-    () => module.content_blocks.filter((b): b is Extract<typeof b, { kind: 'formative' }> => b.kind === 'formative'),
-    [module]
-  );
-  const [readSubPhase, setReadSubPhase] = useState<'prose' | 'check'>('prose');
-
-  // ── Completed-phase tracking (for back-navigation) ──
-  // A phase is "completed" once the learner has advanced past it OR satisfied
-  // its terminal condition. Computed from the persisted record so resume works.
-  const completedPhases = useMemo(() => {
-    const set = new Set<Phase>();
-    if (prior?.primer_completed_at) set.add('primer');
-    if (prior?.reading_completed_at) set.add('read');
-    if (prior?.task_started_at) set.add('explore'); // started Phase 4 ⇒ Phase 3 was completed
-    if (prior?.objective_satisfied_at) set.add('try-it');
-    if (prior?.quiz_submitted_at) set.add('debrief');
-    // Plus anything the in-session phase has already passed.
-    const passed: Phase[] = ['primer', 'read', 'explore', 'try-it', 'debrief'];
-    const idx = passed.indexOf(phase);
-    for (let i = 0; i < idx; i++) set.add(passed[i]);
-    if (objectiveSatisfied) set.add('try-it');
-    if (quizSubmitted) set.add('debrief');
-    return set;
-  }, [prior, phase, objectiveSatisfied, quizSubmitted]);
-
-  /**
-   * Jump back to a previously completed phase. The objective state for try-it
-   * is preserved (objectiveSatisfied stays true on return), so going back to
-   * "read" and forward again doesn't require redoing the task.
-   */
-  const jumpToPhase = (target: Phase) => {
-    if (!completedPhases.has(target) || target === phase) return;
-    setPhase(target);
-    setLastInteractMs(Date.now());
-  };
-
-  // ── Harness + tracker ──
+  // ── Harness ──
   const harnessRef = useRef<ScenarioHarness | null>(null);
   if (!harnessRef.current) harnessRef.current = new ScenarioHarness(module.scenario);
   const harness = harnessRef.current;
 
   // ── Inline recognition prompts ──
   const [activePrompt, setActivePrompt] = useState<InlinePromptConfig | null>(null);
-  // Click-target feedback state — populated when a learner clicks a tile on
-  // the sim in click-target recognition mode, OR when the "Show me" hint
-  // auto-answers a recognition prompt. Declared here so `onShowMe` and
-  // `respondToPrompt` (below) can both write into it.
   const [clickFeedback, setClickFeedback] = useState<{
     label: string; isCorrect: boolean; explanation?: string;
   } | null>(null);
 
-  // ── Hint ladder idle tracking (Phase 4 only) ──
-  const [lastInteractMs, setLastInteractMs] = useState(Date.now());
-  const [now, setNow] = useState(Date.now());
-  const idleMs = now - lastInteractMs;
-
-  // A1: every interaction also bumps the active-time idle gate so the
-  // engagement-second accumulator keeps running.
-  useEffect(() => {
-    lastActiveMsRef.current = lastInteractMs;
-  }, [lastInteractMs]);
-
-  useEffect(() => {
-    if (phase !== 'try-it' || objectiveSatisfied) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [phase, objectiveSatisfied]);
-
+  // ── Hint tier counter (read by HintLadder; written by onTierTriggered) ──
   const [hintTiersTriggered, setHintTiersTriggered] = useState(prior?.hint_tiers_triggered ?? 0);
 
-  // ── Compound-tracker progress (F3) + step-complete toast (F4) ──
+  // ── B2: outcome progress chip (declared early so the engagement hook can
+  // depend on it; reset wiring lives in the tracker's onOutcomeProgress) ──
+  const [outcomeProgress, setOutcomeProgress] = useState<
+    { current: number; target: number; label?: string; byReadout?: any } | null
+  >(null);
+
+  // ── Compound-tracker progress (F3) ──
   const [childStates, setChildStates] = useState<boolean[]>(() => {
     if (module.hidden_objective?.kind === 'compound') {
       return module.hidden_objective.children.map(() => false);
     }
     return [];
   });
+
+  // ── Fix 2: extracted hooks ──
+  // useEngagementTelemetry owns the active-time accumulator, idle
+  // tracking, per-phase counters, and the change-since-progress streak.
+  // usePhaseFlow owns the 5-phase state machine + all advanceFrom* /
+  // handleRetake / handleRestart actions.
+  //
+  // useEngagementTelemetry does NOT take phase as input — the
+  // phase-dependent effects (now-ticker, phase-exit reset) are wired in
+  // explicit useEffects below so engagement can be constructed BEFORE
+  // usePhaseFlow without a chicken-and-egg.
+  const engagement = useEngagementTelemetry(
+    module.id,
+    outcomeProgress,
+    childStates,
+    prior?.time_active_sec,
+  );
+  const flow = usePhaseFlow({
+    module,
+    prior,
+    engagement,
+    resetSimToPreset: () => harness.resetToPreset(),
+    externalCleanup: {
+      setActivePrompt: () => setActivePrompt(null),
+      setStepToast: () => setStepToast(null),
+      setHintTiersTriggered: (v: number) => setHintTiersTriggered(v),
+      setClickFeedback: () => setClickFeedback(null),
+    },
+  });
+  const {
+    phase,
+    setPhase,
+    readSubPhase,
+    setReadSubPhase,
+    briefingDone,
+    acknowledgeBriefing,
+    objectiveSatisfied,
+    setObjectiveSatisfied,
+    quizSubmitted,
+    setQuizSubmitted,
+    completedPhases,
+    jumpToPhase,
+    advanceFromPrimer,
+    advanceFromRead,
+    advanceFromReadOrCheck,
+    advanceFromExplore,
+    advanceFromTryIt,
+    advanceFromDebrief,
+    handleRetake,
+    handleRestart,
+    onRedoTask,
+    checkYourselfAnswersRef,
+    handleCheckYourselfAnswer,
+    formativeBlocks,
+  } = flow;
+  // Convenience locals re-exposing engagement-hook outputs that the rest
+  // of the component reads. Pure aliases — no behavior change.
+  const idleMs = engagement.idleMs;
+  const changesSinceProgress = engagement.changesSinceProgress;
+  const lastInteractMs = engagement.lastInteractMs;
+  const setLastInteractMs = engagement.setLastInteractMs;
+  const exploreStartedAtRef = engagement.exploreStartedAtRef;
+  const exploreControlChangesRef = engagement.exploreControlChangesRef;
+  const taskStartedAtRef = engagement.taskStartedAtRef;
+  const taskControlChangesRef = engagement.taskControlChangesRef;
+  const resetClicksRef = engagement.resetClicksRef;
+  const setChangesSinceProgress = engagement.setChangesSinceProgress;
+  const markActive = engagement.markActive;
+
+  // Phase-dependent engagement effects (formerly inline in the hook).
+  // 1) 1-Hz now-ticker runs only while in try-it and not satisfied — drives
+  //    the HintLadder's idle-based tier triggers.
+  useEffect(() => {
+    if (phase !== 'try-it' || objectiveSatisfied) return;
+    return engagement.startIdleTicker();
+  }, [phase, objectiveSatisfied, engagement]);
+  // 2) Phase-exit cleanup for the change-streak (reset on leaving try-it).
+  useEffect(() => {
+    if (phase !== 'try-it') engagement.resetChangeStreak();
+  }, [phase, engagement]);
+
+  // (childStates declared above in the hook-binding block — used by both
+  // the engagement hook (for change-streak reset) and the TaskCard.)
+  // ── Step-complete toast (F4) ──
   const [stepToast, setStepToast] = useState<{ idx: number; total: number } | null>(null);
   // Auto-dismiss the toast after 3 s so it doesn't linger.
   useEffect(() => {
@@ -361,12 +323,8 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
   // 5-phase sequence.)
   const flashHero = (_target: Phase) => { /* no-op, kept so call sites compile */ };
 
-  // ── Engagement counters (per §1.9) ──
-  const exploreStartedAtRef = useRef<number | null>(null);
-  const exploreControlChangesRef = useRef(0);
-  const taskStartedAtRef = useRef<number | null>(null);
-  const taskControlChangesRef = useRef(0);
-  const resetClicksRef = useRef(0);
+  // (Engagement counter refs moved to useEngagementTelemetry — see
+  // engagement.exploreStartedAtRef / taskStartedAtRef / etc above.)
 
   // Belt-and-suspenders cleanup: if the phase changes away from try-it
   // (debrief, back-nav to read, etc.), wipe any lingering recognition
@@ -390,16 +348,10 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     if (phase !== 'debrief') setDebriefSubView('summary');
   }, [phase]);
 
-  // ── B2: outcome progress chip ──
-  const [outcomeProgress, setOutcomeProgress] = useState<
-    { current: number; target: number; label?: string } | null
-  >(null);
-  // ── B3: hint trigger on N control changes without progress ──
-  // Incremented on every try-it control_changed. Reset to 0 whenever the
-  // tracker reports forward progress (outcome counter goes up OR a compound
-  // child fires). Surfaces tier 1 around 5 changes, tier 2 at 10, tier 3 at 15.
-  const [changesSinceProgress, setChangesSinceProgress] = useState(0);
-  const lastOutcomeProgressRef = useRef(0);
+  // (outcomeProgress, childStates, changesSinceProgress, and the
+  // change-streak reset wiring all live above — outcomeProgress +
+  // childStates are state declared near the hook block; the streak
+  // and its phase-exit reset live inside useEngagementTelemetry.)
 
   // ── B1: readout flash on control change ──
   // When the learner changes a control in the try-it phase, briefly outline
@@ -411,39 +363,19 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     const id = setTimeout(() => setFlashReadouts([]), 1100);
     return () => clearTimeout(id);
   }, [flashReadouts]);
+  // Fix 1 — companion flash for control boxes when the "Show me the
+  // answer" affordance reveals a control as the correct click-target.
+  const [flashControls, setFlashControls] = useState<string[]>([]);
+  useEffect(() => {
+    if (flashControls.length === 0) return;
+    const id = setTimeout(() => setFlashControls([]), 1100);
+    return () => clearTimeout(id);
+  }, [flashControls]);
 
   // Novice-pass §2.3: per-prompt wrong-click count. After 3 wrong clicks on
   // a single recognition prompt, a persistent "Show me the answer" link
   // appears in the Direction banner that flashes the correct target.
   const [wrongClicksByPrompt, setWrongClicksByPrompt] = useState<Record<string, number>>({});
-
-  // B3: reset the no-progress streak whenever the tracker advances —
-  // either an outcome counter ticked up, or a compound child fired.
-  useEffect(() => {
-    const cur = outcomeProgress?.current ?? 0;
-    if (cur > lastOutcomeProgressRef.current) {
-      lastOutcomeProgressRef.current = cur;
-      setChangesSinceProgress(0);
-    }
-    if (!outcomeProgress) lastOutcomeProgressRef.current = 0;
-  }, [outcomeProgress]);
-  const childStatesDoneCountRef = useRef(0);
-  useEffect(() => {
-    const done = childStates.filter(Boolean).length;
-    if (done > childStatesDoneCountRef.current) {
-      childStatesDoneCountRef.current = done;
-      setChangesSinceProgress(0);
-    }
-    if (done === 0) childStatesDoneCountRef.current = 0;
-  }, [childStates]);
-  // Phase-exit: reset the streak so re-entering try-it starts clean.
-  useEffect(() => {
-    if (phase !== 'try-it') {
-      setChangesSinceProgress(0);
-      lastOutcomeProgressRef.current = 0;
-      childStatesDoneCountRef.current = 0;
-    }
-  }, [phase]);
 
   // Novice-pass §16.3 — auto-PEEP delta watcher. Flashes the autoPEEP tile
   // whenever the value moves by ≥ 1 cmH2O between ticks. Draws the novice's
@@ -663,199 +595,10 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     harness.resetToPreset();
   };
 
-  /**
-   * F8: re-arm the try-it phase so the learner can redo the task.
-   * Clears the satisfaction flag; the wiring useEffect re-runs, rebuilds the
-   * tracker, resets the sim, and re-subscribes.
-   */
-  const onRedoTask = () => {
-    setObjectiveSatisfied(false);
-    setActivePrompt(null);
-    setStepToast(null);
-    // Don't wipe persisted achievement — the learner already completed it once.
-    // Just open the tracker again.
-  };
-
-  // ── Phase transitions ──
-  const advanceFromPrimer = (score: number, answers: any[]) => {
-    persistProgress({
-      module_id: module.id,
-      primer_completed_at: new Date().toISOString(),
-      primer_score: score,
-      primer_answers: answers,
-    });
-    setPhase('read');
-    flashHero('read');
-    setLastInteractMs(Date.now());
-  };
-
-  /** Move from Read's prose sub-view → either the check-yourself MCQ page
-   *  (if the module has formative blocks) or directly to Explore. */
-  const advanceFromRead = () => {
-    if (formativeBlocks.length > 0 && readSubPhase === 'prose') {
-      setReadSubPhase('check');
-      return;
-    }
-    advanceFromReadOrCheck();
-  };
-
-  /**
-   * E1: capture each check-yourself answer as the learner makes it, so the
-   * debrief can review them and the score can include a small bonus.
-   * Stable IDs (`{moduleId}-CY{n}`) are derived from the position of the
-   * formative block in the module's content_blocks list.
-   */
-  const checkYourselfAnswersRef = useRef<
-    Map<string, { question_id: string; selected_label: string; is_correct: boolean }>
-  >(new Map());
-  const handleCheckYourselfAnswer = (answer: {
-    question_id: string;
-    selected_label: string;
-    is_correct: boolean;
-  }) => {
-    checkYourselfAnswersRef.current.set(answer.question_id, answer);
-  };
-
-  /** Move from Read (either sub-phase) → Explore. Persists timestamps and
-   *  initializes the exploration counters. */
-  const advanceFromReadOrCheck = () => {
-    persistProgress({
-      module_id: module.id,
-      reading_completed_at: new Date().toISOString(),
-    });
-    // Persist any captured check-yourself answers before leaving the sub-phase.
-    if (checkYourselfAnswersRef.current.size > 0) {
-      persistProgress({
-        module_id: module.id,
-        check_yourself_answers: Array.from(checkYourselfAnswersRef.current.values()),
-      });
-    }
-    exploreStartedAtRef.current = Date.now();
-    exploreControlChangesRef.current = 0;
-    persistProgress({
-      module_id: module.id,
-      exploration_started_at: new Date().toISOString(),
-    });
-    setReadSubPhase('prose'); // reset for back-nav
-    setPhase('explore');
-    flashHero('explore');
-  };
-
-  const advanceFromExplore = () => {
-    const dur = exploreStartedAtRef.current
-      ? Math.round((Date.now() - exploreStartedAtRef.current) / 1000)
-      : undefined;
-    persistProgress({
-      module_id: module.id,
-      exploration_duration_sec: dur,
-      exploration_control_changes: exploreControlChangesRef.current,
-    });
-    setPhase('try-it');
-    flashHero('try-it');
-    setLastInteractMs(Date.now());
-  };
-
-  const advanceFromTryIt = () => {
-    setPhase('debrief');
-    flashHero('debrief');
-  };
-
-  const advanceFromDebrief = (score: number, answers: any[]) => {
-    // A2: best-attempt-wins. Re-read the latest persisted record (so a
-    // retake doesn't lose earlier check-yourself answers) and only commit
-    // the new quiz_score / answers if it BEATS the prior best.
-    const latest = loadProgress(module.id);
-    const priorBest = latest?.quiz_best_score ?? latest?.quiz_score;
-    const isImprovement = priorBest === undefined || score > priorBest;
-    const bestScore = isImprovement ? score : priorBest!;
-    const bestAnswers = isImprovement ? answers : (latest?.quiz_answers ?? answers);
-
-    const cyAnswers: { question_id: string; selected_label: string; is_correct: boolean }[] =
-      Array.from(checkYourselfAnswersRef.current.values()).length > 0
-        ? Array.from(checkYourselfAnswersRef.current.values())
-        : latest?.check_yourself_answers ?? [];
-    const merged = {
-      primer_score: latest?.primer_score,
-      primer_total: module.primer_questions.length,
-      // Score the BEST attempt against the rest of the formula so a retake
-      // with a higher quiz raises the total too.
-      quiz_score: bestScore,
-      quiz_total: module.summative_quiz.length,
-      hint_tiers_triggered: latest?.hint_tiers_triggered ?? 0,
-      reset_to_start_clicks: latest?.reset_to_start_clicks ?? resetClicksRef.current,
-      check_yourself_correct: cyAnswers.filter(a => a.is_correct).length,
-      check_yourself_total: formativeBlocks.length,
-    };
-    const total = computeTotalScore(merged);
-    persistProgress({
-      module_id: module.id,
-      quiz_submitted_at: new Date().toISOString(),
-      quiz_score: bestScore,
-      quiz_best_score: bestScore,
-      quiz_attempts: (latest?.quiz_attempts ?? 0) + 1,
-      quiz_answers: bestAnswers,
-      total_score_percent: total.percent,
-      total_score_letter: total.letter,
-    });
-    setQuizSubmitted(true);
-  };
-
-  /**
-   * A2: "Retake the module" CTA, shown when the learner scored below the
-   * passing threshold on the debrief. Clears the summative + primer state
-   * so the learner runs the assessment portions again, but PRESERVES
-   * exploration, objective, and check-yourself progress so they don't
-   * have to redo the live-sim task. Best-attempt-wins is enforced in
-   * advanceFromDebrief above — if the retake is lower, the prior score
-   * stays put.
-   */
-  const handleRetake = () => {
-    // Wipe the summative + primer phase markers but keep task/objective/CY.
-    const latest = loadProgress(module.id);
-    persistProgress({
-      module_id: module.id,
-      // Force the learner back through the primer + summative; KEEP the
-      // best-score history so the gate respects best-attempt-wins.
-      primer_completed_at: undefined as any,
-      primer_score: undefined as any,
-      primer_answers: undefined as any,
-      quiz_submitted_at: undefined as any,
-      // quiz_best_score and quiz_attempts intentionally retained.
-      total_score_percent: undefined as any,
-      total_score_letter: undefined as any,
-    });
-    setQuizSubmitted(false);
-    // Send the learner back to the primer; the new primer attempt is
-    // graded fresh and its score is what feeds the next computeTotalScore.
-    setPhase('primer');
-    void latest;
-    flashHero('primer');
-  };
-
-  /**
-   * Wipe this module's progress and reset all in-session state so the learner
-   * starts from Phase 1 again. Used by the "Restart module" debrief button.
-   */
-  const handleRestart = () => {
-    clearProgress(module.id);
-    // Reset in-session state
-    setObjectiveSatisfied(false);
-    setQuizSubmitted(false);
-    setActivePrompt(null);
-    setHintTiersTriggered(0);
-    exploreControlChangesRef.current = 0;
-    taskControlChangesRef.current = 0;
-    resetClicksRef.current = 0;
-    exploreStartedAtRef.current = null;
-    taskStartedAtRef.current = null;
-    harness.resetToPreset();
-    setPhase('primer');
-    // Show the intro briefing splash again on restart so the learner gets
-    // re-oriented before re-attempting the module.
-    setBriefingDone(false);
-    // Re-seed started_at so the dashboard sees a fresh attempt
-    persistProgress({ module_id: module.id, started_at: new Date().toISOString() });
-  };
+  // (advanceFromPrimer/Read/ReadOrCheck/Explore/TryIt/Debrief,
+  // handleRetake, handleRestart, onRedoTask, checkYourselfAnswersRef,
+  // handleCheckYourselfAnswer — all moved to usePhaseFlow per Fix 2.
+  // Destructured above from `flow`. No behavior change.)
 
   // ── Per-phase sim interactivity ──
   // When revisiting an already-completed phase via back-nav, the sim opens up
@@ -982,11 +725,14 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                 (wrongClicksByPrompt[activePrompt.prompt_id] ?? 0) >= 3
                   ? () => {
                       const correct = activePrompt.click_targets?.find(t => t.is_correct);
+                      // Fix 1 — route to the appropriate flash channel so
+                      // control targets actually halo on screen (the prior
+                      // implementation called setFlashReadouts for both,
+                      // which silently failed on control elements).
                       if (correct?.element.kind === 'readout') {
                         setFlashReadouts([correct.element.name]);
                       } else if (correct?.element.kind === 'control') {
-                        // Reuse the same flash pipeline; control flash is best-effort.
-                        setFlashReadouts([correct.element.name]);
+                        setFlashControls([correct.element.name]);
                       }
                     }
                   : undefined
@@ -1611,6 +1357,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
           inlinePromptOverlay={inlinePromptOverlay}
           simInteractivity={simInteractivity}
           flashReadouts={flashReadouts}
+          flashControls={flashControls}
           onPrvcAdjust={() => {
             // Per MASTER_SHELL_v3 §6 M9 tighten: when the PRVC adaptive
             // algorithm ticks its inspiratory-pressure target, flash the

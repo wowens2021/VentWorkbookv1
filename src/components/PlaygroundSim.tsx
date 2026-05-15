@@ -71,6 +71,12 @@ interface PlaygroundSimProps {
    */
   flashReadouts?: string[];
   /**
+   * Companion to `flashReadouts` for control elements. When a recognition
+   * "Show me the answer" link reveals a control target, the control box's
+   * outer border flashes sky-blue for ~1 s. Cleared by the parent.
+   */
+  flashControls?: string[];
+  /**
    * Fires once per breath whenever the PRVC / SIMV-mandatory adaptive PI
    * algorithm meaningfully adjusts its inspiratory pressure target. The
    * parent uses this to flash the PIP readout so the learner can SEE the
@@ -238,7 +244,12 @@ const ControlBox = ({
   /** A5: hover-tooltip from the glossary. Suppressed when the parent is
    *  in click-target recognition mode to avoid revealing the answer. */
   tooltip,
+  /** Fix 1 — sky-blue ring when the "Show me the answer" link reveals
+   *  this control as the correct click-target. Auto-cleared by the
+   *  parent (~1 s). Matches NumericCard's flash treatment. */
+  flash = false,
 }: any) => {
+  const flashWrap = flash ? 'bg-sky-50 border-sky-400 ring-2 ring-sky-300/70 shadow-md transition' : '';
   const timerRef = useRef<any>(null);
   const intervalRef = useRef<any>(null);
   const valueRef = useRef(value);
@@ -268,10 +279,10 @@ const ControlBox = ({
       <button
         type="button"
         onClick={onRecognitionClick}
-        className={`flex flex-col gap-0.5 ${className} text-left`}
+        className={`flex flex-col gap-0.5 ${className} text-left ${flash ? 'rounded-lg ' + flashWrap : ''}`}
       >
         <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider text-center">{label}</span>
-        <div className="flex items-center bg-zinc-100 border border-zinc-300 hover:border-zinc-400 rounded-lg p-0.5 shadow-inner transition-all">
+        <div className={`flex items-center bg-zinc-100 border ${flash ? 'border-sky-400' : 'border-zinc-300 hover:border-zinc-400'} rounded-lg p-0.5 shadow-inner transition-all`}>
           <div className="flex-1 text-center px-1">
             <div className="text-base font-mono font-extrabold leading-none tracking-tight text-zinc-900">
               {forceDecimal ? Number(value).toFixed(1) : value}
@@ -287,9 +298,9 @@ const ControlBox = ({
     );
   }
   return (
-    <div className={`flex flex-col gap-0.5 ${className}`} title={tooltip}>
+    <div className={`flex flex-col gap-0.5 ${className} ${flash ? 'rounded-lg ' + flashWrap : ''}`} title={tooltip}>
       <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider text-center">{label}</span>
-      <div className="flex items-center bg-zinc-100 border border-zinc-300 rounded-lg p-0.5 shadow-inner hover:border-sky-300 transition-all">
+      <div className={`flex items-center bg-zinc-100 border ${flash ? 'border-sky-400' : 'border-zinc-300 hover:border-sky-300'} rounded-lg p-0.5 shadow-inner transition-all`}>
         <div className="flex-1 text-center px-1">
           <div className="text-base font-mono font-extrabold leading-none tracking-tight text-zinc-900">
             {forceDecimal ? Number(value).toFixed(1) : value}
@@ -392,6 +403,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   recognitionBanner,
   onRecognitionElementClick,
   flashReadouts,
+  flashControls,
   onPrvcAdjust,
 }) => {
   // Cache the latest prvc-adjust callback in a ref so the animation loop —
@@ -401,6 +413,9 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   useEffect(() => { onPrvcAdjustRef.current = onPrvcAdjust; }, [onPrvcAdjust]);
   // Lookup set for the flash-on-control-change readout halos.
   const flashSet = useMemo(() => new Set(flashReadouts ?? []), [flashReadouts]);
+  // Fix 1 — companion lookup for control flashes (driven by the "Show me
+  // the answer" affordance when the correct target is a control box).
+  const flashControlSet = useMemo(() => new Set(flashControls ?? []), [flashControls]);
   /**
    * Recognition click-target mode is active whenever `recognitionTargets` is
    * provided. In this mode EVERY readout tile and EVERY control box becomes
@@ -1457,7 +1472,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           {/* Ventilator controls — tightened padding */}
           <div className="bg-white shrink-0 rounded-xl border border-zinc-200 p-2 shadow-2xl">
             {/* Mode + hold buttons */}
-            <div className="flex items-center gap-2 mb-2 bg-zinc-50 p-1 rounded-lg border border-zinc-200">
+            <div className={`flex items-center gap-2 mb-2 ${flashControlSet.has('mode') ? 'bg-sky-50 ring-2 ring-sky-300/70 border-sky-400' : 'bg-zinc-50 border-zinc-200'} p-1 rounded-lg border transition`}>
               <div className="flex items-center gap-1">
                 {isLocked('mode') && <Lock size={10} className="text-zinc-400 ml-1" />}
                 {['VCV', 'PCV', 'PRVC', 'SIMV/PS', 'PSV'].map(m => (
@@ -1502,17 +1517,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
 
             {/* Knobs */}
             <div className={`flex flex-row flex-wrap justify-center px-1 items-center ${playgroundMode ? 'gap-3' : 'gap-1.5'}`}>
-              {mode !== 'PSV' && <ControlBox className="w-[90px]" label="Rate" value={settings.respiratoryRate} unit="bpm" min={4} max={40} step={1} onChange={(v: number) => handleSettingChange('respiratoryRate', v)} {...recogPropsForControl('respiratoryRate', 'Rate control')} />}
+              {mode !== 'PSV' && <ControlBox flash={flashControlSet.has('respiratoryRate')} className="w-[90px]" label="Rate" value={settings.respiratoryRate} unit="bpm" min={4} max={40} step={1} onChange={(v: number) => handleSettingChange('respiratoryRate', v)} {...recogPropsForControl('respiratoryRate', 'Rate control')} />}
               {mode === 'PCV'
-                ? <ControlBox className="w-[90px]" label="Pinsp" value={settings.pInsp} unit="cmH2O" min={1} max={60} step={1} onChange={(v: number) => handleSettingChange('pInsp', v)} {...recogPropsForControl('pInsp', 'Pinsp control')} />
+                ? <ControlBox flash={flashControlSet.has('pInsp')} className="w-[90px]" label="Pinsp" value={settings.pInsp} unit="cmH2O" min={1} max={60} step={1} onChange={(v: number) => handleSettingChange('pInsp', v)} {...recogPropsForControl('pInsp', 'Pinsp control')} />
                 : mode === 'PSV'
-                  ? <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel', 'PS control')} />
-                  : <ControlBox className="w-[90px]" label="Vt" value={settings.tidalVolume} unit="mL" min={200} max={1000} step={10} onChange={(v: number) => handleSettingChange('tidalVolume', v)} {...recogPropsForControl('tidalVolume', 'Vt control')} />}
-              {mode !== 'PSV' && <ControlBox className="w-[90px]" label="I-time" value={settings.iTime} unit="sec" min={0.3} max={3.0} step={0.1} onChange={(v: number) => handleSettingChange('iTime', v)} forceDecimal {...recogPropsForControl('iTime', 'I-time control')} />}
-              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="PEEP" value={settings.peep} unit="cmH2O" min={0} max={24} step={1} onChange={(v: number) => handleSettingChange('peep', v)} {...recogPropsForControl('peep', 'PEEP control')} />
-              <ControlBox className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="FiO2" value={settings.fiO2} unit="%" min={21} max={100} step={5} onChange={(v: number) => handleSettingChange('fiO2', v)} {...recogPropsForControl('fiO2', 'FiO2 control')} />
-              {mode === 'SIMV/PS' && <ControlBox className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel', 'PS control')} />}
-              {(mode === 'PSV' || mode === 'SIMV/PS') && <ControlBox className="w-[90px]" label="End-Insp %" value={settings.endInspiratoryPercent} unit="%" min={0} max={50} step={1} onChange={(v: number) => handleSettingChange('endInspiratoryPercent', v)} {...recogPropsForControl('endInspiratoryPercent', 'End-Insp control')} />}
+                  ? <ControlBox flash={flashControlSet.has('psLevel')} className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel', 'PS control')} />
+                  : <ControlBox flash={flashControlSet.has('tidalVolume')} className="w-[90px]" label="Vt" value={settings.tidalVolume} unit="mL" min={200} max={1000} step={10} onChange={(v: number) => handleSettingChange('tidalVolume', v)} {...recogPropsForControl('tidalVolume', 'Vt control')} />}
+              {mode !== 'PSV' && <ControlBox flash={flashControlSet.has('iTime')} className="w-[90px]" label="I-time" value={settings.iTime} unit="sec" min={0.3} max={3.0} step={0.1} onChange={(v: number) => handleSettingChange('iTime', v)} forceDecimal {...recogPropsForControl('iTime', 'I-time control')} />}
+              <ControlBox flash={flashControlSet.has('peep')} className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="PEEP" value={settings.peep} unit="cmH2O" min={0} max={24} step={1} onChange={(v: number) => handleSettingChange('peep', v)} {...recogPropsForControl('peep', 'PEEP control')} />
+              <ControlBox flash={flashControlSet.has('fiO2')} className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="FiO2" value={settings.fiO2} unit="%" min={21} max={100} step={5} onChange={(v: number) => handleSettingChange('fiO2', v)} {...recogPropsForControl('fiO2', 'FiO2 control')} />
+              {mode === 'SIMV/PS' && <ControlBox flash={flashControlSet.has('psLevel')} className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel', 'PS control')} />}
+              {(mode === 'PSV' || mode === 'SIMV/PS') && <ControlBox flash={flashControlSet.has('endInspiratoryPercent')} className="w-[90px]" label="End-Insp %" value={settings.endInspiratoryPercent} unit="%" min={0} max={50} step={1} onChange={(v: number) => handleSettingChange('endInspiratoryPercent', v)} {...recogPropsForControl('endInspiratoryPercent', 'End-Insp control')} />}
             </div>
           </div>
         </div>

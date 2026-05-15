@@ -299,11 +299,12 @@ export const M8: ModuleConfig = {
   briefing: {
     tagline: 'Pressure is fixed. Volume is what gives way.',
     overview:
-      "Pressure control flips the relationship. You pick the pressure, the machine holds it, and tidal volume is whatever the lungs accept at that pressure. This is gentler on stiff or heterogeneous lungs because you can't accidentally over-inflate them. The price is that volume drifts when mechanics change, so you have to watch the delivered tidal volume the same way you'd watch peak pressure in VC.",
+      "Pressure control flips the relationship. You pick the pressure, the machine holds it, and tidal volume is whatever the lungs accept at that pressure. This is gentler on stiff or heterogeneous lungs because you can't accidentally over-inflate them. The price is that volume drifts when mechanics change, so you have to watch the delivered tidal volume the same way you'd watch peak pressure in VC.\n\nAt the end of the read phase you'll also see a 5-minute addendum on the dual-control variants (PRVC, VC+, CMV-Autoflow). Same delivery pattern as PC, with a closed-loop volume target on top.",
     what_youll_do: [
       'In PC, you control pressure. Volume is what gives way.',
       'The flow waveform decelerates as the lungs fill. That shape is the PC fingerprint.',
       'A sudden drop in delivered tidal volume on PC is the signal that compliance got worse.',
+      'PRVC and friends: pressure control with a volume target laid on top. Most of the time, that\'s a feature. When the patient has strong drive, the algorithm can yo-yo.',
     ],
   },
 
@@ -425,6 +426,50 @@ export const M8: ModuleConfig = {
       ],
       answer:
         'Book Ch. 9. An inspiratory hold equilibrates pressures throughout the airway tree, just as in VCV. You absolutely can — and should — measure plat in PCV. Common myth.',
+    },
+    // ── Fix 5 (Option A) — folded "dual-control variants" section ──
+    // The standalone M9 (PRVC) was a CURRICULUM REVIEW CANDIDATE: the
+    // most interesting content (the yo-yo failure mode) lived in prose
+    // because the sim can't render it. The decision: fold the teaching
+    // here as a brief read-only addendum to M8 (no separate try-it,
+    // no separate summative). When the sim gains PinspSwing6 (see
+    // docs/BLOCKED_SIM.md §1), this section can be hoisted back out
+    // into its own module.
+    {
+      kind: 'prose',
+      markdown:
+        "**Dual-control variants (PRVC, VC+, CMV-Autoflow): a 5-minute addendum.** These modes try to give you the best of VCV and PCV. You set the Vt you want, and the vent figures out the PINSP needed to deliver it, breath by breath, using a decelerating flow. When compliance improves, PINSP drops. When compliance worsens, PINSP rises. **Most of the time, that's a feature.**",
+    },
+    {
+      kind: 'callout',
+      tone: 'info',
+      markdown:
+        "PRVC is a pressure-control mode for people who don't like pressure-control. Same delivery pattern; just adds a closed-loop volume target on top.",
+    },
+    {
+      kind: 'predict_mcq',
+      predict:
+        "A PRVC patient's compliance suddenly worsens (say, ARDS develops). Over the next 4–5 breaths the vent will:",
+      options: [
+        { label: 'Hold PIP constant; Vt will fall.', is_correct: false, explanation: "That's PCV. PRVC adjusts pressure to keep volume on target." },
+        { label: 'Hold Vt constant; PIP will rise breath by breath.', is_correct: true },
+        { label: 'Switch to volume-control automatically.', is_correct: false, explanation: "PRVC doesn't mode-switch; it adapts within its own mode." },
+        { label: 'Nothing visible — the breath-by-breath adjustments are too small.', is_correct: false, explanation: "The adjustments are clearly visible — PINSP climbs by 1–3 cmH2O each breath until Vt is back on target." },
+      ],
+      observe:
+        "PRVC senses Vt drift and corrects PINSP to compensate. With sudden worsening compliance, the algorithm ramps PINSP up over 4–5 breaths, holding Vt at target. This is closed-loop control when conditions stay stable.",
+    },
+    {
+      kind: 'callout',
+      tone: 'warn',
+      markdown:
+        "**The yo-yo failure mode.** In an *awake patient with strong drive*, the algorithm misreads the patient's effort as 'compliance improved' and lowers PINSP. The next breath is therefore smaller, the algorithm reads 'compliance worsened,' and ramps PINSP back up. Over 30–60 seconds you see the PINSP cycle visibly: 12 → 22 → 12 → 22, while Vt stays on target. The patient is uncomfortable. **The fix is to switch to a non-adaptive mode (VCV or PCV)** and address why the patient is agitated. Not sedation — sedation buries the diagnostic information.",
+    },
+    {
+      kind: 'callout',
+      tone: 'tip',
+      markdown:
+        "If you don't see PRVC in your training hospital, that's fine — the principles (closed-loop targeting, breath-by-breath adaptation, the yo-yo failure mode) transfer to every adaptive mode. Recognize the cycle when you see it.",
     },
   ],
 

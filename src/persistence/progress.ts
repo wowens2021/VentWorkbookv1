@@ -42,6 +42,17 @@ export function persistProgress(partial: Partial<ProgressRecord> & { module_id: 
     hint_tiers_triggered: 0,
   };
   const merged: ProgressRecord = { ...existing, ...partial, learner_id };
+  // Fix 4 — deep-merge `phase_entries` so an incremental write of a
+  // single counter doesn't wipe the rest. Shallow merge is correct for
+  // every other field (each writer owns its key); phase_entries is the
+  // exception because multiple writers contribute disjoint keys to the
+  // same nested object.
+  if (partial.phase_entries || existing.phase_entries) {
+    merged.phase_entries = {
+      ...(existing.phase_entries ?? {}),
+      ...(partial.phase_entries ?? {}),
+    };
+  }
   try { localStorage.setItem(key(learner_id, partial.module_id), JSON.stringify(merged)); } catch {}
   return merged;
 }

@@ -11,14 +11,9 @@ import type { ModuleConfig } from '../shell/types';
  *       dyssyn_double.svg
  *       dyssyn_starvation.svg
  *
- * [BLOCKED-SIM] Clip authoring required. The three SVG clips above are
- * the canonical assets for this module. Until they exist on disk, the
- * placeholder at /public/clips/dyssyn_placeholder.svg is referenced;
- * the question text is written so it reads naturally whether the trace
- * is rendered or not (the description in the question matches what the
- * trace would show). Do NOT substitute a verbal vignette as a
- * "good-enough" replacement — the whole pedagogical point of M11 is
- * waveform recognition, not chart reading.
+ * [BLOCKED-SIM]: see docs/BLOCKED_SIM.md §2. The five SVG clips are
+ * authored at /public/clips/ with a SMIL sweep cursor; the underlying
+ * trace is still static (live rendering is the upgrade path).
  *
  * Three scored scenarios only (per spec §8 v3.1): ineffective triggering,
  * double triggering, flow starvation. Reverse triggering and bad cycling
@@ -317,17 +312,8 @@ export const M11: ModuleConfig = {
  *
  * Sim tuning: spontaneous Vt is ~140-180 mL with no PS; ~380-450 mL with PS 12.
  *
- * [BLOCKED-SIM] The spec's tracker reads `spontaneousTidalVolume` and
- * `mandatoryTidalVolume` as separate measurements. The current sim exposes
- * only `vte` (the most-recent delivered breath, regardless of which kind).
- * The tracker below uses the implementable proxy — set psLevel to 8–14 +
- * vte ≥ 320 sustained for 5 breaths — which captures the same teaching
- * point (adding PS rescues the spontaneous breaths). When the sim is
- * extended to expose mandatory vs spontaneous Vt separately, the tracker
- * can be tightened to the spec form.
- *
- * Specced against docs/MODULE_SPECS_v3.md §M12 and
- * docs/MODULE_SPEC_UPDATE_v3.1.md §9. See MODULE_SPECS_v3.md Appendix A.
+ * [BLOCKED-SIM]: see docs/BLOCKED_SIM.md §4 for the mandatory-vs-
+ * spontaneous Vte separation limitation.
  */
 export const M12: ModuleConfig = {
   id: 'M12',

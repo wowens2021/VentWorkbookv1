@@ -24,15 +24,8 @@ import type { ModuleConfig } from '../shell/types';
  *                          this perturbation for the yo-yo recognition to
  *                          be visually rendered.
  *
- * [BLOCKED-SIM] PinspSwing6 measurement is the long-term tracker shape
- * required by spec §6 v3.1. The current sim cannot directly compute it.
- * The Try-It uses an implementable proxy (drop compliance → PIP climbs)
- * and exposes mode-switching so the learner's correct response —
- * switching out of PRVC — is still scored. See content_blocks for the
- * read-side honest disclaimer.
- *
- * Specced against docs/MODULE_SPECS_v3.md §M9 and
- * docs/MODULE_SPEC_UPDATE_v3.1.md §6. See MODULE_SPECS_v3.md Appendix A.
+ * [BLOCKED-SIM]: see docs/BLOCKED_SIM.md §1 for the PinspSwing6
+ * limitation and the implementable-proxy adaptation.
  */
 export const M9: ModuleConfig = {
   id: 'M9',

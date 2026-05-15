@@ -627,18 +627,10 @@ export const M18: ModuleConfig = {
  *   - Perturbation scripts for the five DOPES scenarios live in the prompt
  *     bodies (descriptive text) until the sim renders live perturbations.
  *
- * [BLOCKED-SIM] Sim limitation: the spec calls for live perturbations
- * that physically alter the waveform (displacement → lost ETCO2; pneumo →
- * unilateral chest rise loss + parallel pressure rise). The current sim
- * doesn't apply scripted perturbations between recognition prompts, so
- * each scenario is presented as a vignette describing the observable
- * waveform / vital-sign changes; the learner names the pattern. Future
- * work: scripted perturbation overlay + ETCO2 waveform trace + chest-rise
- * indicator. The vignette text is written so it transfers to live
- * rendering without rewriting.
- *
- * Specced against docs/MODULE_SPECS_v3.md §M19 and
- * docs/MODULE_SPEC_UPDATE_v3.1.md §16. See MODULE_SPECS_v3.md Appendix A.
+ * [BLOCKED-SIM]: see docs/BLOCKED_SIM.md §3. The PerturbationSpec API
+ * (v3.2 §9) drives numeric-readout signatures for all five scenarios;
+ * the ETCO2 capnogram trace and chest-rise indicator are the remaining
+ * gaps.
  */
 export const M19: ModuleConfig = {
   id: 'M19',

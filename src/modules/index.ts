@@ -6,11 +6,32 @@ import { M4 } from './M4';
 import { M5, M6 } from './M5_M6';
 import { M_EOM } from './M_EOM';      // Equation of Motion (Physiology, after M5)
 import { M7, M8 } from './M7_M8';
-import { M9, M10 } from './M9_M10';
+// Fix 5 (Option A) — M9 (PRVC, standalone) folded into M8 as a
+// "dual-control variants" read-phase section. M9 is still defined in
+// src/modules/M9_M10.ts (kept so any legacy progress records pointing
+// at id 'M9' don't error on lookup), but is removed from the MODULES
+// array and from MODULE_BY_ID. The remaining modules' .number fields
+// shift down by 1 from this point forward so the picker labels stay
+// dense (1–18 with no gap), even though their string ids (e.g. 'M10')
+// stay as written.
+import { /* M9, */ M10 } from './M9_M10';
 import { M11, M12 } from './M11_M12';
 import { M13, M14 } from './M13_M14';
 import { M15, M16 } from './M15_M16';
 import { M17, M18, M19 } from './M17_M18_M19';
+
+// Renumber: M10..M19 → display-numbers 9..18 so the picker shows a
+// dense sequence. String ids unchanged so progress records persist.
+M10.number = 9;
+M11.number = 10;
+M12.number = 11;
+M13.number = 12;
+M14.number = 13;
+M15.number = 14;
+M16.number = 15;
+M17.number = 16;
+M18.number = 17;
+M19.number = 18;
 
 // Curriculum order: Foundations (M1–M3), then Physiology (M4 → M5 →
 // M-EOM → M6), then Modes/Strategy/Weaning/Synthesis. The picker
@@ -19,7 +40,7 @@ import { M17, M18, M19 } from './M17_M18_M19';
 export const MODULES: ModuleConfig[] = [
   M1, M2, M3,
   M4, M5, M_EOM, M6,
-  M7, M8, M9, M10,
+  M7, M8, M10,
   M11, M12, M13, M14, M15, M16, M17, M18, M19,
 ];
 

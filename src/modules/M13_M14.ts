@@ -14,13 +14,8 @@ import type { ModuleConfig } from '../shell/types';
  *       PEEP 18 → PaO2 92, SBP drops 15 mmHg
  *       PEEP 22 → PaO2 84 (overdistension), SBP drops 30 mmHg
  *
- * [BLOCKED-SIM] The spec adds an SBP guardrail to the tracker (SBP ≥95)
- * to teach "don't overshoot PEEP into hypotension." The sim doesn't
- * currently expose SBP as a readout. The hemodynamic ceiling is taught
- * in the explore-card prose and summative until the sim is extended.
- *
- * Specced against docs/MODULE_SPECS_v3.md §M13 and
- * docs/MODULE_SPEC_UPDATE_v3.1.md §10. See MODULE_SPECS_v3.md Appendix A.
+ * [BLOCKED-SIM]: resolved in v3.2 §4 — see docs/BLOCKED_SIM.md §6
+ * (history). SBP is now a live readout; tracker gates on sbp ≥ 95.
  */
 export const M13: ModuleConfig = {
   id: 'M13',
@@ -260,15 +255,8 @@ export const M13: ModuleConfig = {
  *       PEEP 14, FiO2 0.5 → PaO2 64, SpO2 92
  *   - Prone toggle: when modeled, drops effective shuntFraction from 0.30 → ~0.18.
  *
- * [BLOCKED-SIM] The spec asks for a `prone: boolean` sandbox toggle in the
- * Explore card that drops effective shuntFraction. The sim does not yet
- * model a separate prone state independently from shuntFraction. The
- * teaching is preserved in the read prose (FiO2 → PEEP → mean airway
- * pressure → prone is the escalation ladder); a future sim extension
- * can add the toggle without altering the rest of the module.
- *
- * Specced against docs/MODULE_SPECS_v3.md §M14 and
- * docs/MODULE_SPEC_UPDATE_v3.1.md §11. See MODULE_SPECS_v3.md Appendix A.
+ * [BLOCKED-SIM]: see docs/BLOCKED_SIM.md §5 for the prone-toggle
+ * limitation.
  */
 export const M14: ModuleConfig = {
   id: 'M14',

@@ -450,4 +450,29 @@ export interface ProgressRecord {
     /** Ordered history of selected option labels. */
     selected_labels: string[];
   }[];
+
+  /**
+   * Fix 4 — per-phase entry counts. Each ticks every time the learner
+   * enters the phase, including via back-navigation. Used to identify
+   * modules where learners get stuck or drop off. Not scoring-related.
+   */
+  phase_entries?: {
+    briefing?: number;
+    primer?: number;
+    read?: number;
+    check_yourself?: number;
+    explore?: number;
+    try_it?: number;
+    debrief?: number;
+  };
+
+  /**
+   * Fix 4 — timestamp of the most recent abandonment. Set on every
+   * `beforeunload` while the learner is mid-module (i.e.
+   * quiz_submitted_at is not set). Cleared implicitly when the learner
+   * later completes the debrief and a new quiz_submitted_at is written.
+   */
+  last_abandon_at?: string;
+  /** Companion to last_abandon_at — which phase the learner was in. */
+  last_abandon_phase?: string;
 }

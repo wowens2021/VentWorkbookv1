@@ -5,6 +5,7 @@ import Landing from './components/Landing';
 import KnowledgeCheckPage from './components/KnowledgeCheckPage';
 import TopNav, { type NavTarget } from './components/TopNav';
 import ModuleShell from './shell/ModuleShell';
+import DebugDropOffPanel from './shell/DebugDropOffPanel';
 import { MODULES } from './modules';
 import type { ModuleConfig } from './shell/types';
 
@@ -65,9 +66,13 @@ const App: React.FC = () => {
           />
         )}
         {view.kind === 'modules' && (
-          <ModulePicker
-            onPickModule={(mod) => setView({ kind: 'module', module: mod })}
-          />
+          <>
+            <ModulePicker
+              onPickModule={(mod) => setView({ kind: 'module', module: mod })}
+            />
+            {/* Fix 4 — dev-only drop-off panel. Shift+? to toggle. */}
+            <DebugDropOffPanel />
+          </>
         )}
         {view.kind === 'knowledge-check' && (
           <KnowledgeCheckPage onBrowseModules={() => setView({ kind: 'modules' })} />
