@@ -94,7 +94,7 @@ export const M_EOM: ModuleConfig = {
         require_acknowledgment: {
           question: 'You decreased compliance. What happened to the peak-to-plateau gap?',
           options: [
-            { label: 'Unchanged — both PIP and Pplat rose by roughly the same amount', is_correct: true, explanation: "Right. Compliance is in the V/C term — it raises *alveolar* pressure. Resistance didn't change, so the gap (which reflects resistance) didn't change." },
+            { label: 'Unchanged — both PIP and Pplat rose by roughly the same amount', is_correct: true, explanation: "Compliance is in the V/C term — it raises *alveolar* pressure. Resistance didn't change, so the gap (which reflects resistance) didn't change." },
             { label: 'Widened — PIP rose more than Pplat', is_correct: false, explanation: "That's the resistance signature. Compliance changes affect both pressures equally." },
             { label: 'Narrowed — Pplat rose more than PIP', is_correct: false, explanation: 'Physically impossible — Pplat is always ≤ PIP (since PIP = Pplat + resistance term).' },
           ],
@@ -107,7 +107,7 @@ export const M_EOM: ModuleConfig = {
         require_acknowledgment: {
           question: 'You raised resistance. Which pressure moved more?',
           options: [
-            { label: 'PIP rose more than Pplat — the gap widened', is_correct: true, explanation: 'Right. Resistance lives only in the R·flow term. That adds to PIP but disappears when flow stops, so Pplat barely moves.' },
+            { label: 'PIP rose more than Pplat — the gap widened', is_correct: true, explanation: 'Resistance lives only in the R·flow term. That adds to PIP but disappears when flow stops, so Pplat barely moves.' },
             { label: 'Both rose equally', is_correct: false, explanation: "That's what compliance does. Resistance is asymmetric." },
             { label: 'Pplat rose more than PIP', is_correct: false, explanation: 'Cannot happen. Pplat is always ≤ PIP.' },
           ],
@@ -120,7 +120,7 @@ export const M_EOM: ModuleConfig = {
         require_acknowledgment: {
           question: 'You shortened I-time. Same Vt delivered faster (higher flow). What happens to PIP vs Pplat?',
           options: [
-            { label: "PIP rises; Pplat doesn't change much", is_correct: true, explanation: 'Right. Flow only shows up in the R·flow term. Squeeze the same volume through the same airways faster, and the airway resistance contribution is larger. Pplat is alveolar pressure after flow stops — same Vt, same compliance → same Pplat.' },
+            { label: "PIP rises; Pplat doesn't change much", is_correct: true, explanation: 'Flow only shows up in the R·flow term. Squeeze the same volume through the same airways faster, and the airway resistance contribution is larger. Pplat is alveolar pressure after flow stops — same Vt, same compliance → same Pplat.' },
             { label: 'Both rise', is_correct: false, explanation: 'Pplat depends on compliance and Vt, neither of which changed.' },
             { label: 'Both fall', is_correct: false, explanation: 'Faster flow raises peak pressure, not lowers it.' },
           ],

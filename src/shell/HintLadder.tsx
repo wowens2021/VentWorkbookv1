@@ -29,9 +29,14 @@ interface Props {
 const HintLadder: React.FC<Props> = ({ hint, idleMs, changesSinceProgress = 0, onShowMe, onTierTriggered, suppressed }) => {
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
 
-  // F7: tighter cadence. Confused learners abandon long before 60 s of idle —
-  // tier 1 at 25 s gets them help while they still care.
-  const intervals = hint.intervals_seconds ?? [25, 75, 150];
+  // Fix 7: looser idle cadence (45/100/180 s). The idle path is meant for
+  // genuinely-disengaged learners — a focused trainee mid-thought at 25 s
+  // shouldn't get a hint they didn't ask for. The parallel `changeThresholds`
+  // path catches the actively-stuck case earlier: a learner who's pushing
+  // controls but not making progress hits tier 1 after 5 changes, regardless
+  // of idle time. The "Stuck? Show a hint" button gives the learner an
+  // explicit on-ramp so they don't have to wait the 45 s either.
+  const intervals = hint.intervals_seconds ?? [45, 100, 180];
   // B3: parallel thresholds for control-changes without progress. A learner
   // actively trying but stuck in a loop never goes idle, so the idle timer
   // never escalates — these change-count thresholds catch that case.

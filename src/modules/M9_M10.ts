@@ -22,11 +22,11 @@ export const M9: ModuleConfig = {
   briefing: {
     tagline: 'Volume target. Pressure-limited. Mind the failure modes.',
     overview:
-      "PRVC tries to give you the predictability of volume control with the safety of pressure control. You set a volume target, the vent picks the pressure to hit it, and adjusts breath by breath when mechanics shift. It works well in stable, passive patients. It has known failure modes in patients who are working hard or who are awake and asynchronous, because the algorithm sees their effort as the machine doing its job and quietly reduces support.",
+      "PRVC tries to give you the predictability of volume control with the safety of pressure control. You set a volume target, the vent picks the pressure to hit it, and adjusts breath by breath when mechanics shift. In this module you'll see the adaptive loop work as designed — drop compliance and watch PIP climb to keep Vt on target. The known failure mode (the \"yo-yo\" in awake patients with strong drive, where the algorithm reads the patient's effort as the vent doing its job and quietly drops support) is described in the prose but isn't rendered by the current sim. Recognize the pattern in the read section, then watch the adaptive logic do its correct job on the sim.",
     what_youll_do: [
       'PRVC adjusts pressure breath by breath to hit a volume target.',
       "It's pressure-limited, so peaks can't run away.",
-      'A bucking or coughing patient on PRVC can fool the algorithm into giving them less support. Watch the pressure trend.',
+      'The sim demonstrates the loop working as designed. The yo-yo failure mode is read-only — recognize the pattern in the prose; the current sim can\'t render it.',
     ],
   },
 
@@ -112,7 +112,7 @@ export const M9: ModuleConfig = {
           trigger: { kind: 'on_load' },
           question: 'You dropped compliance. Over the next several breaths, what did the ventilator do?',
           options: [
-            { label: 'Increased delivered pressure to maintain the volume target', is_correct: true, explanation: "Right. PRVC sensed that Vt was falling and ramped PINSP up breath by breath. That's the adaptive-control loop working as designed." },
+            { label: 'Increased delivered pressure to maintain the volume target', is_correct: true, explanation: "PRVC sensed that Vt was falling and ramped PINSP up breath by breath. That's the adaptive-control loop working as designed." },
             { label: 'Decreased delivered pressure', is_correct: false, explanation: "Only happens when delivered Vt exceeds the target — opposite direction." },
             { label: 'Switched modes', is_correct: false, explanation: 'No automatic mode switching in PRVC.' },
             { label: 'Nothing automatic happened', is_correct: false, explanation: 'The PIP flashes on every adaptive step. You saw the algorithm work.' },
@@ -147,6 +147,15 @@ export const M9: ModuleConfig = {
       tone: 'warn',
       markdown:
         'The fix for PRVC dyssynchrony is **not** to add sedation. The fix is to switch to a non-adaptive mode (VCV or PCV) and then address why the patient was agitated.',
+    },
+    {
+      // Fix 8: be honest about what the sim demonstrates vs. what the prose
+      // describes. The yo-yo requires patient drive perturbing the volume
+      // measurement, which this sim doesn't model.
+      kind: 'callout',
+      tone: 'info',
+      markdown:
+        "The sim demonstrates the adaptive loop in stable conditions. The yo-yo behavior requires patient effort perturbing the volume measurement, which the current sim doesn't model.",
     },
   ],
 

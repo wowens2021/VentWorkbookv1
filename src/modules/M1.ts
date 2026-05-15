@@ -159,13 +159,13 @@ export const M1: ModuleConfig = {
           trigger: { kind: 'on_load' },
           question: 'Click the reading that shows peak airway pressure.',
           options: [
-            { label: 'PIP', is_correct: true, explanation: 'Right. PIP is the highest pressure during inspiration — the vent reports it every breath.' },
+            { label: 'PIP', is_correct: true, explanation: 'PIP is the highest pressure during inspiration — the vent reports it every breath.' },
             { label: 'Pplat', is_correct: false, explanation: 'Pplat is alveolar pressure at end-inspiration — only visible during an inspiratory hold. It is not peak.' },
             { label: 'Vte', is_correct: false, explanation: 'Vte is the exhaled tidal volume, in mL. Not pressure.' },
             { label: 'Total PEEP', is_correct: false, explanation: 'Total PEEP is end-expiratory pressure, the floor — not the ceiling.' },
           ],
           click_targets: [
-            { element: { kind: 'readout', name: 'pip' }, label: 'PIP', is_correct: true, explanation: 'Right. PIP is the highest pressure during inspiration — the vent reports it every breath.' },
+            { element: { kind: 'readout', name: 'pip' }, label: 'PIP', is_correct: true, explanation: 'PIP is the highest pressure during inspiration — the vent reports it every breath.' },
             { element: { kind: 'readout', name: 'plat' }, label: 'Pplat', is_correct: false, explanation: 'Pplat is alveolar pressure at end-inspiration — only visible during an inspiratory hold. It is not peak.' },
             { element: { kind: 'readout', name: 'vte' }, label: 'Vte', is_correct: false, explanation: 'Vte is the exhaled tidal volume, in mL. Not pressure.' },
             { element: { kind: 'readout', name: 'totalPeep' }, label: 'Total PEEP', is_correct: false, explanation: 'Total PEEP is end-expiratory pressure, the floor — not the ceiling.' },

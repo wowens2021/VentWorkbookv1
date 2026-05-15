@@ -90,7 +90,7 @@ export const M2: ModuleConfig = {
         { label: 'Inspiration takes twice as long as expiration.', is_correct: false, explanation: "That's 2:1 (inverse ratio)." },
         { label: 'Expiration takes twice as long as inspiration.', is_correct: true, explanation: 'Normal-ish for adults at rest. Book Ch. 9.' },
         { label: 'The set rate is 1, and the actual is 2.', is_correct: false, explanation: "I:E isn't about rate." },
-        { label: "There's two seconds for inspiration and one for expiration.", is_correct: false, explanation: "That's the inverse ratio; obstructive patients will hate it." },
+        { label: "There's two seconds for inspiration and one for expiration.", is_correct: false, explanation: "That describes a 2:1 ratio — the inverse pattern. Obstructive patients especially would suffer from it. The display shows 1:2, which is the normal direction." },
       ],
     },
   ],

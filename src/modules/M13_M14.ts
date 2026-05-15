@@ -332,14 +332,18 @@ export const M14: ModuleConfig = {
     },
     {
       id: 'M14-Q2',
+      // Fix 5: rewrote to reflect the actual state of the literature.
+      // ICU-ROX, HOT-ICU, LOCO2, and OXYGEN-ICU produced mixed signals.
+      // The defensible answer is "mixed results with a harm signal from
+      // liberal O2," not "conservative reduces mortality."
       prompt: 'Conservative oxygen therapy (PaO2 70–100, SpO2 94–98) compared to liberal (PaO2 up to 150, SpO2 97–100) in ICU patients:',
       options: [
-        { label: 'Increased mortality', is_correct: false },
-        { label: 'Reduced mortality in a recent RCT', is_correct: true },
-        { label: 'Made no difference', is_correct: false },
-        { label: 'Increased length of stay', is_correct: false },
+        { label: 'Reduced mortality across every major trial', is_correct: false },
+        { label: 'Showed mixed results across RCTs, with signals of harm from liberal oxygen but no consistent mortality benefit', is_correct: true },
+        { label: 'Increased mortality consistently', is_correct: false },
+        { label: 'Was not studied in critically ill patients', is_correct: false },
       ],
-      explanation: 'Conservative oxygen therapy has been associated with reduced mortality. Book Ch. 8, cited in Owens.',
+      explanation: 'ICU-ROX, HOT-ICU, and LOCO2 produced mixed signals. The consistent finding is that liberal oxygen (PaO2 >150 sustained) appears harmful; the case for tight conservative targets is less settled. Book Ch. 8 and current trial literature.',
     },
     {
       id: 'M14-Q3',

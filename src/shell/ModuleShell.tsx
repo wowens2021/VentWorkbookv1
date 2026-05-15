@@ -913,7 +913,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
               objectiveSatisfied={objectiveSatisfied}
               onReset={onResetToStart}
               onContinueToDebrief={advanceFromTryIt}
-              onShowHint={() => setLastInteractMs(Date.now() - 26_000)}  // F7: tier 1 fires at 25 s
+              onShowHint={() => setLastInteractMs(Date.now() - 46_000)}  // Fix 7: tier 1 now fires at 45 s of idle, so subtract 46_000 ms to push the ladder one tick past it.
               progress={childStates.length > 0 ? childStates : undefined}
               onRedo={onRedoTask}
               outcomeProgress={outcomeProgress}
@@ -1153,8 +1153,16 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
 
                     {/* Timing footer */}
                     <div className="mt-5 pt-4 border-t border-stone-100 grid grid-cols-2 gap-3">
-                      <TimingCard label="Task completion" value={fmtSec(taskSec)} />
-                      <TimingCard label="Total module time" value={fmtSec(totalSec)} />
+                      <TimingCard
+                        label="Task completion"
+                        value={fmtSec(taskSec)}
+                        help="Wall-clock seconds from when you started Phase 4 until the objective was satisfied."
+                      />
+                      <TimingCard
+                        label="Active engagement time"
+                        value={fmtSec(totalSec)}
+                        help="Counted only while this tab is visible and you're actively interacting. Idle time and background tabs don't count."
+                      />
                     </div>
                   </div>
                 );
@@ -1602,10 +1610,26 @@ const BreakdownRow: React.FC<{
   );
 };
 
-/** Two-up timing summary cell. */
-const TimingCard: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+/**
+ * Two-up timing summary cell. Optional `help` text renders a (?) tooltip
+ * next to the label so the learner can see what the number actually means.
+ * Fix 2: "Total module time" → "Active engagement time" with help text
+ * that calls out the active-tab + non-idle gating, since the value isn't
+ * wall-clock.
+ */
+const TimingCard: React.FC<{ label: string; value: string; help?: string }> = ({ label, value, help }) => (
   <div className="bg-stone-50 border border-stone-100 rounded-lg px-3 py-2">
-    <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-0.5">{label}</div>
+    <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-0.5 flex items-center gap-1.5">
+      <span>{label}</span>
+      {help && (
+        <span
+          className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-stone-200 text-stone-600 text-[8px] font-bold cursor-help"
+          title={help}
+        >
+          ?
+        </span>
+      )}
+    </div>
     <div className="text-[15px] font-mono font-bold text-zinc-900">{value}</div>
   </div>
 );

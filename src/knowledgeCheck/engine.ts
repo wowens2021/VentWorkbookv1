@@ -94,14 +94,32 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-/** Build the pool of allowed difficulty tiers given progress. */
+/**
+ * Tier-unlock thresholds — exported so the start-screen banner can render
+ * concrete counts ("Complete 2 more Foundations/Physiology modules to
+ * unlock Intermediate"). Edit here, not in the banner copy.
+ */
+export const TIER_UNLOCK = {
+  intermediateFromNovice: 3,
+  advancedFromIntermediate: 2,
+} as const;
+
+/**
+ * Build the pool of allowed difficulty tiers given progress.
+ *
+ * Tier thresholds were tightened (Fix 1) so a single 12-minute Novice module
+ * no longer unlocks ARMA-level Intermediate questions. Mastery has to
+ * accumulate before a new tier opens. A single completed module in the new
+ * tier itself ALSO unlocks it — so a learner who skipped ahead and finished
+ * one Intermediate module still gets that tier's questions.
+ */
 function unlockedTiers(progress: LearnerProgress): KCDifficulty[] {
   // Novice is always available so brand-new learners have something to do.
   const tiers: KCDifficulty[] = ['Novice'];
-  if (progress.completedByTier.Novice >= 1 || progress.completedByTier.Intermediate >= 1) {
+  if (progress.completedByTier.Novice >= 3 || progress.completedByTier.Intermediate >= 1) {
     tiers.push('Intermediate');
   }
-  if (progress.completedByTier.Intermediate >= 1 || progress.completedByTier.Advanced >= 1) {
+  if (progress.completedByTier.Intermediate >= 2 || progress.completedByTier.Advanced >= 1) {
     tiers.push('Advanced');
   }
   return tiers;

@@ -101,7 +101,7 @@ export const M4: ModuleConfig = {
         require_acknowledgment: {
           question: "You just dropped this patient's compliance to the ARDS range. The pressures rose. The gap between PIP and Pplat:",
           options: [
-            { label: 'Stayed about the same — the gap is set by resistance, not compliance', is_correct: true, explanation: "Right. The gap is the R·flow term in the equation of motion. Resistance didn't change, so the gap didn't change." },
+            { label: 'Stayed about the same — the gap is set by resistance, not compliance', is_correct: true, explanation: "The gap is the R·flow term in the equation of motion. Resistance didn't change, so the gap didn't change." },
             { label: 'Widened — because both pressures rose', is_correct: false, explanation: 'The gap is PIP − Pplat, not their sum. Both rose by similar amounts.' },
             { label: 'Closed completely', is_correct: false, explanation: 'A closed gap means zero airway resistance — very rare even in healthy people on the vent.' },
           ],
@@ -115,7 +115,7 @@ export const M4: ModuleConfig = {
         require_acknowledgment: {
           question: 'You just spiked resistance — think mucus plug or bronchospasm. Which pressure moved more?',
           options: [
-            { label: 'PIP moved much more than Pplat — the gap is now wide', is_correct: true, explanation: "Right. Mucus, bronchospasm, kinked tube — all raise resistance, which lives only in the R·flow term. PIP gets the whole hit; Pplat doesn't." },
+            { label: 'PIP moved much more than Pplat — the gap is now wide', is_correct: true, explanation: "Mucus, bronchospasm, kinked tube — all raise resistance, which lives only in the R·flow term. PIP gets the whole hit; Pplat doesn't." },
             { label: 'Both rose equally', is_correct: false, explanation: "That's the compliance signature. Resistance is asymmetric." },
             { label: "Pplat rose, PIP didn't", is_correct: false, explanation: 'Physically impossible. PIP ≥ Pplat always.' },
           ],

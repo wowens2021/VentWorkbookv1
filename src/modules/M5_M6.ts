@@ -104,7 +104,7 @@ export const M5: ModuleConfig = {
             require_acknowledgment: {
               question: 'You cranked FiO2 to 90%. The SpO2 barely moved. Best explanation?',
               options: [
-                { label: "Shunt — the blood goes past alveoli that have no air in them. Adding more oxygen to the rest doesn't fix that blood.", is_correct: true, explanation: "Right. Shunt is the FiO2-resistant cause of hypoxemia. The fix is to *open* the closed alveoli — that's PEEP, not FiO2." },
+                { label: "Shunt — the blood goes past alveoli that have no air in them. Adding more oxygen to the rest doesn't fix that blood.", is_correct: true, explanation: "Shunt is the FiO2-resistant cause of hypoxemia. The fix is to *open* the closed alveoli — that's PEEP, not FiO2." },
                 { label: 'V/Q mismatch — needs more FiO2', is_correct: false, explanation: "V/Q mismatch *responds* to FiO2 — you'd have seen the SpO2 climb. Failure to respond is the bedside test for shunt." },
                 { label: 'Dead space — needs higher rate', is_correct: false, explanation: 'Dead space causes hypercapnia, not refractory hypoxemia.' },
               ],
@@ -125,7 +125,7 @@ export const M5: ModuleConfig = {
             require_acknowledgment: {
               question: 'You cranked rate to 30. MVe went up. PaCO2 went *up* too, not down. Best explanation?',
               options: [
-                { label: 'Dead-space ventilation rose proportionally — same minute volume, less of it is alveolar', is_correct: true, explanation: "Right. Anatomic dead space is ~150 mL per breath. At rate 30, you're wasting 4.5 L/min of dead-space ventilation. The patient is hyperventilating air past his own dead space." },
+                { label: 'Dead-space ventilation rose proportionally — same minute volume, less of it is alveolar', is_correct: true, explanation: "Anatomic dead space is ~150 mL per breath. At rate 30, you're wasting 4.5 L/min of dead-space ventilation. The patient is hyperventilating air past his own dead space." },
                 { label: 'The vent is malfunctioning', is_correct: false, explanation: 'No — this is exactly what the physiology predicts.' },
                 { label: 'PEEP needs to come up', is_correct: false, explanation: "PEEP doesn't change dead-space ratio. The fix is *bigger* breaths, slower rate." },
               ],

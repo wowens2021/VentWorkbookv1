@@ -14,7 +14,7 @@ export const M11: ModuleConfig = {
   estimated_minutes: 16,
   briefing: {
     tagline: 'The patient is telling you something. Don\'t silence them — read the waveform.',
-    overview: "When a ventilated patient looks uncomfortable, the reflex is to push the sedation dial. Resist. The patient is telling you something. Owens groups dyssynchronies into three buckets — bad triggering, bad assistance, bad termination — and within those, a handful of patterns recur in the ICU. The waveform tells you which one. Once you can name the pattern, the fix is mode-specific and pattern-specific.",
+    overview: "When a ventilated patient looks uncomfortable, the reflex is to push the sedation dial. Resist. The patient is telling you something. Owens groups dyssynchronies into three buckets — bad triggering, bad assistance, bad termination — and within those, a handful of patterns recur in the ICU. The waveform tells you which one. Once you can name the pattern, the fix is mode-specific and pattern-specific. Note: this module describes each dyssynchrony pattern in clinical vignettes — the live sim shows a reference patient with smooth synchrony as your baseline. Future builds will render each pattern as a live waveform.",
     what_youll_do: [
       'Three reference patterns with annotated waveforms: ineffective triggering, double triggering, flow starvation.',
       'Each pattern has one distinctive feature on the pressure waveform.',
@@ -82,7 +82,7 @@ export const M11: ModuleConfig = {
         prompt: {
           prompt_id: 'M11-s1',
           trigger: { kind: 'on_load' },
-          question: '65 yo with COPD on VCV. Auto-PEEP measured 9 cmH2O. On the pressure waveform you see small downward deflections (patient effort) with no delivered breath. What pattern is this?',
+          question: 'Bedside vignette: 65 yo with COPD on VCV. Auto-PEEP measured 9 cmH2O. The pressure trace shows small downward deflections (patient effort) with no delivered breath after them. What pattern is this?',
           options: [
             { label: 'Ineffective triggering', is_correct: true },
             { label: 'Normal breathing', is_correct: false },
@@ -97,7 +97,7 @@ export const M11: ModuleConfig = {
         prompt: {
           prompt_id: 'M11-s2',
           trigger: { kind: 'on_load' },
-          question: '35 yo ARDS on VCV Vt 400 (6 mL/kg), strong respiratory drive. On the pressure waveform you see two breaths delivered back-to-back with no expiration between them. What pattern is this?',
+          question: 'Bedside vignette: 35 yo ARDS on VCV Vt 400 (6 mL/kg), strong respiratory drive. The pressure trace shows two breaths delivered back-to-back with no expiration between them. What pattern is this?',
           options: [
             { label: 'Double triggering', is_correct: true },
             { label: 'Normal breathing', is_correct: false },
@@ -112,7 +112,7 @@ export const M11: ModuleConfig = {
         prompt: {
           prompt_id: 'M11-s3',
           trigger: { kind: 'on_load' },
-          question: '50 yo asthma on PRVC, visible air hunger. During inspiration the pressure waveform scoops downward — the patient is pulling against the vent. What pattern is this?',
+          question: 'Bedside vignette: 50 yo asthma on PRVC, visible air hunger. The pressure trace scoops downward during inspiration — the patient is pulling against the vent. What pattern is this?',
           options: [
             { label: 'Flow starvation', is_correct: true },
             { label: 'Normal breathing', is_correct: false },
@@ -204,7 +204,7 @@ export const M11: ModuleConfig = {
   ],
 
   explore_card: {
-    patient_context: 'A reference patient on PSV with smooth synchrony — so you have a baseline to compare against. The dyssynchrony patterns in this module appear as bedside vignettes (described in the prompt), not live on the waveform; the spec calls for pre-rendered clips that aren\'t in this build yet.',
+    patient_context: 'The live sim on the left is your synchrony reference — a calm patient on PSV with smooth triggering, decelerating inspiratory flow, and expiratory flow returning to zero before the next breath. The dyssynchrony patterns themselves are delivered as bedside vignettes in the recognition prompts (text only) — they are not rendered as live waveforms on this sim yet. Future builds will add pre-rendered clips for each pattern; for now, read the vignette, picture the trace, name the pattern.',
     unlocked_controls_description: [],
     readouts_description: [
       { name: 'Pressure and flow waveforms', description: 'smooth triggering, decelerating inspiratory flow, expiratory flow returning to zero before the next breath. This is what synchrony looks like.' },

@@ -4,6 +4,7 @@ import {
   readLearnerProgress,
   selectQuestions,
   evaluateMastery,
+  TIER_UNLOCK,
   type SelectedQuestion,
   type AnsweredQuestion,
   type MasteryResult,
@@ -215,25 +216,60 @@ const StartScreen: React.FC<{
           </div>
         )}
 
-        {/* Module reminder */}
-        {progress.totalCompleted < 19 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-            <BookOpen size={16} className="text-amber-700 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-[13px] text-amber-900 leading-relaxed">
-                Higher-tier questions unlock as you complete more modules.
-                {progress.completedByTier.Intermediate === 0 && progress.totalByTier.Intermediate > 0 && ' Complete a Modes module to unlock Intermediate-tier questions.'}
-                {progress.completedByTier.Advanced === 0 && progress.totalByTier.Advanced > 0 && ' Complete a Strategy/Weaning/Synthesis module to unlock Advanced-tier questions.'}
-              </p>
-              <button
-                onClick={onBrowseModules}
-                className="mt-2 text-[12px] font-bold text-amber-800 hover:text-amber-900 underline underline-offset-2"
-              >
-                Browse simulations →
-              </button>
+        {/* Module reminder — Fix 1: surface concrete counts using the
+            tightened tier-unlock thresholds, not vague "complete a module"
+            copy. Computed inline so the text mirrors what the engine
+            actually checks. */}
+        {progress.totalCompleted < 19 && (() => {
+          const novNeed = Math.max(
+            0,
+            TIER_UNLOCK.intermediateFromNovice - progress.completedByTier.Novice,
+          );
+          const interNeed = Math.max(
+            0,
+            TIER_UNLOCK.advancedFromIntermediate - progress.completedByTier.Intermediate,
+          );
+          const intermediateLocked =
+            progress.completedByTier.Intermediate === 0 &&
+            progress.totalByTier.Intermediate > 0 &&
+            novNeed > 0;
+          const advancedLocked =
+            progress.completedByTier.Advanced === 0 &&
+            progress.totalByTier.Advanced > 0 &&
+            interNeed > 0;
+          return (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+              <BookOpen size={16} className="text-amber-700 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-[13px] text-amber-900 leading-relaxed">
+                  Higher-tier questions unlock as you build mastery across more modules.
+                  {intermediateLocked && (
+                    <>
+                      {' '}
+                      Complete <strong>{novNeed} more Foundations/Physiology module
+                      {novNeed === 1 ? '' : 's'}</strong> to unlock Intermediate-tier questions
+                      (or finish one Modes module to skip the threshold).
+                    </>
+                  )}
+                  {advancedLocked && (
+                    <>
+                      {' '}
+                      Complete <strong>{interNeed} more Modes module
+                      {interNeed === 1 ? '' : 's'}</strong> to unlock Advanced-tier questions
+                      (or finish one Strategy/Weaning/Synthesis module).
+                    </>
+                  )}
+                </p>
+                <button
+                  onClick={onBrowseModules}
+                  className="mt-2 text-[12px] font-bold text-amber-800 hover:text-amber-900 underline underline-offset-2"
+                >
+                  Browse modules →
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
@@ -270,8 +306,12 @@ const TierCard: React.FC<{ tier: KCDifficulty; unlocked: boolean; completed: num
 function unlockedTiersForDisplay(p: LearnerProgress): Record<KCDifficulty, boolean> {
   return {
     Novice: true,
-    Intermediate: p.completedByTier.Novice >= 1 || p.completedByTier.Intermediate >= 1,
-    Advanced: p.completedByTier.Intermediate >= 1 || p.completedByTier.Advanced >= 1,
+    Intermediate:
+      p.completedByTier.Novice >= TIER_UNLOCK.intermediateFromNovice ||
+      p.completedByTier.Intermediate >= 1,
+    Advanced:
+      p.completedByTier.Intermediate >= TIER_UNLOCK.advancedFromIntermediate ||
+      p.completedByTier.Advanced >= 1,
   };
 }
 
