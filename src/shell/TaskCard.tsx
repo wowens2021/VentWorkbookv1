@@ -1,6 +1,35 @@
 import React from 'react';
-import { Target, RotateCcw, ChevronRight, Lightbulb, Check, Circle, Activity } from 'lucide-react';
+import { Target, RotateCcw, ChevronRight, Lightbulb, Check, Circle, Activity, X } from 'lucide-react';
 import type { TaskFramingStyle } from './types';
+
+/**
+ * Friendly display labels for readout keys, used in the TaskCard's
+ * per-criterion live cards. Keep these short — they live inside small
+ * cards. Falls back to the raw key for any unmapped readout.
+ */
+const READOUT_LABEL: Record<string, string> = {
+  pip: 'PIP',
+  plat: 'Pplat',
+  drivingPressure: 'Driving P',
+  mve: 'MVe',
+  vte: 'Vte',
+  totalPeep: 'Total PEEP',
+  autoPeep: 'Auto-PEEP',
+  actualRate: 'Rate',
+  ieRatio: 'I:E',
+  rsbi: 'RSBI',
+  ph: 'pH',
+  paco2: 'PaCO2',
+  pao2: 'PaO2',
+  spo2: 'SpO2',
+  hco3: 'HCO3',
+  fio2: 'FiO2',
+  peep: 'PEEP',
+  tidalVolumeSet: 'Set Vt',
+  meanAirwayPressure: 'Mean Paw',
+  sbp: 'SBP',
+  etco2: 'ETCO2',
+};
 
 interface Props {
   userFacingTask: string;
@@ -126,11 +155,16 @@ const TaskCard: React.FC<Props> = ({
 
   return (
     <div className="h-full flex flex-col px-5 py-4 overflow-y-auto">
-      <div className="flex items-center gap-2 mb-2">
-        <Target size={16} className="text-rose-600" />
+      {/* Task header — slightly larger icon + cleaner kicker chip for the
+          framing style. The framing-style chip used to be a tiny mono
+          tag in the corner; now it's a small pill that reads naturally. */}
+      <div className="flex items-center gap-2 mb-2.5">
+        <div className="w-6 h-6 rounded-md bg-rose-100 flex items-center justify-center shrink-0">
+          <Target size={14} className="text-rose-600" strokeWidth={2.5} />
+        </div>
         <h2 className="text-[11px] font-black uppercase tracking-widest text-rose-700">Your task</h2>
         {framingStyle && (
-          <span className="ml-auto text-[10px] font-mono text-zinc-400">
+          <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
             {framingStyle === 'A' ? 'direct' : framingStyle === 'B' ? 'clinical' : 'recognition'}
           </span>
         )}
@@ -199,10 +233,10 @@ const TaskCard: React.FC<Props> = ({
 
       {successCriteria.length > 0 && !sequential && (
         <section className="mb-4">
-          <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500 block mb-1.5">
+          <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500 block mb-2">
             Success criteria
           </span>
-          <ul className="space-y-1.5">
+          <ul className="space-y-2 bg-stone-50 border border-stone-200 rounded-lg p-3">
             {successCriteria.map((c, i) => {
               // F3: show a filled check for satisfied steps, hollow circle otherwise.
               // Only applied when the shell provided a progress array (compound trackers).
@@ -219,32 +253,30 @@ const TaskCard: React.FC<Props> = ({
               return (
                 <li
                   key={i}
-                  className={`text-[13px] leading-snug flex items-start gap-2 transition ${
-                    isActive ? 'bg-sky-50 border border-sky-200 rounded-md px-2 py-1' : ''
+                  className={`text-[13px] leading-snug flex items-start gap-2.5 transition ${
+                    isActive ? 'bg-sky-50 border border-sky-300 rounded-md px-2 py-1.5 -mx-1 shadow-sm' : ''
                   }`}
                 >
                   {hasProgress ? (
                     done ? (
-                      <Check
-                        size={14}
-                        strokeWidth={3}
-                        className="text-emerald-600 mt-0.5 shrink-0 transition-opacity"
-                      />
+                      <div className="mt-0.5 shrink-0 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm transition">
+                        <Check size={11} strokeWidth={3.5} className="text-white" />
+                      </div>
                     ) : isActive ? (
-                      <span className="mt-1 shrink-0 inline-block w-2 h-2 rounded-full bg-sky-500 ring-2 ring-sky-200" />
+                      <span className="mt-1 shrink-0 inline-block w-3 h-3 rounded-full bg-sky-500 ring-2 ring-sky-200 animate-pulse" />
                     ) : (
-                      <Circle size={13} className="text-zinc-300 mt-0.5 shrink-0" />
+                      <Circle size={14} className="text-zinc-300 mt-0.5 shrink-0" strokeWidth={2} />
                     )
                   ) : (
-                    <span className="text-emerald-600 mt-0.5">•</span>
+                    <span className="text-emerald-600 mt-0.5 text-base leading-none">•</span>
                   )}
                   <span
                     className={
                       done
                         ? 'text-zinc-400 line-through'
                         : isActive
-                          ? 'text-sky-900 font-semibold'
-                          : 'text-zinc-500'
+                          ? 'text-sky-900 font-bold'
+                          : 'text-zinc-700 font-medium'
                     }
                   >
                     {c}
@@ -256,62 +288,110 @@ const TaskCard: React.FC<Props> = ({
         </section>
       )}
 
-      {/* B2: live "you're getting warmer" chip. Shown only while progress > 0
-          and not yet satisfied; gives the learner a visible signal that their
-          adjustments are landing in range before the tracker fires. */}
+      {/* B2 + appearance polish: live "you're getting warmer" panel.
+          Larger, more prominent layout — bigger counter, full-width
+          chunky progress bar, and per-criterion live cards with
+          friendly labels, current values, and target thresholds. */}
       {outcomeProgress && outcomeProgress.target > 0 && (
-        <div className="mb-4 -mt-1 animate-in fade-in duration-200">
-          <div className="flex items-center gap-2 px-3 py-2 bg-sky-50 border border-sky-200 rounded-lg">
-            <Activity size={14} className="text-sky-600 shrink-0" />
-            <span className="text-[12px] font-bold text-sky-900">
-              Holding {outcomeProgress.current} of {outcomeProgress.target} {outcomeProgress.label ?? 'breaths'}…
-            </span>
-            <div className="flex-1 h-1.5 rounded-full bg-sky-100 overflow-hidden ml-2">
-              <div
-                className="h-full bg-sky-500 rounded-full transition-all"
-                style={{ width: `${Math.min(100, (outcomeProgress.current / outcomeProgress.target) * 100)}%` }}
-              />
-            </div>
-          </div>
-          {/* Novice-pass §15.2: per-readout pass/fail strip. Pairs the
-              "Holding X of Y" chip with explicit "which criterion is
-              breaking the streak" feedback so a learner doesn't spin. */}
-          {outcomeProgress.byReadout && outcomeProgress.byReadout.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {outcomeProgress.byReadout.map(r => (
-                <span
-                  key={r.name}
-                  className={`text-[10.5px] font-mono font-bold px-1.5 py-0.5 rounded border ${
-                    r.passing
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                      : 'bg-rose-50 border-rose-300 text-rose-800'
-                  }`}
-                >
-                  {r.name} {typeof r.current === 'number' ? r.current.toFixed(0) : String(r.current)}
-                  <span className="opacity-60">
-                    {' '}
-                    ({r.operator} {String(r.threshold)})
-                  </span>
-                  {r.passing ? ' ✓' : ' ✗'}
+        <div className="mb-4 -mt-1 animate-in fade-in duration-300">
+          <div className="rounded-xl border-2 border-sky-300 bg-gradient-to-br from-sky-50 to-white shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2.5 px-4 pt-3 pb-2">
+              <div className="w-7 h-7 rounded-full bg-sky-600 flex items-center justify-center shrink-0 shadow-sm">
+                <Activity size={15} className="text-white" strokeWidth={2.5} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-black uppercase tracking-widest text-sky-700 leading-none mb-0.5">
+                  Holding breath streak
+                </div>
+                <div className="text-[14px] font-bold text-sky-900 leading-tight">
+                  {outcomeProgress.label ?? 'breaths within target'}
+                </div>
+              </div>
+              <div className="flex items-baseline gap-1 shrink-0 font-mono">
+                <span className="text-3xl font-black text-sky-700 leading-none tabular-nums">
+                  {outcomeProgress.current}
                 </span>
-              ))}
+                <span className="text-base font-bold text-sky-400 leading-none">/{outcomeProgress.target}</span>
+              </div>
             </div>
-          )}
+            <div className="px-4 pb-3">
+              <div className="h-2.5 rounded-full bg-sky-100 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-sky-500 to-sky-600 rounded-full transition-all duration-500 shadow-inner"
+                  style={{ width: `${Math.min(100, (outcomeProgress.current / outcomeProgress.target) * 100)}%` }}
+                />
+              </div>
+            </div>
+            {/* Per-criterion live cards. Each readout gets a small card
+                showing its name, current value, threshold, and pass/fail
+                color so the learner sees WHICH criterion is the bottleneck. */}
+            {outcomeProgress.byReadout && outcomeProgress.byReadout.length > 0 && (
+              <div className="px-3 pb-3 grid grid-cols-2 gap-2">
+                {outcomeProgress.byReadout.map(r => {
+                  const label = READOUT_LABEL[r.name] ?? r.name;
+                  const opSymbol = r.operator === '>=' ? '≥'
+                    : r.operator === '<=' ? '≤'
+                    : r.operator === '>' ? '>'
+                    : r.operator === '<' ? '<'
+                    : r.operator === '==' ? '='
+                    : r.operator;
+                  const currentDisplay = typeof r.current === 'number'
+                    ? r.current.toFixed(0)
+                    : String(r.current);
+                  return (
+                    <div
+                      key={r.name}
+                      className={`rounded-lg border-2 px-2.5 py-1.5 transition-colors ${
+                        r.passing
+                          ? 'bg-emerald-50 border-emerald-300'
+                          : 'bg-rose-50 border-rose-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${
+                          r.passing ? 'text-emerald-700' : 'text-rose-700'
+                        }`}>
+                          {label}
+                        </span>
+                        {r.passing ? (
+                          <Check size={13} strokeWidth={3} className="text-emerald-600 shrink-0" />
+                        ) : (
+                          <X size={13} strokeWidth={3} className="text-rose-600 shrink-0" />
+                        )}
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className={`text-lg font-mono font-black leading-none tabular-nums ${
+                          r.passing ? 'text-emerald-900' : 'text-rose-900'
+                        }`}>
+                          {currentDisplay}
+                        </span>
+                        <span className={`text-[10px] font-bold ${
+                          r.passing ? 'text-emerald-600' : 'text-rose-600'
+                        }`}>
+                          target {opSymbol} {String(r.threshold)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       <div className="mt-auto flex items-center gap-2 pt-4 border-t border-zinc-200">
         <button
           onClick={onShowHint}
-          className="flex items-center gap-1.5 text-[12px] font-bold text-amber-700 hover:text-amber-800"
+          className="flex items-center gap-1.5 text-[12.5px] font-bold text-amber-700 hover:text-amber-800 transition"
         >
-          <Lightbulb size={13} /> Stuck? Show a hint
+          <Lightbulb size={14} strokeWidth={2.5} /> Stuck? Show a hint
         </button>
         <button
           onClick={onReset}
-          className="ml-auto flex items-center gap-1.5 px-3 py-2 bg-white border border-zinc-300 hover:bg-stone-50 rounded-lg text-[12px] font-bold text-zinc-700 transition"
+          className="ml-auto flex items-center gap-1.5 px-3 py-2 bg-white border border-zinc-300 hover:bg-stone-100 hover:border-zinc-400 rounded-lg text-[12.5px] font-bold text-zinc-700 transition shadow-sm"
         >
-          <RotateCcw size={13} /> Reset to start
+          <RotateCcw size={13} strokeWidth={2.5} /> Reset to start
         </button>
       </div>
     </div>

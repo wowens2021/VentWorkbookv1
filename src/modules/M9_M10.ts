@@ -389,25 +389,18 @@ export const M10: ModuleConfig = {
         control: 'psLevel',
         condition: { type: 'range', min: 10, max: 14 },
       },
-      // Novice-pass §10.2 — the original criterion let a learner pass
-      // with Vt as low as 280 if they slammed PS down to single-digit
-      // territory. Add a lower bound so the range matches the
-      // 6–8 mL/kg PBW target the primer teaches (~380–470 for this
-      // 73-kg PBW patient).
+      // Novice-pass §10.2 — Vte needs a true range (380–480 for this
+      // 73-kg PBW patient). Now uses the array form on a single outcome
+      // so the per-criterion strip on the TaskCard shows both bounds as
+      // distinct cards.
       {
         kind: 'outcome',
         readouts: {
           actualRate: { operator: '>=', value: 14 },
-          vte: { operator: '<=', value: 480 },
-        },
-        sustain_breaths: 5,
-      },
-      // Paired lower-bound check so the criterion is a true range, not
-      // an upper-only ceiling.
-      {
-        kind: 'outcome',
-        readouts: {
-          vte: { operator: '>=', value: 380 },
+          vte: [
+            { operator: '>=', value: 380 },
+            { operator: '<=', value: 480 },
+          ],
         },
         sustain_breaths: 5,
       },

@@ -180,7 +180,14 @@ export interface ManipulationTrackerConfig {
 
 export interface OutcomeTrackerConfig {
   kind: 'outcome';
-  readouts: Partial<Record<ReadoutName, ReadoutCondition>>;
+  /**
+   * Per-readout condition(s). Accepts either a single condition (the
+   * legacy single-bound form) or an array of conditions — used when a
+   * readout needs both a lower and an upper bound to define a range
+   * (e.g. M8's "Vt 410–470 mL"). All conditions in the array must
+   * pass for the readout to be satisfied.
+   */
+  readouts: Partial<Record<ReadoutName, ReadoutCondition | ReadoutCondition[]>>;
   sustain_breaths?: number; // default 1
 }
 

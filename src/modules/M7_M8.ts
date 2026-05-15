@@ -374,10 +374,19 @@ export const M8: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
+  // Bug fix — the task framing says "Vt 410–470 mL" but the tracker
+  // previously checked only the upper bound. A learner stuck at Vt 348
+  // saw all three chips green ("vte 348 ≤ 470 ✓") and the counter
+  // "Holding 3 of 5" froze. With the new array-of-conditions form for
+  // ReadoutCondition, Vte gets both bounds and both render as
+  // distinct cards in the per-criterion strip.
   hidden_objective: {
     kind: 'outcome',
     readouts: {
-      vte: { operator: '<=', value: 470 },
+      vte: [
+        { operator: '>=', value: 410 },
+        { operator: '<=', value: 470 },
+      ],
       pip: { operator: '<=', value: 30 },
       drivingPressure: { operator: '<=', value: 15 },
     },

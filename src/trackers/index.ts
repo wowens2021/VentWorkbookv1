@@ -111,13 +111,16 @@ function applyOp(a: number | boolean, op: string, b: number | boolean): boolean 
 
 function readoutsSatisfied(
   readings: Partial<Record<ReadoutName, number | boolean>>,
-  required: Partial<Record<ReadoutName, ReadoutCondition>>,
+  required: Partial<Record<ReadoutName, ReadoutCondition | ReadoutCondition[]>>,
 ): boolean {
   return (Object.keys(required) as ReadoutName[]).every(key => {
     const cond = required[key];
     const val = readings[key];
     if (cond === undefined || val === undefined) return false;
-    return applyOp(val, cond.operator, cond.value);
+    // A readout key can carry a single condition or an array — when
+    // it's an array (range form), ALL conditions must pass.
+    const conds = Array.isArray(cond) ? cond : [cond];
+    return conds.every(c => applyOp(val, c.operator, c.value));
   });
 }
 
@@ -209,18 +212,31 @@ export class OutcomeTracker implements Tracker {
     const target = this.cfg.sustain_breaths ?? 1;
     // Novice-pass §15.2: per-readout breakdown for the TaskCard chip strip.
     // Each entry tells the learner WHICH specific criterion is failing.
+    // When a readout carries an array of conditions (range form, e.g.
+    // M8's Vte 410–470), emit one row per condition so the learner can
+    // see both bounds and which one is failing.
     const required = this.cfg.readouts;
-    const byReadout = (Object.keys(required) as ReadoutName[]).map(name => {
-      const cond = required[name]!;
+    const byReadout: {
+      name: ReadoutName;
+      current: number | boolean;
+      threshold: number | boolean;
+      operator: string;
+      passing: boolean;
+    }[] = [];
+    (Object.keys(required) as ReadoutName[]).forEach(name => {
+      const condOrArr = required[name]!;
       const current = ev.computed_readouts[name];
-      const passing = current !== undefined && applyOp(current, cond.operator, cond.value);
-      return {
-        name,
-        current: current ?? 0,
-        threshold: cond.value,
-        operator: cond.operator,
-        passing,
-      };
+      const conds = Array.isArray(condOrArr) ? condOrArr : [condOrArr];
+      conds.forEach(cond => {
+        const passing = current !== undefined && applyOp(current, cond.operator, cond.value);
+        byReadout.push({
+          name,
+          current: current ?? 0,
+          threshold: cond.value,
+          operator: cond.operator,
+          passing,
+        });
+      });
     });
     const allPassing = byReadout.every(r => r.passing);
     if (allPassing) {
