@@ -1552,12 +1552,16 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
             </div>
           )}
 
-          {/* Workbook — only renders for modules. Playground hides it entirely. */}
+          {/* Workbook — only renders for modules. Playground hides it entirely.
+              The outer border picks up the brand-olive trim so the workbook
+              reads as the "owens-flavored" half of the screen. */}
           {!playgroundMode && (
-            <div className="bg-white rounded-xl border border-zinc-200 flex-1 flex flex-col overflow-hidden min-h-0 shadow-sm">
-              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 shrink-0">
-                <BookOpen size={14} className="text-sky-600" />
-                <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">Workbook</span>
+            <div className="bg-white rounded-xl border-2 border-brand-olive/25 flex-1 flex flex-col overflow-hidden min-h-0 shadow-md ring-1 ring-brand-olive/10">
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b-2 border-brand-olive/20 bg-gradient-to-r from-brand-olive/[0.08] via-white to-transparent shrink-0">
+                <div className="w-6 h-6 rounded-md bg-brand-olive flex items-center justify-center shrink-0">
+                  <BookOpen size={13} className="text-white" strokeWidth={2.5} />
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-brand-olive">Workbook</span>
               </div>
               <div className="flex-1 overflow-hidden min-h-0">
                 {workbookContent ?? (
