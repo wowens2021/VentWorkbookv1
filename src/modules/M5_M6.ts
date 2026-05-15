@@ -1,11 +1,20 @@
 import type { ModuleConfig } from '../shell/types';
 
 /**
- * M5 — Gas Exchange Basics
+ * MODULE M5 — Gas Exchange Basics
+ *
  * Track: Physiology · Archetype: concept demo (compound strict, reset_between) · 16 min
  * Anchor chapters: VB Ch. 4, Ch. 5, Ch. 7
  *
- * Specced verbatim against docs/MODULE_SPECS_v3.md §M5.
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - compliance-as-shunt-proxy mapping in PlaygroundSim:
+ *       compliance 50 → SpO2 ~96%
+ *       compliance 25 → SpO2 ~88%
+ *       compliance 18 → SpO2 ~82%
+ *   - shuntFraction baseline (if used directly) — teaching abstraction, not exact physiology.
+ *
+ * Specced verbatim against docs/MODULE_SPECS_v3.md §M5 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §2. See MODULE_SPECS_v3.md Appendix A.
  */
 export const M5: ModuleConfig = {
   id: 'M5',
@@ -264,7 +273,7 @@ export const M5: ModuleConfig = {
   },
 
   user_facing_task:
-    "Two short experiments. First, induce shunt (drop the compliance) and try to fix the SpO2 with FiO2 alone — and see why it doesn't work. Then induce dead-space (high rate) and see why the PaCO2 paradoxically rises.",
+    "Induce shunt, then induce dead space. Two short experiments. First, induce shunt (drop the compliance) and try to fix the SpO2 with FiO2 alone — and see why it doesn't work. Then induce dead-space (high rate) and see why the PaCO2 paradoxically rises.",
   success_criteria_display: [
     "Crash compliance to ≤ 25, then push FiO2 to ≥ 90% — explain why SpO2 didn't fix.",
     'Push rate to ≥ 30 — explain why PaCO2 went up despite the bigger minute ventilation.',
@@ -281,11 +290,21 @@ export const M5: ModuleConfig = {
 };
 
 /**
- * M6 — Auto-PEEP and Air Trapping
- * Track: Physiology · Archetype: target state, two-stage · 15 min
- * Anchor chapters: VB Ch. 2, Ch. 3 (Commandment IX), Ch. 13, Ch. 15
+ * MODULE M6 — Auto-PEEP and Air Trapping
  *
- * Specced verbatim against docs/MODULE_SPECS_v3.md §M6.
+ * Track: Physiology · Archetype: target state, two-stage · 15 min
+ * Anchor chapters: VB Ch. 2, Ch. 3, Ch. 13, Ch. 15
+ *
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - compliance: 60 — preserved (obstructive disease pattern)
+ *   - resistance: 22 — tuned to make Step 1 induction trip at rate ~26
+ *   - iTime: 1.0 (baseline) — baseline must equal 1.0 for the manipulation
+ *                            to have room
+ *
+ * Change any one of these and Step 1 induction may not trigger.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M6 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §3. See MODULE_SPECS_v3.md Appendix A.
  */
 export const M6: ModuleConfig = {
   id: 'M6',
@@ -462,7 +481,7 @@ export const M6: ModuleConfig = {
       prompt: 'A vent rate increase that raises PaCO2 instead of lowering it should make you suspect:',
       options: [
         { label: 'Dead space', is_correct: false, explanation: 'Possible but not specific to vent-rate effect.' },
-        { label: 'Auto-PEEP — the higher rate compressed expiratory time, more trapping, less effective alveolar ventilation', is_correct: true, explanation: 'Owens, Commandment IX.' },
+        { label: 'Auto-PEEP — the higher rate compressed expiratory time, more trapping, less effective alveolar ventilation', is_correct: true, explanation: 'Owens\'s rule for obstruction: when PaCO2 climbs as you raise the rate, suspect dynamic hyperinflation — the alveolar minute ventilation actually fell.' },
         { label: 'Hypoventilation', is_correct: false, explanation: 'Opposite — you raised MVe.' },
         { label: 'Sensor error', is_correct: false, explanation: 'Diagnosis of exclusion.' },
       ],
@@ -473,7 +492,7 @@ export const M6: ModuleConfig = {
       options: [
         { label: 'Norepinephrine', is_correct: false, explanation: 'Treats the BP, not the cause.' },
         { label: 'Disconnect from the vent, let the patient exhale for 10–15 seconds, then resume with a slower rate', is_correct: true, explanation: 'Book Ch. 15. Trapped air compresses venous return.' },
-        { label: 'Lower the PEEP setting from 5 to 0', is_correct: false, explanation: "Modest applied PEEP doesn't drive the trapping in COPD; the rate does. Disconnect first." },
+        { label: 'Lower the PEEP setting from 5 to 0', is_correct: false, explanation: "Wrong-ish. Modest applied PEEP doesn't drive the trapping in COPD; the rate does. Disconnect first." },
         { label: 'Increase FiO2 to 1.0', is_correct: false, explanation: "Doesn't address mechanics." },
       ],
     },
@@ -511,7 +530,7 @@ export const M6: ModuleConfig = {
   },
 
   user_facing_task:
-    "This 60-year-old man with COPD is being ventilated. Right now he's borderline. Step 1: push him into clinically significant auto-PEEP (≥ 4 cmH2O) — your options are rate, Vt, and I-time. Step 2: now fix it. Bring auto-PEEP back to ≤ 1.5 and hold it for five breaths.",
+    "Trap him, then untrap him. This 60-year-old man with COPD is being ventilated. Right now he's borderline. Step 1: push him into clinically significant auto-PEEP (≥ 4 cmH2O) — your options are rate, Vt, and I-time. Step 2: now fix it. Bring auto-PEEP back to ≤ 1.5 and hold it for five breaths.",
   success_criteria_display: [
     'Induce auto-PEEP ≥ 4 cmH2O, hold for 3 breaths.',
     'Resolve auto-PEEP ≤ 1.5 cmH2O, hold for 5 breaths.',

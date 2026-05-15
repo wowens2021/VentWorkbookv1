@@ -1,16 +1,27 @@
 import type { ModuleConfig } from '../shell/types';
 
-// MODULE_SPECS_v3 §M13 — PEEP.
-//
-// Pin list (do not change without recalibrating PEEP→PaO2 response):
-//   compliance: 32 (moderate ARDS)
-//   resistance: 11
-//   PEEP 5 → PaO2 ~58.  PEEP 10 → ~75.  PEEP 14 → ~88.  PEEP 18 → ~92.
-//   PEEP 22 → ~84 (overdistension), would also drop SBP.
-//
-// Adaptation: spec's outcome includes SBP ≥95 — the sim has no SBP readout,
-// so the hemodynamic ceiling is taught in the explore copy and the
-// summative, not enforced in the tracker.
+/**
+ * MODULE M13 — PEEP
+ *
+ * Track: Strategy · Archetype: outcome (Style B with secondary risk display) · 22 min
+ *
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - compliance: 32, resistance: 11
+ *   - PEEP-PaO2-BP response curve (calibrated):
+ *       PEEP 5  → PaO2 58, BP baseline
+ *       PEEP 10 → PaO2 75
+ *       PEEP 14 → PaO2 88
+ *       PEEP 18 → PaO2 92, SBP drops 15 mmHg
+ *       PEEP 22 → PaO2 84 (overdistension), SBP drops 30 mmHg
+ *
+ * [BLOCKED-SIM] The spec adds an SBP guardrail to the tracker (SBP ≥95)
+ * to teach "don't overshoot PEEP into hypotension." The sim doesn't
+ * currently expose SBP as a readout. The hemodynamic ceiling is taught
+ * in the explore-card prose and summative until the sim is extended.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M13 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §10. See MODULE_SPECS_v3.md Appendix A.
+ */
 export const M13: ModuleConfig = {
   id: 'M13',
   number: 13,
@@ -212,15 +223,30 @@ export const M13: ModuleConfig = {
   ],
 };
 
-// MODULE_SPECS_v3 §M14 — Oxygenation Strategies.
-//
-// Pin list (do not change without recalibrating the FiO2/PEEP response):
-//   compliance: 30 (shunt physiology, severe ARDS)
-//   resistance: 11
-//   PEEP 8, FiO2 1.0: PaO2 ~65, SpO2 ~92 (shunt-limited — the FiO2 clue).
-//   PEEP 14, FiO2 1.0: PaO2 ~102, SpO2 ~99 (recruitment worked).
-//   PEEP 14, FiO2 0.60: PaO2 ~78, SpO2 ~95 (in target).
-//   PEEP 14, FiO2 0.50: PaO2 ~64, SpO2 ~92 (low end of target).
+/**
+ * MODULE M14 — Oxygenation Strategies
+ *
+ * Track: Strategy · Archetype: outcome with multi-axis trade-off · 18 min
+ *
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - shuntFraction: 0.30 (initial preset)
+ *   - PEEP-FiO2-PaO2 response curve (calibrated at shuntFraction 0.30):
+ *       PEEP 8,  FiO2 1.0 → PaO2 65, SpO2 92  (shunt-limited — the FiO2 clue)
+ *       PEEP 14, FiO2 1.0 → PaO2 102, SpO2 99
+ *       PEEP 14, FiO2 0.6 → PaO2 78, SpO2 95
+ *       PEEP 14, FiO2 0.5 → PaO2 64, SpO2 92
+ *   - Prone toggle: when modeled, drops effective shuntFraction from 0.30 → ~0.18.
+ *
+ * [BLOCKED-SIM] The spec asks for a `prone: boolean` sandbox toggle in the
+ * Explore card that drops effective shuntFraction. The sim does not yet
+ * model a separate prone state independently from shuntFraction. The
+ * teaching is preserved in the read prose (FiO2 → PEEP → mean airway
+ * pressure → prone is the escalation ladder); a future sim extension
+ * can add the toggle without altering the rest of the module.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M14 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §11. See MODULE_SPECS_v3.md Appendix A.
+ */
 export const M14: ModuleConfig = {
   id: 'M14',
   number: 14,

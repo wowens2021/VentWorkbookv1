@@ -1,19 +1,32 @@
 import type { ModuleConfig } from '../shell/types';
 
-// MODULE_SPECS_v3 §M15 — ARDS-Specific Ventilation.
-//
-// Pin list (do not change without recalibrating the recipe math):
-//   compliance: 32 (moderate-severe ARDS)
-//   heightInches: 70, gender: M → PBW ≈ 73 kg → 6 mL/kg ≈ 438 mL
-//   At Vt 600, DP = 600/32 = 18.75 (above the Amato threshold)
-//   At Vt 430, PEEP 10, compliance 32: plat = 23.4, DP = 13.4. In target.
-//
-// Adaptation: the spec's outcome includes Vt 410–470 (range), PEEP 8–14
-// (range), and SpO2 88–96 (range). The sim's outcome tracker only takes
-// one condition per readout, so each range is simplified to its
-// load-bearing bound (vte ≤470 ceiling, peep ≥8 floor, spo2 ≥88 floor,
-// fio2 ≤70 ceiling). The lower Vt bound and upper PEEP bound aren't
-// enforced — the physics doesn't naturally drive the learner there.
+/**
+ * MODULE M15 — ARDS-Specific Ventilation
+ *
+ * Track: Strategy · Archetype: compound (multi-condition, sustained) · 25 min
+ *
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - compliance: 32 (moderate-severe ARDS)
+ *   - heightInches: 70, gender: male — PBW = 73 kg; 6 mL/kg = 438 mL
+ *
+ * Calibration:
+ *   Vt 430, PEEP 10, C=32 → plat = 430/32 + 10 = 23.4; DP = 13.4. Lands in target.
+ *   Vt 430, PEEP 5,  C=32 → plat = 18.4; DP = 13.4. DP still good.
+ *   At Vt 600 (start),         DP = 600/32 = 18.75 — above the Amato threshold.
+ *
+ * Pinned target row of ARDSnet table for FiO2 0.6 is PEEP 10.
+ *
+ * Tracker shape: the spec asks for SIX concurrent conditions (Vt 410-470,
+ * plat ≤30, DP ≤15, PEEP 8-14, SpO2 88-96, FiO2 ≤0.7) sustained 5 breaths.
+ * The engine's ReadoutCondition is single-bound per readout, so we use
+ * `tidalVolumeSet >= 410` (lower) paired with `vte <= 470` (upper) for
+ * the Vt range; PEEP and SpO2 ranges are simplified to their
+ * load-bearing bounds (peep ≥8 floor, spo2 ≥88 floor). The upper bounds
+ * (PEEP 14, SpO2 96) are taught in copy but not enforced by the tracker.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M15 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §12. See MODULE_SPECS_v3.md Appendix A.
+ */
 export const M15: ModuleConfig = {
   id: 'M15',
   number: 15,
@@ -93,6 +106,8 @@ export const M15: ModuleConfig = {
   hidden_objective: {
     kind: 'outcome',
     readouts: {
+      // Vt range 410-470 enforced via the SET / DELIVERED pair (see header).
+      tidalVolumeSet: { operator: '>=', value: 410 },
       vte: { operator: '<=', value: 470 },
       plat: { operator: '<=', value: 30 },
       drivingPressure: { operator: '<=', value: 15 },
@@ -132,6 +147,19 @@ export const M15: ModuleConfig = {
       awaits_control: 'peep',
     },
     { kind: 'callout', tone: 'warn', markdown: 'Permissive hypercapnia: pH ≥7.15–7.20 is acceptable. The exception is elevated ICP — hypercapnia causes cerebral vasodilation.' },
+    // Per spec §12 v3.1 — pedagogically central formative.
+    {
+      kind: 'formative',
+      question: 'After your changes, plat is 32 and DP is 17. Your next move is:',
+      options: [
+        { label: 'Lower Vt by 50 mL.', is_correct: true },
+        { label: 'Lower PEEP.', is_correct: false },
+        { label: 'Raise rate.', is_correct: false },
+        { label: 'Sedate more.', is_correct: false },
+      ],
+      answer:
+        'Lower Vt by 50 mL. Plat at 32 is over the ceiling and DP at 17 is over Amato — both signals point at Vt. Lowering PEEP at fixed Vt drops Pplat by an equal amount but also lifts the FRC out from under recruited alveoli; not the first move. Raising rate doesn\'t help mechanics. Sedation doesn\'t help mechanics. Book Ch. 8.',
+    },
   ],
 
   hint_ladder: {
@@ -239,20 +267,33 @@ export const M15: ModuleConfig = {
   ],
 };
 
-// MODULE_SPECS_v3 §M16 — Obstructive Disease Ventilation.
-//
-// Pin list (do not change without recalibrating the auto-PEEP physics):
-//   resistance: 35 (severe bronchospasm)
-//   compliance: 60 (preserved)
-//   Starting rate 22 with iTime 1.0 traps significant gas.
-//   Rate 12, iTime 1.0 (Te ~4 sec) resolves trapping.
-//
-// Adaptation: spec's compound includes mode=VCV, tidalVolume 530–620, RR 10–14,
-// PEEP ≤3, autoPEEP ≤2. Mode and the two control ranges are tested as
-// manipulation children; PEEP and autoPEEP land in the sustained outcome
-// child. tidalVolume range tested via the control (manipulation) rather than
-// the delivered vte readout, since in PCV the delivered volume varies with
-// mechanics and the spec intent is "set Vt to 7–8 mL/kg".
+/**
+ * MODULE M16 — Obstructive Disease Ventilation
+ *
+ * Track: Strategy · Archetype: compound (recognition + correction) · 22 min
+ *
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - resistance: 35 (SEVERE bronchospasm)
+ *   - compliance: 60 (preserved — asthma pattern)
+ *
+ * Auto-PEEP calibration:
+ *   Rate 22, I-time 1.0, R=35 → autoPEEP 8
+ *   Rate 12, I-time 1.0, R=35 → autoPEEP 2
+ *   Rate 10, I-time 0.8, R=35 → autoPEEP 1
+ *
+ * Vt target 530-620 mL is the obstructive recipe (7-8 mL/kg PBW), NOT
+ * the ARDS range (410-470). This deliberate pedagogical contrast with
+ * M15 is the whole point of the module. The success-criteria chip
+ * displays the obstructive range.
+ *
+ * Tracker shape: compound any_order across (a) mode = VCV, (b) tidalVolume
+ * 530-620, (c) respiratoryRate 10-14, (d) sustained PEEP ≤3 + autoPEEP ≤2.
+ * Mode and the two control ranges are tested as manipulation children;
+ * PEEP and autoPEEP land in the sustained outcome child.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M16 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §13. See MODULE_SPECS_v3.md Appendix A.
+ */
 export const M16: ModuleConfig = {
   id: 'M16',
   number: 16,
@@ -390,7 +431,7 @@ export const M16: ModuleConfig = {
   ],
 
   hint_ladder: {
-    tier1: 'Two things are wrong here: the mode and the rate.',
+    tier1: 'Two things are wrong: the mode and the rate.',
     tier2: 'VCV, rate 12, Vt 7–8 mL/kg, PEEP 0. The pH will be low. That\'s permitted.',
     tier3: { hint_text: 'Switch to VCV.', demonstration: { control: 'mode', target_value: 0 } },
   },

@@ -1,11 +1,18 @@
 import type { ModuleConfig } from '../shell/types';
 
 /**
- * M4 — Compliance and Resistance
+ * MODULE M4 — Compliance and Resistance
+ *
  * Track: Physiology · Archetype: concept demo (compound strict, reset_between) · 14 min
  * Anchor chapters: VB Ch. 1, Ch. 2, Ch. 8, Ch. 15
  *
- * Specced verbatim against docs/MODULE_SPECS_v3.md §M4.
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - tidalVolume: 480 — tracker math assumes baseline PIP ~22, Pplat ~16.
+ *                       Smaller Vt blurs the gap and breaks the resistance step.
+ *   - compliance variants 20/40/60 — three teaching points; trackers depend on each.
+ *
+ * Specced verbatim against docs/MODULE_SPECS_v3.md §M4 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §1. See MODULE_SPECS_v3.md Appendix A.
  */
 export const M4: ModuleConfig = {
   id: 'M4',
@@ -47,7 +54,7 @@ export const M4: ModuleConfig = {
       prompt: 'Falling compliance over hours-to-days usually means:',
       options: [
         { label: 'The patient is getting better.', is_correct: false, explanation: "That's *rising* compliance." },
-        { label: 'Worsening fluid overload, evolving pneumonia, or new pneumothorax.', is_correct: true, explanation: 'Owens, Commandment I.' },
+        { label: 'Worsening fluid overload, evolving pneumonia, or new pneumothorax.', is_correct: true, explanation: 'Owens\'s rule: falling compliance over hours-to-days is a structural change in the lung — look for the new pathology.' },
         { label: 'The PEEP is too high.', is_correct: false, explanation: 'Excess PEEP can overdistend, but compliance is a longer-timescale signal.' },
         { label: 'The ventilator is in the wrong mode.', is_correct: false, explanation: "Mode doesn't change compliance." },
       ],
@@ -56,7 +63,7 @@ export const M4: ModuleConfig = {
       id: 'M4-P3',
       prompt: "Owens's \"baby lung\" concept means:",
       options: [
-        { label: "Children's lungs handle the vent differently than adults'.", is_correct: false, explanation: "The term is about *adults* with ARDS." },
+        { label: "Children's lungs handle the vent differently than adults'.", is_correct: false, explanation: 'Pediatric mechanics aside; the term is about adults.' },
         { label: "In ARDS, the lungs aren't uniformly stiff — there are fewer healthy alveoli doing all the work, like a child's lungs in an adult's chest.", is_correct: true, explanation: 'Book Ch. 8. This is why Vt scales to *healthy* volume, not total.' },
         { label: 'ARDS patients always need a smaller tube.', is_correct: false, explanation: 'Not what the concept means.' },
         { label: 'Compliance in ARDS is calculated differently.', is_correct: false, explanation: 'Same equation, just a much smaller number.' },
@@ -195,7 +202,7 @@ export const M4: ModuleConfig = {
       prompt: 'Normal compliance of the respiratory system in a ventilated adult is:',
       options: [
         { label: '40–50 mL/cmH2O', is_correct: false, explanation: "That's mildly reduced." },
-        { label: '70–80 mL/cmH2O', is_correct: true, explanation: 'Book Ch. 3, Commandment I.' },
+        { label: '70–80 mL/cmH2O', is_correct: true, explanation: 'Healthy off the vent is closer to 100; the intubated baseline drops some because of the tube and circuit.' },
         { label: '100 mL/cmH2O', is_correct: false, explanation: "That's normal *off* the vent." },
         { label: '200 mL/cmH2O', is_correct: false, explanation: "That's lung-alone in a healthy person." },
       ],
@@ -262,7 +269,7 @@ export const M4: ModuleConfig = {
   },
 
   user_facing_task:
-    "This patient just got sicker. First, his compliance is going to crash — drop the slider into the ARDS range (≤ 28) and explain what the gap does. Then his airway is going to plug up — push resistance into the mucus-plug range (≥ 25) and explain what the gap does.",
+    "Demonstrate the gap signatures. This patient just got sicker. First, his compliance is going to crash — drop the slider into the ARDS range (≤ 28) and explain what the gap does. Then his airway is going to plug up — push resistance into the mucus-plug range (≥ 25) and explain what the gap does.",
   success_criteria_display: [
     'Drop compliance to ≤ 28 — explain the gap.',
     'Raise resistance to ≥ 25 — explain the gap.',

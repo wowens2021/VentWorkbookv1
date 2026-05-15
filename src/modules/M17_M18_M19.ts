@@ -1,13 +1,23 @@
 import type { ModuleConfig } from '../shell/types';
 
-// MODULE_SPECS_v3 §M17 — Weaning Concepts (Liberation).
-//
-// Adaptation: spec is a decisional scenario (read bedside data → check
-// pre-criteria → compute RSBI → pass/fail). The sim can't accept a
-// free-form RSBI calculation, so the RSBI step is presented as a
-// multiple-choice — the four options bracket the correct answer
-// (RR 18 / Vt 0.38 ≈ 47). The pre-criteria step and the pass/fail
-// step are each their own recognition. All three required, in order.
+/**
+ * MODULE M17 — Weaning Concepts (Liberation)
+ *
+ * Track: Weaning · Archetype: decisional (read strip, decide) · 18 min
+ *
+ * PINNED PARAMETERS:
+ *   - SBT scenario state is presented as STATIC DATA, not a live sim.
+ *   - The learner reads the strip and decides; this is a decisional module.
+ *
+ * Adaptation: the spec wants free-form RSBI entry; the engine only supports
+ * recognition multiple-choice, so RSBI is presented as a 4-option pick
+ * whose options bracket the correct value (RR 18 / Vt 0.38 ≈ 47). The
+ * pre-criteria step and the pass/fail decision are each their own
+ * recognition. All three required, in order.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M17 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §14. See MODULE_SPECS_v3.md Appendix A.
+ */
 export const M17: ModuleConfig = {
   id: 'M17',
   number: 17,
@@ -209,10 +219,10 @@ export const M17: ModuleConfig = {
       id: 'M17-Q5',
       prompt: 'A patient passes the SBT pre-criteria, completes a 30-min SBT, with RSBI 70, comfortable, no accessory muscle use. The correct next step is:',
       options: [
-        { label: 'Repeat SBT in 12 hours', is_correct: false },
-        { label: 'Extubate', is_correct: true },
-        { label: 'Reduce PS by 2 and try again', is_correct: false },
-        { label: 'Get an ABG first', is_correct: false },
+        { label: 'Repeat SBT in 12 hours', is_correct: false, explanation: 'No reason to delay — the SBT result is in front of you.' },
+        { label: 'Extubate', is_correct: true, explanation: 'Pre-screen passed, trial passed, patient looks good. Extubate. Book Ch. 22.' },
+        { label: 'Reduce PS by 2 and try again', is_correct: false, explanation: 'Trial just passed — there is no second trial to run.' },
+        { label: 'Get an ABG first', is_correct: false, explanation: 'Common practice but not required by Owens. The decision is primarily clinical; ABG is supportive, not gating.' },
       ],
       explanation: 'Pre-screen passed, trial passed, patient looks good — extubate. Book Ch. 22.',
     },
@@ -244,8 +254,28 @@ export const M17: ModuleConfig = {
   ],
 };
 
-// MODULE_SPECS_v3 §M18 — Extubation Criteria and Failure.
-// Four bedside vignettes, four different correct decisions. Compound any_order.
+/**
+ * MODULE M18 — Extubation Criteria and Failure
+ *
+ * Track: Weaning · Archetype: recognition (pattern triage) · 18 min
+ *
+ * PINNED PARAMETERS:
+ *   - Cuff leak thresholds:
+ *       <110 mL:  positive (high stridor risk)
+ *       110-130:  borderline
+ *       >130 mL:  negative
+ *
+ * Four bedside vignettes, four different correct decisions. The spec
+ * requires the same four options to appear on every scenario; the
+ * recognition prompt UI renders each prompt's options independently,
+ * so we author the same option set across all four prompts so the
+ * pedagogical claim ("the learner is genuinely choosing among the same
+ * four options each time") holds. Order randomization is left to the
+ * engine.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M18 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §15. See MODULE_SPECS_v3.md Appendix A.
+ */
 export const M18: ModuleConfig = {
   id: 'M18',
   number: 18,
@@ -314,6 +344,9 @@ export const M18: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
+  // Spec §15 v3.1: every scenario presents the same four options so the
+  // learner is genuinely picking among the same decisions each time. The
+  // correct answer rotates by scenario. Explanations are scenario-specific.
   hidden_objective: {
     kind: 'compound',
     sequence: 'any_order',
@@ -325,10 +358,10 @@ export const M18: ModuleConfig = {
           trigger: { kind: 'on_load' },
           question: '62 yo male, intubated 7 days for pneumonia. SBT passed. Cuff leak test shows 80 mL. Best decision?',
           options: [
-            { label: 'Extubate to NIPPV standby', is_correct: false, explanation: 'NIPPV doesn\'t treat upper-airway obstruction.' },
-            { label: 'Delay extubation 24 hours, give steroids, re-check cuff leak', is_correct: true, explanation: 'Cuff leak <110 mL = positive. Steroids 24 hours before re-trial. Book Ch. 23.' },
-            { label: 'Extubate now and watch', is_correct: false, explanation: 'Sets up post-extubation stridor.' },
-            { label: 'Tracheostomy', is_correct: false, explanation: 'Premature.' },
+            { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: true, explanation: 'Cuff leak <110 mL is a positive screen for upper-airway edema. Steroids 24 hours, then recheck. Book Ch. 23.' },
+            { label: 'Extubate with NIPPV standby', is_correct: false, explanation: 'NIPPV doesn\'t treat upper-airway obstruction — it pushes air past obstruction, not through it.' },
+            { label: 'Extubate per brain-injury data', is_correct: false, explanation: 'Wrong patient context — this is an upper-airway scenario, not a brain-injury one.' },
+            { label: 'Back to A/C — not ready', is_correct: false, explanation: 'Wrong — the patient passed the SBT. The problem isn\'t readiness; it\'s post-extubation stridor risk.' },
           ],
           max_attempts: 2,
         },
@@ -340,10 +373,10 @@ export const M18: ModuleConfig = {
           trigger: { kind: 'on_load' },
           question: '70 yo with HFrEF, EF 25%, intubated for pulmonary edema. SBT on PSV passed. Best decision?',
           options: [
-            { label: 'Delay extubation', is_correct: false, explanation: 'Patient passed the SBT — the framework supports proceeding, with rescue planned.' },
-            { label: 'Extubate with NIPPV standby', is_correct: true, explanation: 'Cardiogenic post-extubation risk. Prophylactic NIPPV reduces re-intubation in high-risk patients.' },
-            { label: 'Tracheostomy', is_correct: false, explanation: 'Premature — patient passed.' },
-            { label: 'Back to A/C', is_correct: false, explanation: 'Patient passed — back to A/C without reason.' },
+            { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: false, explanation: 'No airway-edema risk in this scenario — the failure mode is cardiogenic, not upper-airway.' },
+            { label: 'Extubate with NIPPV standby', is_correct: true, explanation: 'Cardiogenic post-extubation risk. Prophylactic NIPPV reduces re-intubation in high-risk patients (HFrEF, COPD).' },
+            { label: 'Extubate per brain-injury data', is_correct: false, explanation: 'Wrong patient context — this is a cardiogenic scenario, not a brain-injury one.' },
+            { label: 'Back to A/C — not ready', is_correct: false, explanation: 'Patient passed the SBT — back to A/C without reason.' },
           ],
           max_attempts: 2,
         },
@@ -355,10 +388,10 @@ export const M18: ModuleConfig = {
           trigger: { kind: 'on_load' },
           question: '35 yo s/p TBI, GCS 9, no other reason to be intubated. FiO2 35%, PEEP 5, RSBI 50, manageable secretions. Best decision?',
           options: [
-            { label: 'Wait for GCS ≥ 10', is_correct: false, explanation: 'GCS waiting in brain-injured patients with low O2 needs delays liberation without benefit.' },
-            { label: 'Extubate per brain-injury data', is_correct: true, explanation: 'Brain-injured patients with low O2 needs and no apnea do better with early extubation. Book Ch. 22.' },
-            { label: 'Tracheostomy now', is_correct: false, explanation: 'Premature.' },
-            { label: 'Continue intubation indefinitely', is_correct: false, explanation: 'Indefinitely is not a plan.' },
+            { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: false, explanation: 'No airway-edema indication.' },
+            { label: 'Extubate with NIPPV standby', is_correct: false, explanation: 'No cardiogenic indication; brain-injured patients can tolerate extubation directly when O2 needs are low.' },
+            { label: 'Extubate per brain-injury data', is_correct: true, explanation: 'Brain-injured patients with low oxygen requirement and no apnea do better with early extubation despite mental status. This is counter-intuitive and well-supported by the data Owens cites. Do not require GCS ≥10 as a gate. Book Ch. 22.' },
+            { label: 'Back to A/C — not ready', is_correct: false, explanation: 'Pre-screen passes — gas exchange is fine and there\'s no other reason to be intubated. The mental status alone isn\'t the gate.' },
           ],
           max_attempts: 2,
         },
@@ -368,12 +401,12 @@ export const M18: ModuleConfig = {
         prompt: {
           prompt_id: 'M18-s4-failed-screen',
           trigger: { kind: 'on_load' },
-          question: '60 yo with severe COPD, FiO2 50%, PEEP 10, RR 30, RSBI 130. Best decision?',
+          question: '60 yo with severe COPD, FiO2 0.50, PEEP 10, RR 30, RSBI 130. Best decision?',
           options: [
-            { label: 'Extubate to NIPPV', is_correct: false, explanation: 'Patient hasn\'t passed pre-screen or SBT.' },
-            { label: 'Back to A/C — not ready', is_correct: true, explanation: 'Pre-criteria fail (PEEP 10), high RSBI. Not a candidate for SBT today. Book Ch. 22.' },
-            { label: 'Tracheostomy immediately', is_correct: false, explanation: 'Premature — give him a chance to improve.' },
-            { label: 'Extubate', is_correct: false, explanation: 'High failure risk.' },
+            { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: false, explanation: 'Cuff leak isn\'t the problem — pre-screen and SBT both fail.' },
+            { label: 'Extubate with NIPPV standby', is_correct: false, explanation: 'Patient hasn\'t passed pre-screen or SBT. NIPPV after a failed SBT is rescue, not standby.' },
+            { label: 'Extubate per brain-injury data', is_correct: false, explanation: 'Wrong patient context — this is a respiratory pre-screen failure.' },
+            { label: 'Back to A/C — not ready', is_correct: true, explanation: 'Pre-criteria fail (PEEP 10, FiO2 0.50), high RSBI 130. Not a candidate for an SBT today. Book Ch. 22.' },
           ],
           max_attempts: 2,
         },
@@ -476,7 +509,7 @@ export const M18: ModuleConfig = {
       'Brain-injured patients with low O2 needs are an exception to "wait for GCS." Early extubation data support proceeding.',
     ],
   },
-  user_facing_task: 'Four patients. For each, decide: extubate now, extubate with NIPPV standby, delay and treat, or back to A/C. Get all four right.',
+  user_facing_task: 'Four patients. Four decisions. For each, choose the disposition that matches the failure mode in play — delay and treat (cuff leak), extubate with NIPPV standby (cardiogenic), extubate per brain-injury data (TBI with low O2 needs), or back to A/C (failed pre-screen). Same four options every time; the right answer rotates.',
   // success_criteria_display omitted — shell auto-derives from the four
   // recognition prompt questions so each ticks off as the learner answers.
   task_framing_style: 'C',
@@ -490,13 +523,31 @@ export const M18: ModuleConfig = {
   ],
 };
 
-// MODULE_SPECS_v3 §M19 — Troubleshooting the Vent (DOPES).
-//
-// Adaptation: spec calls for live perturbations with reset_between=true. The
-// sim doesn't yet apply scripted perturbations between recognition prompts,
-// so each DOPES scenario is presented as a verbal vignette describing the
-// observable waveform / vital-sign changes, and the learner names the
-// pattern. Five scenarios — D, O, P, E, S — strict order, all required.
+/**
+ * MODULE M19 — Troubleshooting the Vent (DOPES)
+ *
+ * Track: Synthesis · Archetype: recognition + intervention chain · 25 min
+ *
+ * PINNED PARAMETERS:
+ *   - reset_between: TRUE on the compound tracker is mandatory. Without
+ *     reset, the second scenario inherits the first's chaos and the
+ *     tracker is uninterpretable.
+ *   - Perturbation scripts for the five DOPES scenarios live in the prompt
+ *     bodies (descriptive text) until the sim renders live perturbations.
+ *
+ * [BLOCKED-SIM] Sim limitation: the spec calls for live perturbations
+ * that physically alter the waveform (displacement → lost ETCO2; pneumo →
+ * unilateral chest rise loss + parallel pressure rise). The current sim
+ * doesn't apply scripted perturbations between recognition prompts, so
+ * each scenario is presented as a vignette describing the observable
+ * waveform / vital-sign changes; the learner names the pattern. Future
+ * work: scripted perturbation overlay + ETCO2 waveform trace + chest-rise
+ * indicator. The vignette text is written so it transfers to live
+ * rendering without rewriting.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M19 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §16. See MODULE_SPECS_v3.md Appendix A.
+ */
 export const M19: ModuleConfig = {
   id: 'M19',
   number: 19,
@@ -566,9 +617,15 @@ export const M19: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
+  // Spec §16 v3.1: `reset_between: true` is mandatory. The compound
+  // resets the sim to baseline between scenarios so the second prompt
+  // doesn't inherit the first's perturbation state. Even though the
+  // current sim doesn't render live perturbations, setting the flag now
+  // keeps the contract correct for the future scripted-overlay system.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
+    reset_between: true,
     children: [
       {
         kind: 'recognition',

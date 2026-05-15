@@ -1,17 +1,28 @@
 import type { ModuleConfig } from '../shell/types';
 
 /**
- * M9 — PRVC and Dual-Control Ventilation
+ * MODULE M9 — PRVC and Dual-Control Ventilation
+ *
  * Track: Modes · Archetype: outcome with sandbox exploration · 20 min
  * Anchor chapters: VB Ch. 9
  *
- * Specced verbatim against docs/MODULE_SPECS_v3.md §M9, with one adaptation
- * noted in the spec itself: the sim cannot directly verify the "PINSP swing
- * ≥ 4 cmH2O over 6 breaths" custom tracker shape. The implementable
- * proxy below preserves the teaching: drop compliance, observe that the
- * vent's adaptive PI ramps PIP up over several breaths (with the M9
- * visual cue from MASTER_SHELL_v3 §6 wired in), then answer the
- * recognition that names the algorithm's behavior.
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - compliance: 30, resistance: 12 — adaptive PINSP cycle lands in expected band.
+ *   - perturbation script: at t=30s of Try-It, spontaneousRate flips to 24,
+ *                          effortAmplitude high. The sim must produce a
+ *                          PINSP swing of ≥4 cmH2O over 6 breaths under
+ *                          this perturbation for the yo-yo recognition to
+ *                          be visually rendered.
+ *
+ * [BLOCKED-SIM] PinspSwing6 measurement is the long-term tracker shape
+ * required by spec §6 v3.1. The current sim cannot directly compute it.
+ * The Try-It uses an implementable proxy (drop compliance → PIP climbs)
+ * and exposes mode-switching so the learner's correct response —
+ * switching out of PRVC — is still scored. See content_blocks for the
+ * read-side honest disclaimer.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M9 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §6. See MODULE_SPECS_v3.md Appendix A.
  */
 export const M9: ModuleConfig = {
   id: 'M9',
@@ -81,7 +92,11 @@ export const M9: ModuleConfig = {
       settings: { tidalVolume: 450, respiratoryRate: 14, peep: 8, fiO2: 45, iTime: 1.0 },
       patient: { compliance: 30, resistance: 12, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
-    unlocked_controls: ['tidalVolume', 'respiratoryRate', 'peep', 'fiO2', 'iTime', 'compliance'],
+    // Spec §6 v3.1: `mode` is unlocked HERE specifically — the correct
+    // intervention for PRVC dyssynchrony is to switch out of PRVC into
+    // VCV or PCV. Every other module locks mode; this is the one
+    // exception where mode-switching is the lesson.
+    unlocked_controls: ['mode', 'tidalVolume', 'respiratoryRate', 'peep', 'fiO2', 'iTime', 'compliance'],
     visible_readouts: ['pip', 'plat', 'vte', 'drivingPressure', 'mve'],
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
@@ -239,7 +254,7 @@ export const M9: ModuleConfig = {
   },
 
   user_facing_task:
-    "Recognize PRVC's adaptive behavior. Drop the patient's compliance into the ARDS range and watch what the ventilator does — without changing anything else. After 4–5 breaths the PIP will have visibly climbed. Answer what you saw.",
+    "Recognize and respond to PRVC dyssynchrony. Drop the patient's compliance into the ARDS range and watch what the ventilator does — without changing anything else. After 4–5 breaths the PIP will have visibly climbed: that's the adaptive loop working as designed. Answer what you saw. Note: this scenario requires the simulator to render an adaptive PINSP oscillation. If you don't see the swing, the pattern is fully described in the read phase; the test of recognition here is whether you respond by switching out of PRVC.",
   success_criteria_display: [
     "Reduce compliance by at least 40%.",
     'Wait several breaths and watch the PIP trend (you\'ll see halos flash each adaptive step).',
@@ -257,14 +272,29 @@ export const M9: ModuleConfig = {
 };
 
 /**
- * M10 — Pressure Support Ventilation
+ * MODULE M10 — Pressure Support Ventilation (PSV)
+ *
  * Track: Modes · Archetype: outcome with patient-feedback loop · 18 min
  * Anchor chapters: VB Ch. 11, Ch. 13
  *
- * Specced verbatim against docs/MODULE_SPECS_v3.md §M10, with the target
- * state slightly adapted to the sim's readout names (`actualRate` ≡ the
- * spec's `spontaneousRate` readout in PSV mode). The teaching is unchanged:
- * titrate PS by watching the patient, not by hitting a number.
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - compliance: 55 — near-normal, recovering patient
+ *   - spontaneousRate: 12 (base) — patient's underlying drive
+ *   - effortAmplitude: medium (where modeled)
+ *
+ * Sim tuning: PS 10–14 yields Vt 380–470 and spontaneous RR 16–22.
+ *
+ * PSV has NO set rate. The Rate slider must be hidden or disabled when
+ * mode is PSV; spontaneous rate appears only as a readout. The
+ * `unlocked_controls` deliberately excludes `respiratoryRate` for that
+ * reason.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M10 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §7. Adaptation: the sim exposes
+ * `actualRate` rather than a separate `spontaneousRate` readout; in PSV
+ * mode they're equivalent.
+ *
+ * See MODULE_SPECS_v3.md Appendix A.
  */
 export const M10: ModuleConfig = {
   id: 'M10',
@@ -317,7 +347,7 @@ export const M10: ModuleConfig = {
       options: [
         { label: 'A 60-year-old with pneumonia, day 4, alert and following commands', is_correct: false, explanation: 'Good PSV candidate.' },
         { label: 'A 30-year-old post-operative awakening from anesthesia', is_correct: false, explanation: 'Good candidate as anesthesia clears.' },
-        { label: 'A 45-year-old in septic shock on norepinephrine 0.3 mcg/kg/min, intubated 1 hour ago', is_correct: true, explanation: 'Book Ch. 11, Commandment VIII. Shocked, fresh intubation — needs A/C.' },
+        { label: 'A 45-year-old in septic shock on norepinephrine 0.3 mcg/kg/min, intubated 1 hour ago', is_correct: true, explanation: 'Owens\'s rule for the shocked patient: don\'t let the diaphragm consume cardiac output. Shocked + fresh intubation = A/C, not PSV.' },
         { label: 'A 70-year-old extubation candidate', is_correct: false, explanation: 'Ideal PSV candidate.' },
       ],
     },

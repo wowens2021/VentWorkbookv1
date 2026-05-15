@@ -1,11 +1,33 @@
 import type { ModuleConfig } from '../shell/types';
 
-// MODULE_SPECS_v3 §M11 — Dyssynchrony Recognition.
-// Spec limits the click-target patterns to the three the sim can render
-// (or schematically describe) faithfully: ineffective triggering, double
-// triggering, flow starvation. Two others from the canonical five —
-// reverse triggering and bad cycling — are mentioned in the read prose
-// but not tested here.
+/**
+ * MODULE M11 — Dyssynchrony Recognition
+ *
+ * Track: Modes · Archetype: recognition (clip-based) · 16 min
+ *
+ * PINNED PARAMETERS:
+ *   - Static clip file paths in /public/clips/:
+ *       dyssyn_ineffective.svg
+ *       dyssyn_double.svg
+ *       dyssyn_starvation.svg
+ *
+ * [BLOCKED-SIM] Clip authoring required. The three SVG clips above are
+ * the canonical assets for this module. Until they exist on disk, the
+ * placeholder at /public/clips/dyssyn_placeholder.svg is referenced;
+ * the question text is written so it reads naturally whether the trace
+ * is rendered or not (the description in the question matches what the
+ * trace would show). Do NOT substitute a verbal vignette as a
+ * "good-enough" replacement — the whole pedagogical point of M11 is
+ * waveform recognition, not chart reading.
+ *
+ * Three scored scenarios only (per spec §8 v3.1): ineffective triggering,
+ * double triggering, flow starvation. Reverse triggering and bad cycling
+ * appear in the read-phase pattern atlas as labeled reference examples
+ * but are NOT scored items.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M11 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §8. See MODULE_SPECS_v3.md Appendix A.
+ */
 export const M11: ModuleConfig = {
   id: 'M11',
   number: 11,
@@ -77,12 +99,15 @@ export const M11: ModuleConfig = {
     kind: 'compound',
     sequence: 'any_order',
     children: [
+      // TODO(M11-clips): clip file clips/dyssyn_ineffective.svg
+      // The trace text in the question describes what the clip will
+      // show once authored; until then, the description IS the trace.
       {
         kind: 'recognition',
         prompt: {
           prompt_id: 'M11-s1',
           trigger: { kind: 'on_load' },
-          question: 'Bedside vignette: 65 yo with COPD on VCV. Auto-PEEP measured 9 cmH2O. The pressure trace shows small downward deflections (patient effort) with no delivered breath after them. What pattern is this?',
+          question: '65 yo with COPD on VCV. Auto-PEEP measured 9 cmH2O. The pressure trace shows small downward deflections (patient effort) with no delivered breath after them. What pattern is this?',
           options: [
             { label: 'Ineffective triggering', is_correct: true },
             { label: 'Normal breathing', is_correct: false },
@@ -92,12 +117,13 @@ export const M11: ModuleConfig = {
           max_attempts: 2,
         },
       },
+      // TODO(M11-clips): clip file clips/dyssyn_double.svg
       {
         kind: 'recognition',
         prompt: {
           prompt_id: 'M11-s2',
           trigger: { kind: 'on_load' },
-          question: 'Bedside vignette: 35 yo ARDS on VCV Vt 400 (6 mL/kg), strong respiratory drive. The pressure trace shows two breaths delivered back-to-back with no expiration between them. What pattern is this?',
+          question: '35 yo ARDS on VCV Vt 400 (6 mL/kg), strong respiratory drive. The pressure trace shows two breaths delivered back-to-back with no expiration between them. What pattern is this?',
           options: [
             { label: 'Double triggering', is_correct: true },
             { label: 'Normal breathing', is_correct: false },
@@ -107,12 +133,13 @@ export const M11: ModuleConfig = {
           max_attempts: 2,
         },
       },
+      // TODO(M11-clips): clip file clips/dyssyn_starvation.svg
       {
         kind: 'recognition',
         prompt: {
           prompt_id: 'M11-s3',
           trigger: { kind: 'on_load' },
-          question: 'Bedside vignette: 50 yo asthma on PRVC, visible air hunger. The pressure trace scoops downward during inspiration — the patient is pulling against the vent. What pattern is this?',
+          question: '50 yo asthma on PRVC, visible air hunger. The pressure trace scoops downward during inspiration — the patient is pulling against the vent. What pattern is this?',
           options: [
             { label: 'Flow starvation', is_correct: true },
             { label: 'Normal breathing', is_correct: false },
@@ -214,7 +241,7 @@ export const M11: ModuleConfig = {
       'When the task starts, three vignettes will describe the waveform. Match each to its name.',
     ],
   },
-  user_facing_task: 'Three patients in a row. For each, read the waveform description and the bedside context, and select the dyssynchrony pattern. You must get all three correct, in any order, in one pass.',
+  user_facing_task: 'Recognize the dyssynchrony pattern. Three patients in a row. For each, look at the waveform clip and the bedside context, and select the dyssynchrony pattern. You must get all three correct in one pass.',
   // success_criteria_display omitted — shell auto-derives from the three
   // recognition questions so the checklist matches the prompt wording exactly.
   task_framing_style: 'C',
@@ -228,12 +255,30 @@ export const M11: ModuleConfig = {
   ],
 };
 
-// MODULE_SPECS_v3 §M12 — SIMV and Hybrid Modes.
-// Adaptation: the spec wants outcome tracking on spontaneousTidalVolume and
-// mandatoryTidalVolume — readouts the sim doesn't separate. We test the same
-// teaching point via (1) manipulation: set psLevel to 8-14, then (2) outcome:
-// vte sustains in the 320-470 range. With compliance 45 and PS in that range,
-// the sim delivers spontaneous Vt that lands in target.
+/**
+ * MODULE M12 — SIMV and Hybrid Modes
+ *
+ * Track: Modes · Archetype: outcome with combined-effect titration · 14 min
+ *
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - compliance: 45
+ *   - effortAmplitude: low (weak — central to the failure-mode demonstration)
+ *   - mandatory rate floor: 10 (must be allowed)
+ *
+ * Sim tuning: spontaneous Vt is ~140-180 mL with no PS; ~380-450 mL with PS 12.
+ *
+ * [BLOCKED-SIM] The spec's tracker reads `spontaneousTidalVolume` and
+ * `mandatoryTidalVolume` as separate measurements. The current sim exposes
+ * only `vte` (the most-recent delivered breath, regardless of which kind).
+ * The tracker below uses the implementable proxy — set psLevel to 8–14 +
+ * vte ≥ 320 sustained for 5 breaths — which captures the same teaching
+ * point (adding PS rescues the spontaneous breaths). When the sim is
+ * extended to expose mandatory vs spontaneous Vt separately, the tracker
+ * can be tightened to the spec form.
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M12 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §9. See MODULE_SPECS_v3.md Appendix A.
+ */
 export const M12: ModuleConfig = {
   id: 'M12',
   number: 12,
@@ -370,7 +415,7 @@ export const M12: ModuleConfig = {
         { label: 'No proven advantage; daily SBT is what works', is_correct: true },
         { label: 'Lower ICU mortality', is_correct: false },
       ],
-      explanation: 'Multiple RCTs failed to show benefit, and some showed SIMV was slower than alternative weaning strategies. Book Ch. 10.',
+      explanation: 'Multiple trials including Brochard and Esteban show SIMV-based weaning is not faster than daily SBTs. Book Ch. 10.',
     },
     {
       id: 'M12-Q4',

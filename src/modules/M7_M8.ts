@@ -1,11 +1,19 @@
 import type { ModuleConfig } from '../shell/types';
 
 /**
- * M7 — Volume Control Ventilation
+ * MODULE M7 — Volume Control Ventilation (VCV A/C)
+ *
  * Track: Modes · Archetype: outcome (Style B, target-state) · 18 min
  * Anchor chapters: VB Ch. 9, Ch. 8
  *
- * Specced verbatim against docs/MODULE_SPECS_v3.md §M7.
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - compliance: 40 — at Vt 500 baseline this yields plat ~17.5
+ *   - heightInches: 70, gender: male — PBW = 73 kg; 6 mL/kg = 438 mL
+ *
+ * Task target Vt is 410-470 (6 mL/kg PBW ±5%).
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M7 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §4. See MODULE_SPECS_v3.md Appendix A.
  */
 export const M7: ModuleConfig = {
   id: 'M7',
@@ -56,9 +64,9 @@ export const M7: ModuleConfig = {
       id: 'M7-P3',
       prompt: 'Which patient is the textbook indication for VCV (volume A/C)?',
       options: [
-        { label: 'A 70-kg post-arrest patient in shock on norepinephrine.', is_correct: true, explanation: 'Owens, Commandment VIII. The shocked patient needs guaranteed minute ventilation and reliable Vt; A/C does the work of breathing while you resuscitate.' },
+        { label: 'A 70-kg post-arrest patient in shock on norepinephrine.', is_correct: true, explanation: 'Owens\'s rule for the shocked patient: the diaphragm shouldn\'t consume cardiac output while you\'re resuscitating. A/C guarantees minute ventilation and reliable Vt and does the work of breathing for the patient.' },
         { label: 'A spontaneously breathing CHF patient with mild hypoxia.', is_correct: false, explanation: 'This patient may not need intubation at all; if intubated, dual-control or PSV is more comfortable.' },
-        { label: 'A 28-year-old status asthmaticus with severe bronchospasm.', is_correct: false, explanation: 'VCV is the right mode for severe bronchospasm (Ch. 15), but here VCV is to control I:E ratio and prevent stacking, not "do all the work." A is the cleaner indication.' },
+        { label: 'A 28-year-old status asthmaticus with severe bronchospasm.', is_correct: false, explanation: 'Partially right — VCV is the mode of choice for severe bronchospasm (Ch. 15), but VCV here is to control I:E ratio and prevent stacking, not "do all the work." A is the cleaner indication.' },
         { label: 'A 50-year-old extubation candidate.', is_correct: false, explanation: 'PSV is the right answer here.' },
       ],
     },
@@ -86,10 +94,18 @@ export const M7: ModuleConfig = {
   // driving pressure ≤15, sustained 5 breaths. The learner should
   // *land* there and *hold* it, not flick the dial through 430 on the
   // way to 350.
+  // Spec §4 (v3.1): the range 410-470 is a 6 mL/kg PBW ±5% band. The
+  // engine's ReadoutCondition is single-bound per readout, so we express
+  // the range by combining `tidalVolumeSet >= 410` (the lower bound,
+  // measured against the SET value) with `vte <= 470` (the upper bound,
+  // measured against the DELIVERED value). In VCV the two track each
+  // other; a learner who sets Vt = 350 fails the lower bound; a learner
+  // who sets Vt = 520 fails the upper.
   hidden_objective: {
     kind: 'outcome',
     readouts: {
-      vte: { operator: '<=', value: 450 },
+      tidalVolumeSet: { operator: '>=', value: 410 },
+      vte: { operator: '<=', value: 470 },
       plat: { operator: '<=', value: 30 },
       drivingPressure: { operator: '<=', value: 15 },
     },
@@ -172,11 +188,11 @@ export const M7: ModuleConfig = {
     },
     {
       id: 'M7-Q5',
-      prompt: "Owens's Eleventh Commandment regarding the choice of mode for the shocked patient is:",
+      prompt: "Owens's rule for the shocked patient with respect to mode choice is:",
       options: [
-        { label: 'PSV — least work for the patient', is_correct: false, explanation: 'PSV is a recovery mode.' },
-        { label: 'SIMV — best of both worlds', is_correct: false, explanation: 'SIMV in the shocked patient risks high WOB.' },
-        { label: 'A/C — the shocked patient should not fatigue', is_correct: true, explanation: "Commandment VIII. Don't let the shocked patient do the work of breathing while you're resuscitating him." },
+        { label: 'PSV — least work for the patient', is_correct: false, explanation: 'PSV is a recovery mode. The shocked patient cannot afford to do the breathing work.' },
+        { label: 'SIMV — best of both worlds', is_correct: false, explanation: 'SIMV in the shocked patient risks high work of breathing on the spontaneous breaths.' },
+        { label: 'A/C — the shocked patient should not fatigue', is_correct: true, explanation: "Don't let the shocked patient do the work of breathing while you're resuscitating him. A/C guarantees the minute ventilation; the patient's energy goes to the rest of the body." },
         { label: 'APRV — best oxygenation', is_correct: false, explanation: 'Not the first-line mode for shock.' },
       ],
     },
@@ -205,7 +221,7 @@ export const M7: ModuleConfig = {
   user_facing_task:
     "Set lung-protective VCV. This is the standard A/C ventilation that gets every fresh ARDS patient and every intubated trauma. Your Vt is currently 500. The patient is 5'10\", and his compliance is moderately reduced. Adjust the Vt down to the lung-protective range and confirm that plat and driving pressure are in range. Hold the new state for 5 breaths.",
   success_criteria_display: [
-    'Tidal volume 410–450 mL (6 mL/kg ±5% for this patient).',
+    'Tidal volume 410–470 mL (6 mL/kg ±5% for this 73 kg PBW patient).',
     'Plateau pressure ≤ 30 cmH2O.',
     'Driving pressure ≤ 15 cmH2O.',
     'Sustained for 5 consecutive breaths.',
@@ -222,11 +238,20 @@ export const M7: ModuleConfig = {
 };
 
 /**
- * M8 — Pressure Control Ventilation
+ * MODULE M8 — Pressure Control Ventilation (PCV)
+ *
  * Track: Modes · Archetype: outcome (Style B with predict-observe) · 18 min
  * Anchor chapters: VB Ch. 9, Ch. 8
  *
- * Specced verbatim against docs/MODULE_SPECS_v3.md §M8.
+ * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
+ *   - compliance: 35 — at PINSP 18 this yields Vt ~430 mL (≈6 mL/kg PBW)
+ *
+ * The Try-It locks compliance, but the Read-phase predict-observe block
+ * temporarily unlocks it for demonstration of the PCV failure mode (Vt
+ * collapses when compliance falls at fixed PINSP).
+ *
+ * Specced against docs/MODULE_SPECS_v3.md §M8 and
+ * docs/MODULE_SPEC_UPDATE_v3.1.md §5. See MODULE_SPECS_v3.md Appendix A.
  */
 export const M8: ModuleConfig = {
   id: 'M8',
@@ -295,7 +320,14 @@ export const M8: ModuleConfig = {
       settings: { pInsp: 18, respiratoryRate: 14, peep: 8, fiO2: 50, iTime: 1.0 },
       patient: { compliance: 35, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
-    unlocked_controls: ['pInsp', 'respiratoryRate', 'peep', 'fiO2', 'iTime', 'compliance'],
+    // Per spec §5 v3.1: compliance is locked for Try-It (the task is PINSP
+    // titration, not physiology). The Read-phase predict-observe block
+    // below uses `awaits_control: 'compliance'`, which momentarily allows
+    // a single adjustment for the demonstration without exposing the
+    // slider for the whole task. TODO(M8-temp-unlock): cleaner gating
+    // — `predict_observe.requires_temp_unlock: ['compliance']` — would
+    // be more explicit if/when the engine gains that field.
+    unlocked_controls: ['pInsp', 'respiratoryRate', 'peep', 'fiO2', 'iTime'],
     visible_readouts: ['pip', 'plat', 'drivingPressure', 'vte', 'mve'],
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
