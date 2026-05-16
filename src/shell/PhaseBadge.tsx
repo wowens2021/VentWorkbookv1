@@ -30,8 +30,8 @@ interface Props {
 const PhaseBadge: React.FC<Props> = ({ phase, completedPhases, onJumpToPhase, accentHex }) => {
   const currentIdx = PHASE_ORDER.indexOf(phase);
   return (
-    <div className="bg-gradient-to-r from-brand-olive/[0.06] via-white to-brand-olive/[0.06] border-b-2 border-brand-olive/20 px-4 py-2 flex items-center gap-1.5 shrink-0">
-      <span className="text-[11px] font-black uppercase tracking-widest text-brand-olive mr-2">
+    <div className="bg-brand-olive px-4 py-2 flex items-center gap-1.5 shrink-0">
+      <span className="text-[11px] font-black uppercase tracking-widest text-white mr-2">
         {currentIdx + 1} of {PHASE_ORDER.length} — {PHASE_LABEL[phase]}
       </span>
       <div className="flex items-center gap-1 ml-auto">
@@ -40,27 +40,30 @@ const PhaseBadge: React.FC<Props> = ({ phase, completedPhases, onJumpToPhase, ac
           const isCurrent = i === currentIdx;
           const isCompleted = completedPhases?.has(p) ?? isPast;
           const canJump = isCompleted && !isCurrent && !!onJumpToPhase;
+          // Dot palette tuned to read clearly against the solid
+          // brand-olive bar: completed = white check; current = white
+          // dot with subtle ring; future = translucent-white pill.
           const dotState = isPast || isCompleted
-            ? 'bg-emerald-500'
+            ? 'bg-white'
             : isCurrent
               ? '' // tint via inline style below
-              : 'bg-zinc-200';
+              : 'bg-white/25';
           const dotInlineStyle: React.CSSProperties | undefined =
             isCurrent && accentHex
-              ? { backgroundColor: accentHex, boxShadow: `0 0 0 2px ${accentHex}33` }
+              ? { backgroundColor: '#ffffff', boxShadow: '0 0 0 2px rgba(255,255,255,0.5)' }
               : isCurrent
-                ? { backgroundColor: '#0ea5e9', boxShadow: '0 0 0 2px #bae6fd' }
+                ? { backgroundColor: '#ffffff', boxShadow: '0 0 0 2px rgba(255,255,255,0.5)' }
                 : undefined;
 
           const dot = (
             <div
               className={`h-2.5 w-2.5 rounded-full flex items-center justify-center transition ${dotState} ${
-                canJump ? 'cursor-pointer hover:ring-2 hover:ring-emerald-300' : ''
+                canJump ? 'cursor-pointer hover:ring-2 hover:ring-white/50' : ''
               }`}
               style={dotInlineStyle}
               title={canJump ? `Return to ${PHASE_LABEL[p]}` : PHASE_LABEL[p]}
             >
-              {(isPast || isCompleted) && !isCurrent && <Check size={8} className="text-white" strokeWidth={4} />}
+              {(isPast || isCompleted) && !isCurrent && <Check size={8} className="text-brand-olive" strokeWidth={4} />}
             </div>
           );
 
@@ -73,7 +76,7 @@ const PhaseBadge: React.FC<Props> = ({ phase, completedPhases, onJumpToPhase, ac
                   aria-label={`Return to ${PHASE_LABEL[p]}`}
                 >
                   {dot}
-                  <span className="text-[10px] font-semibold text-emerald-700 hidden group-hover:inline">
+                  <span className="text-[10px] font-semibold text-white hidden group-hover:inline">
                     {PHASE_LABEL[p]}
                   </span>
                 </button>
@@ -81,7 +84,7 @@ const PhaseBadge: React.FC<Props> = ({ phase, completedPhases, onJumpToPhase, ac
                 dot
               )}
               {i < PHASE_ORDER.length - 1 && (
-                <div className={`h-px w-4 ${isPast || isCompleted ? 'bg-emerald-300' : 'bg-zinc-200'}`} />
+                <div className={`h-px w-4 ${isPast || isCompleted ? 'bg-white/60' : 'bg-white/25'}`} />
               )}
             </div>
           );
