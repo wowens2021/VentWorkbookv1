@@ -277,8 +277,16 @@ export const M3: ModuleConfig = {
 
   user_facing_task:
     "Four basic adjustments, one at a time. After each change, you'll see exactly what happened on the screen and click Next to go to the next adjustment.",
-  // success_criteria_display intentionally omitted — the sequential UI
-  // surfaces ONE step at a time. The full list isn't shown.
+  // Sequential UI surfaces ONE step at a time — TaskCard reads
+  // successCriteria[activeIndex] for the current step's instruction.
+  // The four labels below align with the four manipulation children in
+  // the hidden_objective compound, in order.
+  success_criteria_display: [
+    'Raise the tidal volume by at least 10%. Watch PIP and Vte respond.',
+    'Raise the respiratory rate by at least 10%. Watch MVe climb.',
+    'Raise PEEP by at least 10%. Watch PIP rise in parallel.',
+    'Change FiO2 — any direction. Watch the waveform stay still.',
+  ],
   task_framing_style: 'A',
 
   key_points: [

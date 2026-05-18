@@ -78,15 +78,17 @@ export const M7: ModuleConfig = {
   scenario: {
     preset_id: 'M7_vcv_baseline',
     preset: {
-      // Sepsis-pattern patient. Vt 500 = 7 mL/kg for 73-kg PBW —
-      // deliberately a touch high so the learner has an obvious lever
-      // to move (down to 6 mL/kg ≈ 430 mL).
-      // PIN: compliance 40, heightInches 70, gender M — DO NOT CHANGE.
-      // 6 mL/kg = 438 mL; tracker accepts 410–450. Compliance 40 puts
-      // plat ~16 at Vt 430.
+      // Sepsis-pattern patient with moderately stiff lungs (early ARDS-
+      // ish). Vt 500 → Pplat ≈ 27, DP ≈ 22 — already over the lung-
+      // protective ceiling and motivates the learner to bring Vt down.
+      // Push Vt up to 600 → Pplat ≈ 32 — the plateau alarm fires and the
+      // "too high" framing actually lands.
+      // Compliance 22 (down from 40) is in the moderate-ARDS range
+      // (15–28 per the medical spec). At the 6-mL/kg PBW target
+      // (Vt 438), Pplat ≈ 25 — comfortably under 30 with margin.
       mode: 'VCV',
       settings: { tidalVolume: 500, respiratoryRate: 14, peep: 5, fiO2: 40, iTime: 1.0 },
-      patient: { compliance: 40, resistance: 12, spontaneousRate: 0, gender: 'M', heightInches: 70 },
+      patient: { compliance: 22, resistance: 12, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
     unlocked_controls: ['tidalVolume', 'respiratoryRate', 'peep', 'fiO2', 'iTime'],
     visible_readouts: ['pip', 'plat', 'drivingPressure', 'vte', 'mve'],
@@ -104,13 +106,21 @@ export const M7: ModuleConfig = {
   // measured against the DELIVERED value). In VCV the two track each
   // other; a learner who sets Vt = 350 fails the lower bound; a learner
   // who sets Vt = 520 fails the upper.
+  // Recalibrated for the new C=22 moderate-ARDS baseline + dynamic-
+  // compliance physics. At PEEP 5 the lungs are stiff; PEEP 8+ recruits
+  // the unstable alveoli and the same Vt now delivers a safer plateau.
+  // Lung-protective target shifts down to 5 mL/kg PBW (~370 mL) for
+  // this stiffness, with a PEEP ≥ 8 gate so DP ≤ 15 is achievable.
   hidden_objective: {
     kind: 'outcome',
     readouts: {
-      tidalVolumeSet: { operator: '>=', value: 410 },
-      vte: { operator: '<=', value: 470 },
+      tidalVolumeSet: [
+        { operator: '>=', value: 340 },
+        { operator: '<=', value: 410 },
+      ],
       plat: { operator: '<=', value: 30 },
       drivingPressure: { operator: '<=', value: 15 },
+      peep: { operator: '>=', value: 8 },
     },
     sustain_breaths: 5,
   },
@@ -247,9 +257,10 @@ export const M7: ModuleConfig = {
   },
 
   user_facing_task:
-    "Set lung-protective VCV. This is the standard A/C ventilation that gets every fresh ARDS patient and every intubated trauma. Your Vt is currently 500. The patient is 5'10\", and his compliance is moderately reduced. Adjust the Vt down to the lung-protective range and confirm that plat and driving pressure are in range. Hold the new state for 5 breaths.",
+    "Set lung-protective volume A/C — the standard mode for fresh ARDS and intubated trauma. Your Vt is 500, and at this patient's stiff compliance the plateau is already over 25. Push Vt up to 600 and watch the alarm fire. Now bring it down: lung-protective for this stiffness is ~5 mL/kg PBW (350–410 mL). You'll also need to raise PEEP to 8+ — the low PEEP is letting alveoli collapse, which is driving the high driving pressure. Hold the safe state for 5 breaths.",
   success_criteria_display: [
-    'Tidal volume 410–470 mL (6 mL/kg ±5% for this 73 kg PBW patient).',
+    'Tidal volume 340–410 mL (5 mL/kg PBW for this 73 kg moderately-stiff patient).',
+    'PEEP ≥ 8 cmH2O — recruit the alveoli, lower the driving pressure.',
     'Plateau pressure ≤ 30 cmH2O.',
     'Driving pressure ≤ 15 cmH2O.',
     'Sustained for 5 consecutive breaths.',

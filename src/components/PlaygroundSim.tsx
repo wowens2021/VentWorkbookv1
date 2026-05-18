@@ -991,6 +991,15 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     hasAlteredRef.current = true;
     const old = (settings as any)[key];
     setSettings(prev => ({ ...prev, [key]: val }));
+    // Bug fix — when PEEP changes, sync metrics.totalPeep to the new
+    // value too. Otherwise the displayed auto-PEEP (computed as
+    // totalPeep − setPEEP) drifts off the stale last-measured total
+    // and the auto-PEEP alarm false-fires whenever the learner adjusts
+    // PEEP without doing an explicit EXP HOLD. The next real EXP HOLD
+    // measurement will overwrite this with the actual physics value.
+    if (key === 'peep') {
+      setMetrics(m => ({ ...m, totalPeep: val }));
+    }
     harness?.emit({ type: 'control_changed', control: key as ControlName, old_value: old, new_value: val, timestamp: Date.now() });
   };
 
@@ -1073,7 +1082,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       const tSinceLastStart = elapsedInSim - lastBreathStartTimeRef.current;
       const iT = settings.iTime || 1.0;
 
-      const C = patient.compliance / 1000;
+      // Dynamic compliance: effective C responds to applied PEEP.
+      // Below PEEP 8, unstable alveoli start to derecruit (atelectasis),
+      // reducing the effective compliance and pushing PIP / driving
+      // pressure UP. At PEEP 8+ the lung is fully recruited.
+      // Curve: C_eff = C_base × clamp(0.55 + 0.05625·PEEP, 0.55, 1.0).
+      //  PEEP  0: 55% of baseline (heavy derecruitment)
+      //  PEEP  5: 83%               (typical mild derecruitment)
+      //  PEEP  8: 100%              (recruited)
+      //  PEEP 12+: 100%             (no further benefit, no overdistension penalty here)
+      const peepRecruitFactor = Math.min(1.0, Math.max(0.55, 0.55 + 0.05625 * settings.peep));
+      const C = (patient.compliance * peepRecruitFactor) / 1000;
       const tau_insp_check = patient.resistance * C;
 
       let isCurrentlyInInsp = false;
@@ -1562,7 +1581,18 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
             <div className={`flex items-center gap-2 mb-2 ${flashControlSet.has('mode') ? 'bg-sky-50 ring-2 ring-sky-300/70 border-sky-400' : 'bg-zinc-50 border-zinc-200'} p-1 rounded-lg border transition`}>
               <div className="flex items-center gap-1">
                 {isLocked('mode') && <Lock size={10} className="text-zinc-400 ml-1" />}
-                {['VCV', 'PCV', 'PRVC', 'SIMV/PS', 'PSV'].map(m => (
+                {/* VCV is the volume-control flavor of assist-control. Real
+                    bedside vents label this "A/C" or "Volume A/C" — VCV is
+                    a technical/textbook term that nobody uses clinically.
+                    The mode key stays 'VCV' for back-compat with module
+                    configs; only the button label changes. */}
+                {[
+                  { key: 'VCV', label: 'A/C' },
+                  { key: 'PCV', label: 'PCV' },
+                  { key: 'PRVC', label: 'PRVC' },
+                  { key: 'SIMV/PS', label: 'SIMV/PS' },
+                  { key: 'PSV', label: 'PSV' },
+                ].map(({ key: m, label }) => (
                   <button
                     key={m}
                     onClick={() => handleModeChange(m)}
@@ -1572,7 +1602,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                       isLocked('mode') ? 'text-zinc-400 cursor-not-allowed' :
                       mode === m ? 'bg-sky-600 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
                     } ${mode === m && isLocked('mode') ? 'bg-zinc-100' : ''}`}
-                  >{m}</button>
+                  >{label}</button>
                 ))}
               </div>
               <div className="flex items-center gap-1 ml-auto">

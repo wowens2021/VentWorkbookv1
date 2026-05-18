@@ -174,6 +174,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
 
   // ── Hint tier counter (read by HintLadder; written by onTierTriggered) ──
   const [hintTiersTriggered, setHintTiersTriggered] = useState(prior?.hint_tiers_triggered ?? 0);
+  // Bumped each time the learner clicks the "Stuck? Show a hint" button.
+  // Used as the React key on HintLadder so the component remounts on each
+  // request — that clears HintLadder's local `dismissed` set and lets the
+  // hint show again even if the learner previously dismissed it.
+  const [hintRequestCounter, setHintRequestCounter] = useState(0);
 
   // ── B2: outcome progress chip (declared early so the engagement hook can
   // depend on it; reset wiring lives in the tracker's onOutcomeProgress) ──
@@ -703,6 +708,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
           )}
           <div className="px-5 pt-3 shrink-0">
             <HintLadder
+              key={hintRequestCounter}
               hint={module.hint_ladder}
               idleMs={idleMs}
               changesSinceProgress={changesSinceProgress}
@@ -719,7 +725,16 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
               objectiveSatisfied={objectiveSatisfied}
               onReset={onResetToStart}
               onContinueToDebrief={advanceFromTryIt}
-              onShowHint={() => setLastInteractMs(Date.now() - 46_000)}  // Fix 7: tier 1 now fires at 45 s of idle, so subtract 46_000 ms to push the ladder one tick past it.
+              onShowHint={() => {
+                // Stuck-button: spike idleMs past the tier-1 threshold AND
+                // bump the HintLadder remount key so any previously-dismissed
+                // tier is cleared. Without the remount, a learner who had
+                // already dismissed tier 1 once would click Stuck and see
+                // nothing — the dismissed set persists in HintLadder's
+                // local state until it unmounts.
+                setLastInteractMs(Date.now() - 46_000);
+                setHintRequestCounter(n => n + 1);
+              }}
               progress={childStates.length > 0 ? childStates : undefined}
               onRedo={onRedoTask}
               outcomeProgress={outcomeProgress}

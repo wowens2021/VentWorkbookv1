@@ -100,6 +100,13 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
           {q.options.map((opt, i) => {
             const isSel = selected === i;
             const showResult = submitted;
+            // Bug fix — don't reveal the correct answer when the learner
+            // submits a wrong one. Highlight only the wrong-selected
+            // option in rose; leave the other options (including the
+            // correct one) visually neutral. The learner reads the
+            // explanation, retries, and only sees the green reveal when
+            // they pick the correct option themselves.
+            const lastWasCorrect = submitted && selected !== null && q.options[selected].is_correct;
             let cls = 'bg-white border-stone-200 text-stone-700 hover:border-brand-olive/40 hover:bg-brand-olive/[0.04]';
             let letterCls = 'bg-stone-100 text-stone-500 border-stone-200';
             if (!showResult && isSel) {
@@ -107,10 +114,15 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
               letterCls = 'bg-brand-olive text-white border-brand-olive';
             }
             if (showResult) {
-              if (opt.is_correct) {
+              if (lastWasCorrect && opt.is_correct) {
+                // Correct submission — show emerald reveal on the
+                // chosen (correct) option.
                 cls = 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-1 ring-emerald-300';
                 letterCls = 'bg-emerald-500 text-white border-emerald-500';
-              } else if (isSel) {
+              } else if (!lastWasCorrect && isSel) {
+                // Wrong submission — only the selected wrong option
+                // is rose-highlighted. The correct one stays neutral
+                // so the learner can think again.
                 cls = 'bg-rose-50 border-rose-500 text-rose-900 ring-1 ring-rose-300';
                 letterCls = 'bg-rose-500 text-white border-rose-500';
               } else {
@@ -131,8 +143,8 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
                   {String.fromCharCode(65 + i)}
                 </span>
                 <span className="flex-1">{opt.label}</span>
-                {showResult && opt.is_correct && <CheckCircle2 size={18} className="text-emerald-600 shrink-0" strokeWidth={2.5} />}
-                {showResult && !opt.is_correct && isSel && <XCircle size={18} className="text-rose-600 shrink-0" strokeWidth={2.5} />}
+                {showResult && lastWasCorrect && opt.is_correct && <CheckCircle2 size={18} className="text-emerald-600 shrink-0" strokeWidth={2.5} />}
+                {showResult && !lastWasCorrect && !opt.is_correct && isSel && <XCircle size={18} className="text-rose-600 shrink-0" strokeWidth={2.5} />}
               </button>
             );
           })}
