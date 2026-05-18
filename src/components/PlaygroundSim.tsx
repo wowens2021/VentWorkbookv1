@@ -327,13 +327,17 @@ const ControlBox = ({
 };
 
 const WaveformPanel = React.memo(({
-  title, dataKey, unit, bounds, segmentedPaths, cursorIndex, dataPoints, isHoldActive = false, showZeroLine = false, isFrozen,
+  title, dataKey, unit, bounds, segmentedPaths, cursorIndex, dataPoints, isHoldActive = false, showZeroLine = false, isFrozen, peepValue,
 }: {
   title: string; dataKey: string; unit: string;
   bounds: { min: number; max: number };
   segmentedPaths: { path: string; color: string }[];
   cursorIndex: number | null; dataPoints: any[];
   isHoldActive?: boolean; showZeroLine?: boolean; isFrozen: boolean;
+  /** Fix 3 — when set, draws a labeled dashed olive guideline at the
+   *  PEEP value so the learner can see where end-expiratory pressure
+   *  is meant to land. Used only on the airway-pressure panel. */
+  peepValue?: number;
 }) => {
   const { min, max } = bounds;
   const cursorValue = cursorIndex !== null && dataPoints[cursorIndex] ? dataPoints[cursorIndex][dataKey] : 0;
@@ -341,6 +345,13 @@ const WaveformPanel = React.memo(({
   // Zero line always sits at the visual midpoint (y=60 out of 120) so it
   // reads as a consistent centre reference across all three waveform panels.
   const zeroY = 60;
+  // PEEP guideline coordinate. For the pressure panel, min=0 so the
+  // line sits at `120 - (peep/max)*120`. Suppressed when peepValue is
+  // 0 (would overlap the zero-line) or undefined.
+  const peepY =
+    peepValue !== undefined && peepValue > 0
+      ? 120 - (((peepValue - min) / (max - min)) * 120)
+      : null;
   return (
     <div className="bg-[#e0e0e0] rounded-xl border border-zinc-300 p-2 flex-1 relative min-h-0 overflow-hidden">
       <div className="absolute left-0 top-3 bottom-3 w-10 flex flex-col justify-between items-end pr-1.5 border-r border-zinc-500/40 z-20 pointer-events-none">
@@ -368,8 +379,23 @@ const WaveformPanel = React.memo(({
           </span>
         </div>
       )}
+      {/* Fix 3 — labeled PEEP guideline rendered in HTML so the text
+          doesn't get distorted by the SVG's non-uniform stretch. */}
+      {peepY !== null && (
+        <div
+          className="absolute right-2 z-20 pointer-events-none flex items-center gap-1"
+          style={{ top: `calc(${(peepY! / 120) * 100}% - 4px)` }}
+        >
+          <span className="text-[8px] font-black uppercase tracking-widest text-brand-olive bg-white/85 px-1 py-0.5 rounded border border-brand-olive/40 leading-none">
+            PEEP {peepValue}
+          </span>
+        </div>
+      )}
       <svg className="absolute inset-0 w-full h-full pt-3 pl-10 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 450 120">
         {showZeroLine && <line x1="0" y1={zeroY} x2="450" y2={zeroY} stroke="#7a7a7a" strokeWidth="0.6" strokeDasharray="3,5" strokeOpacity="0.7" vectorEffect="non-scaling-stroke" />}
+        {peepY !== null && (
+          <line x1="0" y1={peepY!} x2="450" y2={peepY!} stroke="#47713e" strokeWidth="0.8" strokeDasharray="4,4" strokeOpacity="0.9" vectorEffect="non-scaling-stroke" />
+        )}
         {segmentedPaths.map((seg, idx) => (
           <path key={idx} d={seg.path} fill="none" stroke={seg.color} strokeWidth="2.0" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
         ))}
@@ -416,6 +442,16 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   // Fix 1 — companion lookup for control flashes (driven by the "Show me
   // the answer" affordance when the correct target is a control box).
   const flashControlSet = useMemo(() => new Set(flashControls ?? []), [flashControls]);
+  // Opt-in set for the three specialty readouts (SBP, RSBI, ETCO2).
+  // These cards render only when a module explicitly lists them in
+  // scenario.visible_readouts — they're load-bearing in M13 (SBP gate),
+  // M17/M18 (RSBI weaning calc), and M19 (ETCO2 → 0 / SBP drop as DOPES
+  // signatures), and clutter every other module's display.
+  const visibleReadoutSet = useMemo(
+    () => new Set(harness?.scenario?.visible_readouts ?? []),
+    [harness],
+  );
+  const showsReadout = (name: string) => visibleReadoutSet.has(name as any);
   /**
    * Recognition click-target mode is active whenever `recognitionTargets` is
    * provided. In this mode EVERY readout tile and EVERY control box becomes
@@ -661,6 +697,12 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   const lastFreezeTimeRef = useRef(0);
   const totalFreezeOffsetRef = useRef(0);
   const peakExpiratoryFlowRef = useRef(0);
+  // Fix 2 — flow snapshot at the moment EXP HOLD activates. Used to
+  // decide whether expiration was complete: if the patient was still
+  // exhaling meaningfully (|flow| > threshold), there's real auto-PEEP;
+  // otherwise the measurement collapses to set PEEP exactly so the
+  // displayed auto-PEEP doesn't false-positive at normal R + adequate Te.
+  const expHoldFlowAtStartRef = useRef(0);
   const currentFlowLpmRef = useRef(0);
   const trappedVolumeAtBreathStartRef = useRef(0);
   const actualInspDurationRef = useRef(1.0);
@@ -1062,6 +1104,11 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       // Expiratory hold takes priority over a new breath
       if (startNewBreath && pendingExpRef.current) {
         isExpHolding.current = true;
+        // Fix 2 — capture expiratory flow at the instant the hold
+        // activates. If flow is already at baseline (~0), expiration
+        // completed normally and there's no real auto-PEEP. Used by
+        // the hold-release branch to gate the auto-PEEP calculation.
+        expHoldFlowAtStartRef.current = Math.abs(currentFlowLpmRef.current);
         setActiveHoldType('EXP');
         holdStartTimeRef.current = elapsedTotal;
         holdStartRealMsRef.current = Date.now();
@@ -1093,6 +1140,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         peakExpiratoryFlowRef.current = 0;
         if (triggeredByPatient) {
           nextSpontaneousTimeRef.current = elapsedInSim + (60 / (patient.spontaneousRate || 0.1) * (0.8 + Math.random() * 0.4));
+          // Fix 5 — SIMV synchronization. In SIMV/PS, a spontaneous
+          // breath taken in the current cycle "resets the clock":
+          // the next mandatory shouldn't fire on the original schedule
+          // because the patient already breathed. Push the mandatory
+          // timer out by a full mandatory interval from NOW.
+          // In A/C modes (VCV / PCV / PRVC) every triggered breath IS
+          // the mandatory breath, so the existing branch handles that
+          // path; no reset needed here.
+          if (mode === 'SIMV/PS') {
+            nextMandatoryTimeRef.current = elapsedInSim + ventInterval;
+          }
         } else {
           nextMandatoryTimeRef.current = elapsedInSim + ventInterval;
         }
@@ -1171,9 +1229,21 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         }
       } else if (isExpHolding.current) {
         const dur = elapsedTotal - holdStartTimeRef.current;
-        const measuredTotalPeep = settings.peep + (lastVolumeRef.current / C);
+        // Fix 2 — physically-grounded auto-PEEP detection. Auto-PEEP
+        // only exists if expiration was incomplete when the next breath
+        // would have fired (flow had NOT returned to baseline). We
+        // snapshotted the expiratory flow at hold activation; if it
+        // was already at baseline (<2 L/min or <5% of peak exp flow),
+        // expiration completed normally and total PEEP = set PEEP.
+        // Otherwise compute trapped pressure from residual volume.
+        const incompleteExp =
+          expHoldFlowAtStartRef.current >
+          Math.max(2, 0.05 * Math.abs(peakExpiratoryFlowRef.current));
+        const measuredTotalPeep = incompleteExp
+          ? settings.peep + (lastVolumeRef.current / C)
+          : settings.peep;
         if (dur < 1.5) {
-          f = 0; v = lastVolumeRef.current; p = measuredTotalPeep;
+          f = 0; v = incompleteExp ? lastVolumeRef.current : 0; p = measuredTotalPeep;
         } else {
           holdOffsetRef.current += dur;
           isExpHolding.current = false;
@@ -1358,11 +1428,16 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                   </div>
                 </div>
 
-                {/* Compliance */}
+                {/* Compliance.
+                    Fix 4 — recalibrated. Severe was 10 mL/cmH₂O which
+                    forced Vt < 3 mL/kg PBW to keep Pplat ≤ 30 — outside
+                    the realistic ARDS range. Severe ARDS Crs is 15–28
+                    mL/cmH₂O per the medical spec; 22 lets ARDSnet 6
+                    mL/kg PBW achieve Pplat ~24. */}
                 <div className="flex flex-col gap-2">
                   <span className="text-[10px] text-zinc-500 uppercase font-black tracking-wider">Compliance (mL/cmH₂O)</span>
                   <div className="grid grid-cols-3 gap-2">
-                    {[{ label: 'Normal (80)', val: 80, cls: 'emerald' }, { label: 'Reduced (50)', val: 50, cls: 'yellow' }, { label: 'Severe (10)', val: 10, cls: 'rose' }].map(({ label, val, cls }) => (
+                    {[{ label: 'Normal (80)', val: 80, cls: 'emerald' }, { label: 'Moderate (35)', val: 35, cls: 'yellow' }, { label: 'Severe (22)', val: 22, cls: 'rose' }].map(({ label, val, cls }) => (
                       <button key={val} onClick={() => handlePatientChange('compliance', val)} className={`py-2 px-1 rounded border text-[10px] font-bold transition-all ${patient.compliance === val ? `bg-${cls}-900/50 border-${cls}-500 text-${cls}-400` : 'bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100'}`}>{label}</button>
                     ))}
                   </div>
@@ -1439,18 +1514,27 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-600" flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vt/PBW')} />
               <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" flash={flashSet.has('totalPeep')} {...recogPropsForReadout('totalPeep', 'tPEEP')} />
               <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" flash={flashSet.has('autoPeep')} {...recogPropsForReadout('autoPeep', 'autoPEEP')} />
-              <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-600' : rsbiValue > 80 ? 'text-amber-600' : 'text-emerald-600'} flash={flashSet.has('rsbi')} {...recogPropsForReadout('rsbi', 'RSBI')} />
-              {/* v3.2 §4 — SBP. Falls when CO drops; flashes rose under 95 to flag overshoot PEEP on a marginal patient (M13). */}
-              <NumericCard label="SBP" value={abg.sbp} unit="mmHg" color={abg.sbp < 95 ? 'text-rose-600 animate-pulse' : 'text-zinc-900'} flash={flashSet.has('sbp')} {...recogPropsForReadout('sbp', 'SBP')} />
-              {/* v3.2 §9.6 — ETCO2 at the mouth. Goes to 0 on displacement (M19 S1). */}
-              <NumericCard label="ETCO2" value={abg.etco2} unit="mmHg" color={abg.etco2 <= 0 ? 'text-rose-600 animate-pulse' : 'text-zinc-900'} flash={flashSet.has('etco2')} {...recogPropsForReadout('etco2', 'ETCO2')} />
+              {/* Specialty readouts — opt-in per module via visible_readouts.
+                  RSBI is load-bearing in M17/M18 (weaning calc); SBP in M13
+                  (PEEP-overshoot guardrail) and M19 (pneumothorax signature);
+                  ETCO2 in M19 (displacement signature). Hidden everywhere
+                  else to keep the default sim view from feeling cluttered. */}
+              {showsReadout('rsbi') && (
+                <NumericCard label="RSBI" value={rsbiValue} unit="b/L" color={rsbiValue > 105 ? 'text-rose-600' : rsbiValue > 80 ? 'text-amber-600' : 'text-emerald-600'} flash={flashSet.has('rsbi')} {...recogPropsForReadout('rsbi', 'RSBI')} />
+              )}
+              {showsReadout('sbp') && (
+                <NumericCard label="SBP" value={abg.sbp} unit="mmHg" color={abg.sbp < 95 ? 'text-rose-600 animate-pulse' : 'text-zinc-900'} flash={flashSet.has('sbp')} {...recogPropsForReadout('sbp', 'SBP')} />
+              )}
+              {showsReadout('etco2') && (
+                <NumericCard label="ETCO2" value={abg.etco2} unit="mmHg" color={abg.etco2 <= 0 ? 'text-rose-600 animate-pulse' : 'text-zinc-900'} flash={flashSet.has('etco2')} {...recogPropsForReadout('etco2', 'ETCO2')} />
+              )}
             </div>
           </div>
 
           {/* Waveforms — wrapped in an olive-trimmed card so the panel
               reads as a single instrument rather than three loose tiles. */}
           <div className="flex-1 flex flex-col gap-1.5 overflow-hidden relative min-h-0 bg-white rounded-xl border-2 border-brand-olive/25 p-2 shadow-md ring-1 ring-brand-olive/10">
-            <WaveformPanel title="Airway Pressure" dataKey="pressure" unit="cmH2O" segmentedPaths={pressurePaths} bounds={pressureBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} isHoldActive={!!activeHoldType} showZeroLine isFrozen={isFrozen} />
+            <WaveformPanel title="Airway Pressure" dataKey="pressure" unit="cmH2O" segmentedPaths={pressurePaths} bounds={pressureBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} isHoldActive={!!activeHoldType} showZeroLine isFrozen={isFrozen} peepValue={settings.peep} />
             <WaveformPanel title="Flow Rate" dataKey="flow" unit="L/min" segmentedPaths={flowPaths} bounds={flowBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} showZeroLine isFrozen={isFrozen} />
             <WaveformPanel title="Volume" dataKey="volume" unit="mL" segmentedPaths={volumePaths} bounds={volumeBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} showZeroLine isFrozen={isFrozen} />
             {/* Inline recognition prompt overlay */}
