@@ -33,13 +33,20 @@ interface Args {
   resetSimToPreset: () => void;
   /** Called by handleRestart / onRedoTask to clear UI state that lives
    *  outside this hook (recognition prompts, step toast, hint tiers,
-   *  click feedback popups). All optional — pass only the ones you need
-   *  to wipe. */
+   *  click feedback popups, child states for compound trackers,
+   *  outcome progress). All optional — pass only the ones you need to
+   *  wipe. */
   externalCleanup?: {
     setActivePrompt?: (v: null) => void;
     setStepToast?: (v: null) => void;
     setHintTiersTriggered?: (v: number) => void;
     setClickFeedback?: (v: null) => void;
+    /** Reset childStates back to [false × N] for compound trackers, so
+     *  the TaskCard's per-criterion checks repaint cleanly on redo. */
+    resetChildStates?: () => void;
+    /** Clear the "Holding X of Y" outcome chip so the previous run's
+     *  satisfied progress doesn't bleed into the new attempt. */
+    setOutcomeProgress?: (v: null) => void;
   };
 }
 
@@ -368,9 +375,34 @@ export function usePhaseFlow({
   };
 
   const onRedoTask = () => {
-    setObjectiveSatisfied(false);
+    // Bug fix — "Redo this task" on M1 (and any other module with a
+    // compound click-target tracker) used to leave the page blank
+    // because:
+    //   - objective_satisfied_at stayed in localStorage, so the next
+    //     load would still route to debrief.
+    //   - childStates carried over from the prior satisfied run.
+    //   - outcomeProgress kept the prior "Holding 5 of 5" chip up.
+    //   - the harness still held the satisfied tracker state.
+    // We now explicitly clear ALL of the above before re-arming, so
+    // the in-progress TaskCard paints cleanly and the tracker rebuild
+    // useEffect in ModuleShell starts from a known baseline.
     externalCleanup?.setActivePrompt?.(null);
     externalCleanup?.setStepToast?.(null);
+    externalCleanup?.setClickFeedback?.(null);
+    externalCleanup?.resetChildStates?.();
+    externalCleanup?.setOutcomeProgress?.(null);
+    // Wipe the persisted satisfaction marker so a refresh during the
+    // redo attempt doesn't bounce the learner back to debrief.
+    persistProgress({
+      module_id: module.id,
+      objective_satisfied_at: undefined as any,
+      time_to_objective_sec: undefined as any,
+      replay_snapshot_ref: undefined as any,
+    });
+    resetSimToPreset();
+    // Flip the gate LAST so the ModuleShell tracker-rebuild useEffect
+    // sees clean state on its run.
+    setObjectiveSatisfied(false);
   };
 
   return {

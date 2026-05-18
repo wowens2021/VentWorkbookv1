@@ -215,6 +215,14 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
       setStepToast: () => setStepToast(null),
       setHintTiersTriggered: (v: number) => setHintTiersTriggered(v),
       setClickFeedback: () => setClickFeedback(null),
+      resetChildStates: () => {
+        if (module.hidden_objective?.kind === 'compound') {
+          setChildStates(module.hidden_objective.children.map(() => false));
+        } else {
+          setChildStates([]);
+        }
+      },
+      setOutcomeProgress: () => setOutcomeProgress(null),
     },
   });
   const {
