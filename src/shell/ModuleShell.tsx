@@ -4,6 +4,7 @@ import type { ModuleConfig, InlinePromptConfig, ExploreCardConfig, PerturbationS
 import PrimerQuiz from './PrimerQuiz';
 import CheckYourselfPage from './CheckYourselfPage';
 import IntroBriefing from './IntroBriefing';
+import WorkbookErrorBoundary from './WorkbookErrorBoundary';
 import ReadPane from './ReadPane';
 import TrackProgressStrip from './TrackProgressStrip';
 import { trackTone } from './trackColors';
@@ -627,6 +628,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     : phase === 'debrief' ? 'live-frozen'
     : 'live'; // explore
 
+  // ── Click-target mode (recognition by clicking a reading/control) ──
+  // Declared BEFORE the workbookContent useMemo so the memo's body can
+  // reference it without a TDZ error when the memo re-runs.
+  const isClickTargetMode = !!activePrompt?.click_targets && activePrompt.click_targets.length > 0;
+
   // ── Workbook content by phase ──
   const workbookContent = useMemo(() => {
     if (phase === 'primer') {
@@ -1117,10 +1123,24 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
         })()}
       </div>
     );
-  }, [phase, module, objectiveSatisfied, quizSubmitted, idleMs, childStates, stepToast, readSubPhase, formativeBlocks, outcomeProgress, changesSinceProgress, nextModule, debriefSubView]);
+  // Critical: this dep array MUST include every reactive piece of state
+  // that the memo body reads. Otherwise the memo returns stale JSX and
+  // the workbook can appear "blank" — e.g., the active recognition
+  // prompt's Direction banner never updates, the Show-me-answer link
+  // never surfaces, the sequential observation never appears. The list
+  // below is exhaustive for the try-it branch.
+  }, [
+    phase, module, objectiveSatisfied, quizSubmitted,
+    idleMs, childStates, stepToast, readSubPhase, formativeBlocks,
+    outcomeProgress, changesSinceProgress, nextModule, debriefSubView,
+    // Bug fix — recognition / sequential / show-me state was missing.
+    activePrompt, wrongClicksByPrompt, isClickTargetMode,
+    sequentialMode, sequentialTotal, seqAdvancedThrough,
+  ]);
 
-  // ── Click-target mode (recognition by clicking a reading/control) ──
-  const isClickTargetMode = !!activePrompt?.click_targets && activePrompt.click_targets.length > 0;
+  // (isClickTargetMode is now declared above the workbookContent useMemo
+  // so the memo body can read it safely. See the declaration block
+  // immediately before that useMemo.)
 
   /**
    * Short human descriptions for every readout / control so an unmapped tile
@@ -1370,12 +1390,17 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
           workbookContent={
             // D1: keyed wrapper so the workbook column re-mounts and replays
             // the slide-in animation on every phase change.
-            <div
-              key={`${phase}-${readSubPhase}`}
-              className="h-full animate-in slide-in-from-right-4 fade-in duration-300"
-            >
-              {workbookContent}
-            </div>
+            // Wrapped in WorkbookErrorBoundary so any render error in the
+            // phase content (TaskCard, quizzes, the read pane) surfaces as a
+            // recovery panel instead of leaving the surface fully blank.
+            <WorkbookErrorBoundary onResetModule={handleRestart} onBack={onBack}>
+              <div
+                key={`${phase}-${readSubPhase}`}
+                className="h-full animate-in slide-in-from-right-4 fade-in duration-300"
+              >
+                {workbookContent}
+              </div>
+            </WorkbookErrorBoundary>
           }
           inlinePromptOverlay={inlinePromptOverlay}
           simInteractivity={simInteractivity}
