@@ -136,21 +136,32 @@ export function usePhaseFlow({
   );
   const [readSubPhase, setReadSubPhase] = useState<'prose' | 'check'>('prose');
 
+  // Retake bookkeeping: bumped each time handleRetake fires. Forces
+  // completedPhases to re-read the persisted record so the cleared
+  // phase timestamps are reflected immediately (the parent-passed
+  // `prior` is a useMemo snapshot taken at mount and won't update).
+  const [retakeNonce, setRetakeNonce] = useState(0);
+
   // ── Completed-phase tracking ──
   const completedPhases = useMemo(() => {
     const set = new Set<Phase>();
-    if (prior?.primer_completed_at) set.add('primer');
-    if (prior?.reading_completed_at) set.add('read');
-    if (prior?.task_started_at) set.add('explore');
-    if (prior?.objective_satisfied_at) set.add('try-it');
-    if (prior?.quiz_submitted_at) set.add('debrief');
+    // After a retake, re-read from localStorage so the just-cleared
+    // phase timestamps are reflected in the dots. Otherwise the parent
+    // snapshot (`prior`) keeps its stale state from mount and the dots
+    // stay green even though localStorage is empty.
+    const effectivePrior = retakeNonce > 0 ? loadProgress(module.id) : prior;
+    if (effectivePrior?.primer_completed_at) set.add('primer');
+    if (effectivePrior?.reading_completed_at) set.add('read');
+    if (effectivePrior?.task_started_at) set.add('explore');
+    if (effectivePrior?.objective_satisfied_at) set.add('try-it');
+    if (effectivePrior?.quiz_submitted_at) set.add('debrief');
     const passed: Phase[] = ['primer', 'read', 'explore', 'try-it', 'debrief'];
     const idx = passed.indexOf(phase);
     for (let i = 0; i < idx; i++) set.add(passed[i]);
     if (objectiveSatisfied) set.add('try-it');
     if (quizSubmitted) set.add('debrief');
     return set;
-  }, [prior, phase, objectiveSatisfied, quizSubmitted]);
+  }, [prior, phase, objectiveSatisfied, quizSubmitted, retakeNonce, module.id]);
 
   const jumpToPhase = (target: Phase) => {
     if (!completedPhases.has(target) || target === phase) return;
@@ -338,17 +349,69 @@ export function usePhaseFlow({
 
   const handleRetake = () => {
     const latest = loadProgress(module.id);
+    // Retake = full progress wipe so the phase-progress dots reset to
+    // gray and the learner redoes every phase from scratch. The only
+    // things preserved are the score-history fields (quiz_best_score,
+    // quiz_attempts) and the started_at stamp, so "best attempt wins"
+    // still works and the dashboard sees the original session.
     persistProgress({
       module_id: module.id,
+      // Phase timestamps — clear them all so completedPhases recomputes
+      // to an empty Set and the PhaseBadge dots reset.
       primer_completed_at: undefined as any,
       primer_score: undefined as any,
       primer_answers: undefined as any,
+      reading_completed_at: undefined as any,
+      exploration_started_at: undefined as any,
+      exploration_duration_sec: undefined as any,
+      exploration_control_changes: undefined as any,
+      task_started_at: undefined as any,
+      objective_satisfied_at: undefined as any,
+      time_to_objective_sec: undefined as any,
+      task_control_changes: undefined as any,
+      reset_to_start_clicks: undefined as any,
+      replay_snapshot_ref: undefined as any,
       quiz_submitted_at: undefined as any,
+      quiz_answers: undefined as any,
+      // Composite score recomputes on next debrief submission.
       total_score_percent: undefined as any,
       total_score_letter: undefined as any,
+      // Check-yourself answers wipe — they'll be re-collected on the
+      // new pass through the Read.check sub-phase.
+      check_yourself_answers: undefined as any,
+      // Hint history reset for the new attempt; the next debrief score
+      // shouldn't be penalized for hints triggered on a prior try.
+      hint_tiers_triggered: 0,
+      // quiz_best_score and quiz_attempts intentionally PRESERVED so
+      // best-attempt-wins continues to gate the score.
+      // briefing_acknowledged_at PRESERVED so the splash doesn't reappear
+      // on every retake.
     });
+    // In-session resets matching what cleared above.
+    setObjectiveSatisfied(false);
     setQuizSubmitted(false);
+    externalCleanup?.setActivePrompt?.(null);
+    externalCleanup?.setClickFeedback?.(null);
+    externalCleanup?.setStepToast?.(null);
+    externalCleanup?.setHintTiersTriggered?.(0);
+    engagement.exploreControlChangesRef.current = 0;
+    engagement.taskControlChangesRef.current = 0;
+    engagement.resetClicksRef.current = 0;
+    engagement.exploreStartedAtRef.current = null;
+    engagement.taskStartedAtRef.current = null;
+    // Wipe the captured check-yourself answers map so the new run
+    // collects fresh ones.
+    checkYourselfAnswersRef.current.clear();
+    // Reset the sim so the learner starts the new attempt from the
+    // canonical preset, not whatever stuck state the previous run
+    // left behind.
+    resetSimToPreset();
+    setReadSubPhase('prose');
     setPhase('primer');
+    // Force completedPhases to re-read the cleared persisted record.
+    // Without this, the PhaseBadge dots stay green because the parent
+    // `prior` snapshot was captured at mount and never updates.
+    setRetakeNonce(n => n + 1);
     void latest;
   };
 
