@@ -999,19 +999,12 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                       )}
                     </div>
 
-                    {/* Timing footer */}
-                    <div className="mt-5 pt-4 border-t border-stone-100 grid grid-cols-2 gap-3">
-                      <TimingCard
-                        label="Task completion"
-                        value={fmtSec(taskSec)}
-                        help="Wall-clock seconds from when you started Phase 4 until the objective was satisfied."
-                      />
-                      <TimingCard
-                        label="Active engagement time"
-                        value={fmtSec(totalSec)}
-                        help="Counted only while this tab is visible and you're actively interacting. Idle time and background tabs don't count."
-                      />
-                    </div>
+                    {/* Timing footer hidden on the learner-facing debrief —
+                        Task completion and Active engagement time are still
+                        persisted to the ProgressRecord (time_to_objective_sec,
+                        time_active_sec) for downstream dashboards / team
+                        analytics, but they're not shown to the learner. The
+                        bar for "good module run" is the score, not the clock. */}
                   </div>
                 );
               })()}
