@@ -918,15 +918,15 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                   check_yourself_correct: cyCorrect,
                   check_yourself_total: cyTotal,
                 }).breakdown;
-                const taskSec = rec?.time_to_objective_sec;
-                const fmtSec = (s?: number) =>
-                  s === undefined ? '—' : s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
-                // A1: total module time is now ACTIVE engagement seconds —
-                // accumulated only while the tab is visible and the learner
-                // is not idle. Replaces the prior wall-clock between started_at
-                // and quiz_submitted_at, which could span days across sessions
-                // (the "1506 min" bug).
-                const totalSec = rec?.time_active_sec ?? accumulatedSecRef.current;
+                // Bug fix — the timing footer was removed but `taskSec`,
+                // `fmtSec`, and `totalSec` were left declared, with the
+                // last line referencing `accumulatedSecRef` which is no
+                // longer destructured from the engagement hook. When
+                // `rec?.time_active_sec` was undefined (common on Review
+                // of a previously-completed module), the `??` evaluated
+                // the undeclared identifier and threw during render,
+                // blanking the entire ModuleShell. Removed the dead
+                // declarations entirely.
                 return (
                   <div className="bg-white border border-stone-200 rounded-xl p-5 mb-5">
                     <div className="flex items-baseline justify-between mb-1">

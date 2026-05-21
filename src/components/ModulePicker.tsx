@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Play, RotateCcw, Check, ArrowRight, ChevronDown, Layers } from 'lucide-react';
 import { MODULES } from '../modules';
-import { loadProgress, listAllProgress } from '../persistence/progress';
+import { loadProgress, listAllProgress, clearProgress } from '../persistence/progress';
 import type { ModuleConfig, Track, ProgressRecord } from '../shell/types';
 import { trackTone } from '../shell/trackColors';
 
@@ -110,6 +110,22 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
     });
   };
 
+  // Bumped after a restart to force the inline `loadProgress` calls to
+  // re-run so the row flips back to NOT_STARTED without a page reload.
+  const [restartNonce, setRestartNonce] = useState(0);
+
+  const handleRestart = (mod: ModuleConfig) => {
+    const ok = typeof window !== 'undefined'
+      ? window.confirm(
+          `Restart ${mod.id} — ${mod.title}?\n\n` +
+          'This wipes your saved progress, scores, and answers for this module so you can start from the beginning. You can\'t undo this.'
+        )
+      : true;
+    if (!ok) return;
+    clearProgress(mod.id);
+    setRestartNonce(n => n + 1);
+  };
+
   const overallStats = useMemo(() => {
     const all = listAllProgress();
     const completed = all.filter(p => !!p.quiz_submitted_at).length;
@@ -124,7 +140,10 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
             MODULES.reduce((s, m) => s + percent(loadProgress(m.id)), 0) / MODULES.length,
           ),
     };
-  }, []);
+    // Recompute on restart so the "modules completed" + "overall %" tiles
+    // reflect the cleared record.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restartNonce]);
 
   return (
     <div className="min-h-full bg-brand-cream">
@@ -325,24 +344,45 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                             <div className="hidden md:block shrink-0 w-[70px]" />
                           )}
 
-                          {/* CTA — primary action is ALWAYS the brand racing
-                              green, regardless of track. Track identity
-                              shows through icon + accent text up top; the
-                              "Start" button is the single product green so
-                              the dashboard reads as one product. */}
-                          <button
-                            onClick={() => onPickModule(mod)}
-                            className={`shrink-0 px-4 py-2 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition w-[110px] ${
-                              status === 'IN_PROGRESS'
-                                ? 'bg-brand-olive/10 text-brand-olive border border-brand-olive/40 hover:bg-brand-olive/20'
-                                : status === 'COMPLETED'
-                                  ? 'bg-white border border-brand-olive text-brand-olive hover:bg-brand-olive/5'
+                          {/* Action cluster.
+                              - NOT_STARTED  → Start button only.
+                              - IN_PROGRESS  → Resume button only.
+                              - COMPLETED    → Restart (icon) + Review (text).
+                                The Restart icon clears that module's saved
+                                progress after a confirm prompt, so the
+                                learner can redo it from scratch without
+                                first stepping back into the debrief page. */}
+                          {status === 'COMPLETED' ? (
+                            <div className="shrink-0 flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleRestart(mod)}
+                                title={`Restart ${mod.id} from the beginning`}
+                                aria-label={`Restart ${mod.id} from the beginning`}
+                                className="shrink-0 w-9 h-9 rounded-full bg-white border border-stone-300 text-stone-500 hover:text-brand-olive hover:border-brand-olive flex items-center justify-center transition"
+                              >
+                                <RotateCcw size={13} />
+                              </button>
+                              <button
+                                onClick={() => onPickModule(mod)}
+                                className="shrink-0 w-[110px] px-4 py-2 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition bg-white border border-brand-olive text-brand-olive hover:bg-brand-olive/5"
+                              >
+                                <ArrowRight size={12} />
+                                Review
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => onPickModule(mod)}
+                              className={`shrink-0 px-4 py-2 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition w-[110px] ${
+                                status === 'IN_PROGRESS'
+                                  ? 'bg-brand-olive/10 text-brand-olive border border-brand-olive/40 hover:bg-brand-olive/20'
                                   : 'bg-brand-olive hover:bg-brand-olive-hover text-white shadow-sm'
-                            }`}
-                          >
-                            {status === 'IN_PROGRESS' ? <RotateCcw size={12} /> : status === 'COMPLETED' ? <ArrowRight size={12} /> : <Play size={11} fill="currentColor" />}
-                            {status === 'IN_PROGRESS' ? 'Resume' : status === 'COMPLETED' ? 'Review' : 'Start'}
-                          </button>
+                              }`}
+                            >
+                              {status === 'IN_PROGRESS' ? <RotateCcw size={12} /> : <Play size={11} fill="currentColor" />}
+                              {status === 'IN_PROGRESS' ? 'Resume' : 'Start'}
+                            </button>
+                          )}
                         </article>
                       );
                     })}
