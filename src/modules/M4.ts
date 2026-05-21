@@ -268,7 +268,7 @@ export const M4: ModuleConfig = {
     // Novice-pass §4.2: zone labels so a learner reading "set compliance to 28"
     // has a clinical anchor for what that means.
     patient_context:
-      "65-year-old woman, intubated for pneumonia. Right now her lungs are mildly involved. The next two minutes simulate what happens when she gets worse — either lung-wise or airway-wise.\n\n**Note on the compliance slider:** in real life you can't 'set' a patient's compliance — it's a property of their lungs. On this simulator the slider lets you make their lungs stiffer or floppier on demand, so you can see what each one does to the screen.\n\n**Compliance zones to know:** Normal 60–80 · Mild ARDS 40–60 · Moderate 28–40 · Severe ≤ 28. The success criterion (≤ 28) is the severe-ARDS threshold.",
+      "65-year-old woman, intubated for pneumonia. Right now her lungs are mildly involved. The next two minutes simulate what happens when she gets worse — either lung-wise or airway-wise.\n\n**Note on the Patient knobs:** two new rose-labeled knobs appear in the control row for this module — **Compliance** and **Resistance**. In real life you can't 'set' a patient's compliance or resistance — they're properties of their lungs. On this simulator the knobs let you make their lungs stiffer/floppier or their airways narrower/wider on demand, so you can see what each one does to the screen.\n\n**Compliance zones to know:** Normal 60–80 · Mild ARDS 40–60 · Moderate 28–40 · Severe ≤ 28. The success criterion (≤ 28) is the severe-ARDS threshold.",
     unlocked_controls_description: [
       { name: 'Compliance · 20–80', description: "the system's overall stiffness. Normal 60–80 · Mild ARDS 40–60 · Moderate 28–40 · Severe ≤ 28." },
       { name: 'Resistance · 5–35', description: 'airway opposition to flow. Healthy intubated 5–10 · Mild bronchospasm 15–20 · Severe ≥ 25.' },
@@ -286,10 +286,10 @@ export const M4: ModuleConfig = {
   },
 
   user_facing_task:
-    "Demonstrate the gap signatures. This patient just got sicker. First, his compliance is going to crash — drop the slider into the ARDS range (≤ 28) and explain what the gap does. Then his airway is going to plug up — push resistance into the mucus-plug range (≥ 25) and explain what the gap does.",
+    "Demonstrate the gap signatures. This patient just got sicker. Use the rose-labeled PATIENT knobs in the control row to change the lung. First, his compliance crashes — drop the Compliance knob into the ARDS range (≤ 28) and explain what the gap does. Then his airway plugs up — push the Resistance knob into the mucus-plug range (≥ 25) and explain what the gap does.",
   success_criteria_display: [
-    'Drop compliance to ≤ 28 — explain the gap.',
-    'Raise resistance to ≥ 25 — explain the gap.',
+    'Drop the Compliance knob to ≤ 28 — explain the gap.',
+    'Raise the Resistance knob to ≥ 25 — explain the gap.',
   ],
   task_framing_style: 'A',
 

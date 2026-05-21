@@ -1645,6 +1645,25 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               <ControlBox flash={flashControlSet.has('fiO2')} className={playgroundMode ? "w-[120px]" : "w-[90px]"} label="FiO2" value={settings.fiO2} unit="%" min={21} max={100} step={5} onChange={(v: number) => handleSettingChange('fiO2', v)} {...recogPropsForControl('fiO2', 'FiO2 control')} />
               {mode === 'SIMV/PS' && <ControlBox flash={flashControlSet.has('psLevel')} className="w-[90px]" label="PS" value={settings.psLevel} unit="cmH2O" min={0} max={60} step={1} onChange={(v: number) => handleSettingChange('psLevel', v)} {...recogPropsForControl('psLevel', 'PS control')} />}
               {(mode === 'PSV' || mode === 'SIMV/PS') && <ControlBox flash={flashControlSet.has('endInspiratoryPercent')} className="w-[90px]" label="End-Insp %" value={settings.endInspiratoryPercent} unit="%" min={0} max={50} step={1} onChange={(v: number) => handleSettingChange('endInspiratoryPercent', v)} {...recogPropsForControl('endInspiratoryPercent', 'End-Insp control')} />}
+              {/* Patient-state knobs. These aren't real bedside controls
+                  (you can't "turn a knob to give the patient ARDS") but
+                  modules like M4 unlock them as sandbox levers so the
+                  learner can demonstrate cause→effect. They emit
+                  control_changed events keyed off the patient property
+                  name, so the M4 manipulation tracker fires on each
+                  meaningful change. */}
+              {unlockedControls?.includes('compliance') && (
+                <div className="flex flex-col items-center">
+                  <span className="text-[8px] font-black uppercase tracking-wider text-rose-700 leading-none mb-0.5">Patient</span>
+                  <ControlBox flash={flashControlSet.has('compliance')} className="w-[100px]" label="Compliance" value={patient.compliance} unit="mL/cmH2O" min={10} max={100} step={1} onChange={(v: number) => handlePatientChange('compliance', v)} />
+                </div>
+              )}
+              {unlockedControls?.includes('resistance') && (
+                <div className="flex flex-col items-center">
+                  <span className="text-[8px] font-black uppercase tracking-wider text-rose-700 leading-none mb-0.5">Patient</span>
+                  <ControlBox flash={flashControlSet.has('resistance')} className="w-[100px]" label="Resistance" value={patient.resistance} unit="cmH2O·s/L" min={5} max={60} step={1} onChange={(v: number) => handlePatientChange('resistance', v)} />
+                </div>
+              )}
             </div>
           </div>
         </div>
