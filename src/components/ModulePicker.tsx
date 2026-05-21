@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { Play, RotateCcw, Check, ArrowRight, ChevronDown, Layers } from 'lucide-react';
+import { Play, RotateCcw, ArrowRight, ChevronDown, Layers } from 'lucide-react';
 import { MODULES } from '../modules';
 import { loadProgress, listAllProgress, clearProgress } from '../persistence/progress';
 import type { ModuleConfig, Track, ProgressRecord } from '../shell/types';
 import { trackTone } from '../shell/trackColors';
+import { PASSING_THRESHOLD } from '../shell/scoring';
 
 interface Props {
   onPickModule: (mod: ModuleConfig) => void;
@@ -29,33 +30,62 @@ const difficultyClasses: Record<Difficulty, string> = {
   ADVANCED: 'bg-red-50 text-red-900 border-red-200',
 };
 
-type Status = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+type Status = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'NEEDS_RETAKE';
 
+/**
+ * Status derivation, with passing-grade gating.
+ *
+ * A module that's been quiz-submitted but scored below the
+ * PASSING_THRESHOLD (80%) is NOT counted as COMPLETED. It becomes
+ * NEEDS_RETAKE — the learner must pass before mastery is credited.
+ * This matches the in-module debrief, which already gates the
+ * "Continue to next module →" CTA on the same threshold.
+ */
 function statusOf(p: ProgressRecord | null): Status {
   if (!p) return 'NOT_STARTED';
-  if (p.quiz_submitted_at) return 'COMPLETED';
+  if (p.quiz_submitted_at) {
+    const score = p.total_score_percent ?? 0;
+    return score >= PASSING_THRESHOLD ? 'COMPLETED' : 'NEEDS_RETAKE';
+  }
   if (p.primer_completed_at || p.started_at) return 'IN_PROGRESS';
   return 'NOT_STARTED';
 }
 
+/** True when the module counts toward the learner's mastery tally. */
+function isMastered(p: ProgressRecord | null): boolean {
+  return statusOf(p) === 'COMPLETED';
+}
+
 // Status pills: NOT_STARTED stays neutral stone; IN_PROGRESS adopts the
 // brand olive (was amber); COMPLETED keeps emerald to match the brand
-// green family.
+// green family. NEEDS_RETAKE adopts amber so a failing submission stands
+// out without looking like a hard error.
 const statusClasses: Record<Status, string> = {
   NOT_STARTED: 'bg-stone-100 text-stone-600 border-stone-200',
   IN_PROGRESS: 'bg-brand-olive/10 text-brand-olive border-brand-olive/30',
   COMPLETED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  NEEDS_RETAKE: 'bg-amber-100 text-amber-800 border-amber-300',
 };
 
 const statusLabel: Record<Status, string> = {
   NOT_STARTED: 'NOT STARTED',
   IN_PROGRESS: 'IN PROGRESS',
   COMPLETED: 'COMPLETED',
+  NEEDS_RETAKE: 'NEEDS RETAKE',
 };
 
+/**
+ * Per-module contribution to the "Overall %" aggregate.
+ *
+ * Phase markers map to a coarse 5–80% progress signal as before. Once
+ * the quiz is submitted, the contribution becomes the actual graded
+ * score percent — so a failing 60% no longer reads as 100% complete
+ * in the aggregate, and a passing 92% contributes 92, not a misleading
+ * 100. Pre-score legacy records fall back to 100 to avoid a regression.
+ */
 function percent(p: ProgressRecord | null): number {
   if (!p) return 0;
-  if (p.quiz_submitted_at) return 100;
+  if (p.quiz_submitted_at) return p.total_score_percent ?? 100;
   if (p.objective_satisfied_at) return 80;
   if (p.task_started_at) return 60;
   if (p.exploration_started_at) return 40;
@@ -128,7 +158,10 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
 
   const overallStats = useMemo(() => {
     const all = listAllProgress();
-    const completed = all.filter(p => !!p.quiz_submitted_at).length;
+    // "Modules completed" now requires a passing grade — a quiz-submitted
+    // but failing module is NEEDS_RETAKE, not COMPLETED, and shouldn't
+    // count toward the learner's mastery tally.
+    const completed = all.filter(p => isMastered(p)).length;
     const objectivesMet = all.filter(p => !!p.objective_satisfied_at).length;
     return {
       total: MODULES.length,
@@ -207,7 +240,10 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
             if (mods.length === 0) return null;
             const isOpen = openTracks.has(track);
             const tone = trackTone(track);
-            const complete = mods.filter(m => statusOf(loadProgress(m.id)) === 'COMPLETED').length;
+            // Only passing completions count toward the track's "complete"
+            // count — a NEEDS_RETAKE module is not mastered yet.
+            const complete = mods.filter(m => isMastered(loadProgress(m.id))).length;
+            const needsRetake = mods.filter(m => statusOf(loadProgress(m.id)) === 'NEEDS_RETAKE').length;
             const inProgress = mods.filter(m => statusOf(loadProgress(m.id)) === 'IN_PROGRESS').length;
             const trackPct = mods.length === 0
               ? 0
@@ -250,6 +286,11 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                         {inProgress > 0 && (
                           <span className="text-[10px] font-semibold uppercase tracking-[0.14em] px-2 py-0.5 rounded bg-brand-olive/10 text-brand-olive border border-brand-olive/25">
                             {inProgress} in progress
+                          </span>
+                        )}
+                        {needsRetake > 0 && (
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                            {needsRetake} needs retake
                           </span>
                         )}
                       </div>
@@ -323,9 +364,16 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                             </p>
                           </div>
 
-                          {/* Progress (in-progress only) */}
+                          {/* Status badge column.
+                              - IN_PROGRESS: phase-progress % + thin bar.
+                              - COMPLETED / NEEDS_RETAKE: graded letter + %
+                                score from the persisted record. Replaces
+                                the prior "✓ 100%" affordance with the
+                                actual mastery signal — emerald for a
+                                passing grade, amber for sub-passing.
+                              - NOT_STARTED: blank placeholder. */}
                           {status === 'IN_PROGRESS' && (
-                            <div className="hidden md:flex flex-col items-end shrink-0 w-[72px]">
+                            <div className="hidden md:flex flex-col items-end shrink-0 w-[80px]">
                               <span className="text-[15px] font-semibold text-brand-olive leading-none tabular-nums">
                                 {pct}%
                               </span>
@@ -334,25 +382,46 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                               </div>
                             </div>
                           )}
-                          {status === 'COMPLETED' && (
-                            <div className="hidden md:flex items-center gap-1.5 shrink-0 w-[72px] justify-end">
-                              <Check size={14} className="text-brand-olive" strokeWidth={3} />
-                              <span className="text-[12px] font-semibold text-brand-olive tabular-nums">100%</span>
-                            </div>
-                          )}
+                          {(status === 'COMPLETED' || status === 'NEEDS_RETAKE') && (() => {
+                            const score = prog?.total_score_percent;
+                            const letter = prog?.total_score_letter;
+                            const tone = status === 'COMPLETED'
+                              ? { text: 'text-emerald-700', sub: 'text-emerald-600' }
+                              : { text: 'text-amber-700', sub: 'text-amber-700' };
+                            return (
+                              <div className="hidden md:flex flex-col items-end shrink-0 w-[80px]">
+                                <div className="flex items-baseline gap-1 leading-none">
+                                  <span className={`font-display text-[22px] font-bold tabular-nums ${tone.text}`}>
+                                    {letter ?? '—'}
+                                  </span>
+                                  <span className={`text-[11px] font-mono tabular-nums ${tone.sub}`}>
+                                    {score !== undefined ? `${score}%` : ''}
+                                  </span>
+                                </div>
+                                {status === 'NEEDS_RETAKE' && (
+                                  <div className="text-[8.5px] font-bold uppercase tracking-widest text-amber-600 mt-1">
+                                    Below {PASSING_THRESHOLD}%
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                           {status === 'NOT_STARTED' && (
-                            <div className="hidden md:block shrink-0 w-[70px]" />
+                            <div className="hidden md:block shrink-0 w-[80px]" />
                           )}
 
                           {/* Action cluster.
-                              - NOT_STARTED  → Start button only.
-                              - IN_PROGRESS  → Resume button only.
-                              - COMPLETED    → Restart (icon) + Review (text).
+                              - NOT_STARTED   → Start button.
+                              - IN_PROGRESS   → Resume button.
+                              - COMPLETED     → Restart (icon) + Review.
+                              - NEEDS_RETAKE  → Restart (icon) + Retake.
                                 The Restart icon clears that module's saved
-                                progress after a confirm prompt, so the
-                                learner can redo it from scratch without
-                                first stepping back into the debrief page. */}
-                          {status === 'COMPLETED' ? (
+                                progress (full wipe, can't undo) so the
+                                learner can redo it from scratch. The
+                                primary "Retake" CTA opens the module — the
+                                debrief surfaces the in-module "Retake" path
+                                that preserves best-attempt score history. */}
+                          {(status === 'COMPLETED' || status === 'NEEDS_RETAKE') ? (
                             <div className="shrink-0 flex items-center gap-1.5">
                               <button
                                 onClick={() => handleRestart(mod)}
@@ -364,10 +433,14 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                               </button>
                               <button
                                 onClick={() => onPickModule(mod)}
-                                className="shrink-0 w-[110px] px-4 py-2 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition bg-white border border-brand-olive text-brand-olive hover:bg-brand-olive/5"
+                                className={`shrink-0 w-[110px] px-4 py-2 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition ${
+                                  status === 'COMPLETED'
+                                    ? 'bg-white border border-brand-olive text-brand-olive hover:bg-brand-olive/5'
+                                    : 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm'
+                                }`}
                               >
-                                <ArrowRight size={12} />
-                                Review
+                                {status === 'COMPLETED' ? <ArrowRight size={12} /> : <RotateCcw size={12} />}
+                                {status === 'COMPLETED' ? 'Review' : 'Retake'}
                               </button>
                             </div>
                           ) : (
