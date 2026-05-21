@@ -99,43 +99,62 @@ export const M3: ModuleConfig = {
    * sensible adjustment in the right direction counts (the lesson is
    * cause-and-effect, not hitting a precise target).
    */
+  // Six-step guided tour using SPECIFIC numeric targets (per user
+  // feedback). Each step pushes one knob to a defined value so the
+  // learner sees a concrete cause→effect change on the waveform and
+  // readouts, then doubles down with a bigger push to drive the
+  // lesson home. Starting preset is Vt 400 / RR 12 / PEEP 5 / FiO2 40.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
     reset_between: false,
     present_one_at_a_time: true,
     observations: [
-      "PIP rose. So did Vte (the measured exhaled volume). The vent had to push harder to deliver the bigger breath, and the same volume came back out. The peak pressure is a measurement — you didn't change it directly, but it followed your tidal-volume order.",
-      "Minute ventilation (MVe) climbed. The set respiratory rate is the *minimum* the vent will deliver, so raising it pushes more breaths per minute through the lungs. The I:E ratio also tightened because each breath now has less time before the next one.",
-      "PIP rose by about the same amount you raised PEEP. They're additive: every cmH2O you add to the floor shows up at the peak too. Total PEEP equals what you set — there's no auto-PEEP in this stable patient.",
-      // Novice-pass §3.3 — closing synthesis appended to the FiO2-step
-      // observation so the module doesn't end abruptly.
-      "Nothing on the waveform changed. FiO2 is the fraction of oxygen in the gas the vent delivers — it changes the inspired gas mixture, not the pressure or volume profile.\n\n**You just learned:** three of these four knobs change the pressure or volume waveform. FiO2 is the odd one out — it changes what the lungs *receive* without changing how the breath is *delivered*. The next module digs into the lung itself — compliance and resistance — and shows why those same four knobs feel different in a sick lung than a healthy one.",
+      // 1: Vt 400 → 500 (+100)
+      "PIP and Vte ticked up. Same lungs, slightly bigger breath, slightly higher peak. The volume came right back out on exhalation — that's what Vte (exhaled tidal volume) confirms. The peak pressure is a *measurement*; you didn't change it directly but it followed your tidal-volume order.",
+      // 2: Vt 500 → 600 (+100 more)
+      "PIP climbed further. The peak pressure on the waveform is visibly taller now. Same compliance, just more volume pushed through — the relationship is roughly linear: every 100 mL costs you a few cmH2O of peak.",
+      // 3: Rate 12 → 14 (+2)
+      "Minute ventilation (MVe) ticked up. Set rate is the *minimum* the vent will deliver, so two more breaths a minute pushes ~17% more minute volume through.",
+      // 4: Rate 14 → 18 (+4 more, total +6 from start)
+      "MVe climbed more. The I:E ratio also tightened — each breath now has less time before the next one. Push rate too high in a real patient and you start trapping air; we'll see that in M6.",
+      // 5: PEEP 5 → 10
+      "PIP rose by about 5. Total PEEP went from 5 to 10 too — they're additive: every cmH2O you add to the floor shows up at the peak. There's no auto-PEEP in this stable patient, so total PEEP = what you set.",
+      // 6: FiO2 — any change (closing synthesis)
+      "Nothing on the waveform changed. FiO2 is the fraction of oxygen in the gas the vent delivers — it changes the inspired gas *mixture*, not the pressure or volume profile.\n\n**You just learned:** three of these four knobs change the pressure or volume waveform. FiO2 is the odd one out — it changes what the lungs *receive* without changing how the breath is *delivered*. The next module digs into the lung itself — compliance and resistance — and shows why those same four knobs feel different in a sick lung than a healthy one.",
     ],
     children: [
-      // Novice-pass §3.1 — relaxed thresholds. The old 20/30/50% gates
-      // were invisible: a learner who nudged Vt 400→460 (15%) saw
-      // nothing and assumed the sim was broken. 10% bypasses tiny
-      // accidental movements but still fires on a deliberate adjustment.
-      // Step 1 — raise Vt by ≥ 10% → watch PIP + Vte rise.
+      // Step 1 — Vt 400 → 500 (+100)
       {
         kind: 'manipulation',
         control: 'tidalVolume',
-        condition: { type: 'delta_pct', direction: 'increase', min_pct: 10 },
+        condition: { type: 'absolute', operator: '>=', value: 500 },
       },
-      // Step 2 — raise rate by ≥ 10% → watch MVe rise.
+      // Step 2 — Vt 500 → 600 (+100 more)
+      {
+        kind: 'manipulation',
+        control: 'tidalVolume',
+        condition: { type: 'absolute', operator: '>=', value: 600 },
+      },
+      // Step 3 — Rate 12 → 14 (+2)
       {
         kind: 'manipulation',
         control: 'respiratoryRate',
-        condition: { type: 'delta_pct', direction: 'increase', min_pct: 10 },
+        condition: { type: 'absolute', operator: '>=', value: 14 },
       },
-      // Step 3 — raise PEEP by ≥ 10% → watch PIP rise in parallel.
+      // Step 4 — Rate 14 → 18 (+4 more)
+      {
+        kind: 'manipulation',
+        control: 'respiratoryRate',
+        condition: { type: 'absolute', operator: '>=', value: 18 },
+      },
+      // Step 5 — PEEP 5 → 10
       {
         kind: 'manipulation',
         control: 'peep',
-        condition: { type: 'delta_pct', direction: 'increase', min_pct: 10 },
+        condition: { type: 'absolute', operator: '>=', value: 10 },
       },
-      // Step 4 — change FiO2 → watch nothing happen on the waveform.
+      // Step 6 — FiO2 — any change (the null demo).
       {
         kind: 'manipulation',
         control: 'fiO2',
@@ -276,16 +295,18 @@ export const M3: ModuleConfig = {
   },
 
   user_facing_task:
-    "Four basic adjustments, one at a time. After each change, you'll see exactly what happened on the screen and click Next to go to the next adjustment.",
-  // Sequential UI surfaces ONE step at a time — TaskCard reads
-  // successCriteria[activeIndex] for the current step's instruction.
-  // The four labels below align with the four manipulation children in
-  // the hidden_objective compound, in order.
+    "Six adjustments, one at a time. Each step gives you a specific number — push the knob to that value and watch what happens on the waveforms and readouts. Click Next to move on after each.",
+  // Sequential UI surfaces ONE step at a time. The labels below align
+  // with the six manipulation children in hidden_objective, in order.
+  // Specific numeric targets (per user feedback) so the learner sees
+  // concrete cause→effect rather than vague "increase by 10%."
   success_criteria_display: [
-    'Raise the tidal volume by at least 10%. Watch PIP and Vte respond.',
-    'Raise the respiratory rate by at least 10%. Watch MVe climb.',
-    'Raise PEEP by at least 10%. Watch PIP rise in parallel.',
-    'Change FiO2 — any direction. Watch the waveform stay still.',
+    'Raise tidal volume from 400 to 500 mL. Watch PIP and Vte respond.',
+    'Push tidal volume further: 500 → 600 mL. Same lungs, bigger breath.',
+    'Raise respiratory rate from 12 to 14. Watch MVe climb.',
+    'Push respiratory rate further: 14 → 18. MVe climbs more; I:E tightens.',
+    'Raise PEEP from 5 to 10. Watch PIP rise in parallel — they\'re additive.',
+    'Change FiO2 — any direction. Watch the waveform stay perfectly still.',
   ],
   task_framing_style: 'A',
 
