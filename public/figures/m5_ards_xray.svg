@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  M5 — schematic ARDS chest X-ray. Bilateral, diffuse alveolar
+  opacities with air bronchograms. Heart borders preserved. This is a
+  stylized representation; a real anonymized DICOM would be a better
+  authoring choice but is left as a future swap (the figure block in
+  M5.ts just needs its `src` repointed).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 480"
+     role="img" aria-label="Chest X-ray showing bilateral diffuse alveolar opacities consistent with ARDS"
+     font-family="ui-sans-serif, system-ui, -apple-system, Inter, sans-serif">
+  <!-- Dark chest cavity (X-ray background) -->
+  <rect width="600" height="480" fill="#0a0e14"/>
+
+  <!-- Faint outer chest wall outline -->
+  <path d="M 80 80 Q 60 200 80 350 L 100 420 L 500 420 L 520 350 Q 540 200 520 80 Z"
+        fill="none" stroke="#1c2530" stroke-width="2" opacity="0.6"/>
+
+  <!-- Ribs (curved arcs, faint) -->
+  <g stroke="#2a3340" stroke-width="1.3" fill="none" opacity="0.5">
+    <path d="M 100 130 Q 300 110 500 130"/>
+    <path d="M 95 170 Q 300 145 505 170"/>
+    <path d="M 90 215 Q 300 185 510 215"/>
+    <path d="M 92 265 Q 300 230 508 265"/>
+    <path d="M 100 315 Q 300 275 500 315"/>
+    <path d="M 110 365 Q 300 320 490 365"/>
+  </g>
+
+  <!-- Spine -->
+  <rect x="290" y="80" width="20" height="320" fill="#1a2330" rx="2"/>
+  <g stroke="#0a0e14" stroke-width="0.5">
+    <line x1="290" y1="120" x2="310" y2="120"/>
+    <line x1="290" y1="160" x2="310" y2="160"/>
+    <line x1="290" y1="200" x2="310" y2="200"/>
+    <line x1="290" y1="240" x2="310" y2="240"/>
+    <line x1="290" y1="280" x2="310" y2="280"/>
+    <line x1="290" y1="320" x2="310" y2="320"/>
+    <line x1="290" y1="360" x2="310" y2="360"/>
+  </g>
+
+  <!-- LEFT LUNG diffuse opacities (cloudy white patches) -->
+  <g opacity="0.78">
+    <ellipse cx="170" cy="180" rx="55" ry="50" fill="#c8d4e0" opacity="0.6"/>
+    <ellipse cx="210" cy="230" rx="70" ry="55" fill="#d8e4f0" opacity="0.7"/>
+    <ellipse cx="155" cy="280" rx="60" ry="48" fill="#bdc8d8" opacity="0.55"/>
+    <ellipse cx="200" cy="320" rx="50" ry="42" fill="#c5d2e0" opacity="0.65"/>
+    <ellipse cx="170" cy="370" rx="55" ry="35" fill="#d2deea" opacity="0.7"/>
+    <ellipse cx="240" cy="160" rx="40" ry="35" fill="#b8c4d4" opacity="0.5"/>
+    <ellipse cx="120" cy="240" rx="35" ry="48" fill="#aab8c8" opacity="0.5"/>
+  </g>
+
+  <!-- RIGHT LUNG diffuse opacities -->
+  <g opacity="0.78">
+    <ellipse cx="430" cy="180" rx="55" ry="50" fill="#c8d4e0" opacity="0.6"/>
+    <ellipse cx="390" cy="230" rx="70" ry="55" fill="#d8e4f0" opacity="0.7"/>
+    <ellipse cx="445" cy="280" rx="60" ry="48" fill="#bdc8d8" opacity="0.55"/>
+    <ellipse cx="400" cy="320" rx="50" ry="42" fill="#c5d2e0" opacity="0.65"/>
+    <ellipse cx="430" cy="370" rx="55" ry="35" fill="#d2deea" opacity="0.7"/>
+    <ellipse cx="360" cy="160" rx="40" ry="35" fill="#b8c4d4" opacity="0.5"/>
+    <ellipse cx="480" cy="240" rx="35" ry="48" fill="#aab8c8" opacity="0.5"/>
+  </g>
+
+  <!-- Air bronchograms — dark branching airways visible through the
+       opacities. Air-filled bronchi surrounded by fluid-filled alveoli. -->
+  <g stroke="#0a0e14" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85">
+    <!-- Left main + branches -->
+    <path d="M 285 145 L 240 175 L 210 210"/>
+    <path d="M 240 175 L 195 195"/>
+    <path d="M 210 210 L 185 250"/>
+    <path d="M 210 210 L 220 245"/>
+    <!-- Right main + branches -->
+    <path d="M 315 145 L 360 175 L 390 210"/>
+    <path d="M 360 175 L 405 195"/>
+    <path d="M 390 210 L 415 250"/>
+    <path d="M 390 210 L 380 245"/>
+  </g>
+
+  <!-- Trachea -->
+  <rect x="293" y="95" width="14" height="55" fill="#0a0e14" stroke="#1a2330" stroke-width="1.5" opacity="0.9"/>
+
+  <!-- Carina + main stem bronchi -->
+  <line x1="300" y1="150" x2="285" y2="145" stroke="#1a2330" stroke-width="3" stroke-linecap="round"/>
+  <line x1="300" y1="150" x2="315" y2="145" stroke="#1a2330" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Heart silhouette (preserved borders — key DDx from cardiogenic edema) -->
+  <path d="M 270 270 Q 230 290 240 360 Q 260 405 320 410 Q 360 405 360 360 Q 365 290 330 270 Z"
+        fill="#1a2330" opacity="0.75" stroke="#2a3340" stroke-width="1.5"/>
+
+  <!-- Diaphragm -->
+  <path d="M 90 410 Q 200 400 290 410" fill="none" stroke="#3a4555" stroke-width="2.5" opacity="0.7"/>
+  <path d="M 310 410 Q 400 400 510 410" fill="none" stroke="#3a4555" stroke-width="2.5" opacity="0.7"/>
+
+  <!-- Labels for key features -->
+  <g font-size="10" fill="#9fb0c4">
+    <g>
+      <line x1="170" y1="220" x2="40" y2="220" stroke="#d4a017" stroke-width="1" stroke-dasharray="2,2"/>
+      <text x="38" y="217" text-anchor="end" font-weight="bold" fill="#d4a017">Diffuse</text>
+      <text x="38" y="229" text-anchor="end" fill="#d4a017">opacities</text>
+    </g>
+    <g>
+      <line x1="220" y1="195" x2="100" y2="100" stroke="#7fb3d5" stroke-width="1" stroke-dasharray="2,2"/>
+      <text x="40" y="95" font-weight="bold" fill="#7fb3d5">Air bronchogram</text>
+      <text x="40" y="108" fill="#7fb3d5">(dark airway through</text>
+      <text x="40" y="119" fill="#7fb3d5">white alveoli)</text>
+    </g>
+    <g>
+      <line x1="300" y1="340" x2="560" y2="340" stroke="#a0d5a0" stroke-width="1" stroke-dasharray="2,2"/>
+      <text x="562" y="337" font-weight="bold" fill="#a0d5a0">Heart border</text>
+      <text x="562" y="349" fill="#a0d5a0">preserved</text>
+      <text x="562" y="361" fill="#a0d5a0">(not CHF)</text>
+    </g>
+  </g>
+
+  <!-- Bottom caption strip -->
+  <rect x="0" y="450" width="600" height="30" fill="#000000"/>
+  <text x="300" y="469" text-anchor="middle" font-size="11" fill="#9fb0c4" font-style="italic">
+    Bilateral, diffuse alveolar opacities · air bronchograms · sharp heart borders → ARDS pattern
+  </text>
+</svg>
