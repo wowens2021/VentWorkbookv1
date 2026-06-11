@@ -19,6 +19,8 @@ const trackToDifficulty: Record<Track, Difficulty> = {
   Strategy: 'ADVANCED',
   Weaning: 'ADVANCED',
   Synthesis: 'ADVANCED',
+  'Advanced Topics': 'ADVANCED',
+  'Clinical Skills': 'ADVANCED',
 };
 
 // Difficulty pills sit inside the green/cream library palette: olive for
@@ -95,7 +97,7 @@ function percent(p: ProgressRecord | null): number {
 }
 
 // Curriculum order — left-to-right and top-to-bottom on the page.
-const TRACK_ORDER: Track[] = ['Foundations', 'Physiology', 'Modes', 'Strategy', 'Weaning', 'Synthesis'];
+const TRACK_ORDER: Track[] = ['Foundations', 'Physiology', 'Modes', 'Strategy', 'Advanced Topics', 'Weaning', 'Synthesis', 'Clinical Skills'];
 
 const TRACK_BLURB: Record<Track, string> = {
   Foundations: 'Start here. The four reasons to intubate, the vent display vocabulary, the equation of motion.',
@@ -104,6 +106,8 @@ const TRACK_BLURB: Record<Track, string> = {
   Strategy: 'PEEP titration, oxygenation ladders, disease-specific lung-protective recipes.',
   Weaning: 'The daily judgments that decide whether the tube comes out today or tomorrow.',
   Synthesis: 'Putting it together at the bedside when a vented patient acutely deteriorates.',
+  'Advanced Topics': 'PEEP and oxygenation strategies in their full clinical reasoning loop.',
+  'Clinical Skills': 'Bedside troubleshooting at 2 AM — the right framework for each call.',
 };
 
 const ModulePicker: React.FC<Props> = ({ onPickModule }) => {

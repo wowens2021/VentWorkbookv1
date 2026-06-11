@@ -22,6 +22,25 @@ export class ScenarioHarness {
 
   baseline_controls: Partial<Record<ControlName, number>> = {};
 
+  /**
+   * v3 Troubleshooting spec — active-step clinical findings exposed
+   * to the Auscultate / Examine-patient buttons in PlaygroundSim.
+   * ModuleShell calls `setActiveFindings` when a tracker step
+   * activates; PlaygroundSim reads the latest snapshot when the
+   * button is clicked.
+   */
+  private _activeFindings: { auscultation?: string; exam?: string } | null = null;
+  private findingsListeners: ((f: { auscultation?: string; exam?: string } | null) => void)[] = [];
+  setActiveFindings(f: { auscultation?: string; exam?: string } | null) {
+    this._activeFindings = f;
+    this.findingsListeners.forEach(l => l(f));
+  }
+  getActiveFindings(): { auscultation?: string; exam?: string } | null { return this._activeFindings; }
+  onFindings(fn: (f: { auscultation?: string; exam?: string } | null) => void): () => void {
+    this.findingsListeners.push(fn);
+    return () => { this.findingsListeners = this.findingsListeners.filter(l => l !== fn); };
+  }
+
   constructor(public scenario: Scenario) {
     // Snapshot baseline values from the preset
     const s = scenario.preset.settings ?? {};

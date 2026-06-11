@@ -20,6 +20,19 @@ export type ContentBlock =
   | { kind: 'prose'; markdown: string }
   | { kind: 'figure'; src?: string; caption?: string; ascii?: string }
   | { kind: 'callout'; tone: 'info' | 'warn' | 'tip'; markdown: string }
+  /**
+   * v3 Troubleshooting spec [UX-7] — a non-graded, non-tracked predict
+   * prompt that visually bridges Read → Explore. Renders as a distinct
+   * blue-italic block with a left-border accent. Text-only.
+   */
+  | { kind: 'predict_prompt'; markdown: string }
+  /**
+   * v3 Troubleshooting spec [UX-11] — a real table block (not bulleted
+   * prose). Used by the ABG-driven adjustments quick reference. The
+   * Markdown renderer doesn't know about cell semantics, so this block
+   * carries headers + rows directly and renders as an HTML table.
+   */
+  | { kind: 'reference_table'; caption?: string; headers: string[]; rows: string[][] }
   | {
       kind: 'formative';
       question: string;
@@ -97,7 +110,14 @@ export type ControlName =
   | 'mode' | 'tidalVolume' | 'respiratoryRate' | 'iTime' | 'peep' | 'fiO2'
   | 'pInsp' | 'psLevel' | 'endInspiratoryPercent'
   | 'compliance' | 'resistance' | 'spontaneousRate'
-  | 'inspiratory_pause' | 'expiratory_pause';
+  | 'inspiratory_pause' | 'expiratory_pause'
+  /**
+   * v3 Troubleshooting spec — Auscultation and Examine-patient action
+   * buttons. They emit control_changed events the same way the hold
+   * buttons do; the active tracker step's `findings` strings drive what
+   * the resulting popup shows.
+   */
+  | 'auscultate' | 'examine_patient';
 
 export type ReadoutName =
   | 'pip' | 'plat' | 'drivingPressure' | 'mve' | 'vte' | 'totalPeep' | 'autoPeep'
@@ -177,6 +197,40 @@ export interface ManipulationTrackerConfig {
     options: QuizOption[];
     annotation_on_correct?: string;
   };
+  /**
+   * v3 Troubleshooting spec — sim state override applied when this
+   * manipulation step becomes active. Mirrors the field on
+   * RecognitionTrackerConfig. Cleared when the parent compound's
+   * `reset_between` fires or when the step satisfies.
+   */
+  perturbation?: PerturbationSpec;
+  /**
+   * v3 Troubleshooting spec — clinical findings exposed via the
+   * Auscultate / Examine-patient action buttons while this step is
+   * active. When the learner clicks the button, a popup renders the
+   * matching string. `null` / unset = button responds with "no new
+   * findings."
+   */
+  findings?: { auscultation?: string; exam?: string };
+  /**
+   * v3 Troubleshooting spec [UX-6] — non-blocking soft prompt shown in
+   * the TaskCard header while this step is active. Used for "Have you
+   * examined the patient?" hints that don't gate progression.
+   */
+  soft_prompt?: string;
+  /**
+   * v3 Troubleshooting spec [30s_reminder] — after `delay_ms` of step
+   * activation with no matching control change, a toast fires with
+   * `text`. Fires once. Dismissable.
+   */
+  idle_reminder?: { delay_ms: number; text: string };
+  /**
+   * v3 Troubleshooting spec — per-step Tier-3 demonstration override.
+   * When set, overrides the module-level `hint_ladder.tier3.demonstration`
+   * while this step is active. Lets one module carry different
+   * Show-Me animations for different cases.
+   */
+  tier3_demonstration?: { control: ControlName; target_value: number; hint_text?: string };
 }
 
 export interface OutcomeTrackerConfig {
@@ -271,6 +325,16 @@ export interface RecognitionTrackerConfig {
    * deltas rather than off prose vignettes.
    */
   perturbation?: PerturbationSpec;
+  /**
+   * v3 Troubleshooting spec — clinical findings exposed via the
+   * Auscultate / Examine-patient action buttons while this step is
+   * active. See ManipulationTrackerConfig.findings.
+   */
+  findings?: { auscultation?: string; exam?: string };
+  /** v3 Troubleshooting spec — see ManipulationTrackerConfig.soft_prompt. */
+  soft_prompt?: string;
+  /** v3 Troubleshooting spec — see ManipulationTrackerConfig.tier3_demonstration. */
+  tier3_demonstration?: { control: ControlName; target_value: number; hint_text?: string };
 }
 
 export interface CompoundTrackerConfig {

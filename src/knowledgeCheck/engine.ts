@@ -34,6 +34,8 @@ const trackTier: Record<Track, KCDifficulty> = {
   Strategy: 'Advanced',
   Weaning: 'Advanced',
   Synthesis: 'Advanced',
+  'Advanced Topics': 'Advanced',
+  'Clinical Skills': 'Advanced',
 };
 
 export interface LearnerProgress {

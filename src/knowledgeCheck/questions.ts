@@ -435,6 +435,8 @@ const trackToTier: Record<Track, KCDifficulty> = {
   Strategy: 'Advanced',
   Weaning: 'Advanced',
   Synthesis: 'Advanced',
+  'Advanced Topics': 'Advanced',
+  'Clinical Skills': 'Advanced',
 };
 
 /** Convert one module's summative quiz into Knowledge-Check items. */

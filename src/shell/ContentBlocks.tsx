@@ -56,6 +56,48 @@ const Block: React.FC<{
     );
   }
 
+  // v3 Troubleshooting spec [UX-7]. Blue-italic block with a left
+  // border accent. Not graded, not tracked — a cognitive priming nudge.
+  if (block.kind === 'predict_prompt') {
+    return (
+      <div className="my-4 border-l-4 border-sky-400 bg-sky-50/60 pl-4 pr-3 py-2.5">
+        <div className="text-[10px] font-black uppercase tracking-widest text-sky-700 mb-1">Predict before you explore</div>
+        <div className="text-[14px] italic text-sky-900 leading-relaxed">{renderInline(block.markdown)}</div>
+      </div>
+    );
+  }
+
+  // v3 Troubleshooting spec [UX-11]. Real HTML table for the
+  // ABG-driven adjustments quick reference. Bulleted prose was a wall
+  // of text; the table makes the mode × direction lookup readable.
+  if (block.kind === 'reference_table') {
+    return (
+      <div className="my-4">
+        <div className="overflow-x-auto rounded-lg border border-zinc-300 bg-white shadow-sm">
+          <table className="w-full text-[13.5px]">
+            <thead className="bg-zinc-100 border-b border-zinc-300">
+              <tr>
+                {block.headers.map((h, i) => (
+                  <th key={i} className="px-3 py-2 text-left font-bold text-zinc-800 whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {block.rows.map((row, ri) => (
+                <tr key={ri} className={ri % 2 === 1 ? 'bg-zinc-50' : ''}>
+                  {row.map((cell, ci) => (
+                    <td key={ci} className="px-3 py-2 align-top text-zinc-700 border-t border-zinc-200">{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {block.caption && <div className="text-[12px] text-zinc-500 mt-1.5 italic">{block.caption}</div>}
+      </div>
+    );
+  }
+
   if (block.kind === 'callout') {
     const Icon = block.tone === 'warn' ? AlertTriangle : block.tone === 'tip' ? Lightbulb : Info;
     const tone =

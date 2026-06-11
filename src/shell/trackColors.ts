@@ -94,6 +94,30 @@ export const TRACK_COLORS: Record<Track, TrackTone> = {
     accentText: 'text-slate-700',
     hex: '#334155',
   },
+  // Advanced Topics: deeper book gold to share the Strategy family while
+  // distinct enough to read as a separate track in the picker.
+  'Advanced Topics': {
+    bg: 'bg-amber-800',
+    bgHover: 'hover:bg-amber-700',
+    chipBg: 'bg-amber-50',
+    chipBorder: 'border-amber-300',
+    chipText: 'text-amber-900',
+    fgOnSolid: 'text-white',
+    accentText: 'text-amber-900',
+    hex: '#92400e',
+  },
+  // Clinical Skills: a fresh rose accent for the bedside troubleshooting
+  // capstone — calls back to the rose-labeled patient knobs in M4.
+  'Clinical Skills': {
+    bg: 'bg-rose-700',
+    bgHover: 'hover:bg-rose-600',
+    chipBg: 'bg-rose-50',
+    chipBorder: 'border-rose-200',
+    chipText: 'text-rose-900',
+    fgOnSolid: 'text-white',
+    accentText: 'text-rose-800',
+    hex: '#be123c',
+  },
 };
 
 export const trackTone = (track: Track): TrackTone => TRACK_COLORS[track] ?? TRACK_COLORS.Foundations;

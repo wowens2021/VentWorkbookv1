@@ -535,6 +535,10 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   const [showPatientSettings, setShowPatientSettings] = useState(false);
   const [heightUnit, setHeightUnit] = useState<'in' | 'cm'>('in');
   const [alerts, setAlerts] = useState<{ id: number; message: string; type: 'positive' | 'negative' }[]>([]);
+  // v3 Troubleshooting spec — modal that pops when the learner clicks
+  // the Auscultate or Examine-patient button. Renders the active
+  // tracker step's findings string.
+  const [findingsModal, setFindingsModal] = useState<{ kind: 'auscultate' | 'exam'; text: string } | null>(null);
   const [dataPoints, setDataPoints] = useState<any[]>([]);
   const [activeHoldType, setActiveHoldType] = useState<'INSP' | 'EXP' | null>(null);
   const [prvcAdaptivePi, setPrvcAdaptivePi] = useState(15);
@@ -1579,6 +1583,29 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                 {inlinePromptOverlay}
               </div>
             )}
+            {/* v3 Troubleshooting spec — Auscultate / Examine findings
+                modal. Pops on button click; click anywhere or press
+                Close to dismiss. */}
+            {findingsModal && (
+              <div
+                className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4"
+                onClick={() => setFindingsModal(null)}
+              >
+                <div
+                  className="max-w-md w-full bg-white rounded-xl shadow-2xl border-2 border-zinc-200 p-5"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${findingsModal.kind === 'auscultate' ? 'text-emerald-700' : 'text-rose-700'}`}>
+                    {findingsModal.kind === 'auscultate' ? 'Auscultation' : 'Patient Examination'}
+                  </div>
+                  <div className="text-[14px] text-zinc-800 leading-relaxed mb-4">{findingsModal.text}</div>
+                  <button
+                    onClick={() => setFindingsModal(null)}
+                    className="w-full px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-[13px] font-bold rounded-md transition"
+                  >Close</button>
+                </div>
+              </div>
+            )}
             {/* Phase 1 — locked preview overlay */}
             {simInteractivity === 'locked' && (
               <div className="absolute inset-0 z-30 flex items-center justify-center bg-zinc-200/70 backdrop-blur-sm">
@@ -1646,6 +1673,42 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                     timestamp: Date.now(),
                   });
                 }} disabled={isLocked('expiratory_pause')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all border ${isLocked('expiratory_pause') ? 'bg-zinc-100 border-zinc-300 text-zinc-400 cursor-not-allowed' : activeHoldType === 'EXP' ? 'bg-amber-600 border-amber-500 text-white shadow-md animate-pulse' : 'bg-amber-200 border-amber-300 text-amber-900 hover:bg-amber-300'}`}>EXP HOLD</button>
+                {/* v3 Troubleshooting spec — Auscultate / Examine
+                    action buttons. Render only when the module unlocks
+                    them. Each click emits a control_changed event and
+                    pops a modal with the active step's findings. */}
+                {!isLocked('auscultate') && (
+                  <button
+                    onClick={() => {
+                      harness?.emit({
+                        type: 'control_changed',
+                        control: 'auscultate' as any,
+                        old_value: 0,
+                        new_value: 1,
+                        timestamp: Date.now(),
+                      });
+                      const f = harness?.getActiveFindings?.();
+                      setFindingsModal({ kind: 'auscultate', text: f?.auscultation ?? 'No new auscultation findings at this step.' });
+                    }}
+                    className="px-3 py-1 text-[10px] font-bold rounded-md transition-all border bg-emerald-200 border-emerald-300 text-emerald-900 hover:bg-emerald-300"
+                  >AUSCULTATE</button>
+                )}
+                {!isLocked('examine_patient') && (
+                  <button
+                    onClick={() => {
+                      harness?.emit({
+                        type: 'control_changed',
+                        control: 'examine_patient' as any,
+                        old_value: 0,
+                        new_value: 1,
+                        timestamp: Date.now(),
+                      });
+                      const f = harness?.getActiveFindings?.();
+                      setFindingsModal({ kind: 'exam', text: f?.exam ?? 'No new exam findings at this step.' });
+                    }}
+                    className="px-3 py-1 text-[10px] font-bold rounded-md transition-all border bg-rose-200 border-rose-300 text-rose-900 hover:bg-rose-300"
+                  >EXAMINE</button>
+                )}
               </div>
             </div>
 

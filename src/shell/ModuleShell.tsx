@@ -331,6 +331,50 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     }
   }, [phase, sequentialMode]);
 
+  // v3 Troubleshooting spec — sync per-step shell state (findings,
+  // perturbation, idle reminder, soft prompt, per-step tier-3 demo)
+  // whenever the active step in a sequential compound changes. Each
+  // child of the compound may carry these fields; this effect runs
+  // them at the right moments.
+  const [stepSoftPrompt, setStepSoftPrompt] = useState<string | null>(null);
+  const [idleReminderToast, setIdleReminderToast] = useState<string | null>(null);
+  const [stepTier3Demo, setStepTier3Demo] = useState<{ control: any; target_value: number; hint_text?: string } | null>(null);
+  useEffect(() => {
+    if (phase !== 'try-it' || !sequentialMode || module.hidden_objective?.kind !== 'compound') return;
+    const activeIdx = seqAdvancedThrough + 1;
+    // Always clear stale state when the step changes.
+    setIdleReminderToast(null);
+    const child: any = module.hidden_objective.children[activeIdx];
+    if (!child) {
+      harness.setActiveFindings(null);
+      setStepSoftPrompt(null);
+      setStepTier3Demo(null);
+      return;
+    }
+    // Findings → harness so the Auscultate / Examine buttons can read them.
+    harness.setActiveFindings(child.findings ?? null);
+    // Soft prompt shows in the TaskCard header until the step advances.
+    setStepSoftPrompt(child.soft_prompt ?? null);
+    // Per-step Tier-3 demonstration override.
+    setStepTier3Demo(child.tier3_demonstration ?? null);
+    // Apply per-step perturbation if defined (recognition trackers
+    // already handle this via the tracker engine; manipulation trackers
+    // didn't, so we apply here for either kind).
+    if (child.perturbation && child.kind === 'manipulation') {
+      harness.applyPerturbation(child.perturbation);
+    }
+    // 30s_reminder. Fires once after delay_ms if step hasn't advanced.
+    let reminderTimer: number | null = null;
+    if (child.idle_reminder) {
+      reminderTimer = window.setTimeout(() => {
+        setIdleReminderToast(child.idle_reminder.text);
+      }, child.idle_reminder.delay_ms);
+    }
+    return () => {
+      if (reminderTimer != null) window.clearTimeout(reminderTimer);
+    };
+  }, [seqAdvancedThrough, phase, sequentialMode, module.hidden_objective, harness]);
+
   // (Phase hero banner removed — was too intrusive. The slide-in
   // animation on workbookContent already conveys motion. The
   // PhaseBadge in the top strip still tracks position in the
@@ -560,7 +604,9 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
 
   const onShowMe = () => {
     // 1) Manipulation-tier demo (a specific control flick + reset).
-    const demo = module.hint_ladder.tier3?.demonstration;
+    // v3 Troubleshooting spec — prefer the active step's tier3
+    // demonstration over the module-level one.
+    const demo = stepTier3Demo ?? module.hint_ladder.tier3?.demonstration;
     if (demo) {
       harness.emit({ type: 'demonstration_played', control: demo.control, timestamp: Date.now() });
       harness.emit({
@@ -723,7 +769,32 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
               suppressed={objectiveSatisfied}
             />
           </div>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden relative">
+            {/* v3 Troubleshooting spec [UX-6] — soft prompt overlay
+                rendered in the TaskCard header area while the active
+                step carries one. Non-blocking; dismiss with the X. */}
+            {stepSoftPrompt && (
+              <div className="absolute top-2 left-3 right-3 z-30 bg-amber-50 border border-amber-300 rounded-md px-3 py-2 flex items-start gap-2 shadow-sm">
+                <div className="text-[12px] text-amber-900 leading-snug flex-1">{stepSoftPrompt}</div>
+                <button
+                  onClick={() => setStepSoftPrompt(null)}
+                  className="text-amber-700 hover:text-amber-900 text-[14px] leading-none"
+                  aria-label="Dismiss"
+                >×</button>
+              </div>
+            )}
+            {/* v3 Troubleshooting spec — 30s_reminder toast. Fires once
+                per step if the learner is idle past the threshold. */}
+            {idleReminderToast && (
+              <div className="absolute bottom-3 left-3 right-3 z-30 bg-sky-50 border border-sky-300 rounded-md px-3 py-2 flex items-start gap-2 shadow-md animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="text-[12px] text-sky-900 leading-snug flex-1">{idleReminderToast}</div>
+                <button
+                  onClick={() => setIdleReminderToast(null)}
+                  className="text-sky-700 hover:text-sky-900 text-[14px] leading-none"
+                  aria-label="Dismiss"
+                >×</button>
+              </div>
+            )}
             <TaskCard
               userFacingTask={module.user_facing_task ?? 'Continue using the simulator to complete this module.'}
               successCriteria={deriveSuccessCriteria(module)}
