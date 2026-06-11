@@ -50,13 +50,14 @@ export const M2: ModuleConfig = {
       "Every ventilator says the same things in slightly different ways. Vt, Pplat, PEEP, MV, RR. Once you know what each label means and where it lives on the screen, you can walk up to any ventilator and orient yourself in under a minute. The other thing worth knowing right now: every value on the display is either something you set, or something the patient and machine are doing as a result. Confusing the two is one of the most common bedside mistakes.",
     what_youll_do: [
       'Set values and measured values are different categories, even when they share a name.',
+      'In volume control you set Vt; in pressure control you set Pinsp (inspiratory pressure). Compliance links them — choosing one mode just chooses which variable is dependent.',
       'Plateau pressure is what the alveoli actually feel. Peak pressure includes the cost of pushing gas through tubes.',
       'Minute ventilation is just rate times tidal volume. Most "where did the CO2 go" questions start here.',
     ],
   },
 
   visible_learning_objectives: [
-    'Define eight bedside terms: Vt, MVe, PEEP, FiO2, PIP, Pplat, I:E, set rate.',
+    'Define the bedside terms: Vt, Pinsp (insp pressure), MVe, PEEP, FiO2, PIP, Pplat, I:E, set rate.',
     'For each term, point to it on a live display.',
     'State which terms are set vs measured.',
     'Predict which readouts change when each control moves.',
@@ -175,13 +176,19 @@ export const M2: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "Eight terms, and that's most of the bedside language. **Four are set by you**: Vt, rate, PEEP, FiO2. **Three are measured**: PIP, Vte, Pplat. **One is derived**: I:E. Confuse Vt with Vte, or PIP with Pplat, and the next 17 modules won't make sense.",
+        "These terms cover most of the bedside language. **Set by you**: Vt (in volume control) or **Pinsp / insp pressure** (in pressure control), rate, PEEP, FiO2. **Measured**: PIP, Vte, Pplat. **Derived**: I:E. Confuse Vt with Vte, or PIP with Pplat, and the next 17 modules won't make sense.",
     },
     {
       kind: 'callout',
       tone: 'info',
       markdown:
         "Set values are **orders**. Measured values are **reports**. The vent doesn't decide; it executes. If the report doesn't match the order — leak, fight, or broken sensor.",
+    },
+    {
+      kind: 'callout',
+      tone: 'tip',
+      markdown:
+        "**Vt vs Pinsp.** In **volume control** you order a tidal volume (**Vt**) and the vent delivers whatever pressure it takes to push it in — pressure is the dependent variable. In **pressure control** you order an inspiratory pressure (**Pinsp** / insp pressure) and the vent delivers whatever volume the lung accepts at that pressure — volume is the dependent variable. The two are linked by compliance: `Vt ≈ (Pinsp − PEEP) × compliance`. Picking a mode is really just picking which variable you want to lock and which one you'll watch.",
     },
     {
       // v3.2 §0.6 — legacy predict_observe converted.
@@ -303,7 +310,7 @@ export const M2: ModuleConfig = {
     patient_context:
       "Same patient as M1 — stable, post-intubation hour 1. You're here to map your eight terms onto the live display.",
     unlocked_controls_description: [
-      { name: 'Tidal volume · 350–600 mL', description: 'volume per breath you order.' },
+      { name: 'Tidal volume (Vt) · 350–600 mL', description: 'volume per breath you order in volume control. In pressure control you instead set Pinsp (inspiratory pressure) and Vt becomes the dependent variable — the two are linked by compliance.' },
       { name: 'Rate · 8–24 / min', description: 'minimum rate.' },
       { name: 'PEEP · 0–18', description: 'end-expiratory floor.' },
       { name: 'FiO2 · 21–100%', description: 'inspired oxygen fraction.' },
@@ -326,7 +333,8 @@ export const M2: ModuleConfig = {
   task_framing_style: 'C',
 
   key_points: [
-    'Eight terms. Four set, three measured, one derived.',
+    'The bedside vocabulary: set (Vt or Pinsp, rate, PEEP, FiO2), measured (PIP, Vte, Pplat), derived (I:E).',
+    'Vt and Pinsp are two ways of asking for the same breath. Compliance links them; the mode just picks which one you lock.',
     'Vte ≈ set Vt in VCV unless something is leaking.',
     'MVe = Vte × *actual* rate, not set rate.',
     'Pplat tells you about the alveoli; PIP tells you about the airways and the alveoli together.',
