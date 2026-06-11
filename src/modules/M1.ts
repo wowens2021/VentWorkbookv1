@@ -20,7 +20,7 @@ export const M1: ModuleConfig = {
     // change a setting."
     tagline: 'Name the deficit before you change a setting.',
     overview:
-      "The reasons for mechanical ventilation. People get put on ventilators for four reasons, and only four — failure to oxygenate, failure to ventilate, failure to protect the airway, and excessive work of breathing. Each of the four matches a recognizable type of respiratory failure, and naming the type tells you what the ventilator is actually for in this patient. Get this right and every later decision is easier.",
+      "The reasons for mechanical ventilation. Patients typically end up on a ventilator for one of four reasons — failure to oxygenate, failure to ventilate, failure to protect the airway, or excessive work of breathing. Naming which one is in play tells you what the ventilator is actually for in this patient. Get this right and every later decision is easier.",
     what_youll_do: [
       'Type I (hypoxemic) and Type II (hypercapnic) respiratory failure are different problems with different blood-gas signatures.',
       "An unconscious patient with normal lungs still needs a tube. That's an airway problem, not a lung problem.",
@@ -162,13 +162,13 @@ export const M1: ModuleConfig = {
           trigger: { kind: 'on_load' },
           question: 'Click the reading that shows peak airway pressure.',
           options: [
-            { label: 'PIP', is_correct: true, explanation: 'PIP is the highest pressure during inspiration — the vent reports it every breath.' },
+            { label: 'PIP', is_correct: true, explanation: 'PIP stands for **peak inspiratory pressure** — the highest pressure during inspiration, reported every breath.' },
             { label: 'Pplat', is_correct: false, explanation: 'Pplat is alveolar pressure at end-inspiration — only visible during an inspiratory hold. It is not peak.' },
             { label: 'Vte', is_correct: false, explanation: 'Vte is the exhaled tidal volume, in mL. Not pressure.' },
             { label: 'Total PEEP', is_correct: false, explanation: 'Total PEEP is end-expiratory pressure, the floor — not the ceiling.' },
           ],
           click_targets: [
-            { element: { kind: 'readout', name: 'pip' }, label: 'PIP', is_correct: true, explanation: 'PIP is the highest pressure during inspiration — the vent reports it every breath.' },
+            { element: { kind: 'readout', name: 'pip' }, label: 'PIP', is_correct: true, explanation: 'PIP stands for **peak inspiratory pressure** — the highest pressure during inspiration, reported every breath.' },
             { element: { kind: 'readout', name: 'plat' }, label: 'Pplat', is_correct: false, explanation: 'Pplat is alveolar pressure at end-inspiration — only visible during an inspiratory hold. It is not peak.' },
             { element: { kind: 'readout', name: 'vte' }, label: 'Vte', is_correct: false, explanation: 'Vte is the exhaled tidal volume, in mL. Not pressure.' },
             { element: { kind: 'readout', name: 'totalPeep' }, label: 'Total PEEP', is_correct: false, explanation: 'Total PEEP is end-expiratory pressure, the floor — not the ceiling.' },
@@ -242,7 +242,7 @@ export const M1: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "There are exactly four reasons a patient gets a tube. **Hypoxemia** you can't fix with a mask. **Hypercapnia** that's dropping the pH. **An airway** you can't trust. **A patient in shock** who can't afford to spend 40% of his energy on breathing. Everything else — the agitation, the bad gas, the bad chest X-ray — is a sign, not a reason.",
+        "Patients typically get a tube for one of four reasons. **Hypoxemia** you can't fix with a mask. **Hypercapnia** that's dropping the pH. **An airway** you can't trust. **A patient in shock** who can't afford to spend 40% of his energy on breathing. Everything else — agitation, a bad gas, a bad chest X-ray — is a sign, not a reason.",
     },
     {
       kind: 'callout',
@@ -273,13 +273,13 @@ export const M1: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        '**The textbook names.** When you see "the lung is failing at oxygenation" — low PaO2, normal CO2 — that\'s **Type I (hypoxemic) respiratory failure**. When you see "the lung is failing at clearing CO2" — high PaCO2, acid pH — that\'s **Type II (hypercapnic) respiratory failure**. Type III is post-op atelectasis. Type IV is shock-driven. You\'ll mostly deal with Type I and Type II.',
+        '**The textbook names.** When you see "the lung is failing at oxygenation" — low PaO2, normal CO2 — that\'s **Type I (hypoxemic) respiratory failure**. When you see "the lung is failing at clearing CO2" — high PaCO2, acid pH — that\'s **Type II (hypercapnic) respiratory failure**. Those are the only two types. At the bedside, they overlap constantly — a tired Type-I patient slides into Type-II — but for naming the deficit it helps to keep them clean.',
     },
     {
       kind: 'callout',
       tone: 'tip',
       markdown:
-        'Quick rule: **low O2 → Type I. High CO2 → Type II.** The two are not mutually exclusive — a tired Type-I patient eventually becomes Type-II.',
+        'Quick rule: **low O2 → Type I. High CO2 → Type II.** The two are not mutually exclusive — a tired Type-I patient eventually becomes Type-II. In real practice they overlap; for naming the deficit, keep them clean.',
     },
     // Novice-pass §1.2 + v3.2 §0.7 — practice applying the Type-II label
     // BEFORE the summative.
@@ -291,7 +291,7 @@ export const M1: ModuleConfig = {
         { label: 'Type I — failing to oxygenate.', is_correct: false, explanation: 'Type I requires low PaO2 with a normal or low PaCO2; her PaO2 is 62, marginal, and the dominant problem is the markedly elevated PaCO2 with acidemia.' },
         { label: 'Type II — failing to ventilate.', is_correct: true },
         { label: "Airway protection problem — she's somnolent.", is_correct: false, explanation: 'Somnolence here is a *consequence* of CO2 narcosis, not an independent airway problem. The fix is restoring ventilation, not a tube for airway alone.' },
-        { label: 'Type IV — shock-driven respiratory failure.', is_correct: false, explanation: "There's no shock named in the prompt; the diaphragm isn't competing with cardiac output." },
+        { label: 'Excessive work of breathing without a gas-exchange problem.', is_correct: false, explanation: 'Her CO2 is markedly elevated — gas exchange is the problem. Pure work-of-breathing intubations are for patients whose gas is still tolerable but whose energy budget is not (e.g. septic shock with a normal CO2).' },
       ],
       observe:
         "The dominant signal is the CO2 — markedly elevated with acidemia. Type II by definition. Naming this correctly is what saves you from reaching for a non-rebreather (which fixes oxygenation, the lesser problem) when the patient actually needs ventilatory support.",
@@ -372,15 +372,14 @@ export const M1: ModuleConfig = {
             'Elevated PaCO2 (> 45) with acidemia = Type II (hypercapnic) failure. The patient is failing to ventilate — to clear CO2 — not just to oxygenate. Book Ch. 4.',
         },
         {
-          label: 'Type III — perioperative.',
+          label: 'Airway protection failure.',
           is_correct: false,
-          explanation: 'Type III is the post-op atelectasis picture — not the case here.',
+          explanation: 'The somnolence here is CO2 narcosis — a consequence of the ventilatory failure, not an independent airway problem. Fix the ventilation and the mental status follows.',
         },
         {
-          label: 'Type IV — shock-related.',
+          label: 'Excessive work of breathing.',
           is_correct: false,
-          explanation:
-            'Type IV is shock-driven respiratory failure (intubation to spare the diaphragm). The COPD picture is straightforward Type II.',
+          explanation: 'A work-of-breathing intubation is the shock patient whose diaphragm is competing with cardiac output. This patient is failing to clear CO2 — that\'s Type II.',
         },
       ],
     },

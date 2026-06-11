@@ -287,7 +287,7 @@ export const M3: ModuleConfig = {
       { name: 'Total PEEP', description: 'the measured floor — should equal set PEEP unless there\'s auto-PEEP.' },
     ],
     suggestions: [
-      'Try raising Vt from 400 to 550 in two clicks. Watch PIP. Watch Vte.',
+      'Try raising Vt from 400 to 550 (Vt steps in 10 mL increments). Watch PIP. Watch Vte.',
       "Try cutting the rate from 12 to 8. Minute ventilation drops. The I:E ratio loosens because there's more time between breaths.",
       'Try raising PEEP from 5 to 12. PIP rises by about 7. Total PEEP rises with it.',
       "Try changing FiO2. Nothing on the waveform moves. That's the point.",
