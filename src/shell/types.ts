@@ -315,7 +315,7 @@ export interface HintConfig {
 }
 
 // ── Module configuration ──
-export type Track = 'Foundations' | 'Physiology' | 'Modes' | 'Strategy' | 'Weaning' | 'Synthesis' | 'Advanced Topics';
+export type Track = 'Foundations' | 'Physiology' | 'Modes' | 'Strategy' | 'Weaning' | 'Synthesis' | 'Advanced Topics' | 'Clinical Skills';
 
 // ── Explore card (Phase 3 content) ──
 export interface ExploreCardConfig {

@@ -31,6 +31,10 @@ import { M11, M12 } from './M11_M12';
 import { M13 } from './M13_M14';
 import { M15, M16 } from './M15_M16';
 import { M17, M18, M19 } from './M17_M18_M19';
+// New Clinical-Skills capstone built from
+// docs/Troubleshooting_2AM_v3.pdf — DOPES, four problem-specific
+// first steps, and three cases at 2:45 AM.
+import { M_TROUBLESHOOT } from './M_TROUBLESHOOT';
 
 // Renumber after the M1+M2 merge and the M4 split: the new module
 // order is M1(combined), M3, M4a, M4b, M5, M-EOM, M6, M7, M8, M10,
@@ -52,6 +56,7 @@ M16.number = 14;
 M17.number = 15;
 M18.number = 16;
 M19.number = 17;
+M_TROUBLESHOOT.number = 18;
 
 // Curriculum order: Foundations (combined M1, M3), then Physiology
 // (M4a → M4b → M5 → M-EOM → M6), then Modes/Strategy/Weaning/Synthesis.
@@ -61,6 +66,7 @@ export const MODULES: ModuleConfig[] = [
   M4a, M4b, M5, M6,
   M7, M8, M10,
   M11, M12, M13, M15, M16, M17, M18, M19,
+  M_TROUBLESHOOT,
 ];
 
 export const MODULE_BY_ID: Record<string, ModuleConfig> = Object.fromEntries(
