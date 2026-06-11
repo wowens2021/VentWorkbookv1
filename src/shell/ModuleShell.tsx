@@ -357,6 +357,12 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     setStepSoftPrompt(child.soft_prompt ?? null);
     // Per-step Tier-3 demonstration override.
     setStepTier3Demo(child.tier3_demonstration ?? null);
+    // If the step asks for a sim reset (e.g. between cases in a
+    // multi-case Try-It), do it BEFORE applying any perturbation so the
+    // reset doesn't wipe what we're about to apply.
+    if (child.reset_sim) {
+      harness.resetToPreset();
+    }
     // Apply per-step perturbation if defined (recognition trackers
     // already handle this via the tracker engine; manipulation trackers
     // didn't, so we apply here for either kind).
@@ -769,28 +775,17 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
               suppressed={objectiveSatisfied}
             />
           </div>
-          <div className="flex-1 overflow-hidden relative">
-            {/* v3 Troubleshooting spec [UX-6] — soft prompt overlay
-                rendered in the TaskCard header area while the active
-                step carries one. Non-blocking; dismiss with the X. */}
+          <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+            {/* v3 Troubleshooting spec [UX-6] — soft prompt rendered
+                INLINE above the TaskCard so it never overlaps the
+                TaskCard's own header chip or footer buttons.
+                Non-blocking; dismiss with the X. */}
             {stepSoftPrompt && (
-              <div className="absolute top-2 left-3 right-3 z-30 bg-amber-50 border border-amber-300 rounded-md px-3 py-2 flex items-start gap-2 shadow-sm">
+              <div className="mx-3 mt-2 mb-1 bg-amber-50 border border-amber-300 rounded-md px-3 py-2 flex items-start gap-2 shadow-sm shrink-0">
                 <div className="text-[12px] text-amber-900 leading-snug flex-1">{stepSoftPrompt}</div>
                 <button
                   onClick={() => setStepSoftPrompt(null)}
                   className="text-amber-700 hover:text-amber-900 text-[14px] leading-none"
-                  aria-label="Dismiss"
-                >×</button>
-              </div>
-            )}
-            {/* v3 Troubleshooting spec — 30s_reminder toast. Fires once
-                per step if the learner is idle past the threshold. */}
-            {idleReminderToast && (
-              <div className="absolute bottom-3 left-3 right-3 z-30 bg-sky-50 border border-sky-300 rounded-md px-3 py-2 flex items-start gap-2 shadow-md animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="text-[12px] text-sky-900 leading-snug flex-1">{idleReminderToast}</div>
-                <button
-                  onClick={() => setIdleReminderToast(null)}
-                  className="text-sky-700 hover:text-sky-900 text-[14px] leading-none"
                   aria-label="Dismiss"
                 >×</button>
               </div>
@@ -1403,6 +1398,21 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
 
   return (
     <div className="flex flex-col h-screen bg-brand-olive text-zinc-900 font-sans overflow-hidden select-none">
+      {/* v3 Troubleshooting spec — 30s idle reminder rendered as a
+          viewport-fixed toast at the bottom-right. Lives OUTSIDE the
+          TaskCard so it can't overlap the TaskCard footer buttons or
+          the soft-prompt chip. Fires once per step; dismissable. */}
+      {idleReminderToast && (
+        <div className="fixed bottom-5 right-5 z-50 max-w-sm bg-sky-50 border border-sky-300 rounded-md px-4 py-3 flex items-start gap-3 shadow-2xl animate-in fade-in slide-in-from-right-4 duration-300">
+          <div className="text-[10px] font-black uppercase tracking-widest text-sky-700 shrink-0 mt-0.5">Hint</div>
+          <div className="text-[13px] text-sky-900 leading-snug flex-1">{idleReminderToast}</div>
+          <button
+            onClick={() => setIdleReminderToast(null)}
+            className="text-sky-700 hover:text-sky-900 text-[16px] leading-none shrink-0"
+            aria-label="Dismiss"
+          >×</button>
+        </div>
+      )}
       {/* Top nav — track-colored brand strip with a sticky learn-tagline. */}
       {(() => {
         const tone = trackTone(module.track);

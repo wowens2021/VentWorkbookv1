@@ -37,9 +37,23 @@ import type { ModuleConfig, TrackerConfig } from '../shell/types';
 // diagnostic question.
 const useScenarioA = Math.random() < 0.5;
 
+// Findings persist across every step within a case so the learner
+// can re-click Auscultate / Examine at any point and re-read what
+// they're working with.
+const case1AFindings = {
+  auscultation: 'Left: clear. Right: markedly diminished at base.',
+  exam: 'Patient is uncomfortable. No accessory muscle use. No JVD.',
+};
+const case1BFindings = {
+  auscultation: 'Left: absent. Right: present and clear.',
+  exam: 'Patient unresponsive to verbal stimulus. No tracheal deviation visible. No JVD visible. Hemodynamics declining.',
+};
+
 const case1Steps: TrackerConfig[] = useScenarioA
   ? [
-      // Scenario A — resistance / mucus plug (right mainstem)
+      // Scenario A — resistance / mucus plug. Equalized to 4 steps so
+      // the "Step X of Y" counter is consistent across the A and B
+      // variants (pause → identify type → name cause → treat).
       {
         kind: 'manipulation',
         control: 'inspiratory_pause',
@@ -48,10 +62,7 @@ const case1Steps: TrackerConfig[] = useScenarioA
           id: 't2am-case1-A',
           patient: { resistance: 34, compliance: 32 },
         },
-        findings: {
-          auscultation: 'Left: clear. Right: markedly diminished at base.',
-          exam: 'Patient is uncomfortable. No accessory muscle use. No JVD.',
-        },
+        findings: case1AFindings,
         soft_prompt: 'Have you examined the patient? Click Auscultate or Examine above.',
         idle_reminder: {
           delay_ms: 30_000,
@@ -73,25 +84,44 @@ const case1Steps: TrackerConfig[] = useScenarioA
             { label: 'Auto-PEEP', is_correct: false, explanation: 'Auto-PEEP is confirmed via the expiratory pause and presents with non-returning expiratory flow.' },
           ],
         },
+        findings: case1AFindings,
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'T2AM-c1A-cause',
+          trigger: { kind: 'on_load' },
+          question: 'Resistance pattern with right-side diminished breath sounds. What is the single most likely cause first?',
+          max_attempts: 2,
+          options: [
+            { label: 'Mucus plug', is_correct: true, explanation: 'In the ICU, secretions / mucus plug is the most common acute wide-gap cause. Auscultation showing one side worse than the other (here, right) is classic for a plug obstructing a mainstem.' },
+            { label: 'Bronchospasm', is_correct: false, explanation: 'Bronchospasm is usually bilateral with diffuse wheeze, not focally worse on one side.' },
+            { label: 'Right mainstem intubation', is_correct: false, explanation: 'Mainstem intubation gives the OPPOSITE-side absent sounds (here you would expect the LEFT to be absent if the tube were in the right mainstem).' },
+            { label: 'Kinked ETT', is_correct: false, explanation: 'A kinked tube usually causes globally diminished breath sounds, not focal.' },
+          ],
+        },
+        findings: case1AFindings,
       },
       {
         kind: 'recognition',
         prompt: {
           prompt_id: 'T2AM-c1A-act',
           trigger: { kind: 'on_load' },
-          question: 'Wide-gap resistance pattern. What do you do first?',
+          question: 'Wide-gap resistance — likely plug. What do you do first?',
           max_attempts: 2,
           options: [
-            { label: 'Pass a suction catheter', is_correct: true, explanation: 'Mucus plug is the most common acute wide-gap cause in the ICU. Suction first; if you meet resistance against the catheter, the tube itself may be obstructed.' },
+            { label: 'Pass a suction catheter', is_correct: true, explanation: 'Suction first; if you meet resistance against the catheter, the tube itself may be obstructed. Bronchoscopy if suction fails to clear.' },
             { label: 'Increase PEEP', is_correct: false, explanation: 'PEEP addresses alveolar recruitment, not airway resistance.' },
             { label: 'Reduce tidal volume', is_correct: false, explanation: 'Pplat is safe — Vt reduction targets alveolar overdistension.' },
-            { label: 'Needle decompression', is_correct: false, explanation: 'No clinical signs of pneumothorax in this scenario; breath sounds are nearly equal.' },
+            { label: 'Needle decompression', is_correct: false, explanation: 'No clinical signs of pneumothorax in this scenario; Pplat is normal.' },
           ],
         },
+        findings: case1AFindings,
       },
     ]
   : [
-      // Scenario B — left tension pneumothorax (compliance fault)
+      // Scenario B — left tension pneumothorax (compliance fault).
+      // 4 steps: pause → type → diagnose → treat.
       {
         kind: 'manipulation',
         control: 'inspiratory_pause',
@@ -100,10 +130,7 @@ const case1Steps: TrackerConfig[] = useScenarioA
           id: 't2am-case1-B',
           patient: { compliance: 18, bpSys: 86 },
         },
-        findings: {
-          auscultation: 'Left: absent. Right: present and clear.',
-          exam: 'Patient unresponsive to verbal stimulus. No tracheal deviation visible. No JVD visible. Hemodynamics declining.',
-        },
+        findings: case1BFindings,
         soft_prompt: 'Have you examined the patient? Click Auscultate or Examine above.',
         idle_reminder: {
           delay_ms: 30_000,
@@ -125,6 +152,7 @@ const case1Steps: TrackerConfig[] = useScenarioA
             { label: 'Circuit leak', is_correct: false, explanation: 'A leak drops delivered Vt and triggers a low-MV alarm, not a high-pressure alarm.' },
           ],
         },
+        findings: case1BFindings,
       },
       {
         kind: 'recognition',
@@ -140,6 +168,7 @@ const case1Steps: TrackerConfig[] = useScenarioA
             { label: 'Pulmonary edema', is_correct: false, explanation: 'Edema is bilateral and presents with crackles, not absent breath sounds on one side.' },
           ],
         },
+        findings: case1BFindings,
       },
       {
         kind: 'recognition',
@@ -155,6 +184,7 @@ const case1Steps: TrackerConfig[] = useScenarioA
             { label: 'Reduce tidal volume', is_correct: false, explanation: 'Does not address the underlying air-leak / mass-effect physiology.' },
           ],
         },
+        findings: case1BFindings,
       },
     ];
 
@@ -247,33 +277,27 @@ export const M_TROUBLESHOOT: ModuleConfig = {
     reset_between: false,
     present_one_at_a_time: true,
     observations: [
-      // Case 1 step 1 — inspiratory pause (shared across A/B)
-      "You performed an inspiratory pause. Read Pplat — that one number splits every high-pressure alarm into the right category.",
-      // Case 1 step 2 — type
+      // ── Case 1 ── Both variants now run 4 steps so the global "Step
+      // X of Y" counter is consistent (total = 4 + 3 + 3 = 10).
+      "**Case 1 of 3 — High peak pressure alarm.** You performed an inspiratory pause. Read Pplat — that one number splits every high-pressure alarm into the right category.",
       useScenarioA
         ? "Wide PIP–Pplat gap with normal Pplat = airway-resistance problem. The alveoli are safe. The airway is obstructed."
         : "Pplat above 30 with a near-normal gap = alveolar / compliance problem. The lung itself is in trouble.",
-      // Case 1 step 3 — act / diagnosis
+      useScenarioA
+        ? "One side worse than the other on auscultation points to a focal obstruction. Plug is more common than bronchospasm or kinking when one side is acutely diminished."
+        : "Absent left breath sounds + falling BP + high Pplat = left tension pneumothorax until proven otherwise. Tracheal deviation and JVD are not required — treat clinically.",
       useScenarioA
         ? "Suction first. Mucus plug is the most common acute wide-gap cause in the ICU. If suction doesn't fix it, escalate to bronchoscopy or replace the tube."
-        : "Absent left breath sounds + falling BP + high Pplat = left tension pneumothorax until proven otherwise. Tracheal deviation and JVD are not required — treat clinically.",
-      // Case 1 step 4 (only Scenario B) — treat
-      useScenarioA
-        ? ""
         : "Needle decompress the left chest (2nd intercostal space, midclavicular line). Chest tube must follow immediately — needling is temporizing.",
-      // Case 2 step 1 — disconnect and bag
-      "Disconnect and bag takes the vent out of the equation. Now auscultate before deciding anything.",
-      // Case 2 step 2 — diagnose
+      // ── Case 2 ──
+      "**Case 2 of 3 — Sudden SpO2 drop.** Sim has reset to a fresh baseline. Disconnect and bag takes the vent out of the equation. Now auscultate before deciding anything.",
       "Left absent, right present + stable hemodynamics + present ETCO2 waveform = tube migrated into the right mainstem. Pull it back.",
-      // Case 2 step 3 — treat
       "Pulling the tube back 3 cm typically equalizes breath sounds and SpO2 recovers over the next several breaths. Order a CXR to confirm position once stable.",
-      // Case 3 step 1 — interpret gradient
-      "Widened PaCO2-ETCO2 gradient (30) with unchanged MV = CO2 is in the blood but is not reaching the exhaled gas. Pulmonary perfusion has dropped.",
-      // Case 3 step 2 — diagnose
+      // ── Case 3 ──
+      "**Case 3 of 3 — Falling ETCO2.** Sim has reset to a fresh baseline. Widened PaCO2-ETCO2 gradient (30) with unchanged MV = CO2 is in the blood but is not reaching the exhaled gas. Pulmonary perfusion has dropped.",
       "Sudden dead-space increase + hypotension + tachycardia + hypoxemia in a bedridden ICU patient is pulmonary embolism until proven otherwise.",
-      // Case 3 step 3 — vent response
-      "Increase FiO2 to 1.0 while you arrange definitive workup. Don't chase PEEP or change modes — treat the hypoxemia while the team mobilizes for diagnosis.",
-    ].filter(Boolean),
+      "Push FiO2 up to treat the hypoxemia while the team arranges definitive workup. Don't chase PEEP or change modes.",
+    ],
     children: [
       // ── Case 1 — A or B picked at module-load ──
       ...case1Steps,
@@ -296,11 +320,14 @@ export const M_TROUBLESHOOT: ModuleConfig = {
           id: 't2am-case2-mainstem',
           patient: { compliance: 22, resistance: 14 },
         },
+        // Sim resets to baseline before Case 2's perturbation applies
+        // so the Case-1 numbers don't bleed into this case.
+        reset_sim: true,
         findings: {
           auscultation: 'Left: absent. Right: present and clear.',
           exam: 'Patient appears comfortable. No distress. ETT at 23 cm at lip.',
         },
-        tier3_demonstration: { control: 'fiO2', target_value: 100, hint_text: 'Show me — the auscultation finding (left absent / right present) plus stable hemodynamics points to right mainstem. Pull the tube back.' },
+        tier3_demonstration: { control: 'fiO2', target_value: 80, hint_text: 'Show me — the auscultation finding (left absent / right present) plus stable hemodynamics points to right mainstem. Pull the tube back.' },
       },
       {
         kind: 'recognition',
@@ -316,6 +343,10 @@ export const M_TROUBLESHOOT: ModuleConfig = {
             { label: 'Pulmonary edema', is_correct: false, explanation: 'Edema is bilateral; gives crackles, not absent unilateral breath sounds.' },
           ],
         },
+        findings: {
+          auscultation: 'Left: absent. Right: present and clear.',
+          exam: 'Patient appears comfortable. No distress. ETT at 23 cm at lip.',
+        },
       },
       {
         kind: 'recognition',
@@ -330,6 +361,10 @@ export const M_TROUBLESHOOT: ModuleConfig = {
             { label: 'Increase PEEP', is_correct: false, explanation: 'PEEP does not fix mainstem intubation; the left lung is mechanically excluded.' },
             { label: 'Suction', is_correct: false, explanation: 'Suction would not explain the right-sided sounds being intact while the left is silent.' },
           ],
+        },
+        findings: {
+          auscultation: 'Left: absent. Right: present and clear.',
+          exam: 'Patient appears comfortable. No distress. ETT at 23 cm at lip.',
         },
       },
       // ── Case 3 — ETCO2 change (PE) ──
@@ -351,11 +386,13 @@ export const M_TROUBLESHOOT: ModuleConfig = {
           id: 't2am-case3-pe',
           patient: { etco2_loss_fraction: 0.55, bpSys: 86 },
         },
+        // Sim resets to baseline before Case 3's perturbation applies.
+        reset_sim: true,
         findings: {
           auscultation: 'Bilateral clear. No wheeze. No crackles.',
           exam: 'Patient appears acutely ill. Tachycardic. BP declining. No focal respiratory findings.',
         },
-        tier3_demonstration: { control: 'fiO2', target_value: 100, hint_text: 'Show me — a falling ETCO2 with unchanged MV means perfusion has dropped; in a bedridden ICU patient that is PE until proven otherwise.' },
+        tier3_demonstration: { control: 'fiO2', target_value: 80, hint_text: 'Show me — a falling ETCO2 with unchanged MV means perfusion has dropped; in a bedridden ICU patient that is PE until proven otherwise.' },
       },
       {
         kind: 'recognition',
@@ -371,19 +408,30 @@ export const M_TROUBLESHOOT: ModuleConfig = {
             { label: 'Dynamic hyperinflation', is_correct: false, explanation: 'Dynamic hyperinflation shows non-returning expiratory flow and a COPD-pattern history.' },
           ],
         },
+        findings: {
+          auscultation: 'Bilateral clear. No wheeze. No crackles.',
+          exam: 'Patient appears acutely ill. Tachycardic. BP declining. No focal respiratory findings.',
+        },
       },
       {
         kind: 'manipulation',
         control: 'fiO2',
-        condition: { type: 'absolute', operator: '>=', value: 90 },
+        // Lowered from 90 → 80 so the learner reaches the threshold in
+        // ~6 button taps (step 5) instead of 10. The clinical point
+        // (push FiO2 up to treat hypoxemia) lands either way.
+        condition: { type: 'absolute', operator: '>=', value: 80 },
         require_acknowledgment: {
           question: 'What ventilator change is appropriate now while you arrange workup?',
           options: [
-            { label: 'Increase FiO2 to 1.0', is_correct: true, explanation: 'Treat the hypoxemia while definitive workup proceeds. PE is the diagnostic problem; FiO2 is the temporizing move.' },
+            { label: 'Increase FiO2 (toward 1.0)', is_correct: true, explanation: 'Treat the hypoxemia while definitive workup proceeds. PE is the diagnostic problem; FiO2 is the temporizing move.' },
             { label: 'Increase PEEP to 15', is_correct: false, explanation: 'High PEEP in suspected PE can worsen RV afterload.' },
             { label: 'Switch to APRV', is_correct: false, explanation: 'Mode switch does not address PE-driven hypoxemia.' },
             { label: 'Lower tidal volume', is_correct: false, explanation: 'Vt is not the problem; perfusion is.' },
           ],
+        },
+        findings: {
+          auscultation: 'Bilateral clear. No wheeze. No crackles.',
+          exam: 'Patient appears acutely ill. Tachycardic. BP declining. No focal respiratory findings.',
         },
       },
     ],
@@ -519,13 +567,12 @@ export const M_TROUBLESHOOT: ModuleConfig = {
 
   explore_card: {
     patient_context:
-      "It is 2:45 AM. You are covering a busy ICU. The Explore phase lets you walk through the auto-PEEP demo and the ETCO2 / dead-space demo before the real cases start in Try-It. Use the inspiratory- and expiratory-pause buttons, and the Auscultate / Examine buttons, freely. Nothing counts yet.",
+      "It is 2:45 AM. You are covering a busy ICU. The Explore phase is a quiet warmup — get familiar with the buttons and readouts you will use during the three calls. The actual case perturbations (resistance fault, mainstem migration, PE-pattern dead-space) fire in Try-It; this preset is the calm before. Nothing counts yet.",
     unlocked_controls_description: [
-      { name: 'Inspiratory pause', description: '1-second hold; shows live Pplat. The first step for any high-pressure alarm.' },
-      { name: 'Expiratory pause', description: '1-second hold; shows measured auto-PEEP vs set PEEP. The confirmation step for dynamic hyperinflation.' },
-      { name: 'Auscultate / Examine', description: 'Action buttons that report the active step\'s clinical findings. Use them whenever a case asks "what did you find?"' },
-      { name: 'Rate (8–24), I-time (0.6–1.5 s)', description: 'For the auto-PEEP demo. Lower rate gives the lung more exhalation time; shorter Ti widens the I:E.' },
-      { name: 'PEEP, FiO2, Vt', description: 'Standard controls; used in Case 3 to titrate FiO2 for PE-driven hypoxemia.' },
+      { name: 'Inspiratory pause (INSP HOLD)', description: '1-second hold; surfaces live Pplat. This is the book\'s first step for any high-pressure alarm — you\'ll use it in Case 1.' },
+      { name: 'Expiratory pause (EXP HOLD)', description: '1-second hold; shows measured auto-PEEP vs set PEEP. The confirmation step for dynamic hyperinflation if you ever suspect it.' },
+      { name: 'Auscultate / Examine', description: 'Action buttons that report the active case\'s clinical findings. They live next to the hold buttons and become useful in Try-It; pressing them now will just say "no new findings at this step."' },
+      { name: 'Rate, I-time, PEEP, FiO2, Vt', description: 'Standard ventilator knobs. Move them and watch which readouts respond — same mental model you built in M3 and M4.' },
     ],
     readouts_description: [
       { name: 'Ppeak, Pplat, Driving pressure', description: 'Read these in every high-pressure alarm. The gap = resistance; the Pplat = alveolar load.' },
@@ -534,9 +581,10 @@ export const M_TROUBLESHOOT: ModuleConfig = {
       { name: 'SpO2, SBP', description: 'The two clinical signals you trend during a sudden deterioration.' },
     ],
     suggestions: [
-      'Scenario D (auto-PEEP) — Lower the rate to 12 and watch the expiratory flow waveform recover. Now raise rate to 22 instead — Commandment IX: more rate makes CO2 worse, not better.',
-      'Scenario E (ETCO2 / dead space) — ETCO2 drops to 22 with MV unchanged. The waveform shape is preserved — that is dead-space, not an absent waveform.',
-      "Use 'Reset to start' between experiments to keep your bearings.",
+      'Tap INSP HOLD and watch Pplat lock in for ~1 second. That is the manoeuvre Case 1 opens with.',
+      'Tap EXP HOLD on this calm preset — auto-PEEP reads 0 because the expiratory flow already returns to zero. You\'ll know what a NORMAL expiratory pause looks like before you see a pathologic one.',
+      'Move FiO2 up and down a few times. The pressure waveform stays still — FiO2 is a parallel lever (recap from M3).',
+      'Open and dismiss the Auscultate and Examine modals so you know where they live. The buttons get loud findings to report once Case 1 starts.',
     ],
   },
 

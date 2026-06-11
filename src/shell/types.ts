@@ -225,6 +225,13 @@ export interface ManipulationTrackerConfig {
    */
   idle_reminder?: { delay_ms: number; text: string };
   /**
+   * v3 Troubleshooting spec — when true, the shell calls
+   * `harness.resetToPreset()` BEFORE applying any step-level
+   * perturbation. Use this between cases in a multi-case Try-It so
+   * the sim doesn't carry stale numbers from the previous case.
+   */
+  reset_sim?: boolean;
+  /**
    * v3 Troubleshooting spec — per-step Tier-3 demonstration override.
    * When set, overrides the module-level `hint_ladder.tier3.demonstration`
    * while this step is active. Lets one module carry different
@@ -335,6 +342,8 @@ export interface RecognitionTrackerConfig {
   soft_prompt?: string;
   /** v3 Troubleshooting spec — see ManipulationTrackerConfig.tier3_demonstration. */
   tier3_demonstration?: { control: ControlName; target_value: number; hint_text?: string };
+  /** v3 Troubleshooting spec — see ManipulationTrackerConfig.reset_sim. */
+  reset_sim?: boolean;
 }
 
 export interface CompoundTrackerConfig {
