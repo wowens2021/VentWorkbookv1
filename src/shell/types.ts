@@ -102,7 +102,8 @@ export type ControlName =
 export type ReadoutName =
   | 'pip' | 'plat' | 'drivingPressure' | 'mve' | 'vte' | 'totalPeep' | 'autoPeep'
   | 'actualRate' | 'ieRatio' | 'rsbi' | 'ph' | 'paco2' | 'pao2' | 'spo2' | 'hco3'
-  | 'fio2' | 'peep' | 'tidalVolumeSet' | 'meanAirwayPressure' | 'sbp' | 'etco2';
+  | 'fio2' | 'peep' | 'tidalVolumeSet' | 'meanAirwayPressure' | 'sbp' | 'etco2'
+  | 'staticCompliance';
 
 export type WaveformName = 'pressure_time' | 'flow_time' | 'volume_time';
 
@@ -314,7 +315,7 @@ export interface HintConfig {
 }
 
 // ── Module configuration ──
-export type Track = 'Foundations' | 'Physiology' | 'Modes' | 'Strategy' | 'Weaning' | 'Synthesis';
+export type Track = 'Foundations' | 'Physiology' | 'Modes' | 'Strategy' | 'Weaning' | 'Synthesis' | 'Advanced Topics';
 
 // ── Explore card (Phase 3 content) ──
 export interface ExploreCardConfig {

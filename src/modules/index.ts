@@ -22,7 +22,11 @@ import { M7, M8 } from './M7_M8';
 // stay as written.
 import { /* M9, */ M10 } from './M9_M10';
 import { M11, M12 } from './M11_M12';
-import { M13, M14 } from './M13_M14';
+// M13 and M14 are merged into a single Advanced-Topics module
+// (id: 'M13_M14_merged') per docs/M13_M14_merged_shell_spec.pdf.
+// The exported variable is still named M13 for back-compat; M14 is
+// retired.
+import { M13 } from './M13_M14';
 import { M15, M16 } from './M15_M16';
 import { M17, M18, M19 } from './M17_M18_M19';
 
@@ -42,12 +46,11 @@ M10.number = 10;
 M11.number = 11;
 M12.number = 12;
 M13.number = 13;
-M14.number = 14;
-M15.number = 15;
-M16.number = 16;
-M17.number = 17;
-M18.number = 18;
-M19.number = 19;
+M15.number = 14;
+M16.number = 15;
+M17.number = 16;
+M18.number = 17;
+M19.number = 18;
 
 // Curriculum order: Foundations (combined M1, M3), then Physiology
 // (M4a → M4b → M5 → M-EOM → M6), then Modes/Strategy/Weaning/Synthesis.
@@ -56,7 +59,7 @@ export const MODULES: ModuleConfig[] = [
   M1, M3,
   M4a, M4b, M5, M_EOM, M6,
   M7, M8, M10,
-  M11, M12, M13, M14, M15, M16, M17, M18, M19,
+  M11, M12, M13, M15, M16, M17, M18, M19,
 ];
 
 export const MODULE_BY_ID: Record<string, ModuleConfig> = Object.fromEntries(

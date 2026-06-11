@@ -1547,6 +1547,23 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               {showsReadout('etco2') && (
                 <NumericCard label="ETCO2" value={abg.etco2} unit="mmHg" color={abg.etco2 <= 0 ? 'text-rose-600 animate-pulse' : 'text-zinc-900'} flash={flashSet.has('etco2')} {...recogPropsForReadout('etco2', 'ETCO2')} />
               )}
+              {/* M13_M14_merged (PEEP and Oxygenation Strategies) opts in
+                  to MAP and live static compliance via visible_readouts. */}
+              {showsReadout('meanAirwayPressure') && (
+                <NumericCard label="MAP" value={metrics.map ? Number(metrics.map).toFixed(1) : '--'} unit="cmH2O" color="text-sky-600" flash={flashSet.has('meanAirwayPressure')} {...recogPropsForReadout('meanAirwayPressure', 'MAP')} />
+              )}
+              {showsReadout('staticCompliance') && (
+                <NumericCard
+                  label="Cstat"
+                  value={(metrics.plat && metrics.plat > settings.peep)
+                    ? Math.round(metrics.vte / Math.max(1, metrics.plat - settings.peep))
+                    : '--'}
+                  unit="mL/cmH2O"
+                  color="text-violet-600"
+                  flash={flashSet.has('staticCompliance')}
+                  {...recogPropsForReadout('staticCompliance', 'Cstat')}
+                />
+              )}
             </div>
           </div>
 
