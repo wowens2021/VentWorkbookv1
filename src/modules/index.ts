@@ -10,7 +10,9 @@ import { M3 } from './M3';            // Basic Vent Adjustments (Foundations)
 import { M4a } from './M4a';
 import { M4b } from './M4b';
 import { M5, M6 } from './M5_M6';
-import { M_EOM } from './M_EOM';      // Equation of Motion (Physiology, after M5)
+// M_EOM (Equation of Motion) retired — the equation-of-motion concept
+// is folded into M4a/M4b and the EOM-specific module is removed from
+// the registry. Source file kept on disk for back-compat.
 import { M7, M8 } from './M7_M8';
 // Fix 5 (Option A) — M9 (PRVC, standalone) folded into M8 as a
 // "dual-control variants" read-phase section. M9 is still defined in
@@ -38,26 +40,25 @@ M3.number = 2;
 M4a.number = 3;
 M4b.number = 4;
 M5.number = 5;
-M_EOM.number = 6;
-M6.number = 7;
-M7.number = 8;
-M8.number = 9;
-M10.number = 10;
-M11.number = 11;
-M12.number = 12;
-M13.number = 13;
-M15.number = 14;
-M16.number = 15;
-M17.number = 16;
-M18.number = 17;
-M19.number = 18;
+M6.number = 6;
+M7.number = 7;
+M8.number = 8;
+M10.number = 9;
+M11.number = 10;
+M12.number = 11;
+M13.number = 12;
+M15.number = 13;
+M16.number = 14;
+M17.number = 15;
+M18.number = 16;
+M19.number = 17;
 
 // Curriculum order: Foundations (combined M1, M3), then Physiology
 // (M4a → M4b → M5 → M-EOM → M6), then Modes/Strategy/Weaning/Synthesis.
 // The picker groups by track but preserves array order within each.
 export const MODULES: ModuleConfig[] = [
   M1, M3,
-  M4a, M4b, M5, M_EOM, M6,
+  M4a, M4b, M5, M6,
   M7, M8, M10,
   M11, M12, M13, M15, M16, M17, M18, M19,
 ];
