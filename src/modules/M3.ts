@@ -25,7 +25,7 @@ export const M3: ModuleConfig = {
   briefing: {
     tagline: 'Move the knobs. Watch the screen change.',
     overview:
-      "Once you can read the ventilator (M1, M2), the next thing to learn is what each knob actually does to the screen. Four basic adjustments — tidal volume, respiratory rate, PEEP, and FiO2 — cover most of what you'll do at the bedside. You'll make each change one at a time and watch how the measured values respond. No physiology theory yet — just the basic cause-and-effect between every control and every readout.",
+      "Once you can read the ventilator (M1, M2), the next thing to learn is what each knob actually does to the screen. We'll work in **volume-control ventilation (VCV)** — you set a tidal volume and the vent delivers the pressure needed to push it in. That's how most clinicians work most of the time; in pressure control you'd set an inspiratory pressure instead and read the tidal volume back, but the four basic adjustments below are the same in either mode. You'll make each change one at a time and watch how the measured values respond. No physiology theory yet — just the basic cause-and-effect between every control and every readout.",
     what_youll_do: [
       'Raise the tidal volume. Watch PIP rise. Watch Vte rise to match.',
       'Raise the rate. Watch minute ventilation rise.',
@@ -35,9 +35,10 @@ export const M3: ModuleConfig = {
   },
 
   visible_learning_objectives: [
-    'Identify which readout responds to each of the four basic controls.',
+    'Work the four basic VCV knobs (Vt, rate, PEEP, FiO2) and identify which readout responds to each.',
     'Predict the effect of changing tidal volume, rate, PEEP, or FiO2 in isolation.',
     'Recognize that FiO2 affects gas concentration, not pressure/volume readings.',
+    'Name the VCV/PCV distinction: in VCV you set Vt and read pressure; in PCV you set Pinsp and read Vt. Compliance links the two.',
   ],
 
   primer_questions: [
@@ -53,7 +54,7 @@ export const M3: ModuleConfig = {
     },
     {
       id: 'M3-P2',
-      prompt: 'You raise the set tidal volume from 400 to 500 mL. At constant compliance and resistance, what happens to PIP?',
+      prompt: 'In VCV, you raise the set tidal volume from 400 to 500 mL. At constant compliance and resistance, what happens to PIP?',
       options: [
         { label: 'PIP falls — bigger Vt is easier to deliver.', is_correct: false, explanation: 'Backwards. More volume means more pressure needed to deliver it.' },
         { label: 'PIP rises.', is_correct: true, explanation: 'More volume into the same compliance means a higher alveolar pressure, and a higher peak. Book Ch. 1.' },
@@ -184,7 +185,7 @@ export const M3: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "**Vt and PIP travel together.** Bigger Vt at the same compliance means a higher peak pressure. The vent has to push harder. Measured Vte should match your set Vt closely (unless there's a leak).",
+        "**Vt and PIP travel together.** In VCV you set the Vt and pressure is the dependent variable: bigger Vt at the same compliance means a higher peak pressure — the vent has to push harder. Measured Vte should match your set Vt closely (unless there's a leak). In PCV the dependence flips: you set Pinsp and read Vt, but compliance still ties the two together.",
     },
     {
       kind: 'prose',
@@ -282,7 +283,7 @@ export const M3: ModuleConfig = {
     patient_context:
       "Stable patient, healthy lungs, on routine volume-control settings. There's no clinical fire here — your job is just to explore which knob talks to which readout. The compliance and resistance are locked; everything else is yours to move.",
     unlocked_controls_description: [
-      { name: 'Tidal volume (set Vt) · 350–600 mL', description: 'volume per breath. Move it; watch PIP and Vte respond.' },
+      { name: 'Tidal volume (set Vt) · 350–600 mL', description: 'volume per breath you order in VCV. Move it; watch PIP and Vte respond. (In PCV this knob would be replaced by Pinsp.)' },
       { name: 'Rate · 8–24 breaths/min', description: 'breaths per minute. Move it; watch MVe and I:E respond.' },
       { name: 'PEEP · 0–18 cmH2O', description: 'end-expiratory floor. Move it; watch PIP rise in parallel.' },
       { name: 'FiO2 · 21–100%', description: 'fraction of inspired oxygen. Move it; watch nothing else change.' },
@@ -317,6 +318,7 @@ export const M3: ModuleConfig = {
   task_framing_style: 'A',
 
   key_points: [
+    'This module is VCV: you set Vt, pressure is the dependent variable. In PCV the roles flip; compliance links them either way.',
     'Vt and PIP travel together — bigger breath, higher peak.',
     'Rate and MVe travel together — more breaths, more minute ventilation.',
     'PEEP raises the floor AND the peak — they\'re additive.',
