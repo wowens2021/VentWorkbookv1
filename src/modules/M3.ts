@@ -171,6 +171,12 @@ export const M3: ModuleConfig = {
     },
     {
       kind: 'callout',
+      tone: 'tip',
+      markdown:
+        "**This module uses volume-control ventilation (VCV)** — you set a tidal volume and the vent delivers whatever pressure it takes to push it in. That's how most clinicians work most of the time. In **pressure-control ventilation (PCV)** the clinician sets an **inspiratory pressure (Pinsp)** instead, and the tidal volume the patient receives is the dependent variable. The two are linked by the compliance of the respiratory system — you can't deliver a tidal volume without some pressure, and if you set an inspiratory pressure it will deliver some tidal volume. Picking VCV vs PCV is really just picking which variable you set and which one you read.",
+    },
+    {
+      kind: 'callout',
       tone: 'info',
       markdown:
         "Three of these knobs change something you can see on the pressure or flow waveform. One of them — FiO2 — doesn't change the waveform at all; it changes the gas concentration. That's a useful early instinct: not every knob talks to every readout.",
