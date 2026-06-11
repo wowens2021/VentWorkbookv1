@@ -1,237 +1,275 @@
 import type { ModuleConfig } from '../shell/types';
 
 /**
- * M1 — Why We Ventilate
- * Track: Foundations · Archetype: vocabulary (click-target) · 12 min
- * Anchor chapters: VB Ch. 1, Ch. 4, Ch. 7
+ * M1 — Why We Ventilate & The Vent Display
  *
- * Specced verbatim against docs/MODULE_SPECS_v3.md §M1.
+ * Combined module per the M1M2_M4a_M4b shell spec. Replaces the legacy
+ * standalone M1 ("Why We Ventilate") and M2 ("Vocabulary and the Vent
+ * Display") with a single ~20–25 minute Foundations module.
+ *
+ * Track: Foundations · Phases: Primer → Read → Explore → Try It → Debrief.
  */
 export const M1: ModuleConfig = {
   id: 'M1',
   number: 1,
-  title: 'Why We Ventilate',
+  title: 'Why We Ventilate & The Vent Display',
   track: 'Foundations',
-  estimated_minutes: 12,
+  estimated_minutes: 22,
   briefing: {
-    // Description line per Will's edit (B1): "The reasons for mechanical
-    // ventilation." Replaces the old opener; the GOAL hairline at the top of
-    // the module continues to show the tagline "Name the deficit before you
-    // change a setting."
-    tagline: 'Name the deficit before you change a setting.',
+    tagline: 'Name the indication. Read the display.',
     overview:
-      "The reasons for mechanical ventilation. Patients typically end up on a ventilator for one of four reasons — failure to oxygenate, failure to ventilate, failure to protect the airway, or excessive work of breathing. Naming which one is in play tells you what the ventilator is actually for in this patient. Get this right and every later decision is easier.",
+      "Two foundations layered into one module. **Why** a patient gets a tube — the four primary indications for mechanical ventilation — and **how** to read what the vent is showing you once they're on it. By the end you'll be able to look at any ventilator display and name what every number means, separate what you ordered from what the patient is doing, and tell which indication is in play.",
     what_youll_do: [
-      'Type I (hypoxemic) and Type II (hypercapnic) respiratory failure are different problems with different blood-gas signatures.',
-      "An unconscious patient with normal lungs still needs a tube. That's an airway problem, not a lung problem.",
-      'A shocked septic patient on the verge of fatigue is intubated for the work of breathing, not the gas exchange.',
+      'Match each ventilator indication to a recognizable clinical picture.',
+      'Walk a live ventilator display and click each of the eight bedside terms by name.',
+      'Separate set values (orders) from measured values (reports) — the gap is diagnostic.',
     ],
   },
 
   visible_learning_objectives: [
-    'Name the four bedside indications for mechanical ventilation.',
-    'Distinguish set settings (the clinician\'s order) from measured readouts (what the patient is doing).',
-    'Identify PIP, Vte, set PEEP, and set rate on the live display.',
-    'State plainly: the ventilator supports — it does not cure.',
+    'Recognize the four primary indications for mechanical ventilation.',
+    'Match ventilator terminology to display elements.',
+    'Distinguish set values from measured values.',
+    'Read Ppeak, Pplat, PEEP, Vt, rate, MV, FiO2, and I:E ratio from a live display.',
   ],
 
   primer_questions: [
     {
       id: 'M1-P1',
-      prompt: 'Why does a patient get put on a mechanical ventilator?',
+      prompt:
+        'A patient with a severe drug overdose is unconscious but breathing adequately — normal O2 sat and normal blood gas. The most appropriate indication for intubation is:',
       options: [
-        {
-          label: 'Because the ventilator cures pneumonia, ARDS, and most respiratory illness.',
-          is_correct: false,
-          explanation:
-            "The vent supports gas exchange while the patient (and the treatment) does the actual healing. Owens, Commandment III: the ventilator offers no curative properties in itself.",
-        },
-        {
-          label: "Because the patient cannot meet the body's oxygenation, ventilation, or work-of-breathing demands without help.",
-          is_correct: true,
-          explanation:
-            "Parrillo's definition of acute respiratory failure, restated in clinical terms (book Ch. 4). The four bedside indications all reduce to this.",
-        },
-        {
-          label: 'Because the blood gas is abnormal.',
-          is_correct: false,
-          explanation:
-            'A patient with a "bad" gas may not need a tube, and a patient with a "good" gas sometimes does. The history and exam come first.',
-        },
-        {
-          label: 'Because the patient has a respiratory rate above 24.',
-          is_correct: false,
-          explanation: 'Tachypnea is a sign, not an indication. Many patients are tachypneic and improving.',
-        },
+        { label: 'Failure of oxygenation', is_correct: false, explanation: 'Normal sat; no oxygenation failure.' },
+        { label: 'Failure of ventilation', is_correct: false, explanation: 'Normal blood gas; CO2 clearance is adequate.' },
+        { label: 'Airway protection', is_correct: true, explanation: 'Unconscious patient cannot protect the airway from aspiration. Intubation is prophylactic.' },
+        { label: 'Decreased work of breathing', is_correct: false, explanation: 'Patient is breathing adequately and is unconscious — no WOB issue.' },
       ],
     },
-    // Novice-pass §1.1: reframe in plain language — "what's failing,
-    // oxygenation or ventilation" — BEFORE the read teaches the
-    // Type-I/Type-II vocabulary. The vocabulary lives in a dedicated
-    // read block; the summative is the first place those labels are
-    // tested.
     {
       id: 'M1-P2',
-      prompt:
-        '68-year-old with severe pneumonia. On a 100% non-rebreather his PaO2 is 55 mmHg, PaCO2 36, pH 7.42, alert and conversing. Which is failing in this patient — oxygenation or ventilation?',
+      prompt: "On a ventilator display, you see '450' next to 'Vt.' What does this most likely represent?",
       options: [
-        {
-          label: 'Oxygenation is failing.',
-          is_correct: true,
-          explanation:
-            'PaO2 of 55 even on 100% O2 means the lung cannot get enough O2 into the blood — oxygenation failure. His CO2 is normal (36) and he\'s alert and talking, so ventilation is fine. We\'ll attach the textbook label ("Type I") in the read phase.',
-        },
-        {
-          label: 'Ventilation is failing.',
-          is_correct: false,
-          explanation:
-            'Ventilation = clearing CO2. His PaCO2 is 36 (normal) and his pH is 7.42 (normal). Ventilation is fine here. The problem is getting O2 across.',
-        },
-        {
-          label: 'Both are failing.',
-          is_correct: false,
-          explanation:
-            'For both to fail we\'d expect a low PaO2 AND a high PaCO2 with acidemia. PaCO2 is normal here.',
-        },
-        {
-          label: 'Neither — these vitals are normal.',
-          is_correct: false,
-          explanation:
-            'A PaO2 of 55 on 100% O2 is severely abnormal. Normal PaO2 on room air is 80–100. On 100% O2 we\'d expect >300 in a healthy lung.',
-        },
+        { label: 'Set inspiratory pressure', is_correct: false, explanation: 'Pinsp is in cmH2O, usually 10–30. 450 is implausible.' },
+        { label: 'Tidal volume in mL', is_correct: true, explanation: 'Vt = tidal volume. Typical adult 350–600 mL; 450 fits.' },
+        { label: 'Minute ventilation in L', is_correct: false, explanation: 'MV is in L/min (typical 6–10). 450 is impossible.' },
+        { label: 'PEEP in cmH2O', is_correct: false, explanation: 'PEEP is typically 5–15 cmH2O.' },
       ],
     },
     {
       id: 'M1-P3',
-      prompt: 'A medical student says, "The ventilator is treating his ARDS." What\'s the cleanest correction?',
+      prompt: "What is the key difference between 'set rate' and 'measured rate' on the ventilator display?",
       options: [
-        {
-          label: "The vent reduces shunt and provides oxygen and rest. It doesn't reverse the disease — that's the antibiotic, the proning, the resolution of inflammation.",
-          is_correct: true,
-          explanation: 'Owens, Commandment III: three benefits — O2 delivery, shunt reduction, taking over WoB — none of them curative.',
-        },
-        {
-          label: 'The vent treats ARDS through PEEP and high tidal volumes.',
-          is_correct: false,
-          explanation: "High Vt is harmful in ARDS — that's the whole point of ARMA.",
-        },
-        {
-          label: 'The vent has no benefit at all.',
-          is_correct: false,
-          explanation: 'The three real benefits — O2 delivery, shunt reduction, taking over WoB — are real.',
-        },
-        {
-          label: "Once you're on a vent, you stay on a vent.",
-          is_correct: false,
-          explanation: 'Liberation is the goal of every vented patient (book Ch. 22).',
-        },
+        { label: 'Same thing in different units', is_correct: false, explanation: 'Conceptually different values.' },
+        { label: 'Set = operator input; measured = what the patient is actually doing', is_correct: true, explanation: 'Gap = spontaneous breathing activity above the mandatory rate.' },
+        { label: 'Set applies only in VC; measured only in PC', is_correct: false, explanation: 'Both exist in every mode.' },
+        { label: 'Measured = only mandatory breaths', is_correct: false, explanation: 'Measured rate includes all breaths.' },
       ],
     },
   ],
 
   scenario: {
-    preset_id: 'M1_healthy_baseline_vcv',
+    preset_id: 'passive_baseline_vc',
     preset: {
-      // Healthy-ish patient on safe defaults. The learner is here to read the
-      // display, not fix anything yet. PBW = 73 kg (M, 70 in) → Vt 450 = 6.2 mL/kg.
+      // Display-only module. The learner can't change anything; they're
+      // here to name what they see.
       mode: 'VCV',
       settings: { tidalVolume: 450, respiratoryRate: 14, peep: 5, fiO2: 40, iTime: 1.0 },
       patient: { compliance: 55, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
-    // M1 unlocks the four core order knobs — Vt, rate, PEEP, FiO2 — so the
-    // learner can confirm the *display* responds to each. Compliance,
-    // resistance, and I-time stay locked so the physiology doesn't drift.
-    unlocked_controls: ['tidalVolume', 'respiratoryRate', 'peep', 'fiO2'],
-    visible_readouts: ['pip', 'plat', 'vte', 'mve', 'totalPeep', 'autoPeep', 'actualRate', 'ieRatio'],
-    visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
+    unlocked_controls: [],
+    // Note: Vt set, set rate, PEEP, and FiO2 live in the control row.
+    // They're visible (even though unlocked_controls is empty, control
+    // boxes still render — they're just non-interactive). The readout
+    // strip renders pip (PIP), plat (Pplat), totalPeep (tPEEP), mve (VE
+    // = MV), actualRate (RR = measured), ieRatio (I:E), and vte.
+    visible_readouts: [
+      'pip', 'plat', 'totalPeep',
+      'vte', 'mve', 'actualRate', 'ieRatio',
+    ],
+    visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Four click-target recognitions, ANY ORDER. The four prompts are
-  // independent — there's no pedagogical reason to enforce a sequence.
-  // Click-target mode is mandatory here because the entire learning
-  // objective is "read the display."
+  // Eight click-target recognitions in STRICT sequence. The spec gives
+  // each one 2 attempts; on miss, the correct element gets a highlight
+  // ring and the learner clicks it to advance.
   hidden_objective: {
     kind: 'compound',
-    sequence: 'any_order',
+    sequence: 'strict',
     reset_between: false,
     children: [
       {
         kind: 'recognition',
         prompt: {
-          prompt_id: 'M1-pip',
+          prompt_id: 'M1-ppeak',
           trigger: { kind: 'on_load' },
-          question: 'Click the reading that shows peak airway pressure.',
+          question: 'Click the peak pressure reading on the display.',
+          max_attempts: 2,
+          annotation_on_correct: 'Ppeak — the top of the pressure waveform; the highest pressure each breath.',
           options: [
-            { label: 'PIP', is_correct: true, explanation: 'PIP stands for **peak inspiratory pressure** — the highest pressure during inspiration, reported every breath.' },
-            { label: 'Pplat', is_correct: false, explanation: 'Pplat is alveolar pressure at end-inspiration — only visible during an inspiratory hold. It is not peak.' },
-            { label: 'Vte', is_correct: false, explanation: 'Vte is the exhaled tidal volume, in mL. Not pressure.' },
-            { label: 'Total PEEP', is_correct: false, explanation: 'Total PEEP is end-expiratory pressure, the floor — not the ceiling.' },
+            { label: 'Ppeak', is_correct: true, explanation: 'Ppeak (PIP) = peak inspiratory pressure. Top of the pressure waveform.' },
+            { label: 'Pplat', is_correct: false, explanation: 'Pplat is the held pressure after an inspiratory pause — always ≤ Ppeak.' },
+            { label: 'PEEP', is_correct: false, explanation: 'PEEP is the floor at end-expiration, not the peak.' },
+            { label: 'MV', is_correct: false, explanation: 'MV is minute ventilation — a volume per minute, not a pressure.' },
           ],
           click_targets: [
-            { element: { kind: 'readout', name: 'pip' }, label: 'PIP', is_correct: true, explanation: 'PIP stands for **peak inspiratory pressure** — the highest pressure during inspiration, reported every breath.' },
-            { element: { kind: 'readout', name: 'plat' }, label: 'Pplat', is_correct: false, explanation: 'Pplat is alveolar pressure at end-inspiration — only visible during an inspiratory hold. It is not peak.' },
-            { element: { kind: 'readout', name: 'vte' }, label: 'Vte', is_correct: false, explanation: 'Vte is the exhaled tidal volume, in mL. Not pressure.' },
-            { element: { kind: 'readout', name: 'totalPeep' }, label: 'Total PEEP', is_correct: false, explanation: 'Total PEEP is end-expiratory pressure, the floor — not the ceiling.' },
+            { element: { kind: 'readout', name: 'pip' }, label: 'Ppeak', is_correct: true, explanation: 'Ppeak — top of the pressure waveform; highest pressure each breath.' },
+            { element: { kind: 'readout', name: 'plat' }, label: 'Pplat', is_correct: false, explanation: 'Pplat is the held alveolar pressure — always ≤ Ppeak.' },
+            { element: { kind: 'readout', name: 'totalPeep' }, label: 'PEEP', is_correct: false, explanation: 'PEEP is the floor at end-expiration, not the peak.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is minute ventilation in L/min — not a pressure.' },
           ],
         },
       },
       {
         kind: 'recognition',
         prompt: {
-          prompt_id: 'M1-vte',
+          prompt_id: 'M1-vt_set',
           trigger: { kind: 'on_load' },
-          question: 'Click the reading that shows what the patient actually exhaled this breath.',
+          question: 'Click the set tidal volume reading.',
+          max_attempts: 2,
+          annotation_on_correct: 'Vt set — the volume per breath you ordered.',
           options: [
-            { label: 'Vte', is_correct: true, explanation: 'Vte = expired tidal volume. The order says "set Vt 450"; Vte tells you what came back out.' },
-            { label: 'Set Vt', is_correct: false, explanation: 'That is the *set* tidal volume — what you ordered. Vte is what the patient delivered.' },
-            { label: 'MVe', is_correct: false, explanation: 'MVe is minute ventilation in L/min — Vte × rate. Not a single breath.' },
-            { label: 'Actual rate', is_correct: false, explanation: 'Actual rate is breaths/min, not volume.' },
+            { label: 'Vt set', is_correct: true, explanation: 'Set Vt is the order — the volume per breath the operator dialed in.' },
+            { label: 'Vte (delivered)', is_correct: false, explanation: 'Vte is the measured exhaled volume — what came back out.' },
+            { label: 'MV', is_correct: false, explanation: 'MV is per minute, not per breath.' },
+            { label: 'Ppeak', is_correct: false, explanation: 'Ppeak is a pressure, not a volume.' },
           ],
           click_targets: [
-            { element: { kind: 'readout', name: 'vte' }, label: 'Vte', is_correct: true, explanation: 'Vte = expired tidal volume. The order says "set Vt 450"; Vte tells you what came back out.' },
-            { element: { kind: 'control', name: 'tidalVolume' }, label: 'Set Vt', is_correct: false, explanation: 'That is the *set* tidal volume — what you ordered. Vte is what the patient delivered.' },
-            { element: { kind: 'readout', name: 'mve' }, label: 'MVe', is_correct: false, explanation: 'MVe is minute ventilation in L/min — Vte × rate. Not a single breath.' },
-            { element: { kind: 'readout', name: 'actualRate' }, label: 'Actual rate', is_correct: false, explanation: 'Actual rate is breaths/min, not volume.' },
+            { element: { kind: 'control', name: 'tidalVolume' }, label: 'Vt set', is_correct: true, explanation: 'Vt set — the volume per breath you ordered.' },
+            { element: { kind: 'readout', name: 'vte' }, label: 'Vte (delivered)', is_correct: false, explanation: 'Vte is the measured exhaled volume — what came back out.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is per minute, not per breath.' },
+            { element: { kind: 'readout', name: 'pip' }, label: 'Ppeak', is_correct: false, explanation: 'Ppeak is a pressure, not a volume.' },
           ],
         },
       },
       {
         kind: 'recognition',
         prompt: {
-          prompt_id: 'M1-setpeep',
+          prompt_id: 'M1-peep',
           trigger: { kind: 'on_load' },
-          question: 'Click the control where you set the PEEP order.',
+          question: 'Click the PEEP reading.',
+          max_attempts: 2,
+          annotation_on_correct: 'PEEP — the floor; pressure at end-expiration.',
           options: [
-            { label: 'PEEP (control)', is_correct: true, explanation: 'The PEEP knob is the order. The Total PEEP readout reports what the patient is actually generating, which can be higher if there is auto-PEEP.' },
-            { label: 'Total PEEP (readout)', is_correct: false, explanation: 'Total PEEP is the measurement, not the setting. You set the floor; the patient can add to it.' },
-            { label: 'Auto-PEEP', is_correct: false, explanation: 'Auto-PEEP is the difference between Total PEEP and your set PEEP. It is a problem to find, not a setting.' },
-            { label: 'FiO2', is_correct: false, explanation: 'FiO2 is oxygen, not pressure.' },
+            { label: 'PEEP', is_correct: true, explanation: 'PEEP — end-expiratory pressure; the floor of the pressure trace.' },
+            { label: 'Ppeak', is_correct: false, explanation: 'Ppeak is the top of the pressure trace, not the floor.' },
+            { label: 'Pplat', is_correct: false, explanation: 'Pplat is the held inspiratory pressure, not the expiratory floor.' },
+            { label: 'FiO2', is_correct: false, explanation: 'FiO2 is gas composition, not pressure.' },
           ],
           click_targets: [
-            { element: { kind: 'control', name: 'peep' }, label: 'PEEP (control)', is_correct: true, explanation: 'The PEEP knob is the order. The Total PEEP readout reports what the patient is actually generating, which can be higher if there is auto-PEEP.' },
-            { element: { kind: 'readout', name: 'totalPeep' }, label: 'Total PEEP (readout)', is_correct: false, explanation: 'Total PEEP is the measurement, not the setting. You set the floor; the patient can add to it.' },
-            { element: { kind: 'readout', name: 'autoPeep' }, label: 'Auto-PEEP', is_correct: false, explanation: 'Auto-PEEP is the difference between Total PEEP and your set PEEP. It is a problem to find, not a setting.' },
-            { element: { kind: 'control', name: 'fiO2' }, label: 'FiO2', is_correct: false, explanation: 'FiO2 is oxygen, not pressure.' },
+            { element: { kind: 'readout', name: 'totalPeep' }, label: 'PEEP', is_correct: true, explanation: 'PEEP — end-expiratory pressure; the floor (the tPEEP card on the readout strip).' },
+            { element: { kind: 'readout', name: 'pip' }, label: 'Ppeak', is_correct: false, explanation: 'Ppeak is the top of the pressure trace, not the floor.' },
+            { element: { kind: 'readout', name: 'plat' }, label: 'Pplat', is_correct: false, explanation: 'Pplat is the held inspiratory pressure, not the expiratory floor.' },
+            { element: { kind: 'control', name: 'fiO2' }, label: 'FiO2', is_correct: false, explanation: 'FiO2 is gas composition, not pressure.' },
           ],
         },
       },
       {
         kind: 'recognition',
         prompt: {
-          prompt_id: 'M1-setrate',
+          prompt_id: 'M1-rate_set',
           trigger: { kind: 'on_load' },
-          question: 'Click the control where you set the respiratory rate.',
+          question: 'Click the set respiratory rate.',
+          max_attempts: 2,
+          annotation_on_correct: 'Set rate — the minimum mandatory rate you ordered.',
           options: [
-            { label: 'Rate (control)', is_correct: true, explanation: 'Set rate is the order — the floor. The patient can trigger above it in A/C; he cannot go below it.' },
-            { label: 'Actual rate (readout)', is_correct: false, explanation: 'Actual rate is what the patient is doing — set + triggered. Not the setting.' },
-            { label: 'MVe', is_correct: false, explanation: 'MVe is minute ventilation, not rate. Calculated as Vte × actual rate.' },
-            { label: 'I:E', is_correct: false, explanation: 'I:E is the ratio of inspiration to expiration time. Not the rate.' },
+            { label: 'Set rate', is_correct: true, explanation: 'Set rate is the minimum mandatory rate — the order.' },
+            { label: 'Measured rate', is_correct: false, explanation: 'Measured rate is what the patient is actually doing — set + triggered.' },
+            { label: 'I:E ratio', is_correct: false, explanation: 'I:E is a derived ratio, not a rate.' },
+            { label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a rate alone.' },
           ],
           click_targets: [
-            { element: { kind: 'control', name: 'respiratoryRate' }, label: 'Rate (control)', is_correct: true, explanation: 'Set rate is the order — the floor. The patient can trigger above it in A/C; he cannot go below it.' },
-            { element: { kind: 'readout', name: 'actualRate' }, label: 'Actual rate (readout)', is_correct: false, explanation: 'Actual rate is what the patient is doing — set + triggered. Not the setting.' },
-            { element: { kind: 'readout', name: 'mve' }, label: 'MVe', is_correct: false, explanation: 'MVe is minute ventilation, not rate. Calculated as Vte × actual rate.' },
-            { element: { kind: 'readout', name: 'ieRatio' }, label: 'I:E', is_correct: false, explanation: 'I:E is the ratio of inspiration to expiration time. Not the rate.' },
+            { element: { kind: 'control', name: 'respiratoryRate' }, label: 'Set rate', is_correct: true, explanation: 'Set rate — the minimum mandatory rate you ordered.' },
+            { element: { kind: 'readout', name: 'actualRate' }, label: 'Measured rate', is_correct: false, explanation: 'Measured rate is what the patient is actually doing — set + triggered.' },
+            { element: { kind: 'readout', name: 'ieRatio' }, label: 'I:E ratio', is_correct: false, explanation: 'I:E is a derived ratio, not a rate.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a rate alone.' },
+          ],
+        },
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M1-fio2',
+          trigger: { kind: 'on_load' },
+          question: 'Click the FiO2 reading.',
+          max_attempts: 2,
+          annotation_on_correct: 'FiO2 — inspired oxygen fraction; 0.21 = room air.',
+          options: [
+            { label: 'FiO2', is_correct: true, explanation: 'FiO2 — inspired oxygen fraction (0.21 room air, 1.0 = 100%).' },
+            { label: 'PEEP', is_correct: false, explanation: 'PEEP is a pressure, not a gas fraction.' },
+            { label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a gas fraction.' },
+            { label: 'Ppeak', is_correct: false, explanation: 'Ppeak is a pressure, not a gas fraction.' },
+          ],
+          click_targets: [
+            { element: { kind: 'control', name: 'fiO2' }, label: 'FiO2', is_correct: true, explanation: 'FiO2 — inspired oxygen fraction (the FiO2 control box).' },
+            { element: { kind: 'readout', name: 'totalPeep' }, label: 'PEEP', is_correct: false, explanation: 'PEEP is pressure, not gas fraction.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not gas fraction.' },
+            { element: { kind: 'readout', name: 'pip' }, label: 'Ppeak', is_correct: false, explanation: 'Ppeak is pressure, not gas fraction.' },
+          ],
+        },
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M1-mv',
+          trigger: { kind: 'on_load' },
+          question: 'Click the minute ventilation reading.',
+          max_attempts: 2,
+          annotation_on_correct: 'MV — total volume per minute; rate × Vt.',
+          options: [
+            { label: 'MV', is_correct: true, explanation: 'MV = rate × Vt; total volume per minute, in L/min.' },
+            { label: 'Vt set', is_correct: false, explanation: 'Vt is per breath, not per minute.' },
+            { label: 'Measured rate', is_correct: false, explanation: 'Measured rate is a frequency, not a volume.' },
+            { label: 'I:E', is_correct: false, explanation: 'I:E is a ratio, not a volume.' },
+          ],
+          click_targets: [
+            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: true, explanation: 'MV — total volume per minute; rate × Vt.' },
+            { element: { kind: 'control', name: 'tidalVolume' }, label: 'Vt set', is_correct: false, explanation: 'Vt is per breath, not per minute.' },
+            { element: { kind: 'readout', name: 'actualRate' }, label: 'Measured rate', is_correct: false, explanation: 'Measured rate is a frequency, not a volume.' },
+            { element: { kind: 'readout', name: 'ieRatio' }, label: 'I:E', is_correct: false, explanation: 'I:E is a ratio, not a volume.' },
+          ],
+        },
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M1-ie',
+          trigger: { kind: 'on_load' },
+          question: 'Click the I:E ratio reading.',
+          max_attempts: 2,
+          annotation_on_correct: 'I:E — inspiratory to expiratory time; normal 1:2 or 1:3.',
+          options: [
+            { label: 'I:E', is_correct: true, explanation: 'I:E — ratio of inspiratory to expiratory time. Normal 1:2 or 1:3.' },
+            { label: 'Measured rate', is_correct: false, explanation: 'Rate is a frequency; I:E is a ratio.' },
+            { label: 'PEEP', is_correct: false, explanation: 'PEEP is a pressure, not a ratio.' },
+            { label: 'MV', is_correct: false, explanation: 'MV is a volume per minute, not a ratio.' },
+          ],
+          click_targets: [
+            { element: { kind: 'readout', name: 'ieRatio' }, label: 'I:E', is_correct: true, explanation: 'I:E — inspiratory to expiratory time; normal 1:2 or 1:3.' },
+            { element: { kind: 'readout', name: 'actualRate' }, label: 'Measured rate', is_correct: false, explanation: 'Rate is a frequency; I:E is a ratio.' },
+            { element: { kind: 'readout', name: 'totalPeep' }, label: 'PEEP', is_correct: false, explanation: 'PEEP is a pressure, not a ratio.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a ratio.' },
+          ],
+        },
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M1-rate_meas',
+          trigger: { kind: 'on_load' },
+          question: 'Click the measured respiratory rate.',
+          max_attempts: 2,
+          annotation_on_correct: 'Measured rate — what the patient is actually doing (set + triggered).',
+          options: [
+            { label: 'Measured rate', is_correct: true, explanation: 'Measured rate counts every breath — mandatory + triggered.' },
+            { label: 'Set rate', is_correct: false, explanation: 'Set rate is the order; measured is what the patient is doing.' },
+            { label: 'I:E', is_correct: false, explanation: 'I:E is a ratio, not a count.' },
+            { label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a count.' },
+          ],
+          click_targets: [
+            { element: { kind: 'readout', name: 'actualRate' }, label: 'Measured rate', is_correct: true, explanation: 'Measured rate — every breath (mandatory + triggered).' },
+            { element: { kind: 'control', name: 'respiratoryRate' }, label: 'Set rate', is_correct: false, explanation: 'Set rate is the order; measured is what the patient is doing.' },
+            { element: { kind: 'readout', name: 'ieRatio' }, label: 'I:E', is_correct: false, explanation: 'I:E is a ratio, not a count.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a count.' },
           ],
         },
       },
@@ -242,192 +280,137 @@ export const M1: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "Patients typically get a tube for one of four reasons. **Hypoxemia** you can't fix with a mask. **Hypercapnia** that's dropping the pH. **An airway** you can't trust. **A patient in shock** who can't afford to spend 40% of his energy on breathing. Everything else — agitation, a bad gas, a bad chest X-ray — is a sign, not a reason.",
-    },
-    {
-      kind: 'callout',
-      tone: 'info',
-      markdown:
-        'The vent is **support, not cure**. It buys time. The illness is treated by everything else you\'re doing — antibiotics, fluids, source control, time.',
-    },
-    {
-      // v3.2 §0.6 conversion of legacy predict_observe to predict_mcq.
-      kind: 'predict_mcq',
-      awaits_control: 'tidalVolume',
-      predict:
-        'If you raise the set tidal volume from 450 to 600 at constant compliance, what happens to PIP?',
-      options: [
-        { label: 'PIP rises — same compliance, more volume to deliver.', is_correct: true },
-        { label: 'PIP falls — bigger Vt is easier to deliver.', is_correct: false, explanation: 'Backwards. More volume needs more pressure, not less.' },
-        { label: 'PIP is unchanged — Vt and PIP are independent.', is_correct: false, explanation: 'They\'re not — PIP scales with Vt at fixed compliance.' },
-        { label: 'PIP rises only if compliance also drops.', is_correct: false, explanation: 'PIP rises with Vt alone; a compliance drop would compound it, but it isn\'t a precondition.' },
-      ],
-      observe:
-        'PIP rose because the system has to push more air through a finite compliance every breath. The Vte readout now reads about 600 too — that\'s how you check the order got delivered.',
-    },
-    // Novice-pass §1.2 — teach the Type-I / Type-II vocabulary explicitly
-    // BEFORE asking the learner to apply the labels. The primer Q2 has
-    // already pushed them to commit to "oxygenation failing" vs
-    // "ventilation failing" in plain English; here we attach the textbook
-    // names.
-    {
-      kind: 'prose',
-      markdown:
-        '**The textbook names.** When you see "the lung is failing at oxygenation" — low PaO2, normal CO2 — that\'s **Type I (hypoxemic) respiratory failure**. When you see "the lung is failing at clearing CO2" — high PaCO2, acid pH — that\'s **Type II (hypercapnic) respiratory failure**. Those are the only two types. At the bedside, they overlap constantly — a tired Type-I patient slides into Type-II — but for naming the deficit it helps to keep them clean.',
+        '**The four indications for mechanical ventilation.**\n\n' +
+        '1. **Failure of oxygenation (Type I)**: PaO2 < 60 mmHg despite supplemental O2. Caused by shunt (ARDS, pneumonia, pulmonary edema) and V/Q mismatch. Fix: FiO2 and PEEP.\n\n' +
+        '2. **Failure of ventilation (Type II)**: PaCO2 > 50 mmHg with pH < 7.30. CO2 is not being cleared. Causes include COPD exacerbation, severe asthma, neuromuscular disease. Fix: minute ventilation (rate × tidal volume).\n\n' +
+        '3. **Airway protection**: Patient cannot protect the airway from aspiration or obstruction. Classic cases: unconscious overdose, GCS ≤ 8, severe angioedema. Gas exchange may be normal — the tube goes in anyway.\n\n' +
+        '4. **Decreased work of breathing / impending fatigue**: In shock or severe metabolic acidosis, WOB can account for 40–50% of total O2 consumption. Intubation takes that burden off while the underlying problem is treated.',
     },
     {
       kind: 'callout',
       tone: 'tip',
       markdown:
-        'Quick rule: **low O2 → Type I. High CO2 → Type II.** The two are not mutually exclusive — a tired Type-I patient eventually becomes Type-II. In real practice they overlap; for naming the deficit, keep them clean.',
-    },
-    // Novice-pass §1.2 + v3.2 §0.7 — practice applying the Type-II label
-    // BEFORE the summative.
-    {
-      kind: 'predict_mcq',
-      predict:
-        "A 72-year-old has PaCO2 78, pH 7.21, PaO2 62 on 4 L. She's somnolent. Which option best names the deficit?",
-      options: [
-        { label: 'Type I — failing to oxygenate.', is_correct: false, explanation: 'Type I requires low PaO2 with a normal or low PaCO2; her PaO2 is 62, marginal, and the dominant problem is the markedly elevated PaCO2 with acidemia.' },
-        { label: 'Type II — failing to ventilate.', is_correct: true },
-        { label: "Airway protection problem — she's somnolent.", is_correct: false, explanation: 'Somnolence here is a *consequence* of CO2 narcosis, not an independent airway problem. The fix is restoring ventilation, not a tube for airway alone.' },
-        { label: 'Excessive work of breathing without a gas-exchange problem.', is_correct: false, explanation: 'Her CO2 is markedly elevated — gas exchange is the problem. Pure work-of-breathing intubations are for patients whose gas is still tolerable but whose energy budget is not (e.g. septic shock with a normal CO2).' },
-      ],
-      observe:
-        "The dominant signal is the CO2 — markedly elevated with acidemia. Type II by definition. Naming this correctly is what saves you from reaching for a non-rebreather (which fixes oxygenation, the lesser problem) when the patient actually needs ventilatory support.",
+        '**Key distinction.** Oxygenation failure responds to FiO2 and PEEP. Ventilation failure responds to minute ventilation. A patient with normal PaO2 but PaCO2 75 and pH 7.18 needs more minute ventilation, not more oxygen.',
     },
     {
-      kind: 'formative',
-      question: 'You see set PEEP = 5 and Total PEEP = 9 on the display. What does that tell you?',
-      options: [
-        { label: 'The vent is malfunctioning.', is_correct: false },
-        { label: 'There is 4 cmH2O of auto-PEEP. The patient isn\'t fully exhaling.', is_correct: true },
-        { label: 'The patient is over-sedated.', is_correct: false },
-        { label: 'PEEP needs to be lowered.', is_correct: false },
-      ],
-      answer:
-        'Total PEEP − set PEEP = auto-PEEP. A 4 cmH2O gap means the patient is generating 4 cmH2O of trapped end-expiratory pressure on top of what you ordered — incomplete exhalation. Most often seen in obstructive disease or when the rate is too high. Lowering PEEP might be part of the fix, but the *finding* is just the gap.',
+      kind: 'prose',
+      markdown:
+        '**Set values vs measured values.**\n\n' +
+        '**Set values (operator inputs):** set Vt, set rate, PEEP, FiO2, set inspiratory pressure.\n\n' +
+        '**Measured values (what the system reports):** delivered Vt, measured rate, Ppeak, Pplat, MV.\n\n' +
+        'Gaps between set and measured values are diagnostic. Set Vt 500 / delivered Vt 340 = circuit or cuff leak. Set rate 14 / measured rate 22 = patient triggering 8 extra breaths per minute.',
+    },
+    {
+      kind: 'prose',
+      markdown:
+        '**The eight terms.**\n\n' +
+        '- **Ppeak**: highest pressure during each breath. Includes elastic + resistive components. Typical 15–35 cmH2O.\n' +
+        '- **Pplat**: pressure after an end-inspiratory pause. Reflects alveolar pressure only. Always ≤ Ppeak. ARDS target < 30 cmH2O.\n' +
+        '- **PEEP**: pressure at end-expiration. The floor. Typical 5–15 cmH2O.\n' +
+        '- **Vt**: volume per breath in mL. Set Vt and delivered Vt. Target 6 mL/kg PBW.\n' +
+        '- **Set rate / measured rate**: set = what you ordered; measured = all breaths. Gap = spontaneous activity.\n' +
+        '- **MV**: rate × Vt. Total air per minute. Target 6–10 L/min.\n' +
+        '- **FiO2**: inspired O2 fraction. 0.21 = room air; 1.0 = 100% O2.\n' +
+        '- **I:E ratio**: inspiratory to expiratory time. Normal 1:2 or 1:3.\n\n' +
+        '**Pressure hierarchy: Ppeak ≥ Pplat ≥ PEEP. Always.**',
     },
   ],
 
   hint_ladder: {
-    tier1:
-      "You're looking for four readings. Each one matches a clinical phrase. Try clicking what feels right — wrong clicks just explain.",
-    tier2:
-      "Peak airway pressure is a measurement. Vte ends in 'e' for *exhaled*. The set knobs and the readouts live in different rows on the display.",
-    tier3: {
-      hint_text: 'Use "Show me" to auto-fill the next correct answer with an explanation popup.',
-    },
+    tier1: 'Look at the labels on the vent display. Find the one being asked about.',
+    tier2: 'Each term has a unique abbreviation. Ppeak is at the top of the pressure column; Pplat is next to or below it.',
+    tier3: { hint_text: 'Show me — highlights the correct region with an animated ring. You still click it to satisfy the objective.' },
   },
 
   summative_quiz: [
     {
       id: 'M1-Q1',
-      prompt: 'Type I respiratory failure is defined as:',
+      prompt: 'A 22-year-old with severe asthma has PaCO2 68, pH 7.22, clear mental status. Indication for intubation:',
       options: [
-        { label: 'PaO2 <60 mm Hg.', is_correct: true, explanation: 'Book Ch. 4 — the canonical definition of hypoxemic (Type I) respiratory failure.' },
-        { label: 'PaCO2 >50 with pH <7.30.', is_correct: false, explanation: "That's Type II — hypercapnic respiratory failure." },
-        { label: 'SpO2 <88%.', is_correct: false, explanation: 'SpO2 is the bedside surrogate; the definition uses PaO2.' },
-        { label: 'Respiratory rate >30.', is_correct: false, explanation: 'Sign, not definition.' },
+        { label: 'Failure of oxygenation', is_correct: false, explanation: 'The problem is elevated PaCO2, not low PaO2.' },
+        { label: 'Failure of ventilation', is_correct: true, explanation: 'Elevated PaCO2 + respiratory acidosis = ventilatory failure. Asthma limits CO2 removal via resistive obstruction.' },
+        { label: 'Airway protection', is_correct: false, explanation: 'Patient is conscious with intact mental status.' },
+        { label: 'Decreased WOB', is_correct: false, explanation: 'Primary driver here is ventilation failure.' },
       ],
     },
     {
       id: 'M1-Q2',
-      prompt: 'Owens lists three therapeutic benefits a ventilator can provide. Which one is NOT on the list?',
+      prompt: 'Set Vt 450, delivered Vt 310, set rate 16, measured rate 16. Most likely explanation:',
       options: [
-        { label: 'Guaranteed delivery of high levels of oxygen.', is_correct: false, explanation: 'On the list.' },
-        { label: 'Positive pressure to reduce intrapulmonary shunt.', is_correct: false, explanation: 'On the list.' },
-        { label: 'Providing the work of breathing until the patient can do it himself.', is_correct: false, explanation: 'On the list.' },
-        { label: 'Reversal of the underlying pulmonary disease.', is_correct: true, explanation: 'The vent does none of this. It buys time. Commandment III.' },
+        { label: 'Spontaneous breaths', is_correct: false, explanation: 'Measured rate would exceed set rate.' },
+        { label: 'Circuit leak', is_correct: true, explanation: 'Gap between set and delivered Vt with equal rates = gas escaping. Check cuff and circuit.' },
+        { label: 'Ventilator malfunction', is_correct: false, explanation: 'Circuit/cuff problem first; machine failure is a diagnosis of exclusion.' },
+        { label: 'High compliance in pressure mode', is_correct: false, explanation: 'High compliance would increase volume, not decrease it.' },
       ],
     },
     {
       id: 'M1-Q3',
-      prompt: 'You see "set Vt: 450, Vte: 360" on a volume-control vent. The most useful first thought is:',
+      prompt: 'Tidal volume 500 mL, respiratory rate 14. Minute ventilation:',
       options: [
-        { label: "There's a leak in the circuit — that's where 90 mL went.", is_correct: true, explanation: 'In VCV the vent guarantees the inspiratory volume; if exhaled is short, the difference is leak (or a cuff problem or a bronchopleural fistula).' },
-        { label: 'The patient is improving.', is_correct: false, explanation: "You can't conclude improvement from one breath's Vte gap." },
-        { label: 'The compliance is getting better.', is_correct: false, explanation: 'That changes PIP, not Vte.' },
-        { label: 'The vent is broken.', is_correct: false, explanation: 'Equipment failure is a diagnosis of exclusion (book Ch. 7).' },
+        { label: '3.5 L/min', is_correct: false, explanation: 'Math error.' },
+        { label: '7 L/min', is_correct: true, explanation: 'MV = 0.5 L × 14 = 7 L/min.' },
+        { label: '14 L/min', is_correct: false, explanation: 'Math error.' },
+        { label: '35 L/min', is_correct: false, explanation: 'Normal MV is 6–10 L/min.' },
       ],
     },
-    // B2: replaced the ETCO2-gradient item (which belongs in a future
-    // Patient Monitoring module). New Q4 covers Type II (hypercapnic)
-    // failure to balance the Q1 Type I item.
     {
       id: 'M1-Q4',
-      prompt:
-        'A 72-year-old with severe COPD is admitted somnolent. ABG: pH 7.21, PaCO2 78, PaO2 62 on 4 L. The type of respiratory failure is:',
+      prompt: 'Ppeak 34, Pplat 22. Which statement is true?',
       options: [
-        {
-          label: 'Type I — hypoxemic respiratory failure.',
-          is_correct: false,
-          explanation:
-            'Type I has a low PaO2 with a NORMAL or LOW PaCO2. This patient is markedly hypercapnic and acidemic.',
-        },
-        {
-          label: 'Type II — hypercapnic respiratory failure.',
-          is_correct: true,
-          explanation:
-            'Elevated PaCO2 (> 45) with acidemia = Type II (hypercapnic) failure. The patient is failing to ventilate — to clear CO2 — not just to oxygenate. Book Ch. 4.',
-        },
-        {
-          label: 'Airway protection failure.',
-          is_correct: false,
-          explanation: 'The somnolence here is CO2 narcosis — a consequence of the ventilatory failure, not an independent airway problem. Fix the ventilation and the mental status follows.',
-        },
-        {
-          label: 'Excessive work of breathing.',
-          is_correct: false,
-          explanation: 'A work-of-breathing intubation is the shock patient whose diaphragm is competing with cardiac output. This patient is failing to clear CO2 — that\'s Type II.',
-        },
+        { label: 'Peak-plateau gap of 12 suggests compliance problem', is_correct: false, explanation: 'Compliance moves peak and plateau together.' },
+        { label: 'Peak-plateau gap of 12 suggests resistance problem', is_correct: true, explanation: 'The gap IS the resistive component. Widening gap = rising resistance.' },
+        { label: 'Pplat > 20 means barotrauma', is_correct: false, explanation: 'ARDS target is Pplat ≤ 30. A Pplat of 22 is safe.' },
+        { label: 'Peak and plateau should be equal in healthy lung', is_correct: false, explanation: 'Normal airways always add some resistive pressure.' },
       ],
     },
     {
       id: 'M1-Q5',
-      prompt: 'Which is the strongest argument for putting a hypotensive septic patient on the vent, even if his SpO2 is acceptable?',
+      prompt: 'Patient intubated for oxygenation failure from pneumonia. Initial strategy should prioritize:',
       options: [
-        { label: 'To improve the SpO2 to 100%.', is_correct: false, explanation: "SpO2 is already fine — that's not the reason." },
-        { label: "To take over the work of breathing so he isn't spending 40% of his cardiac output on his diaphragm.", is_correct: true, explanation: 'Owens, Commandment VIII. The septic diaphragm is a luxury organ when the heart is failing.' },
-        { label: 'To prevent aspiration.', is_correct: false, explanation: 'Sometimes true, but the bigger reason here is energy balance.' },
-        { label: 'To allow administration of bronchodilators.', is_correct: false, explanation: "Doesn't require intubation." },
+        { label: 'Raising MV to lower CO2', is_correct: false, explanation: 'CO2 was not the indication.' },
+        { label: 'Optimizing FiO2 and PEEP', is_correct: true, explanation: 'Indication drives strategy. Oxygenation failure requires FiO2 and PEEP optimization first.' },
+        { label: 'Reducing WOB only', is_correct: false, explanation: 'Not the primary goal here.' },
+        { label: 'Airway protection is sufficient', is_correct: false, explanation: 'Placing the tube addressed airway, not oxygenation.' },
       ],
     },
   ],
 
   explore_card: {
     patient_context:
-      "58-year-old man, intubated for pneumonia an hour ago. He's stable now: SpO2 96%, BP fine, no agitation. The vent is doing exactly what was ordered. Your job for the next two minutes is just to read the display.",
-    unlocked_controls_description: [
-      { name: 'Tidal volume (set Vt) · 350–600 mL', description: "the volume of air you're ordering per breath. Lung-protective range is 6–8 mL/kg PBW (predicted body weight — calculated from height and sex, not actual weight). You'll see PBW computed in M7." },
-      { name: 'Rate · 8–24 breaths/min', description: 'the minimum rate. The patient can trigger above this.' },
-      { name: 'PEEP · 0–18 cmH2O', description: 'the end-expiratory floor.' },
-      { name: 'FiO2 · 21–100%', description: 'fraction of inspired oxygen.' },
-    ],
+      'A stable, passively ventilated patient on routine volume-control settings. No controls are unlocked — you are learning to read the display before changing anything.',
+    unlocked_controls_description: [],
     readouts_description: [
-      { name: 'PIP', description: 'the peak pressure each breath. Rises with higher Vt, lower compliance, or higher resistance.' },
-      { name: 'Vte', description: 'exhaled volume, in mL. Should be close to your set Vt in volume modes.' },
-      { name: 'Total PEEP', description: 'what the patient is actually generating at end-expiration. Equals set PEEP unless auto-PEEP is present.' },
+      { name: 'Ppeak', description: 'top of pressure waveform; highest pressure each breath.' },
+      { name: 'Pplat', description: 'after an inspiratory pause; reflects alveolar pressure; always ≤ Ppeak.' },
+      { name: 'PEEP', description: 'floor; pressure at end-expiration.' },
+      { name: 'Vt set and Vt delivered', description: 'gap signals a leak.' },
+      { name: 'Set rate vs measured rate', description: 'gap = spontaneous breaths above the mandatory rate.' },
+      { name: 'MV', description: 'rate × Vt; target 6–10 L/min for most adults.' },
+      { name: 'FiO2', description: 'inspired oxygen fraction.' },
+      { name: 'I:E ratio', description: 'inspiratory to expiratory time.' },
     ],
     suggestions: [
-      'Set Vt up to 600. Watch PIP rise. Watch Vte rise to match.',
-      "Drop FiO2 to 30%. Nothing about the *display* changes — FiO2 is its own number. (That's the point.)",
-      "Raise PEEP from 5 to 10. Watch PIP rise too — they're additive.",
-      'Look at MVe (the minute ventilation readout). Compare it to (set Vt × set rate) ÷ 1000. They should match.',
+      'Notice that Ppeak is always > Pplat > PEEP.',
+      'If measured rate > set rate, the patient is breathing above the mandatory rate.',
+      'If set Vt = delivered Vt, there is no circuit leak.',
     ],
   },
 
-  user_facing_task: 'Four prompts. For each one, click the matching tile on the sim — readings live up top, controls at the bottom. Wrong clicks don\'t penalize you; they explain what you just clicked.',
-  // success_criteria_display intentionally omitted — the shell auto-derives
-  // the criteria list from the four recognition prompt questions so the
-  // checklist and the blue banner above the sim stay word-for-word in sync.
+  user_facing_task:
+    'Your senior names eight values from the display one at a time. Click the matching readout panel for each one.',
+  success_criteria_display: [
+    'Click the correct readout panel for each of the eight terms.',
+    'Two attempts per term before the answer is revealed with a highlight ring.',
+    'Complete all eight to unlock the debrief.',
+  ],
   task_framing_style: 'C',
 
   key_points: [
-    'Four indications: refractory hypoxemia, hypercapnia with acidosis, jeopardized airway, shock.',
-    'The vent supports. It does not cure.',
-    'Set values are orders. Measured values (PIP, Vte, Total PEEP) are what the patient is generating.',
-    'The three real benefits are O2 delivery, shunt reduction, and taking over WoB.',
-    'Read the display every time you change a setting. The numbers tell you whether the order got delivered.',
+    'Four indications: failure of oxygenation, failure of ventilation, airway protection, decreased work of breathing.',
+    'Oxygenation failure (Type I) responds to FiO2 and PEEP. Ventilation failure (Type II) responds to minute ventilation.',
+    'Set values = what you ordered. Measured values = what actually happened. Gaps are diagnostic.',
+    'Eight terms: Ppeak, Pplat, PEEP, Vt (set and delivered), rate (set and measured), MV, FiO2, I:E ratio.',
+    'Ppeak ≥ Pplat ≥ PEEP. The Ppeak–Pplat gap = airway resistance.',
+    'MV = rate × Vt. Target 6–10 L/min for most adults.',
   ],
 };

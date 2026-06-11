@@ -1,8 +1,14 @@
 import type { ModuleConfig, TrackerConfig } from '../shell/types';
+// M1 is now the combined "Why We Ventilate & The Vent Display" module
+// (legacy M1 + M2 merged per the M1M2_M4a_M4b shell spec). The legacy
+// standalone M2 module is retired; its file is kept for back-compat
+// but is no longer registered.
 import { M1 } from './M1';
-import { M2 } from './M2';
 import { M3 } from './M3';            // Basic Vent Adjustments (Foundations)
-import { M4 } from './M4';
+// Legacy M4 ("Compliance and Resistance") is split into two focused
+// Physiology modules: M4a (Compliance) and M4b (Resistance).
+import { M4a } from './M4a';
+import { M4b } from './M4b';
 import { M5, M6 } from './M5_M6';
 import { M_EOM } from './M_EOM';      // Equation of Motion (Physiology, after M5)
 import { M7, M8 } from './M7_M8';
@@ -20,26 +26,35 @@ import { M13, M14 } from './M13_M14';
 import { M15, M16 } from './M15_M16';
 import { M17, M18, M19 } from './M17_M18_M19';
 
-// Renumber: M10..M19 → display-numbers 9..18 so the picker shows a
-// dense sequence. String ids unchanged so progress records persist.
-M10.number = 9;
-M11.number = 10;
-M12.number = 11;
-M13.number = 12;
-M14.number = 13;
-M15.number = 14;
-M16.number = 15;
-M17.number = 16;
-M18.number = 17;
-M19.number = 18;
+// Renumber after the M1+M2 merge and the M4 split: the new module
+// order is M1(combined), M3, M4a, M4b, M5, M-EOM, M6, M7, M8, M10,
+// M11–M19 — total 18 entries, display numbers 1..18.
+M1.number = 1;
+M3.number = 2;
+M4a.number = 3;
+M4b.number = 4;
+M5.number = 5;
+M_EOM.number = 6;
+M6.number = 7;
+M7.number = 8;
+M8.number = 9;
+M10.number = 10;
+M11.number = 11;
+M12.number = 12;
+M13.number = 13;
+M14.number = 14;
+M15.number = 15;
+M16.number = 16;
+M17.number = 17;
+M18.number = 18;
+M19.number = 19;
 
-// Curriculum order: Foundations (M1–M3), then Physiology (M4 → M5 →
-// M-EOM → M6), then Modes/Strategy/Weaning/Synthesis. The picker
-// groups by track but preserves array order within each, so M-EOM
-// slots in between Gas Exchange Basics (M5) and Auto-PEEP (M6).
+// Curriculum order: Foundations (combined M1, M3), then Physiology
+// (M4a → M4b → M5 → M-EOM → M6), then Modes/Strategy/Weaning/Synthesis.
+// The picker groups by track but preserves array order within each.
 export const MODULES: ModuleConfig[] = [
-  M1, M2, M3,
-  M4, M5, M_EOM, M6,
+  M1, M3,
+  M4a, M4b, M5, M_EOM, M6,
   M7, M8, M10,
   M11, M12, M13, M14, M15, M16, M17, M18, M19,
 ];
