@@ -1527,7 +1527,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" flash={flashSet.has('ieRatio')} {...recogPropsForReadout('ieRatio', 'I:E')} />
               <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" flash={flashSet.has('pip')} {...recogPropsForReadout('pip', 'PIP')} />
               <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} flash={flashSet.has('plat')} {...recogPropsForReadout('plat', 'Pplat')} />
-              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color={metrics.drivingPressure > 15 ? 'text-rose-600' : 'text-violet-600'} flash={flashSet.has('drivingPressure')} {...recogPropsForReadout('drivingPressure', 'DP')} />
+              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color="text-violet-600" flash={flashSet.has('drivingPressure')} {...recogPropsForReadout('drivingPressure', 'DP')} />
               <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" flash={flashSet.has('mve')} {...recogPropsForReadout('mve', 'VE')} />
               <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vte')} />
               <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-600" flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vt/PBW')} />

@@ -21,13 +21,12 @@ export const M4: ModuleConfig = {
   track: 'Physiology',
   estimated_minutes: 14,
   briefing: {
-    tagline: 'Peak-plateau gap separates airway from lung.',
+    tagline: 'Compliance lives in the lung. Resistance lives in the airway.',
     overview:
-      "This is the bedside skill the rest of the book builds on. When peak pressure rises, you have to know whether the lungs got stiffer or the airways got narrower, and the ventilator already tells you. The gap between peak and plateau is the answer. A small gap means the problem is in the lung itself. A big gap means the problem is in the airway. That single observation drives most of what you do for sudden pressure changes.",
+      "**Respiratory-system compliance** is how much volume the lung accepts per unit of pressure — `Vt / ΔP`, measured in mL/cmH2O. A stiff lung takes more pressure to inflate; a floppy lung takes less. **Airway resistance** is how hard it is to push gas through the airways — `ΔP / flow`, measured in cmH2O per (L/s). A narrow, plugged, or kinked airway takes more pressure to move gas; a wide-open airway takes less. Compliance and resistance are the two mechanical properties of the respiratory system, and every pressure reading on a ventilator is some combination of them.",
     what_youll_do: [
-      'Compliance problems raise peak and plateau together.',
-      'Resistance problems raise peak alone, widening the gap.',
-      'Plateau pressure is the most important number on the screen for evaluating lung mechanics.',
+      'See how changing compliance changes the measured vent values.',
+      'Understand how airway resistance can affect ventilation.',
     ],
   },
 
@@ -54,14 +53,14 @@ export const M4: ModuleConfig = {
       prompt: 'Falling compliance over hours-to-days usually means:',
       options: [
         { label: 'The patient is getting better.', is_correct: false, explanation: "That's *rising* compliance." },
-        { label: 'Worsening fluid overload, evolving pneumonia, or new pneumothorax.', is_correct: true, explanation: 'Owens\'s rule: falling compliance over hours-to-days is a structural change in the lung — look for the new pathology.' },
+        { label: 'Worsening fluid overload, evolving pneumonia, or new pneumothorax.', is_correct: true, explanation: 'Falling compliance over hours-to-days is a structural change in the lung — look for the new pathology.' },
         { label: 'The PEEP is too high.', is_correct: false, explanation: 'Excess PEEP can overdistend, but compliance is a longer-timescale signal.' },
         { label: 'The ventilator is in the wrong mode.', is_correct: false, explanation: "Mode doesn't change compliance." },
       ],
     },
     {
       id: 'M4-P3',
-      prompt: "Owens's \"baby lung\" concept means:",
+      prompt: 'The "baby lung" concept means:',
       options: [
         { label: "Children's lungs handle the vent differently than adults'.", is_correct: false, explanation: 'Pediatric mechanics aside; the term is about adults.' },
         { label: "In ARDS, the lungs aren't uniformly stiff — there are fewer healthy alveoli doing all the work, like a child's lungs in an adult's chest.", is_correct: true, explanation: 'Book Ch. 8. This is why Vt scales to *healthy* volume, not total.' },
@@ -86,24 +85,49 @@ export const M4: ModuleConfig = {
     },
     // PEEP unlocked too — so the learner can confirm in Explore that PEEP
     // raises both pressures by the same amount (a "third term" demo).
-    unlocked_controls: ['compliance', 'resistance', 'peep'],
+    // inspiratory_pause and expiratory_pause unlock the hold buttons that
+    // the guided walkthrough teaches at the start of Try-It.
+    unlocked_controls: ['compliance', 'resistance', 'peep', 'inspiratory_pause', 'expiratory_pause'],
     visible_readouts: ['pip', 'plat', 'drivingPressure', 'vte', 'mve'],
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Strict (not any-order): the clinical reasoning M4 teaches requires
-  // anchoring to an unchanged baseline. Compliance change first (lung
-  // pattern), then resistance change (airway pattern), with a sim reset
-  // between so each is a clean experiment.
+  // Strict, one-step-at-a-time walkthrough. Before any questions or any
+  // mechanic changes, the learner is taught what the INSP HOLD and EXP
+  // HOLD buttons actually do — then they see how compliance and resistance
+  // each change the pressure picture.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
-    reset_between: true,
+    reset_between: false,
+    present_one_at_a_time: true,
+    observations: [
+      // 1: Press INSP HOLD
+      "You just performed an inspiratory hold. The vent closed both valves at end-inspiration and froze the breath inside the lung. With flow stopped, the airway and the alveoli equilibrate — the pressure reading drops from PIP (the peak you saw during flow) to **Pplat (plateau pressure)**, the pressure inside the alveoli. PIP includes the cost of pushing gas through the airway; Pplat is the lung itself. Note the two numbers and the gap between them.",
+      // 2: Press EXP HOLD
+      "You just performed an expiratory hold. The vent closed both valves at end-expiration, with no fresh breath delivered. With flow stopped, the airway equilibrates with the alveoli — what you see is **total PEEP**, the actual end-expiratory pressure inside the lung. If the patient is fully exhaling, total PEEP equals set PEEP. If there's air trapping, total PEEP is higher than set PEEP, and the difference is auto-PEEP. The exp hold is the only way to measure it.",
+      // 3: Compliance drop
+      "Both PIP and Pplat rose. They rose by *the same amount* — the gap between them didn't change. That's the signature of a lung-side problem: lower compliance means the lung accepts less volume per unit of pressure, so any given Vt now costs more pressure to deliver. The airway didn't change, so the part of the peak pressure that comes from pushing gas through the airway is unchanged.",
+      // 4: Resistance spike
+      "PIP jumped. Pplat barely moved. The gap between them blew open. That's the signature of an airway-side problem: higher resistance means it takes more pressure to push gas through the tube and bronchi *while gas is moving*. As soon as flow stops on the inspiratory hold, the cost of resistance disappears — that's why Pplat is unchanged. **Wide PIP–Pplat gap → airway. Both up together → lung.**",
+    ],
     children: [
+      // Step 1 — Press INSP HOLD (any change counts).
+      {
+        kind: 'manipulation',
+        control: 'inspiratory_pause',
+        condition: { type: 'any_change' },
+      },
+      // Step 2 — Press EXP HOLD.
+      {
+        kind: 'manipulation',
+        control: 'expiratory_pause',
+        condition: { type: 'any_change' },
+      },
+      // Step 3 — Drop compliance into ARDS range.
       {
         kind: 'manipulation',
         control: 'compliance',
-        // ARDS-range — a clinically meaningful threshold, not an arbitrary delta.
         condition: { type: 'absolute', operator: '<=', value: 28 },
         require_acknowledgment: {
           question: "You just dropped this patient's compliance to the ARDS range. The pressures rose. The gap between PIP and Pplat:",
@@ -114,10 +138,10 @@ export const M4: ModuleConfig = {
           ],
         },
       },
+      // Step 4 — Spike resistance (mucus-plug range).
       {
         kind: 'manipulation',
         control: 'resistance',
-        // Mucus-plug / bronchospasm range.
         condition: { type: 'absolute', operator: '>=', value: 25 },
         require_acknowledgment: {
           question: 'You just spiked resistance — think mucus plug or bronchospasm. Which pressure moved more?',
@@ -136,6 +160,11 @@ export const M4: ModuleConfig = {
       kind: 'prose',
       markdown:
         'There are two reasons the peak pressure on a vent gets ugly. **Either the lung is the problem, or the airway is the problem.** The bedside test is one button — the inspiratory hold. It tells you which conversation to have.',
+    },
+    {
+      kind: 'prose',
+      markdown:
+        "**The hold buttons.** Two buttons on every ventilator let you freeze flow and read static pressures.\n\n**INSP HOLD (inspiratory hold)** closes the inspiratory *and* expiratory valves at end-inspiration, trapping the breath in the lung. With flow stopped, what you see is **plateau pressure (Pplat)** — the pressure inside the alveoli once the airway and lung have equilibrated. The difference between PIP (during flow) and Pplat (no flow) is the cost of pushing gas through the airway — it's the resistance signal.\n\n**EXP HOLD (expiratory hold)** closes both valves at end-expiration. With flow stopped, what you see is **total PEEP** — the actual end-expiratory pressure inside the lung. If total PEEP > set PEEP, the patient has **auto-PEEP** (air trapping). The exp hold is the only way to measure it.\n\nThe Try-It section will walk you through both buttons before you change anything else.",
     },
     {
       kind: 'callout',
@@ -172,23 +201,6 @@ export const M4: ModuleConfig = {
         'PIP shot up. Pplat barely moved. The gap blew open. This is the bedside resistance signature.',
     },
     {
-      kind: 'figure',
-      caption: 'Compliance pattern vs resistance pattern, with the clinical differentials labeled.',
-      ascii:
-        'LUNG PROBLEM (compliance ↓)           AIRWAY PROBLEM (resistance ↑)\n' +
-        '──────────────────────────            ──────────────────────────\n' +
-        '   PIP ┤  ╱‾‾‾┐  ← hold                  PIP ┤  ╱‾‾‾┐  ← hold\n' +
-        '         ╱    │                                ╱    │\n' +
-        '   Pplat╲    └──                          Pplat╲    └─────\n' +
-        '         │                                      │\n' +
-        '         │   GAP normal                         │    GAP wide\n' +
-        '\n' +
-        ' Differential:                          Differential:\n' +
-        '  ARDS, pneumonia,                       kinked tube, mucus plug,\n' +
-        '  pulm. edema, pneumo,                   bronchospasm, biting,\n' +
-        '  mainstem intubation                    secretions',
-    },
-    {
       kind: 'formative',
       question: 'A patient: Vt 500, PIP 38, Pplat 30, PEEP 8. His static compliance is:',
       options: [
@@ -203,9 +215,9 @@ export const M4: ModuleConfig = {
   ],
 
   hint_ladder: {
-    tier1: 'Two steps. First, drop the compliance into the ARDS range. The tracker shows you when you\'re there.',
-    tier2: 'Step 1: compliance ≤ 28. Step 2 (after the reset): resistance ≥ 25. Then answer the acknowledgment correctly.',
-    tier3: { hint_text: 'Use "Show me" to run the active step\'s manipulation, then reset.', demonstration: { control: 'compliance', target_value: 25 } },
+    tier1: 'Four steps. The TaskCard shows the active one — press the named button or move the named knob.',
+    tier2: 'Step 1: INSP HOLD button (top of the controls card). Step 2: EXP HOLD. Step 3: compliance ≤ 28. Step 4: resistance ≥ 25, then answer the acknowledgments.',
+    tier3: { hint_text: 'Press the INSP HOLD or EXP HOLD button at the top of the ventilator controls, then drop compliance to ~25 and raise resistance to ~28.' },
   },
 
   summative_quiz: [
@@ -221,7 +233,7 @@ export const M4: ModuleConfig = {
     },
     {
       id: 'M4-Q2',
-      prompt: "A patient with measured compliance of 20 mL/cmH2O and PBW 70 kg has, in Owens's framework:",
+      prompt: 'A patient with measured compliance of 20 mL/cmH2O and PBW 70 kg has, by the baby-lung concept:',
       options: [
         { label: 'The lungs of a healthy adult, just with a stiff chest wall.', is_correct: false, explanation: 'In ARDS the chest wall is usually OK; the lungs are smaller, not stiffer.' },
         { label: 'The functional lung volume of a 20 kg child — the baby lung.', is_correct: true, explanation: 'Book Ch. 8. Vt scales to the baby lung, not the adult body.' },
@@ -268,7 +280,7 @@ export const M4: ModuleConfig = {
     // Novice-pass §4.2: zone labels so a learner reading "set compliance to 28"
     // has a clinical anchor for what that means.
     patient_context:
-      "65-year-old woman, intubated for pneumonia. Right now her lungs are mildly involved. The next two minutes simulate what happens when she gets worse — either lung-wise or airway-wise.\n\n**Note on the Patient knobs:** two new rose-labeled knobs appear in the control row for this module — **Compliance** and **Resistance**. In real life you can't 'set' a patient's compliance or resistance — they're properties of their lungs. On this simulator the knobs let you make their lungs stiffer/floppier or their airways narrower/wider on demand, so you can see what each one does to the screen.\n\n**Compliance zones to know:** Normal 60–80 · Mild ARDS 40–60 · Moderate 28–40 · Severe ≤ 28. The success criterion (≤ 28) is the severe-ARDS threshold.",
+      "65-year-old woman, intubated for pneumonia. Her lungs are mildly involved right now. Over the next two minutes you'll simulate what happens when she gets worse — first lung-wise, then airway-wise.\n\nTwo rose-labeled knobs appear in the control row just for this module: Compliance and Resistance. In real life you can't turn a knob to change a patient's mechanics — they're properties of the lungs — but here the knobs let you make her lungs stiffer or her airways narrower on demand so you can see exactly what each one does to the pressure picture.\n\nFor reference, compliance zones run roughly: normal 60–80, mild ARDS 40–60, moderate 28–40, severe at or below 28. The success criterion (compliance ≤ 28) is the severe-ARDS threshold.",
     unlocked_controls_description: [
       { name: 'Compliance · 20–80', description: "the system's overall stiffness. Normal 60–80 · Mild ARDS 40–60 · Moderate 28–40 · Severe ≤ 28." },
       { name: 'Resistance · 5–35', description: 'airway opposition to flow. Healthy intubated 5–10 · Mild bronchospasm 15–20 · Severe ≥ 25.' },
@@ -286,10 +298,12 @@ export const M4: ModuleConfig = {
   },
 
   user_facing_task:
-    "Demonstrate the gap signatures. This patient just got sicker. Use the rose-labeled PATIENT knobs in the control row to change the lung. First, his compliance crashes — drop the Compliance knob into the ARDS range (≤ 28) and explain what the gap does. Then his airway plugs up — push the Resistance knob into the mucus-plug range (≥ 25) and explain what the gap does.",
+    "Four steps, one at a time. First you'll press the two hold buttons and read off Pplat and total PEEP. Then you'll drop the patient's compliance into the ARDS range and watch the pressure picture change. Finally you'll spike her airway resistance and see the gap blow open.",
   success_criteria_display: [
-    'Drop the Compliance knob to ≤ 28 — explain the gap.',
-    'Raise the Resistance knob to ≥ 25 — explain the gap.',
+    'Press INSP HOLD — read off Pplat and the PIP–Pplat gap.',
+    'Press EXP HOLD — read off total PEEP.',
+    'Drop the Compliance knob to ≤ 28 — watch PIP and Pplat rise together.',
+    'Raise the Resistance knob to ≥ 25 — watch the PIP–Pplat gap blow open.',
   ],
   task_framing_style: 'A',
 
