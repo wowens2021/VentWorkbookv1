@@ -339,6 +339,15 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
   const [stepSoftPrompt, setStepSoftPrompt] = useState<string | null>(null);
   const [idleReminderToast, setIdleReminderToast] = useState<string | null>(null);
   const [stepTier3Demo, setStepTier3Demo] = useState<{ control: any; target_value: number; hint_text?: string } | null>(null);
+  // Whether the active Read-phase slide references the sim. ReadPane
+  // reports this up; when false, the sim column collapses and the
+  // workbook gets the full body width.
+  const [readSlideNeedsSim, setReadSlideNeedsSim] = useState(true);
+  // Reset to "needs sim" defaults when leaving Read so other phases
+  // don't inherit a stale collapsed-sim state.
+  useEffect(() => {
+    if (phase !== 'read') setReadSlideNeedsSim(true);
+  }, [phase]);
   useEffect(() => {
     if (phase !== 'try-it' || !sequentialMode || module.hidden_objective?.kind !== 'compound') return;
     const activeIdx = seqAdvancedThrough + 1;
@@ -714,6 +723,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
           harness={harness}
           ctaLabel={ctaLabel}
           onAdvance={advanceFromRead}
+          onSimNeededChange={setReadSlideNeedsSim}
           onPredictMcqStatusChange={(s) => {
             // v3.2 §0.4: persist per-block attempts for dashboard telemetry.
             // Best-effort merge — only write to localStorage on completion to
@@ -1461,6 +1471,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
           harness={harness}
           initialPreset={module.scenario.preset}
           unlockedControls={module.scenario.unlocked_controls}
+          simHidden={phase === 'read' && readSubPhase === 'prose' && !readSlideNeedsSim}
           workbookContent={
             // D1: keyed wrapper so the workbook column re-mounts and replays
             // the slide-in animation on every phase change.

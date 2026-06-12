@@ -39,6 +39,12 @@ interface PlaygroundSimProps {
    */
   playgroundMode?: boolean;
   /**
+   * Hide the sim column entirely and let the workbook column take the full
+   * width of the body. Used by the Read phase on text-only slides where
+   * the sim isn't referenced — giving the learner more room to read.
+   */
+  simHidden?: boolean;
+  /**
    * When set, the named on-sim elements (readouts/controls) render with a
    * sky-blue highlight ring and become clickable. The first matching element
    * the learner clicks fires `onRecognitionElementClick` with its label and
@@ -425,6 +431,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   hideHeader,
   simInteractivity = 'live',
   playgroundMode = false,
+  simHidden = false,
   recognitionTargets,
   recognitionBanner,
   onRecognitionElementClick,
@@ -1504,7 +1511,9 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2 overflow-hidden min-h-0"
         onMouseDown={e => { if (isFrozen) { setIsDragging(true); handleWaveformInteraction(e); } }}
       >
-        {/* ── Left column: measured values strip → waveforms → vent controls ── */}
+        {/* ── Left column: measured values strip → waveforms → vent controls ──
+            Hidden entirely when simHidden is true (text-only Read slides). */}
+        {!simHidden && (
         <div className={`${playgroundMode ? 'lg:col-span-12' : 'lg:col-span-6'} flex flex-col gap-2 min-h-0 cursor-crosshair`}>
 
           {/* Recognition click-target banner — only shown when an active
@@ -1747,10 +1756,12 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
             </div>
           </div>
         </div>
+        )}
 
-        {/* ── Right column: workbook + hints. Hidden entirely in playground mode. ── */}
+        {/* ── Right column: workbook + hints. Hidden entirely in playground mode.
+            When simHidden is true, take the full row (col-span-12). ── */}
         {!playgroundMode && (
-        <div className="lg:col-span-6 flex flex-col gap-2 min-h-0">
+        <div className={`${simHidden ? 'lg:col-span-12' : 'lg:col-span-6'} flex flex-col gap-2 min-h-0`}>
 
           {/* Hints — compact, only shows when alerts are active */}
           {alerts.length > 0 && (
