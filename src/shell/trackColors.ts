@@ -118,6 +118,30 @@ export const TRACK_COLORS: Record<Track, TrackTone> = {
     accentText: 'text-rose-800',
     hex: '#be123c',
   },
+  // Patient-Ventilator Dyssynchrony: violet — sits between the
+  // Modes-green family and the Strategy-gold family.
+  'Patient-Ventilator Dyssynchrony': {
+    bg: 'bg-violet-700',
+    bgHover: 'hover:bg-violet-600',
+    chipBg: 'bg-violet-50',
+    chipBorder: 'border-violet-200',
+    chipText: 'text-violet-900',
+    fgOnSolid: 'text-white',
+    accentText: 'text-violet-800',
+    hex: '#6d28d9',
+  },
+  // Ventilator Liberation: warm stone — the leather-binding tone the
+  // legacy 'Weaning' track used to carry.
+  'Ventilator Liberation': {
+    bg: 'bg-stone-700',
+    bgHover: 'hover:bg-stone-600',
+    chipBg: 'bg-stone-50',
+    chipBorder: 'border-stone-300',
+    chipText: 'text-stone-800',
+    fgOnSolid: 'text-white',
+    accentText: 'text-stone-700',
+    hex: '#44403c',
+  },
 };
 
 export const trackTone = (track: Track): TrackTone => TRACK_COLORS[track] ?? TRACK_COLORS.Foundations;

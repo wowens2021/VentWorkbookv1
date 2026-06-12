@@ -36,6 +36,8 @@ const trackTier: Record<Track, KCDifficulty> = {
   Synthesis: 'Advanced',
   'Advanced Topics': 'Advanced',
   'Clinical Skills': 'Advanced',
+  'Patient-Ventilator Dyssynchrony': 'Advanced',
+  'Ventilator Liberation': 'Advanced',
 };
 
 export interface LearnerProgress {

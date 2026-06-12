@@ -21,6 +21,8 @@ const trackToDifficulty: Record<Track, Difficulty> = {
   Synthesis: 'ADVANCED',
   'Advanced Topics': 'ADVANCED',
   'Clinical Skills': 'ADVANCED',
+  'Patient-Ventilator Dyssynchrony': 'ADVANCED',
+  'Ventilator Liberation': 'ADVANCED',
 };
 
 // Difficulty pills sit inside the green/cream library palette: olive for
@@ -108,6 +110,8 @@ const TRACK_BLURB: Record<Track, string> = {
   Synthesis: 'Putting it together at the bedside when a vented patient acutely deteriorates.',
   'Advanced Topics': 'PEEP and oxygenation strategies in their full clinical reasoning loop.',
   'Clinical Skills': 'Bedside troubleshooting at 2 AM — the right framework for each call.',
+  'Patient-Ventilator Dyssynchrony': 'When the patient and the vent disagree. Waveform pattern recognition and the fix for each category.',
+  'Ventilator Liberation': 'Getting the tube out — weaning readiness, SBT pass/fail, and what makes extubation succeed or fail.',
 };
 
 const ModulePicker: React.FC<Props> = ({ onPickModule }) => {

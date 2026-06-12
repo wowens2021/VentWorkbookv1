@@ -6,9 +6,9 @@ import type { ModuleConfig, TrackerConfig } from '../shell/types';
 import { M1 } from './M1';
 import { M3 } from './M3';            // Basic Vent Adjustments (Foundations)
 // Legacy M4 ("Compliance and Resistance") is split into two focused
-// Physiology modules: M4a (Compliance) and M4b (Resistance).
-import { M4a } from './M4a';
-import { M4b } from './M4b';
+// Physiology modules with descriptive ids: 'compliance' and 'resistance'.
+import { Compliance } from './Compliance';
+import { Resistance } from './Resistance';
 import { M5, M6 } from './M5_M6';
 // M_EOM (Equation of Motion) retired — the equation-of-motion concept
 // is folded into M4a/M4b and the EOM-specific module is removed from
@@ -41,8 +41,8 @@ import { M_TROUBLESHOOT } from './M_TROUBLESHOOT';
 // M11–M19 — total 18 entries, display numbers 1..18.
 M1.number = 1;
 M3.number = 2;
-M4a.number = 3;
-M4b.number = 4;
+Compliance.number = 3;
+Resistance.number = 4;
 M5.number = 5;
 M6.number = 6;
 M7.number = 7;
@@ -63,7 +63,7 @@ M_TROUBLESHOOT.number = 18;
 // The picker groups by track but preserves array order within each.
 export const MODULES: ModuleConfig[] = [
   M1, M3,
-  M4a, M4b, M5, M6,
+  Compliance, Resistance, M5, M6,
   M7, M8, M10,
   M11, M12, M13, M15, M16, M17, M18, M19,
   M_TROUBLESHOOT,

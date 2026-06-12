@@ -10,8 +10,8 @@ import type { ModuleConfig } from '../shell/types';
  * how it shows up on the pressure waveform in volume control, and how to
  * measure it from Pplat and PEEP. Resistance lives in M4b.
  */
-export const M4a: ModuleConfig = {
-  id: 'M4a',
+export const Compliance: ModuleConfig = {
+  id: 'compliance',
   number: 4,
   title: 'Compliance',
   track: 'Physiology',

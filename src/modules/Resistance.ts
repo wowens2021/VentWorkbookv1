@@ -9,8 +9,8 @@ import type { ModuleConfig } from '../shell/types';
  * pressure waveform, and how the peak-plateau gap is used at the bedside
  * to distinguish a resistance problem from a compliance problem.
  */
-export const M4b: ModuleConfig = {
-  id: 'M4b',
+export const Resistance: ModuleConfig = {
+  id: 'resistance',
   number: 5,
   title: 'Resistance',
   track: 'Physiology',

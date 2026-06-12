@@ -388,7 +388,20 @@ export interface HintConfig {
 }
 
 // ── Module configuration ──
-export type Track = 'Foundations' | 'Physiology' | 'Modes' | 'Strategy' | 'Weaning' | 'Synthesis' | 'Advanced Topics' | 'Clinical Skills';
+export type Track =
+  | 'Foundations'
+  | 'Physiology'
+  | 'Modes'
+  | 'Strategy'
+  | 'Patient-Ventilator Dyssynchrony'
+  | 'Ventilator Liberation'
+  | 'Clinical Skills'
+  // Legacy track values retained so historical progress records and
+  // any not-yet-migrated module files compile. Not surfaced in the new
+  // curriculum order.
+  | 'Weaning'
+  | 'Synthesis'
+  | 'Advanced Topics';
 
 // ── Explore card (Phase 3 content) ──
 export interface ExploreCardConfig {

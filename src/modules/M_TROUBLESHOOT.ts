@@ -5,7 +5,7 @@ import type { ModuleConfig, TrackerConfig } from '../shell/types';
  * Per docs/Troubleshooting_2AM_v3.pdf (v3 — UX + flow revised).
  *
  * Track: Clinical Skills · Phases: Primer → Read → Explore → Try It → Debrief.
- * Hard prereq: M4a, M4b. Soft prereq: M1 (the combined Foundations module).
+ * Hard prereq: Compliance, Resistance. Soft prereq: M1 (the combined Foundations module).
  *
  * v3 features implemented in this build (previously deferred):
  *   - predict_prompt and reference_table content blocks render
@@ -197,7 +197,7 @@ export const M_TROUBLESHOOT: ModuleConfig = {
   briefing: {
     tagline: "It's 2:45 AM. Pick the right framework.",
     overview:
-      "The systematic approach to acute ventilator problems, built directly from Chapter 2 (Quick Adjustments and Troubleshooting), Chapter 3 (The Eleven Commandments), and Chapter 14 (Patient-Ventilator Dyssynchrony). Each problem type has its own first step — high pressure starts with an inspiratory pause; sudden SpO2 drop starts with disconnect-and-bag; fighting the vent starts with TSS and finding the mechanism; general acute deterioration runs through DOPES. Get the framework right and the rest follows. **Prerequisite: M4a (Compliance) and M4b (Resistance).** The plateau pressure maneuver and peak-plateau gap logic are used here without re-teaching. Soft prerequisite: M1 (the eight key readouts).",
+      "The systematic approach to acute ventilator problems, built directly from Chapter 2 (Quick Adjustments and Troubleshooting), Chapter 3 (The Eleven Commandments), and Chapter 14 (Patient-Ventilator Dyssynchrony). Each problem type has its own first step — high pressure starts with an inspiratory pause; sudden SpO2 drop starts with disconnect-and-bag; fighting the vent starts with TSS and finding the mechanism; general acute deterioration runs through DOPES. Get the framework right and the rest follows. **Prerequisite: the Compliance and Resistance modules.** The plateau pressure maneuver and peak-plateau gap logic are used here without re-teaching. Soft prerequisite: M1 (the eight key readouts).",
     what_youll_do: [
       'Use the four problem-specific first steps — inspiratory pause, disconnect-and-bag, TSS, DOPES — and learn which framework matches which call.',
       'Interpret an ABG and adjust the ventilator in the right order across all four modes (VC, PC, APRV, HFOV).',

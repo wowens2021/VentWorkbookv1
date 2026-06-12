@@ -437,6 +437,8 @@ const trackToTier: Record<Track, KCDifficulty> = {
   Synthesis: 'Advanced',
   'Advanced Topics': 'Advanced',
   'Clinical Skills': 'Advanced',
+  'Patient-Ventilator Dyssynchrony': 'Advanced',
+  'Ventilator Liberation': 'Advanced',
 };
 
 /** Convert one module's summative quiz into Knowledge-Check items. */
