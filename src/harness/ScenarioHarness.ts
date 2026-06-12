@@ -10,6 +10,18 @@ import type { HarnessEvent } from '../trackers';
 
 type Subscriber = (ev: HarnessEvent) => void;
 
+/**
+ * One entry in the unified shell notification stack. `kind` controls
+ * the icon/color; `id` is stable so a source can replace its own
+ * notification without piling duplicates.
+ */
+export interface ShellNotification {
+  id: string;
+  kind: 'alert' | 'hint' | 'prompt' | 'reminder';
+  message: string;
+  dismissable: boolean;
+}
+
 export class ScenarioHarness {
   private subscribers: Subscriber[] = [];
   private promptListeners: ((prompt: InlinePromptConfig) => void)[] = [];
@@ -21,6 +33,48 @@ export class ScenarioHarness {
   private resetProvider: (() => void) | null = null;
 
   baseline_controls: Partial<Record<ControlName, number>> = {};
+
+  /**
+   * Unified notifications system. Every in-app alert / soft prompt /
+   * idle reminder / hint surfaces here so the learner sees one
+   * consolidated stack at the top-right of the viewport instead of
+   * three competing UIs (AlertContainer toast + workbook Hints panel
+   * + ModuleShell soft-prompt chip + fixed idle-reminder toast).
+   *
+   * Sources call `notify` and get back an id; later they can dismiss
+   * via `dismiss(id)` to retract a notification when its triggering
+   * condition resolves. Stable string ids (e.g. `pplat-high`) let a
+   * source replace its own notification by id without piling
+   * duplicates.
+   */
+  private _notifications: ShellNotification[] = [];
+  private _nextNotifId = 1;
+  private notifListeners: ((list: ShellNotification[]) => void)[] = [];
+  notify(n: { kind: ShellNotification['kind']; message: string; id?: string; dismissable?: boolean; autoDismissMs?: number }): string {
+    const id = n.id ?? `n${this._nextNotifId++}`;
+    // Replace by id if present, else append.
+    const idx = this._notifications.findIndex(x => x.id === id);
+    const entry: ShellNotification = { id, kind: n.kind, message: n.message, dismissable: n.dismissable ?? true };
+    if (idx >= 0) this._notifications[idx] = entry; else this._notifications = [...this._notifications, entry];
+    this.notifListeners.forEach(l => l(this._notifications));
+    if (n.autoDismissMs && n.autoDismissMs > 0) {
+      const ms = n.autoDismissMs;
+      setTimeout(() => this.dismiss(id), ms);
+    }
+    return id;
+  }
+  dismiss(id: string) {
+    const before = this._notifications.length;
+    this._notifications = this._notifications.filter(n => n.id !== id);
+    if (this._notifications.length !== before) {
+      this.notifListeners.forEach(l => l(this._notifications));
+    }
+  }
+  getNotifications(): ShellNotification[] { return this._notifications; }
+  onNotifications(fn: (list: ShellNotification[]) => void): () => void {
+    this.notifListeners.push(fn);
+    return () => { this.notifListeners = this.notifListeners.filter(l => l !== fn); };
+  }
 
   /**
    * v3 Troubleshooting spec — active-step clinical findings exposed

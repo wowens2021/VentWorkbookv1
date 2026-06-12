@@ -6,6 +6,7 @@ import CheckYourselfPage from './CheckYourselfPage';
 import IntroBriefing from './IntroBriefing';
 import WorkbookErrorBoundary from './WorkbookErrorBoundary';
 import ReadPane from './ReadPane';
+import Notifications from './Notifications';
 import TrackProgressStrip from './TrackProgressStrip';
 import { trackTone } from './trackColors';
 import { successPhrase, wrongPhrase, continueCTA } from './microcopy';
@@ -336,8 +337,13 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
   // whenever the active step in a sequential compound changes. Each
   // child of the compound may carry these fields; this effect runs
   // them at the right moments.
-  const [stepSoftPrompt, setStepSoftPrompt] = useState<string | null>(null);
-  const [idleReminderToast, setIdleReminderToast] = useState<string | null>(null);
+  // Per-step soft prompts and idle reminders no longer live in
+  // ModuleShell local state — they push through harness.notify so they
+  // render in the single consolidated Notifications surface alongside
+  // physiology alerts. The keys below are stable so each source can
+  // replace its own entry without piling duplicates.
+  const STEP_SOFT_PROMPT_ID = 'step-soft-prompt';
+  const STEP_IDLE_REMINDER_ID = 'step-idle-reminder';
   const [stepTier3Demo, setStepTier3Demo] = useState<{ control: any; target_value: number; hint_text?: string } | null>(null);
   // Whether the active Read-phase slide references the sim. ReadPane
   // reports this up; when false, the sim column collapses and the
@@ -351,19 +357,21 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
   useEffect(() => {
     if (phase !== 'try-it' || !sequentialMode || module.hidden_objective?.kind !== 'compound') return;
     const activeIdx = seqAdvancedThrough + 1;
-    // Always clear stale state when the step changes.
-    setIdleReminderToast(null);
+    // Always clear stale notifications when the step changes.
+    harness.dismiss(STEP_IDLE_REMINDER_ID);
+    harness.dismiss(STEP_SOFT_PROMPT_ID);
     const child: any = module.hidden_objective.children[activeIdx];
     if (!child) {
       harness.setActiveFindings(null);
-      setStepSoftPrompt(null);
       setStepTier3Demo(null);
       return;
     }
     // Findings → harness so the Auscultate / Examine buttons can read them.
     harness.setActiveFindings(child.findings ?? null);
-    // Soft prompt shows in the TaskCard header until the step advances.
-    setStepSoftPrompt(child.soft_prompt ?? null);
+    // Soft prompt → unified Notifications surface.
+    if (child.soft_prompt) {
+      harness.notify({ id: STEP_SOFT_PROMPT_ID, kind: 'prompt', message: child.soft_prompt });
+    }
     // Per-step Tier-3 demonstration override.
     setStepTier3Demo(child.tier3_demonstration ?? null);
     // If the step asks for a sim reset (e.g. between cases in a
@@ -379,10 +387,16 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
       harness.applyPerturbation(child.perturbation);
     }
     // 30s_reminder. Fires once after delay_ms if step hasn't advanced.
+    // Pushes through harness.notify so it stacks with everything else
+    // in the single Notifications surface.
     let reminderTimer: number | null = null;
     if (child.idle_reminder) {
       reminderTimer = window.setTimeout(() => {
-        setIdleReminderToast(child.idle_reminder.text);
+        harness.notify({
+          id: STEP_IDLE_REMINDER_ID,
+          kind: 'reminder',
+          message: child.idle_reminder.text,
+        });
       }, child.idle_reminder.delay_ms);
     }
     return () => {
@@ -786,20 +800,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
             />
           </div>
           <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-            {/* v3 Troubleshooting spec [UX-6] — soft prompt rendered
-                INLINE above the TaskCard so it never overlaps the
-                TaskCard's own header chip or footer buttons.
-                Non-blocking; dismiss with the X. */}
-            {stepSoftPrompt && (
-              <div className="mx-3 mt-2 mb-1 bg-amber-50 border border-amber-300 rounded-md px-3 py-2 flex items-start gap-2 shadow-sm shrink-0">
-                <div className="text-[12px] text-amber-900 leading-snug flex-1">{stepSoftPrompt}</div>
-                <button
-                  onClick={() => setStepSoftPrompt(null)}
-                  className="text-amber-700 hover:text-amber-900 text-[14px] leading-none"
-                  aria-label="Dismiss"
-                >×</button>
-              </div>
-            )}
+            {/* The per-step soft prompt chip used to render here. It
+                now pushes through harness.notify into the unified
+                Notifications surface at the top-right, so the TaskCard
+                stays focused on the task and learners have a single
+                place to look for alerts and hints. */}
             <TaskCard
               userFacingTask={module.user_facing_task ?? 'Continue using the simulator to complete this module.'}
               successCriteria={deriveSuccessCriteria(module)}
@@ -1408,21 +1413,11 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
 
   return (
     <div className="flex flex-col h-screen bg-brand-olive text-zinc-900 font-sans overflow-hidden select-none">
-      {/* v3 Troubleshooting spec — 30s idle reminder rendered as a
-          viewport-fixed toast at the bottom-right. Lives OUTSIDE the
-          TaskCard so it can't overlap the TaskCard footer buttons or
-          the soft-prompt chip. Fires once per step; dismissable. */}
-      {idleReminderToast && (
-        <div className="fixed bottom-5 right-5 z-50 max-w-sm bg-sky-50 border border-sky-300 rounded-md px-4 py-3 flex items-start gap-3 shadow-2xl animate-in fade-in slide-in-from-right-4 duration-300">
-          <div className="text-[10px] font-black uppercase tracking-widest text-sky-700 shrink-0 mt-0.5">Hint</div>
-          <div className="text-[13px] text-sky-900 leading-snug flex-1">{idleReminderToast}</div>
-          <button
-            onClick={() => setIdleReminderToast(null)}
-            className="text-sky-700 hover:text-sky-900 text-[16px] leading-none shrink-0"
-            aria-label="Dismiss"
-          >×</button>
-        </div>
-      )}
+      {/* Single consolidated alerts / hints surface. Every source
+          (physiology alerts, step soft prompts, idle reminders) pushes
+          into harness.notify and the Notifications panel renders them
+          as one stack at the top-right. */}
+      <Notifications harness={harness} />
       {/* Top nav — track-colored brand strip with a sticky learn-tagline. */}
       {(() => {
         const tone = trackTone(module.track);

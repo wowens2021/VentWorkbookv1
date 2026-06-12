@@ -967,11 +967,19 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   }, [autoPeepValue, isFrozen, addAlert, removeAlert]);
 
   useEffect(() => {
-    if (isFrozen) return;
-    const msg = 'Plateau Pressure > 30 cmH₂O — risk of volutrauma/barotrauma. Reduce Vt or PEEP.';
-    if (metrics.plat > 30 && metrics.plat > 0) addAlert(msg, 'negative');
-    else removeAlert(msg);
-  }, [metrics.plat, isFrozen, addAlert, removeAlert]);
+    if (isFrozen || !harness) return;
+    const id = 'sim-pplat-high';
+    if (metrics.plat > 30 && metrics.plat > 0) {
+      harness.notify({
+        id,
+        kind: 'alert',
+        message: 'Plateau Pressure > 30 cmH₂O — risk of volutrauma/barotrauma. Reduce Vt or PEEP.',
+        dismissable: false,
+      });
+    } else {
+      harness.dismiss(id);
+    }
+  }, [metrics.plat, isFrozen, harness]);
 
   // The "Driving Pressure > 15" alert was firing into BOTH the
   // top-right AlertContainer toast and the workbook's Hints panel —
@@ -1413,7 +1421,9 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       }}
       onMouseUp={() => setIsDragging(false)}
     >
-      <AlertContainer alerts={alerts} />
+      {/* AlertContainer toast removed — physiology alerts now route
+          through harness.notify and render in the unified Notifications
+          panel rendered by ModuleShell at the top-right. */}
 
       {/* Header (hidden when embedded in shell) */}
       {!hideHeader && (
@@ -1765,21 +1775,9 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         {!playgroundMode && (
         <div className={`${simHidden ? 'lg:col-span-12' : 'lg:col-span-6'} flex flex-col gap-2 min-h-0`}>
 
-          {/* Hints — compact, only shows when alerts are active */}
-          {alerts.length > 0 && (
-            <div className="bg-white rounded-xl border border-amber-200 p-2.5 shrink-0 max-h-32 overflow-y-auto shadow-sm">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">Hints</span>
-              </div>
-              <div className="space-y-1.5">
-                {alerts.map(alert => (
-                  <div key={alert.id} className={`px-2.5 py-2 rounded-lg text-[12px] font-semibold leading-snug ${alert.type === 'positive' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
-                    {alert.message}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* In-workbook Hints panel removed — alerts now consolidate in
+              the single Notifications surface at the top-right of the
+              viewport so there's one place to look. */}
 
           {/* Workbook — only renders for modules. Playground hides it entirely.
               The outer border picks up the brand-olive trim so the workbook
