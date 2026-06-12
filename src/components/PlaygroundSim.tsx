@@ -973,12 +973,14 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     else removeAlert(msg);
   }, [metrics.plat, isFrozen, addAlert, removeAlert]);
 
-  useEffect(() => {
-    if (isFrozen) return;
-    const msg = 'Driving Pressure > 15 cmH₂O — associated with excess mortality in ARDS.';
-    if (metrics.drivingPressure > 15 && metrics.drivingPressure > 0) addAlert(msg, 'negative');
-    else removeAlert(msg);
-  }, [metrics.drivingPressure, isFrozen, addAlert, removeAlert]);
+  // The "Driving Pressure > 15" alert was firing into BOTH the
+  // top-right AlertContainer toast and the workbook's Hints panel —
+  // surfacing the same warning twice on the screen. Distracting per
+  // user feedback and pedagogically heavy-handed (driving-pressure
+  // ceilings are taught in the Compliance and Strategy modules, not
+  // as a per-breath toast). Pulled at the source so both renderings
+  // drop. The Plateau > 30 safety alert stays — that one is a genuine
+  // alveolar-injury floor, not a soft target.
 
   // Spontaneous rate adapts gently to physiology
   useEffect(() => {
