@@ -310,12 +310,11 @@ export const M8: ModuleConfig = {
   briefing: {
     tagline: 'Pressure is fixed. Volume is what gives way.',
     overview:
-      "Pressure control flips the relationship. You pick the pressure, the machine holds it, and tidal volume is whatever the lungs accept at that pressure. This is gentler on stiff or heterogeneous lungs because you can't accidentally over-inflate them. The price is that volume drifts when mechanics change, so you have to watch the delivered tidal volume the same way you'd watch peak pressure in VC.\n\nAt the end of the read phase you'll also see a 5-minute addendum on the dual-control variants (PRVC, VC+, CMV-Autoflow). Same delivery pattern as PC, with a closed-loop volume target on top.",
+      "Pressure control flips the relationship. You pick the pressure, the machine holds it, and tidal volume is whatever the lungs accept at that pressure. This is gentler on stiff or heterogeneous lungs because you can't accidentally over-inflate them. The price is that volume drifts when mechanics change, so you have to watch the delivered tidal volume the same way you'd watch peak pressure in VC.",
     what_youll_do: [
       'In PC, you control pressure. Volume is what gives way.',
       'The flow waveform decelerates as the lungs fill. That shape is the PC fingerprint.',
       'A sudden drop in delivered tidal volume on PC is the signal that compliance got worse.',
-      'PRVC and friends: pressure control with a volume target laid on top. Most of the time, that\'s a feature. When the patient has strong drive, the algorithm can yo-yo.',
     ],
   },
 
@@ -353,12 +352,12 @@ export const M8: ModuleConfig = {
     // check: which variable does the clinician set in PCV?
     {
       id: 'M8-P3',
-      prompt: 'In PCV (pressure control), which two things does the *clinician* set on each breath?',
+      prompt: 'In PCV, the clinician sets rate, PEEP, and FiO2 (as in every A/C mode). What ADDITIONAL two settings define a PCV breath that VCV does not use?',
       options: [
-        { label: 'Tidal volume and respiratory rate.', is_correct: false, explanation: "Tidal volume is *measured* in PCV — it floats based on the patient's compliance. The clinician sets pressure, not volume." },
-        { label: 'Inspiratory pressure (PINSP) and inspiratory time (I-time).', is_correct: true, explanation: "In PCV you set the pressure target each breath should reach and how long the breath should last. Tidal volume is whatever the patient's lung delivers at that pressure for that time." },
-        { label: 'Tidal volume and PEEP.', is_correct: false, explanation: 'PCV sets pressure, not volume.' },
-        { label: 'Peak pressure and plateau pressure.', is_correct: false, explanation: 'Plateau pressure is *measured*. PCV sets PINSP (the inspiratory pressure target).' },
+        { label: 'Tidal volume and inspiratory flow.', is_correct: false, explanation: 'Tidal volume is *measured* in PCV — it floats with the patient\'s compliance. Inspiratory flow is auto-shaped by the vent, not set.' },
+        { label: 'Inspiratory pressure (PINSP) and inspiratory time (I-time).', is_correct: true, explanation: 'On top of rate, PEEP, and FiO2, PCV needs you to set the pressure target each breath should reach and how long the breath should last. Tidal volume is whatever the patient\'s lung delivers at that pressure for that time — it is the dependent variable.' },
+        { label: 'Tidal volume and plateau pressure.', is_correct: false, explanation: 'PCV sets pressure, not volume. Plateau pressure is *measured* (with an inspiratory hold), not set.' },
+        { label: 'Peak pressure and driving pressure.', is_correct: false, explanation: 'Driving pressure is a derived value (Pplat − PEEP). PCV sets PINSP and I-time directly.' },
       ],
     },
   ],
@@ -413,7 +412,8 @@ export const M8: ModuleConfig = {
     {
       kind: 'callout',
       tone: 'info',
-      markdown: 'PINSP is the rise above PEEP. If PINSP is 18 and PEEP is 8, total peak airway pressure is 26.',
+      markdown:
+        'PINSP is the **total inspiratory pressure** the vent holds at the airway opening — not the rise above PEEP. The **driving pressure** is what actually inflates the lung: `DP = PINSP − PEEP`, and `Vt ≈ DP × compliance`. (Some vendors label the knob "Pcontrol" or "P above PEEP" instead — read your vent before you turn it.)',
     },
     {
       kind: 'predict_mcq',
@@ -447,50 +447,11 @@ export const M8: ModuleConfig = {
       answer:
         'Book Ch. 9. An inspiratory hold equilibrates pressures throughout the airway tree, just as in VCV. You absolutely can — and should — measure plat in PCV. Common myth.',
     },
-    // ── Fix 5 (Option A) — folded "dual-control variants" section ──
-    // The standalone M9 (PRVC) was a CURRICULUM REVIEW CANDIDATE: the
-    // most interesting content (the yo-yo failure mode) lived in prose
-    // because the sim can't render it. The decision: fold the teaching
-    // here as a brief read-only addendum to M8 (no separate try-it,
-    // no separate summative). When the sim gains PinspSwing6 (see
-    // docs/BLOCKED_SIM.md §1), this section can be hoisted back out
-    // into its own module.
-    {
-      kind: 'prose',
-      markdown:
-        "**Dual-control variants (PRVC, VC+, CMV-Autoflow): a 5-minute addendum.** These modes try to give you the best of VCV and PCV. You set the Vt you want, and the vent figures out the PINSP needed to deliver it, breath by breath, using a decelerating flow. When compliance improves, PINSP drops. When compliance worsens, PINSP rises. **Most of the time, that's a feature.**",
-    },
-    {
-      kind: 'callout',
-      tone: 'info',
-      markdown:
-        "PRVC is a pressure-control mode for people who don't like pressure-control. Same delivery pattern; just adds a closed-loop volume target on top.",
-    },
-    {
-      kind: 'predict_mcq',
-      predict:
-        "A PRVC patient's compliance suddenly worsens (say, ARDS develops). Over the next 4–5 breaths the vent will:",
-      options: [
-        { label: 'Hold PIP constant; Vt will fall.', is_correct: false, explanation: "That's PCV. PRVC adjusts pressure to keep volume on target." },
-        { label: 'Hold Vt constant; PIP will rise breath by breath.', is_correct: true },
-        { label: 'Switch to volume-control automatically.', is_correct: false, explanation: "PRVC doesn't mode-switch; it adapts within its own mode." },
-        { label: 'Nothing visible — the breath-by-breath adjustments are too small.', is_correct: false, explanation: "The adjustments are clearly visible — PINSP climbs by 1–3 cmH2O each breath until Vt is back on target." },
-      ],
-      observe:
-        "PRVC senses Vt drift and corrects PINSP to compensate. With sudden worsening compliance, the algorithm ramps PINSP up over 4–5 breaths, holding Vt at target. This is closed-loop control when conditions stay stable.",
-    },
-    {
-      kind: 'callout',
-      tone: 'warn',
-      markdown:
-        "**The yo-yo failure mode.** In an *awake patient with strong drive*, the algorithm misreads the patient's effort as 'compliance improved' and lowers PINSP. The next breath is therefore smaller, the algorithm reads 'compliance worsened,' and ramps PINSP back up. Over 30–60 seconds you see the PINSP cycle visibly: 12 → 22 → 12 → 22, while Vt stays on target. The patient is uncomfortable. **The fix is to switch to a non-adaptive mode (VCV or PCV)** and address why the patient is agitated. Not sedation — sedation buries the diagnostic information.",
-    },
-    {
-      kind: 'callout',
-      tone: 'tip',
-      markdown:
-        "If you don't see PRVC in your training hospital, that's fine — the principles (closed-loop targeting, breath-by-breath adaptation, the yo-yo failure mode) transfer to every adaptive mode. Recognize the cycle when you see it.",
-    },
+    // Dual-control variants (PRVC, VC+, CMV-Autoflow) used to live
+    // here as a 5-minute addendum but were pulled out per user
+    // feedback — they belong in their own module. The standalone M9
+    // (PRVC and Dual-Control Ventilation) is re-registered in
+    // src/modules/index.ts and takes over that teaching slot.
   ],
 
   hint_ladder: {
@@ -502,12 +463,12 @@ export const M8: ModuleConfig = {
   summative_quiz: [
     {
       id: 'M8-Q1',
-      prompt: 'A patient is on PCV with PINSP 20, PEEP 10, I-time 1.0. Compliance is 25 mL/cmH2O. The expected Vt is approximately:',
+      prompt: 'A patient is on PCV. The vent is set to hold an inspiratory pressure of 20 cmH2O at the airway opening, with PEEP 10 and I-time 1.0. Compliance is 25 mL/cmH2O. The expected Vt is approximately:',
       options: [
-        { label: '200 mL', is_correct: false, explanation: 'Too low — PINSP 20 × C 25 ≈ 500.' },
-        { label: '500 mL', is_correct: true, explanation: 'Vt ≈ PINSP × C.' },
-        { label: '800 mL', is_correct: false, explanation: 'That would be C = 40.' },
-        { label: 'Cannot be calculated without knowing flow', is_correct: false, explanation: 'This is the deterministic relationship.' },
+        { label: '250 mL', is_correct: true, explanation: 'Vt ≈ driving pressure × compliance. Driving pressure = PINSP − PEEP = 20 − 10 = 10 cmH2O. Vt ≈ 10 × 25 = 250 mL.' },
+        { label: '500 mL', is_correct: false, explanation: 'That would use PINSP directly instead of the driving pressure (PINSP − PEEP). The lung only "feels" the pressure above PEEP.' },
+        { label: '800 mL', is_correct: false, explanation: 'Math error.' },
+        { label: 'Cannot be calculated without knowing flow', is_correct: false, explanation: 'In PCV the delivered Vt at end-inspiration is determined by driving pressure and compliance, not flow.' },
       ],
     },
     {
@@ -558,7 +519,7 @@ export const M8: ModuleConfig = {
     patient_context:
       "Same post-laparotomy septic patient as M7, but the attending placed him on PCV. Compliance 35.\n\n**Note on the compliance slider:** the compliance slider here is for exploration only — your task is to titrate PINSP. The slider lets you see how Vt responds when the lung changes (which it will, in real patients, hour by hour). You don't have to touch it to finish the module.",
     unlocked_controls_description: [
-      { name: 'PINSP · 8–30', description: 'rise above PEEP. Total peak = PINSP + PEEP. ← This is what your task wants you to titrate.' },
+      { name: 'PINSP · 8–30', description: 'the total inspiratory pressure target. Driving pressure = PINSP − PEEP. ← This is what your task wants you to titrate.' },
       { name: 'Rate · 8–30', description: 'mandatory minimum.' },
       { name: 'PEEP · 0–18', description: 'end-expiratory floor.' },
       { name: 'FiO2 · 30–80%', description: 'inspired oxygen.' },

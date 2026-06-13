@@ -14,15 +14,11 @@ import { M5, M6 } from './M5_M6';
 // is folded into M4a/M4b and the EOM-specific module is removed from
 // the registry. Source file kept on disk for back-compat.
 import { M7, M8 } from './M7_M8';
-// Fix 5 (Option A) — M9 (PRVC, standalone) folded into M8 as a
-// "dual-control variants" read-phase section. M9 is still defined in
-// src/modules/M9_M10.ts (kept so any legacy progress records pointing
-// at id 'M9' don't error on lookup), but is removed from the MODULES
-// array and from MODULE_BY_ID. The remaining modules' .number fields
-// shift down by 1 from this point forward so the picker labels stay
-// dense (1–18 with no gap), even though their string ids (e.g. 'M10')
-// stay as written.
-import { /* M9, */ M10 } from './M9_M10';
+// M9 (PRVC and Dual-Control Ventilation) is registered as its own
+// standalone Modes module. It was briefly folded into M8 as a 5-minute
+// addendum but pulled back out — per user feedback, hybrid / dual-control
+// modes deserve their own module rather than tagging on to PCV.
+import { M9, M10 } from './M9_M10';
 import { M11, M12 } from './M11_M12';
 // M13 and M14 are merged into a single Advanced-Topics module
 // (id: 'M13_M14_merged') per docs/M13_M14_merged_shell_spec.pdf.
@@ -47,16 +43,17 @@ M5.number = 5;
 M6.number = 6;
 M7.number = 7;
 M8.number = 8;
-M10.number = 9;
-M11.number = 10;
-M12.number = 11;
-M13.number = 12;
-M15.number = 13;
-M16.number = 14;
-M17.number = 15;
-M18.number = 16;
-M19.number = 17;
-M_TROUBLESHOOT.number = 18;
+M9.number = 9;
+M10.number = 10;
+M11.number = 11;
+M12.number = 12;
+M13.number = 13;
+M15.number = 14;
+M16.number = 15;
+M17.number = 16;
+M18.number = 17;
+M19.number = 18;
+M_TROUBLESHOOT.number = 19;
 
 // Curriculum order: Foundations (combined M1, M3), then Physiology
 // (M4a → M4b → M5 → M-EOM → M6), then Modes/Strategy/Weaning/Synthesis.
@@ -64,7 +61,7 @@ M_TROUBLESHOOT.number = 18;
 export const MODULES: ModuleConfig[] = [
   M1, M3,
   Compliance, Resistance, M5, M6,
-  M7, M8, M10,
+  M7, M8, M9, M10,
   M11, M12, M13, M15, M16, M17, M18, M19,
   M_TROUBLESHOOT,
 ];
