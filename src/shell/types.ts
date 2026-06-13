@@ -163,6 +163,18 @@ export interface SimPreset {
     leak_mL_per_breath: number;
     etco2_loss_fraction: number;
     bpSys: number;
+    /**
+     * Disable the global PEEP-recruitment effect for this scenario.
+     * The sim normally models that low PEEP derecruits unstable alveoli,
+     * effectively dropping compliance and raising plateau. That's the
+     * teaching point in the Strategy track (PEEP titration). For
+     * mode-mechanics modules like M7 (VCV) it conflates two things —
+     * the user expects the pure mechanical relationship
+     * `Pplat = Vt / C + PEEP` so lowering PEEP lowers plateau.
+     * Setting this to true bypasses the recruitment factor for this
+     * preset.
+     */
+    disable_peep_recruitment: boolean;
   }>;
 }
 

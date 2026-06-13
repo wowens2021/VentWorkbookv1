@@ -1112,7 +1112,12 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       //  PEEP  5: 83%               (typical mild derecruitment)
       //  PEEP  8: 100%              (recruited)
       //  PEEP 12+: 100%             (no further benefit, no overdistension penalty here)
-      const peepRecruitFactor = Math.min(1.0, Math.max(0.55, 0.55 + 0.05625 * settings.peep));
+      // Per-scenario opt-out for modules that teach pure mechanical
+      // relationships (e.g. M7 VCV) where the curve conflates the
+      // PEEP term with derecruitment.
+      const peepRecruitFactor = (initialPreset?.patient as any)?.disable_peep_recruitment
+        ? 1.0
+        : Math.min(1.0, Math.max(0.55, 0.55 + 0.05625 * settings.peep));
       const C = (patient.compliance * peepRecruitFactor) / 1000;
       const tau_insp_check = patient.resistance * C;
 
@@ -1354,21 +1359,38 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     }
   }, [isFrozen]);
 
-  // ── Waveform bounds (stable axes with hysteresis) ──
-  // Axes anchor on sensible minimum ranges so a single big breath doesn't
-  // rescale the whole panel — making it look as if "nothing changed" when
-  // the next peak is in fact higher. We snap up only in coarse steps and
-  // never shrink during a session, so peak-to-peak differences are visible.
-  const pressureCeilRef = useRef(40);
+  // ── Waveform bounds (tight auto-fit with shrink) ──
+  // Axes auto-fit to the visible peak with ~20 % headroom and SHRINK
+  // back down when the peak settles. Old behavior never shrank, so a
+  // transient spike pegged the axis at 220 L/min for the rest of the
+  // session even after flow returned to 50 — making the waveform
+  // visually tiny. New behavior: pick the smallest "round" ceiling that
+  // contains peak + headroom; only refuse to shrink if it would jitter
+  // (mild hysteresis at the bottom of the choice ladder).
+  const pressureCeilRef = useRef(30);
   const flowAbsCeilRef = useRef(60);
-  const volumeCeilRef = useRef(700);
+  const volumeCeilRef = useRef(600);
+
+  // Pick the smallest value from `choices` that is ≥ target. Falls back
+  // to the largest choice if nothing fits.
+  const pickCeil = (target: number, choices: number[]): number => {
+    for (const c of choices) if (c >= target) return c;
+    return choices[choices.length - 1];
+  };
 
   const pressureBounds = useMemo(() => {
     if (dataPoints.length === 0) return { min: 0, max: pressureCeilRef.current };
     const peak = Math.max(...dataPoints.map(d => d.pressure));
-    if (peak + 4 > pressureCeilRef.current) {
-      // Step up in coarse increments: 40 → 60 → 80 → 100
-      pressureCeilRef.current = Math.ceil((peak + 8) / 20) * 20;
+    // Headroom: peak × 1.2, rounded up to the next 10.
+    const target = Math.max(20, Math.ceil((peak * 1.2) / 10) * 10);
+    const candidate = pickCeil(target, [20, 30, 40, 50, 60, 80, 100, 120]);
+    // Mild anti-jitter: don't shrink if the new ceiling is just 1 step
+    // smaller AND the peak is within 5 cmH2O of the current ceiling's
+    // headroom — i.e. we'd flip back and forth on each big breath.
+    if (candidate < pressureCeilRef.current && peak + 5 > candidate) {
+      // hold
+    } else {
+      pressureCeilRef.current = candidate;
     }
     return { min: 0, max: pressureCeilRef.current };
   }, [dataPoints]);
@@ -1377,8 +1399,12 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     if (dataPoints.length === 0) return { min: -flowAbsCeilRef.current, max: flowAbsCeilRef.current };
     const vals = dataPoints.map(d => d.flow);
     const maxAbs = Math.max(Math.abs(Math.min(...vals)), Math.max(...vals));
-    if (maxAbs + 5 > flowAbsCeilRef.current) {
-      flowAbsCeilRef.current = Math.ceil((maxAbs + 10) / 30) * 30; // 60 → 90 → 120
+    const target = Math.max(40, Math.ceil((maxAbs * 1.2) / 10) * 10);
+    const candidate = pickCeil(target, [40, 60, 90, 120, 150, 180, 240]);
+    if (candidate < flowAbsCeilRef.current && maxAbs + 8 > candidate) {
+      // hold
+    } else {
+      flowAbsCeilRef.current = candidate;
     }
     return { min: -flowAbsCeilRef.current, max: flowAbsCeilRef.current };
   }, [dataPoints]);
@@ -1386,8 +1412,12 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   const volumeBounds = useMemo(() => {
     if (dataPoints.length === 0) return { min: 0, max: volumeCeilRef.current };
     const peak = Math.max(...dataPoints.map(d => d.volume));
-    if (peak + 50 > volumeCeilRef.current) {
-      volumeCeilRef.current = Math.ceil((peak + 100) / 200) * 200; // 700 → 900 → 1100
+    const target = Math.max(400, Math.ceil((peak * 1.2) / 100) * 100);
+    const candidate = pickCeil(target, [400, 600, 800, 1000, 1200, 1600]);
+    if (candidate < volumeCeilRef.current && peak + 75 > candidate) {
+      // hold
+    } else {
+      volumeCeilRef.current = candidate;
     }
     return { min: 0, max: volumeCeilRef.current };
   }, [dataPoints]);
@@ -1396,9 +1426,9 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   useEffect(() => {
     if (!harness) return;
     return harness.onReset(() => {
-      pressureCeilRef.current = 40;
+      pressureCeilRef.current = 30;
       flowAbsCeilRef.current = 60;
-      volumeCeilRef.current = 700;
+      volumeCeilRef.current = 600;
     });
   }, [harness]);
 
