@@ -439,6 +439,19 @@ export const M10: ModuleConfig = {
       tone: 'info',
       markdown: 'The number on the screen labeled RR in PSV is whatever the patient is doing — not what you set, because you can\'t set it.',
     },
+    // User feedback — the cycle of PSV needs to be explained explicitly,
+    // because it differs from VCV (volume-cycled) and PCV (time-cycled).
+    {
+      kind: 'prose',
+      markdown:
+        "**How PSV decides a breath is done — the cycle.** Every ventilator breath has a *cycle*: the moment when the vent switches from inhale to exhale. The mode determines what triggers that switch.\n\n- **VCV is volume-cycled.** The vent ends the breath when the set tidal volume has been delivered. *Volume* is the signal.\n- **PCV is time-cycled.** The vent ends the breath when the set I-time has elapsed. *Time* is the signal.\n- **PSV is flow-cycled.** The vent watches the inspiratory flow waveform. As the lung fills, flow naturally decelerates. When inspiratory flow falls to a preset fraction of its peak — typically **25–30 %** — the vent recognizes the patient is finished inhaling and ends the breath. *Flow* is the signal.\n\nThis is why PSV feels comfortable to most awake patients: the vent doesn't impose an inspiratory time. The patient takes a deep breath, the flow ramps up, the lung accepts it, the flow tapers off, and the vent reads that taper as \"done\" and lets exhalation begin. Short, quick breaths cycle quickly; longer, deeper breaths cycle later. The patient sets the rhythm.",
+    },
+    {
+      kind: 'callout',
+      tone: 'tip',
+      markdown:
+        'The **End-Insp %** setting on the vent is the flow-cycle threshold (the percent-of-peak-flow at which PSV decides the breath is over). 25–30 % is the standard. Lower it (10–15 %) for COPD patients with very long time constants; raise it (35–50 %) for stiff, fast-filling lungs.',
+    },
     {
       // v3.2 §0.6 — legacy predict_observe conversion (the existing PS18→24
       // exploration).

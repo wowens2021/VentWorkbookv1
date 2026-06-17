@@ -107,7 +107,17 @@ const ReadPane: React.FC<Props> = ({
   );
   const [mcqStatus, setMcqStatus] = useState<Record<string, boolean>>({});
   const handleMcqStatus = (s: PredictMcqStatus) => {
-    setMcqStatus(prev => (prev[s.block_id] === s.satisfied ? prev : { ...prev, [s.block_id]: s.satisfied }));
+    setMcqStatus(prev => {
+      // Satisfaction is MONOTONIC — once a predict_mcq is answered
+      // correctly, paginating away and back must not reset it. The
+      // PredictMcq component's local `satisfied` state is lost on
+      // unmount, so it reports `false` on remount until the learner
+      // re-answers. Without this guard, opening a previous slide
+      // re-locks the Continue CTA.
+      if (prev[s.block_id] === true && !s.satisfied) return prev;
+      if (prev[s.block_id] === s.satisfied) return prev;
+      return { ...prev, [s.block_id]: s.satisfied };
+    });
     onPredictMcqStatusChange?.(s);
   };
   const satisfiedMcq = Object.values(mcqStatus).filter(Boolean).length;
