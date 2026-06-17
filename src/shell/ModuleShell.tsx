@@ -1454,7 +1454,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
               >
                 {module.track}
               </span>
-              <span className="font-bold text-white shrink-0">{module.id}</span>
+              <span className="font-bold text-white shrink-0">M{module.number}</span>
               <span className="text-white/40 shrink-0">·</span>
               <span className="text-[14px] font-semibold text-white/95 truncate">{module.title}</span>
             </div>

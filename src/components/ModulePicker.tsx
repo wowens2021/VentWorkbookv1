@@ -155,7 +155,7 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
   const handleRestart = (mod: ModuleConfig) => {
     const ok = typeof window !== 'undefined'
       ? window.confirm(
-          `Restart ${mod.id} — ${mod.title}?\n\n` +
+          `Restart M${mod.number} — ${mod.title}?\n\n` +
           'This wipes your saved progress, scores, and answers for this module so you can start from the beginning. You can\'t undo this.'
         )
       : true;
@@ -341,10 +341,16 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                             status === 'IN_PROGRESS' ? 'border-brand-olive/40' : 'border-stone-200 hover:border-stone-300'
                           }`}
                         >
-                          {/* Module id + minutes — quieter mono column, modern. */}
+                          {/* Module number + minutes — quieter mono column,
+                              modern. We show the sequential M{number} label,
+                              NOT the raw string id. The ids drifted out of
+                              sync after the curriculum reorder (some are
+                              'compliance' / 'resistance' / 'M13_M14_merged'),
+                              so rendering them verbatim looked broken. The
+                              `number` field is dense and consistent (1..N). */}
                           <div className="shrink-0 w-[64px] hidden md:flex flex-col items-start gap-0.5">
                             <span className="text-[11px] font-mono font-semibold tracking-wider text-stone-700">
-                              {mod.id}
+                              M{mod.number}
                             </span>
                             <span className="text-[10px] text-stone-400 tabular-nums">
                               {mod.estimated_minutes} min
@@ -433,8 +439,8 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
                             <div className="shrink-0 flex items-center gap-1.5">
                               <button
                                 onClick={() => handleRestart(mod)}
-                                title={`Restart ${mod.id} from the beginning`}
-                                aria-label={`Restart ${mod.id} from the beginning`}
+                                title={`Restart M${mod.number} from the beginning`}
+                                aria-label={`Restart M${mod.number} from the beginning`}
                                 className="shrink-0 w-9 h-9 rounded-full bg-white border border-stone-300 text-stone-500 hover:text-brand-olive hover:border-brand-olive flex items-center justify-center transition"
                               >
                                 <RotateCcw size={13} />

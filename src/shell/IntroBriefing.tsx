@@ -44,7 +44,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
         </button>
         <div className="flex items-center gap-2 text-[12px]">
           <BookOpen size={13} className="text-white/70" />
-          <span className="font-bold text-white">{module.id}</span>
+          <span className="font-bold text-white">M{module.number}</span>
           <span className="text-white/40">·</span>
           <span className="text-[14px] font-semibold text-white/95">{module.title}</span>
         </div>
@@ -59,7 +59,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
             <span className={`text-[10px] font-black uppercase tracking-widest ${tone.chipText} ${tone.chipBg} border ${tone.chipBorder} px-2 py-0.5 rounded`}>
               {module.track}
             </span>
-            <span className="text-[10px] font-mono text-zinc-500">{module.id}</span>
+            <span className="text-[10px] font-mono text-zinc-500">M{module.number}</span>
             <span className="text-[10px] text-zinc-400 flex items-center gap-1">
               <Clock size={11} /> {module.estimated_minutes} min
             </span>

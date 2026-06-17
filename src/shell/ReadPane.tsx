@@ -148,7 +148,7 @@ const ReadPane: React.FC<Props> = ({
             <span className="text-[10px] font-black uppercase tracking-widest text-brand-olive bg-stone-50 px-2 py-0.5 rounded">
               {module.track}
             </span>
-            <span className="text-[10px] font-mono text-zinc-500">{module.id}</span>
+            <span className="text-[10px] font-mono text-zinc-500">M{module.number}</span>
             <span className="text-[10px] text-zinc-400 flex items-center gap-1">
               <Clock size={11} /> {module.estimated_minutes} min
             </span>

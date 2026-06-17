@@ -33,26 +33,40 @@ import { M17, M18, M19 } from './M17_M18_M19';
 import { M_TROUBLESHOOT } from './M_TROUBLESHOOT';
 
 // Renumber after the M1+M2 merge and the M4 split: the new module
-// order is M1(combined), M3, M4a, M4b, M5, M-EOM, M6, M7, M8, M10,
-// M11–M19 — total 18 entries, display numbers 1..18.
+// Display numbers (the "M{n}" label in the picker) follow the picker's
+// TRACK_ORDER traversal so they read strictly 1→19 as the learner
+// scrolls. Note this is NOT array order — the picker groups by track,
+// and Strategy is shown before Advanced Topics, so M15/M16 (Strategy)
+// number ahead of M13 (Advanced Topics) even though M13 precedes them
+// in the MODULES array. The raw string ids (M13_M14_merged, compliance,
+// etc.) are unaffected — only the displayed number changes.
+//
+// Foundations
 M1.number = 1;
 M3.number = 2;
+// Physiology
 Compliance.number = 3;
 Resistance.number = 4;
 M5.number = 5;
 M6.number = 6;
+// Modes
 M7.number = 7;
 M8.number = 8;
 M9.number = 9;
 M10.number = 10;
 M11.number = 11;
 M12.number = 12;
-M13.number = 13;
-M15.number = 14;
-M16.number = 15;
+// Strategy
+M15.number = 13;
+M16.number = 14;
+// Advanced Topics
+M13.number = 15;
+// Weaning
 M17.number = 16;
 M18.number = 17;
+// Synthesis
 M19.number = 18;
+// Clinical Skills
 M_TROUBLESHOOT.number = 19;
 
 // Curriculum order: Foundations (combined M1, M3), then Physiology
