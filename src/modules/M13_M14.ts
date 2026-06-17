@@ -183,13 +183,7 @@ export const M13: ModuleConfig = {
     {
       kind: 'figure',
       caption: 'The three levers on the pressure waveform. PEEP lifts the entire floor; longer inspiratory time widens the plateau without changing the peak; FiO2 is invisible on the waveform.',
-      ascii:
-        'PEEP 5, Ti 1.0 s          PEEP 12, Ti 1.0 s         PEEP 5, Ti 1.5 s          FiO2 changed (any PEEP/Ti)\n' +
-        '─────────────────         ─────────────────         ─────────────────         ────────────────────────\n' +
-        '   ┌─┐                       ┌─┐                       ┌───┐                     ┌─┐\n' +
-        '   │ │   Pmean 12             │ │   Pmean 18             │   │  Pmean 16            │ │   Pmean unchanged\n' +
-        '   │ └─                       │ └─                       │   └─                    │ └─\n' +
-        ' ──┘                       ──┘  ←floor lifted          ──┘    ←plateau wider     ──┘    ← waveform unchanged',
+      src: '/figures/peep_oxygenation_levers.svg',
     },
     {
       kind: 'prose',

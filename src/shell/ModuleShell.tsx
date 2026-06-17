@@ -1376,6 +1376,14 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     ? clickFeedbackModal
     : activePrompt && !isClickTargetMode ? (
         <RecognitionPrompt
+          // CRITICAL: keying by prompt_id forces a fresh mount when the
+          // active prompt changes within a compound tracker. Without
+          // this, React reused the same RecognitionPrompt instance for
+          // every prompt in sequence; the `submitted` state from prompt
+          // A leaked into prompt B and rendered B's correct option as
+          // already-answered (the "AI auto-answered" bug the learner
+          // saw across M11 and M13-14).
+          key={activePrompt.prompt_id}
           prompt={activePrompt}
           onResponse={(label, isCorrect) => respondToPrompt(label, isCorrect)}
           onContinue={() => {

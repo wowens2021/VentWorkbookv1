@@ -1185,17 +1185,16 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         peakExpiratoryFlowRef.current = 0;
         if (triggeredByPatient) {
           nextSpontaneousTimeRef.current = elapsedInSim + (60 / (patient.spontaneousRate || 0.1) * (0.8 + Math.random() * 0.4));
-          // Fix 5 — SIMV synchronization. In SIMV/PS, a spontaneous
-          // breath taken in the current cycle "resets the clock":
-          // the next mandatory shouldn't fire on the original schedule
-          // because the patient already breathed. Push the mandatory
-          // timer out by a full mandatory interval from NOW.
-          // In A/C modes (VCV / PCV / PRVC) every triggered breath IS
-          // the mandatory breath, so the existing branch handles that
-          // path; no reset needed here.
-          if (mode === 'SIMV/PS') {
-            nextMandatoryTimeRef.current = elapsedInSim + ventInterval;
-          }
+          // Per user feedback — the previous "SIMV synchronization" fix
+          // pushed nextMandatoryTimeRef out by a full ventInterval
+          // whenever a spontaneous breath fired. When patient rate >
+          // set rate (the common SIMV failure case the module teaches),
+          // the patient was resetting the timer on every breath and
+          // mandatory breaths NEVER fired — the sim showed only the
+          // spontaneous train. SIMV mandatory breaths must fire on
+          // schedule regardless of spontaneous activity. The
+          // flow-sync gate (above) already prevents back-to-back
+          // overlap if a mandatory window arrives mid-spontaneous.
         } else {
           nextMandatoryTimeRef.current = elapsedInSim + ventInterval;
         }
