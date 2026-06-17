@@ -33,6 +33,13 @@ export type ContentBlock =
    * carries headers + rows directly and renders as an HTML table.
    */
   | { kind: 'reference_table'; caption?: string; headers: string[]; rows: string[][] }
+  /**
+   * v3.3 M11 — embed a live React component in the read phase. Used by
+   * the dyssynchrony atlas to render <DyssynchronyWaveform mode="atlas">
+   * inline. `props` is forwarded to the component; `component` selects
+   * the registered renderer.
+   */
+  | { kind: 'live_component'; component: string; props?: Record<string, unknown>; caption?: string }
   | {
       kind: 'formative';
       question: string;
@@ -305,6 +312,15 @@ export interface InlinePromptConfig {
    * is prose-only as before.
    */
   clip_src?: string;
+  /**
+   * v3.3 M11 — render a registered React component above the prompt
+   * instead of a static SVG. RecognitionPrompt maps `clip_component`
+   * names to React renderers; `pattern` is passed through to the
+   * component so a single component can render multiple variants.
+   * Currently supported: `'DyssynchronyWaveform'`.
+   */
+  clip_component?: string;
+  pattern?: string;
 }
 
 /**
@@ -382,6 +398,24 @@ export interface CompoundTrackerConfig {
    * child[i] fires; advancing reveals child[i+1]'s direction.
    */
   observations?: string[];
+  /**
+   * v3.3 M11 — explicit sequencing contract.
+   *  'sequential' (default): show ONE recognition prompt at a time.
+   *    When sequence === 'any_order', children are shuffled at try-it
+   *    load so order varies across attempts.
+   *  'simultaneous': all prompts visible at once (legacy any_order).
+   */
+  display_mode?: 'sequential' | 'simultaneous';
+  /**
+   * v3.3 M11 — retry behavior on a wrong recognition answer.
+   *  'stay' (default for M11): on a wrong answer, show the explanation
+   *    and re-present the same waveform; only advance when correct or
+   *    when max_attempts is exhausted (then reveal correct answer and
+   *    advance).
+   *  'advance' (legacy): wrong answer reveals correct + explanation,
+   *    then the learner clicks Continue → and the tracker moves on.
+   */
+  retry_flow?: 'stay' | 'advance';
 }
 
 export type TrackerConfig =

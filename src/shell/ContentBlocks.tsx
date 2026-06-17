@@ -3,6 +3,16 @@ import { Info, AlertTriangle, Lightbulb, Sparkles, Check } from 'lucide-react';
 import type { ContentBlock, ControlName } from './types';
 import type { ScenarioHarness } from '../harness/ScenarioHarness';
 import PBWWidget from './PBWWidget';
+import DyssynchronyWaveform from '../components/DyssynchronyWaveform';
+
+/**
+ * Registry of live React components that can be embedded inline via the
+ * `live_component` ContentBlock kind. Keys are the `component` field on
+ * the block; values are React components that accept the block's `props`.
+ */
+const LIVE_COMPONENTS: Record<string, React.FC<any>> = {
+  DyssynchronyWaveform,
+};
 
 const renderInline = (md: string): React.ReactNode => {
   // Minimal markdown: **bold**, `code`, and newlines → <p>
@@ -127,6 +137,25 @@ const Block: React.FC<{
         blockId={blockIdForMcq ?? 'PM'}
         onStatusChange={onMcqStatusChange}
       />
+    );
+  }
+  // v3.3 M11 — embed a registered React component inline.
+  if (block.kind === 'live_component') {
+    const Comp = LIVE_COMPONENTS[block.component];
+    if (!Comp) {
+      return (
+        <div className="my-3 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-[12px] text-rose-800">
+          Unknown live component: <code>{block.component}</code>
+        </div>
+      );
+    }
+    return (
+      <div className="my-4">
+        <Comp {...(block.props ?? {})} />
+        {block.caption && (
+          <div className="text-[12px] text-zinc-500 mt-2 italic">{block.caption}</div>
+        )}
+      </div>
     );
   }
   if (block.kind === 'pbw_widget') {

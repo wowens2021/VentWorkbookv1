@@ -1385,6 +1385,14 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
           // saw across M11 and M13-14).
           key={activePrompt.prompt_id}
           prompt={activePrompt}
+          // v3.3 M11 — pull retry_flow from the compound config so a
+          // wrong recognition answer can re-open the form (up to
+          // max_attempts) when the module opts in.
+          retryFlow={
+            module.hidden_objective?.kind === 'compound'
+              ? (module.hidden_objective as any).retry_flow ?? 'advance'
+              : 'advance'
+          }
           onResponse={(label, isCorrect) => respondToPrompt(label, isCorrect)}
           onContinue={() => {
             // Force-advance: emit a recognition_response with is_correct=true

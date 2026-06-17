@@ -3,22 +3,25 @@ import type { ModuleConfig } from '../shell/types';
 /**
  * MODULE M11 — Dyssynchrony Recognition
  *
- * Track: Modes · Archetype: recognition (clip-based) · 16 min
+ * Track: Modes · Archetype: recognition (live waveform) · 16 min
  *
- * PINNED PARAMETERS:
- *   - Static clip file paths in /public/clips/:
- *       dyssyn_ineffective.svg
- *       dyssyn_double.svg
- *       dyssyn_starvation.svg
+ * v3.3 UPGRADE — Live waveform rendering replaces static SVG clips.
+ * The three scored recognition prompts now embed <DyssynchronyWaveform>
+ * inline (via clip_component / pattern prop) rather than referencing
+ * static /public/clips/*.svg paths. The component runs the same
+ * equation-of-motion engine as PlaygroundSim so the waveforms are
+ * physiologically continuous, scale to any display, and animate with
+ * the same sweep cursor the learner already knows from the playground.
  *
- * [BLOCKED-SIM]: see docs/BLOCKED_SIM.md §2. The five SVG clips are
- * authored at /public/clips/ with a SMIL sweep cursor; the underlying
- * trace is still static (live rendering is the upgrade path).
+ * Implementation:
+ *   src/components/DyssynchronyWaveform.tsx   ← physics + rendering
+ *   The RecognitionPrompt shell reads clip_component + pattern and
+ *   renders <DyssynchronyWaveform pattern={...} /> above the MCQ.
  *
- * Three scored scenarios only (per spec §8 v3.1): ineffective triggering,
- * double triggering, flow starvation. Reverse triggering and bad cycling
- * appear in the read-phase pattern atlas as labeled reference examples
- * but are NOT scored items.
+ * Three scored scenarios (per spec §8 v3.1):
+ *   ineffective triggering, double triggering, flow starvation.
+ * Reverse triggering and premature cycling appear in the read-phase
+ * atlas as labeled live waveforms (not scored).
  *
  * Specced against docs/MODULE_SPECS_v3.md §M11 and
  * docs/MODULE_SPEC_UPDATE_v3.1.md §8. See MODULE_SPECS_v3.md Appendix A.
@@ -31,9 +34,9 @@ export const M11: ModuleConfig = {
   estimated_minutes: 16,
   briefing: {
     tagline: 'The patient is telling you something. Don\'t silence them — read the waveform.',
-    overview: "When a ventilated patient looks uncomfortable, the reflex is to push the sedation dial. Resist. The patient is telling you something. Owens groups dyssynchronies into three buckets — bad triggering, bad assistance, bad termination — and within those, a handful of patterns recur in the ICU. The waveform tells you which one. Once you can name the pattern, the fix is mode-specific and pattern-specific. Note: this module describes each dyssynchrony pattern in clinical vignettes — the live sim shows a reference patient with smooth synchrony as your baseline. Future builds will render each pattern as a live waveform.",
+    overview: "When a ventilated patient looks uncomfortable, the reflex is to push the sedation dial. Resist. The patient is telling you something. Owens groups dyssynchronies into three buckets — bad triggering, bad assistance, bad termination — and within those, a handful of patterns recur in the ICU. The waveform tells you which one. Once you can name the pattern, the fix is mode-specific and pattern-specific.",
     what_youll_do: [
-      'Three reference patterns with annotated waveforms: ineffective triggering, double triggering, flow starvation.',
+      'Three live waveform patterns: ineffective triggering, double triggering, flow starvation.',
       'Each pattern has one distinctive feature on the pressure waveform.',
       'Each pattern has a different fix. Sedation fixes none of them.',
     ],
@@ -41,41 +44,41 @@ export const M11: ModuleConfig = {
   visible_learning_objectives: [
     'Recognize ineffective triggering on the pressure waveform: patient effort, no breath.',
     'Recognize double triggering: two stacked breaths with no expiration between.',
-    'Recognize flow starvation (schematic): scooped pressure during inspiration.',
+    'Recognize flow starvation: scooped pressure during inspiration in VCV.',
     'Name the first-line corrective action for each pattern.',
   ],
 
   primer_questions: [
-    // Novice-pass §11.3 — define DOPES inline on first appearance so a
-    // novice isn't expected to know the mnemonic before M19.
     {
       id: 'M11-P1',
       prompt: '"The patient is fighting the vent." The FIRST step is to:',
       options: [
         { label: 'Increase sedation', is_correct: false, explanation: 'That\'s the reflex answer. It\'s also often the wrong one — sedation buries the diagnostic information you need.' },
         { label: 'Increase neuromuscular blockade', is_correct: false, explanation: 'Paralyzing the patient buries the problem without fixing it.' },
-        { label: 'Bag the patient off the vent, then examine and check vent settings', is_correct: true, explanation: 'Bag off → run **DOPES** (the bedside checklist: **D**isplacement of the tube, **O**bstruction of the tube, **P**neumothorax, **E**quipment failure, **S**tacking / auto-PEEP) → then read the waveform. We\'ll come back to DOPES in detail in M19. Book Ch. 14.' },
+        { label: 'Bag the patient off the vent, then examine and check vent settings', is_correct: true, explanation: 'Bag off → run DOPES (Displacement, Obstruction, Pneumothorax, Equipment, Stacking) → then read the waveform. Book Ch. 14.' },
         { label: 'Switch the mode to APRV', is_correct: false, explanation: 'Mode-switching without a diagnosis is gambling.' },
       ],
     },
     {
       id: 'M11-P2',
-      prompt: 'Ineffective triggering on the pressure waveform looks like:',
+      // Tests genuine prerequisite knowledge (auto-PEEP from M6), not this module's content.
+      prompt: 'A COPD patient on VCV has auto-PEEP of 10 cmH2O and a flow trigger set at −2 cmH2O. To trigger the vent, the patient must generate a negative airway pressure of at least:',
       options: [
-        { label: 'A second breath stacked immediately on the first', is_correct: false, explanation: 'That\'s double triggering.' },
-        { label: 'A downward deflection (patient effort) with no corresponding breath delivery', is_correct: true, explanation: 'Patient effort fails to cross trigger threshold. Auto-PEEP is the most common cause. Book Ch. 14.' },
-        { label: 'A scooped-out pressure waveform during inspiration', is_correct: false, explanation: 'That\'s flow starvation.' },
-        { label: 'A high-frequency oscillation in the expiratory phase', is_correct: false, explanation: 'Not a dyssynchrony pattern.' },
+        { label: '−2 cmH2O — the trigger threshold is what matters', is_correct: false, explanation: 'The trigger threshold is measured from airway opening pressure, not from alveolar pressure. With 10 cmH2O trapped, the patient starts from +10 and must first unload that before any negative swing reaches the trigger.' },
+        { label: '−12 cmH2O — the patient must overcome auto-PEEP first, then cross the trigger threshold', is_correct: true, explanation: 'Auto-PEEP raises the baseline the patient works against. 10 cmH2O auto-PEEP + 2 cmH2O trigger = 12 cmH2O of effort before the vent registers anything. Book Ch. 13.' },
+        { label: '−10 cmH2O — auto-PEEP is the only barrier', is_correct: false, explanation: 'Auto-PEEP is the larger barrier, but the trigger threshold adds on top of it.' },
+        { label: '−5 cmH2O — the vent compensates for auto-PEEP automatically', is_correct: false, explanation: 'Standard triggers do not auto-compensate for air trapping. That\'s what extrinsic PEEP titration is for.' },
       ],
     },
     {
       id: 'M11-P3',
-      prompt: 'Double triggering most commonly occurs because:',
+      // Tests prerequisite bedside observation (what "fighting the vent" looks like before pattern naming).
+      prompt: 'A nurse calls: "The patient looks like he\'s working hard to breathe but I\'m not seeing extra breaths on the vent display." Before you look at the waveform, what are you thinking?',
       options: [
-        { label: 'The patient wants more Vt than the vent is set to deliver', is_correct: true, explanation: 'Common in low-Vt ARDS protocols with strong respiratory drive. Book Ch. 14.' },
-        { label: 'The trigger sensitivity is too low', is_correct: false, explanation: 'That would produce ineffective triggering, not double.' },
-        { label: 'The PEEP is too high', is_correct: false, explanation: 'PEEP doesn\'t drive double-triggering directly.' },
-        { label: 'The expiratory valve is stuck', is_correct: false, explanation: 'That would produce different waveform artifacts.' },
+        { label: 'The patient is anxious — push more sedation', is_correct: false, explanation: 'Visible work without counted breaths could mean the vent isn\'t seeing the efforts at all. Sedation before diagnosis buries the finding.' },
+        { label: 'The patient\'s efforts may not be crossing the trigger threshold — they work but nothing fires', is_correct: true, explanation: 'When you see effort but no delivered breath, the vent isn\'t detecting it. The waveform will show pressure deflections between mandatory breaths with no corresponding flow. Book Ch. 14.' },
+        { label: 'The rate is set too high — the patient can\'t exhale fully', is_correct: false, explanation: 'A rate too high produces air trapping, not visible effort without breath delivery.' },
+        { label: 'The flow sensor is broken', is_correct: false, explanation: 'Equipment failure is possible but comes after you\'ve ruled out patient-vent mismatch.' },
       ],
     },
   ],
@@ -92,21 +95,29 @@ export const M11: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // v3.2 §3 — recognition now drives off SVG clips, not prose vignettes.
-  // Each prompt embeds a static waveform (authored in /public/clips) and
-  // the question prose is a short clinical anchor, not a description of
-  // the trace. Distractors are *other recognizable patterns* so the
-  // wrong-answer feedback teaches the contrast.
+  // v3.3 — recognition prompts now use clip_component + pattern instead of
+  // clip_src. RecognitionPrompt renders <DyssynchronyWaveform pattern={...} />
+  // above the MCQ question text. The pattern string matches a key in the
+  // PATTERNS object exported from DyssynchronyWaveform.tsx.
   hidden_objective: {
     kind: 'compound',
     sequence: 'any_order',
+    // Fix #4: Explicit sequencing contract for the shell.
+    // display_mode: 'sequential' — show one prompt at a time; learner must answer (or exhaust
+    //   max_attempts) before the next waveform appears. The shell randomly selects the ORDER
+    //   from the children array on each try-it load (achieving true any_order with no look-ahead).
+    // retry_flow: 'stay' — on a wrong answer within max_attempts, stay on the same prompt and
+    //   show the wrong-answer explanation. Only advance after correct answer or max_attempts.
+    display_mode: 'sequential',
+    retry_flow: 'stay',
     children: [
       {
         kind: 'recognition',
         prompt: {
           prompt_id: 'M11-ineffective',
           trigger: { kind: 'on_load' },
-          clip_src: '/clips/dyssyn_ineffective.svg',
+          clip_component: 'DyssynchronyWaveform',
+          pattern: 'ineffective',
           question:
             '65 yo on VCV. Auto-PEEP measured 9 cmH2O. The waveform above is recorded over 6 seconds. What pattern is this?',
           options: [
@@ -123,7 +134,8 @@ export const M11: ModuleConfig = {
         prompt: {
           prompt_id: 'M11-double',
           trigger: { kind: 'on_load' },
-          clip_src: '/clips/dyssyn_double.svg',
+          clip_component: 'DyssynchronyWaveform',
+          pattern: 'double',
           question:
             '35 yo ARDS on VCV Vt 400 (6 mL/kg), strong respiratory drive. The waveform above is recorded over 6 seconds. What pattern is this?',
           options: [
@@ -140,7 +152,8 @@ export const M11: ModuleConfig = {
         prompt: {
           prompt_id: 'M11-starvation',
           trigger: { kind: 'on_load' },
-          clip_src: '/clips/dyssyn_starvation.svg',
+          clip_component: 'DyssynchronyWaveform',
+          pattern: 'starvation',
           question:
             '50 yo asthma on VCV with visible air hunger. The waveform above is recorded over 6 seconds. What pattern is this?',
           options: [
@@ -156,49 +169,40 @@ export const M11: ModuleConfig = {
   },
 
   content_blocks: [
-    { kind: 'prose', markdown: '**The patient is telling you something.** Owens groups dyssynchronies into three buckets — bad triggering, bad assistance, bad termination — and within those, five common patterns recur in the ICU. The waveform tells you which one.' },
+    {
+      kind: 'prose',
+      markdown: '**The patient is telling you something.** Owens groups dyssynchronies into three buckets — bad triggering, bad assistance, bad termination — and within those, five common patterns recur in the ICU. The waveform tells you which one.',
+    },
     { kind: 'callout', tone: 'tip', markdown: 'The DOPES rule-out comes first. Then read the waveform.' },
-    // v3.2 §0.7 — predict_mcq anchoring the diagnostic-not-sedation reflex
-    // before the pattern atlas. Recognition modules get a predict_mcq early.
     {
       kind: 'predict_mcq',
       predict:
-        "A vented patient looks uncomfortable. The bedside reflex is to push sedation. According to Owens, the correct first sequence is:",
+        "You're at the bedside. The patient has a respiratory rate of 28 on the vent display, but the nurse says the patient looks like they're working harder than that — she counts 35 visible efforts per minute. Before you look at the waveform, what best explains the discrepancy?",
       options: [
-        { label: "Sedate first, troubleshoot if the sedation doesn't work.", is_correct: false, explanation: 'Sedation buries the diagnostic information you need.' },
-        { label: 'Bag off the vent, run DOPES, then read the waveform.', is_correct: true },
-        { label: 'Switch modes (try APRV) to see if the patient is more comfortable.', is_correct: false, explanation: 'Mode-switching without a diagnosis is gambling.' },
-        { label: 'Increase the FiO2 — discomfort is usually hypoxia.', is_correct: false, explanation: 'Discomfort on the vent is more commonly synchrony than oxygenation; FiO2 is the wrong axis.' },
+        { label: 'The rate display is broken.', is_correct: false, explanation: 'Rate display errors are rare. Check the patient before blaming the equipment.' },
+        { label: 'The patient is making efforts the vent is not delivering breaths for — 7 efforts per minute are failing to trigger.', is_correct: true },
+        { label: 'The patient is moving artifactually — the nurse is miscounting.', is_correct: false, explanation: 'Dismiss the clinical observation last, not first.' },
+        { label: 'The patient is breathing too fast for the vent to keep up — rate limiting.', is_correct: false, explanation: 'Modern ICU vents don\'t rate-limit like this. Every trigger attempt either fires a breath or doesn\'t — one-for-one.' },
       ],
       observe:
-        'The patient is telling you something. Disconnect first to rule out the vent. Then DOPES (displacement / obstruction / pneumothorax / equipment / stacking). Only after those are clean do you assume dyssynchrony and read the waveform.',
+        'Seven efforts per minute disappearing without a breath. That\'s ineffective triggering at an asynchrony index of 7/35 = 20% — clinically significant. The waveform will show small pressure dips between delivered breaths with no corresponding rise in flow. Now you know what to look for.',
     },
-    // v3.2 §3.6 — pattern atlas. Five clips, each labeled in its caption.
-    // The recognition prompts in the Try-It show the same clips with NO
-    // label so the learner identifies them. Reverse triggering and
-    // premature cycling are reference-only (not in the recognition pool).
+
+    // Pattern descriptions come BEFORE the labeled atlas so the learner builds
+    // a mental model from text first, then confirms it on the waveform.
+    // This prevents the atlas from short-circuiting the try-it recognition task.
     {
-      kind: 'figure',
-      caption: 'Ineffective triggering — patient effort (downward pressure dip + tiny negative-flow blip) with no delivered breath.',
-      src: '/clips/dyssyn_ineffective.svg',
+      kind: 'prose',
+      markdown: '**Ineffective triggering.** A small dip in pressure with no delivered breath. The patient tried; the vent didn\'t see it. Auto-PEEP is the most common cause — the patient has to overcome the trapped pressure before crossing the trigger threshold. Weak drive is the next cause.',
     },
-    { kind: 'prose', markdown: '**Ineffective triggering.** A small dip in pressure with no delivered breath. The patient tried; the vent didn\'t see it. Auto-PEEP is the most common cause — the patient has to overcome the trapped pressure before crossing trigger. Weak drive is the next cause.' },
     {
-      kind: 'figure',
-      caption: 'Double triggering — one Vt delivered, no exhalation, a second Vt stacked on top. Peak rises because the lung never emptied.',
-      src: '/clips/dyssyn_double.svg',
+      kind: 'prose',
+      markdown: '**Double triggering.** One Vt delivered, no exhalation, a second Vt stacked on top. Peak pressure on the second breath is higher because the lung never emptied. The root cause: the patient\'s neural inspiratory time is longer than the ventilator\'s set Ti — the drive continues into what the vent calls expiration, and that ongoing effort triggers a second breath before the first has fully exited. Classic in lung-protective Vt with strong respiratory drive. The fix addresses the mismatch: raise Vt to satisfy demand, or switch to PCV so the patient\'s own neural Ti sets when the breath cycles off.',
     },
-    { kind: 'prose', markdown: '**Double triggering.** One Vt delivered, no exhalation, a second Vt stacked. The patient wanted more than the vent set. Classic in lung-protective Vt with strong respiratory drive.' },
     {
-      kind: 'figure',
-      caption: 'Flow starvation — inspiratory pressure scoops downward as the patient pulls harder than the set flow; flow stays constant (VCV does not compensate).',
-      src: '/clips/dyssyn_starvation.svg',
+      kind: 'prose',
+      markdown: '**Flow starvation.** During inspiration the pressure waveform scoops downward while flow stays constant and square. The patient is pulling harder than the set flow can supply. VC-specific. Either raise the inspiratory flow or switch to a flow-variable mode.',
     },
-    { kind: 'prose', markdown: '**Flow starvation.** During inspiration the pressure waveform scoops downward — the patient is pulling harder than the set flow can supply. VC-specific. Either raise the inspiratory flow or switch to a flow-variable mode.' },
-    // Novice-pass §11.2 — the three above are scored. Reverse and
-    // premature cycling are reference-only — collapsed into a single
-    // "further reading" callout so a novice isn't asked to absorb five
-    // patterns at once.
     {
       kind: 'callout',
       tone: 'tip',
@@ -206,12 +210,26 @@ export const M11: ModuleConfig = {
         "**Further reading (not on the try-it).** Two more patterns exist that you may see at the bedside: **reverse triggering** (a mandatory breath provokes a delayed diaphragm contraction — pressure dip mid-expiration; common in deeply sedated ARDS) and **premature cycling** (PSV terminates inspiration while the patient is still pulling — pressure drops while flow is still positive). The three above are the ones to recognize first; come back to these once those are solid.",
     },
     { kind: 'callout', tone: 'warn', markdown: 'Each pattern has a different fix. Sedation "fixes" all of them by silencing the patient — which is exactly what you don\'t want until you\'ve corrected the mismatch.' },
+
+    // v3.3 — labeled waveform atlas appears AFTER the text descriptions.
+    // Learner builds mental model from prose → confirms on live waveform →
+    // then faces the try-it with unlabeled waveforms.
+    // The try-it prompts show waveforms WITHOUT description/fix text (compact mode)
+    // and with neutral annotation labels (no diagnostic conclusions).
+    {
+      kind: 'live_component',
+      component: 'DyssynchronyWaveform',
+      props: { defaultPattern: 'ineffective', mode: 'atlas' },
+      caption: 'Reference atlas — labeled live waveforms. Compare each against the text descriptions above. The try-it will show these waveforms without labels.',
+    },
   ],
 
   hint_ladder: {
-    tier1: 'Each pattern has one distinctive waveform feature. Look at the pressure waveform first.',
-    tier2: 'Ineffective: dip with no breath. Double: two breaths stacked. Starvation: scoop in inspiratory pressure.',
-    tier3: { hint_text: 'Match the description in the prompt to the signature in the reference figure.' },
+    tier1: 'Each pattern has one distinctive waveform feature. Look at the pressure waveform first — ignore the flow trace until you have a hypothesis.',
+    tier2: 'Three questions: (1) Is there a pressure deflection with NO delivered breath? → ineffective triggering. (2) Do two full breaths stack back-to-back with expiratory flow never hitting zero? → double triggering. (3) Does the inspiratory pressure scoop downward while flow stays constant and square? → flow starvation.',
+    tier3: {
+      hint_text: 'For the waveform on screen: count the distinct inspiration events. If you see three pressure rises but the patient clearly made four efforts, an effort went undelivered — that\'s ineffective triggering. If two breaths arrive before any expiration, that\'s double triggering. If the pressure dips during a delivered breath while flow is flat, that\'s flow starvation. Pause the waveform (play/pause button) to freeze it on the diagnostic moment.',
+    },
   },
 
   summative_quiz: [
@@ -239,14 +257,14 @@ export const M11: ModuleConfig = {
     },
     {
       id: 'M11-Q3',
-      prompt: 'Flow starvation in a patient on PRVC is best addressed by:',
+      prompt: 'Flow starvation in a patient on VCV is best addressed by:',
       options: [
-        { label: 'Increasing PEEP', is_correct: false },
-        { label: 'Shortening I-time, or changing to constant inspiratory flow', is_correct: true },
-        { label: 'Adding paralytic', is_correct: false },
-        { label: 'Switching to PSV', is_correct: false },
+        { label: 'Increasing PEEP', is_correct: false, explanation: 'PEEP affects oxygenation and end-expiratory volume, not inspiratory flow delivery. It won\'t resolve the flow-demand mismatch.' },
+        { label: 'Increasing peak inspiratory flow or switching to a pressure-based mode', is_correct: true, explanation: 'The patient is pulling faster than the set flow can supply. Higher peak flow closes the gap in VCV. A pressure-based mode (PCV, PSV, PRVC) lets flow vary to match demand — the scooping disappears. Book Ch. 14.' },
+        { label: 'Adding paralytic', is_correct: false, explanation: 'Paralytics eliminate the patient\'s drive — silencing the problem rather than fixing it. The mismatch is between flow supply and demand; address the supply.' },
+        { label: 'Increasing the set respiratory rate', is_correct: false, explanation: 'Rate doesn\'t affect peak flow or how quickly gas is delivered during inspiration. The scoop happens within each breath, not because of breath frequency.' },
       ],
-      explanation: 'The patient is pulling faster than the vent can supply. Shorter Ti raises peak flow; constant-flow modes also help. Book Ch. 14.',
+      explanation: 'The patient is pulling faster than the vent can supply. Higher peak flow or a mode that lets flow vary (PCV, PRVC, PSV) fixes the mismatch. Book Ch. 14.',
     },
     {
       id: 'M11-Q4',
@@ -273,22 +291,18 @@ export const M11: ModuleConfig = {
   ],
 
   explore_card: {
-    patient_context: 'The live sim on the left is your synchrony reference — a calm patient on PSV with smooth triggering, decelerating inspiratory flow, and expiratory flow returning to zero before the next breath. The dyssynchrony patterns themselves are delivered as bedside vignettes in the recognition prompts (text only) — they are not rendered as live waveforms on this sim yet. Future builds will add pre-rendered clips for each pattern; for now, read the vignette, picture the trace, name the pattern.',
+    patient_context: 'The live sim on the left is your synchrony reference — a calm patient on PSV with smooth triggering, decelerating inspiratory flow, and expiratory flow returning to zero before the next breath. This is what synchrony looks like. The try-it waveforms include PSV and VCV patients; the mode is given in each vignette. Two of the three patterns (ineffective triggering, double triggering) are shown in PSV; one (flow starvation) is in VCV — note how the pressure and flow shapes differ by mode before you try to identify the dyssynchrony.',
     unlocked_controls_description: [],
     readouts_description: [
-      { name: 'Pressure and flow waveforms', description: 'smooth triggering, decelerating inspiratory flow, expiratory flow returning to zero before the next breath. This is what synchrony looks like.' },
+      { name: 'Pressure and flow waveforms', description: 'smooth triggering, decelerating inspiratory flow, expiratory flow returning to zero before the next breath. This is synchrony.' },
     ],
     suggestions: [
       'Anchor on the normal pattern. Each dyssynchrony is a distortion of one part of it.',
-      'When the task starts, three vignettes will describe the waveform. Match each to its name.',
+      'When the task starts, three live waveform prompts will appear. Match each to its pattern name.',
     ],
   },
-  // v3.2 §3.7 — clip-first framing. Wrong answers explain what THAT
-  // pattern would have shown, so the module teaches recognition by
-  // contrast.
-  user_facing_task: 'Recognize the dyssynchrony pattern. Three waveform clips, one patient context per clip. For each, look at the clip and the bedside vignette, and pick the pattern. You must get all three correct in one pass — wrong answers explain what *that* pattern would have shown.',
-  // success_criteria_display omitted — shell auto-derives from the three
-  // recognition questions so the checklist matches the prompt wording exactly.
+
+  user_facing_task: 'Recognize the dyssynchrony pattern. Three live waveforms, one patient context per waveform. For each, watch the waveform and read the bedside vignette, then pick the pattern. You must get all three correct — wrong answers explain what that pattern would have shown instead. Note: the playground sim to the left shows a synchronised PSV patient as your reference for normal. Two of the three try-it waveforms are VCV patients — the mode is given in the vignette and changes what the waveforms look like.',
   task_framing_style: 'C',
 
   key_points: [
@@ -296,9 +310,10 @@ export const M11: ModuleConfig = {
     'Bag off the vent and run DOPES; then read the waveform.',
     'Ineffective triggering → look for auto-PEEP.',
     'Double triggering → patient wants more Vt; raise it or switch to PCV.',
-    'Flow starvation → shorten I-time or switch to constant flow.',
+    'Flow starvation → increase peak flow or switch to pressure mode.',
   ],
 };
+
 
 /**
  * MODULE M12 — SIMV and Hybrid Modes

@@ -342,7 +342,21 @@ export class CompoundTracker implements Tracker {
   private childSatisfied: boolean[] = [];
 
   constructor(private cfg: CompoundTrackerConfig) {
-    this.children = cfg.children.map(buildTracker);
+    // v3.3 M11 — when display_mode === 'sequential' AND sequence ===
+    // 'any_order', shuffle the children order at construction so the
+    // presentation order varies across try-it attempts. The shuffle is
+    // a Fisher-Yates over a copy of cfg.children, leaving the config
+    // itself untouched.
+    let sourceChildren = cfg.children;
+    if (cfg.display_mode === 'sequential' && cfg.sequence === 'any_order') {
+      const arr = [...cfg.children];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      sourceChildren = arr;
+    }
+    this.children = sourceChildren.map(buildTracker);
     this.childSatisfied = this.children.map(() => false);
   }
 
