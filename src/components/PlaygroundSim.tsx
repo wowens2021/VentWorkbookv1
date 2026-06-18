@@ -1264,7 +1264,20 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           if (leak > 0) newVte = Math.max(0, newVte - leak);
           const totalMve = (newVte * m.actualRate) / 1000;
           const mveSpontContrib = isPatientTriggeredRef.current ? (newVte * patient.spontaneousRate) / 1000 : m.mveSpont;
-          return { ...m, pip: Math.round(currentBreathPeakPressureRef.current), vte: newVte, isLastSpont: isPatientTriggeredRef.current, mve: totalMve, mveSpont: mveSpontContrib };
+          // Continuous plateau + driving pressure. Previously these were
+          // updated ONLY during an inspiratory hold, so they sat at 0 in
+          // any module that didn't unlock the hold button — which made
+          // outcome gates on plat / drivingPressure either impossible
+          // (a `>=` gate could never be reached) or vacuously true (a
+          // `<=` gate passed with the meaningless value 0). Computing
+          // them every breath from the end-inspiratory volume (the same
+          // formula the hold uses: vAtEndOfInsp / C + PEEP) makes the
+          // readouts live and every plat / DP gate behave correctly.
+          // An inspiratory hold still freezes the waveform to confirm
+          // the number; it just no longer is the ONLY source of it.
+          const platLive = Math.round((vAtEndOfInspRef.current / C) + settings.peep);
+          const dpLive = Math.max(0, platLive - settings.peep);
+          return { ...m, pip: Math.round(currentBreathPeakPressureRef.current), plat: platLive, drivingPressure: dpLive, vte: newVte, isLastSpont: isPatientTriggeredRef.current, mve: totalMve, mveSpont: mveSpontContrib };
         });
       }
       wasInInspirationRef.current = inInsp;
