@@ -490,24 +490,37 @@ export const M6: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
-  // Step 1: induce auto-PEEP ≥ 4. Step 2: resolve auto-PEEP ≤ 1.5 for
-  // 5 breaths. Step 3 (novice-pass §6.3): recognition prompt — the
-  // disconnect maneuver is the most important novice-life-saving teaching
-  // and should be practiced, not just read.
+  // Bug fix: the original two steps gated on the auto-PEEP READOUT
+  // (≥4, then ≤1.5). But the sim only updated that readout after an
+  // expiratory hold, and M6 doesn't unlock the expiratory-pause button
+  // — so auto-PEEP read 0 forever and the task could never advance.
+  // Two changes fix it: (1) PlaygroundSim now surfaces a LIVE auto-PEEP
+  // estimate (see autoPeepValue), and (2) the two steps below gate on
+  // the RATE manipulation the learner actually performs — raise the
+  // rate to trap, then lower it to untrap — which is guaranteed
+  // achievable. The live auto-PEEP readout climbs and falls as they do
+  // it, so the lesson still lands visually.
+  // Step 3 (novice-pass §6.3): recognition prompt — the disconnect
+  // maneuver is the most important novice-life-saving teaching.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
     reset_between: false,
     children: [
+      // Step 1 — raise the rate to induce trapping. Watch the
+      // expiratory flow fail to return to zero and the auto-PEEP
+      // readout climb.
       {
-        kind: 'outcome',
-        readouts: { autoPeep: { operator: '>=', value: 4 } },
-        sustain_breaths: 3,
+        kind: 'manipulation',
+        control: 'respiratoryRate',
+        condition: { type: 'absolute', operator: '>=', value: 26 },
       },
+      // Step 2 — lower the rate to give expiration time. Auto-PEEP
+      // falls back toward zero.
       {
-        kind: 'outcome',
-        readouts: { autoPeep: { operator: '<=', value: 1.5 } },
-        sustain_breaths: 5,
+        kind: 'manipulation',
+        control: 'respiratoryRate',
+        condition: { type: 'absolute', operator: '<=', value: 12 },
       },
       // Novice-pass §6.3 — disconnect-the-vent practice.
       {
@@ -640,9 +653,9 @@ export const M6: ModuleConfig = {
   ],
 
   hint_ladder: {
-    tier1: 'Two steps. First, push the patient into clinically significant trapping. Second, fix it.',
-    tier2: 'Step 1: raise rate to 26+ and watch auto-PEEP climb past 4. Step 2: drop rate to 10–12 to give expiration room, sustained for 5 breaths.',
-    tier3: { hint_text: 'Use "Show me" to run Step 1 (raise rate to 26), then prompt you to drop it back.', demonstration: { control: 'respiratoryRate', target_value: 26 } },
+    tier1: 'Two steps, both on the rate knob. First push the patient into trapping, then relieve it.',
+    tier2: 'Step 1: raise the rate to 26 or higher — watch auto-PEEP climb and the expiratory flow stop returning to zero. Step 2: drop the rate to 12 or lower to give expiration room — auto-PEEP falls.',
+    tier3: { hint_text: 'Use "Show me" to set the rate to 26 (Step 1). Then lower it to 12 or below to finish Step 2.', demonstration: { control: 'respiratoryRate', target_value: 26 } },
   },
 
   summative_quiz: [
@@ -720,10 +733,10 @@ export const M6: ModuleConfig = {
   },
 
   user_facing_task:
-    "Trap him, then untrap him. This 60-year-old man with COPD is being ventilated. Right now he's borderline. Step 1: push him into clinically significant auto-PEEP (≥ 4 cmH2O) — your options are rate, Vt, and I-time. Step 2: now fix it. Bring auto-PEEP back to ≤ 1.5 and hold it for five breaths.",
+    "Trap him, then untrap him. This 60-year-old man with COPD is being ventilated. Step 1: raise the respiratory rate to 26+ and watch the trapping build — the expiratory flow stops returning to zero and the auto-PEEP readout climbs. Step 2: bring the rate down to 12 or below to give each breath time to exhale, and watch auto-PEEP fall back toward zero.",
   success_criteria_display: [
-    'Induce auto-PEEP ≥ 4 cmH2O, hold for 3 breaths.',
-    'Resolve auto-PEEP ≤ 1.5 cmH2O, hold for 5 breaths.',
+    'Raise the respiratory rate to ≥ 26 — watch auto-PEEP climb and the expiratory flow stop returning to zero.',
+    'Lower the respiratory rate to ≤ 12 — watch auto-PEEP fall as expiratory time lengthens.',
   ],
   task_framing_style: 'B',
 

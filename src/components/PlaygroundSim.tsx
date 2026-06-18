@@ -884,7 +884,10 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     if (!harness) return;
     if (metrics.vte <= 0) return;
     breathNumRef.current += 1;
-    const autoPeep = (metrics.totalPeep || settings.peep) - settings.peep;
+    // Bug fix (M6): use the continuous estimate so the auto-PEEP
+    // outcome tracker can see trapping develop and resolve without an
+    // expiratory hold (which M6 doesn't unlock). See autoPeepValue.
+    const autoPeep = abg.effectiveAutoPeep ?? ((metrics.totalPeep || settings.peep) - settings.peep);
     harness.emit({
       type: 'sim_tick',
       breath_number: breathNumRef.current,
@@ -926,11 +929,21 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     return Math.round(metrics.actualRate / vtL);
   }, [metrics.actualRate, metrics.vte]);
 
-  // Auto-PEEP display value
+  // Auto-PEEP display value.
+  // Bug fix (M6): previously this read ONLY from metrics.totalPeep,
+  // which the sim updates exclusively after an expiratory hold. M6
+  // doesn't unlock the expiratory-pause button, so the value sat at 0
+  // forever and the auto-PEEP task (autoPeep ≥ 4 → ≤ 1.5) was
+  // unwinnable. We now surface the continuous estimate
+  // (abg.effectiveAutoPeep = max of the held measurement and the
+  // latent trapped-volume pressure), so the readout climbs live as
+  // trapping develops and falls as the learner lengthens expiratory
+  // time. At healthy baselines effectiveAutoPeep ≈ 0, so no other
+  // module regresses.
   const autoPeepValue = useMemo(() => {
-    const diff = (metrics.totalPeep || settings.peep) - settings.peep;
-    return diff > 0.1 ? diff : 0;
-  }, [metrics.totalPeep, settings.peep]);
+    const v = abg.effectiveAutoPeep ?? ((metrics.totalPeep || settings.peep) - settings.peep);
+    return v > 0.1 ? v : 0;
+  }, [abg.effectiveAutoPeep, metrics.totalPeep, settings.peep]);
 
   // I:E ratio
   const currentIERatio = useMemo(() => {
