@@ -57,7 +57,7 @@ export const M3: ModuleConfig = {
       prompt: 'In VCV, you raise the set tidal volume from 400 to 500 mL. At constant compliance and resistance, what happens to PIP?',
       options: [
         { label: 'PIP falls — bigger Vt is easier to deliver.', is_correct: false, explanation: 'Backwards. More volume means more pressure needed to deliver it.' },
-        { label: 'PIP rises.', is_correct: true, explanation: 'More volume into the same compliance means a higher alveolar pressure, and a higher peak. Book Ch. 1.' },
+        { label: 'PIP rises.', is_correct: true, explanation: 'More volume into the same compliance means a higher alveolar pressure, and a higher peak. TVB Ch. 1.' },
         { label: 'PIP is unchanged.', is_correct: false, explanation: 'PIP scales with Vt. Same compliance + bigger Vt = higher PIP.' },
         { label: 'PIP becomes unstable.', is_correct: false, explanation: 'Not unstable — predictably higher.' },
       ],
@@ -251,7 +251,7 @@ export const M3: ModuleConfig = {
       id: 'M3-Q3',
       prompt: 'You raise PEEP from 5 to 10. PIP was 22. The expected new PIP is approximately:',
       options: [
-        { label: 'About 27', is_correct: true, explanation: 'PEEP raises the floor; PIP rises by roughly the same amount. They\'re additive. Book Ch. 1.' },
+        { label: 'About 27', is_correct: true, explanation: 'PEEP raises the floor; PIP rises by roughly the same amount. They\'re additive. TVB Ch. 1.' },
         { label: 'About 17', is_correct: false, explanation: 'PEEP doesn\'t lower PIP — it raises it.' },
         { label: 'Unchanged at 22', is_correct: false, explanation: 'PEEP and PIP both share the baseline. Raise the baseline; the peak follows.' },
         { label: 'About 44 (double)', is_correct: false, explanation: 'PEEP is additive, not multiplicative.' },

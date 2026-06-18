@@ -56,7 +56,7 @@ export const M15: ModuleConfig = {
       prompt: 'The ARMA trial (NEJM 2000) compared 6 mL/kg PBW vs 12 mL/kg PBW in ARDS. The result was:',
       options: [
         { label: 'No difference in mortality', is_correct: false, explanation: 'There was a difference, and it was large.' },
-        { label: 'A 9% absolute mortality reduction with low Vt', is_correct: true, explanation: 'One of the largest effects in all of ICU medicine. Book Ch. 8.' },
+        { label: 'A 9% absolute mortality reduction with low Vt', is_correct: true, explanation: 'One of the largest effects in all of ICU medicine. TVB Ch. 8.' },
         { label: 'Lower Vt caused more pneumothorax', is_correct: false, explanation: 'The opposite of what you\'d expect — and what was found.' },
         { label: 'Lower Vt required more sedation but had no mortality effect', is_correct: false, explanation: 'The mortality effect was the headline.' },
       ],
@@ -66,7 +66,7 @@ export const M15: ModuleConfig = {
       prompt: 'A 70-inch male in ARDS — his PBW is ~73 kg. The starting Vt is:',
       options: [
         { label: '350 mL', is_correct: false, explanation: 'That\'s 4.8 mL/kg — defensible only if plat is high.' },
-        { label: '430–440 mL', is_correct: true, explanation: '6 mL/kg of PBW. Book Ch. 8.' },
+        { label: '430–440 mL', is_correct: true, explanation: '6 mL/kg of PBW. TVB Ch. 8.' },
         { label: '600 mL', is_correct: false, explanation: 'That\'s 8.2 mL/kg — pre-ARMA dosing.' },
         { label: '800 mL', is_correct: false, explanation: 'Reflects an older era of ventilation that increased mortality.' },
       ],
@@ -76,7 +76,7 @@ export const M15: ModuleConfig = {
       prompt: 'The Amato 2015 driving pressure analysis showed that:',
       options: [
         { label: 'Plateau pressure was more important than driving pressure', is_correct: false, explanation: 'The opposite — DP outperformed plat in their model.' },
-        { label: 'Driving pressure ≤15 was independently linked to survival, even at low Vt and plateau', is_correct: true, explanation: 'A separate signal of lung-protection quality. Book Ch. 8.' },
+        { label: 'Driving pressure ≤15 was independently linked to survival, even at low Vt and plateau', is_correct: true, explanation: 'A separate signal of lung-protection quality. TVB Ch. 8.' },
         { label: 'Driving pressure was unrelated to outcome', is_correct: false, explanation: 'Strongly related — across multiple ARDS trial datasets.' },
         { label: 'Higher driving pressure improved oxygenation', is_correct: false, explanation: 'Higher DP worsened outcomes.' },
       ],
@@ -187,7 +187,7 @@ export const M15: ModuleConfig = {
         { label: 'Sedate more.', is_correct: false },
       ],
       answer:
-        'Lower Vt by 50 mL. Plat at 32 is over the ceiling and DP at 17 is over Amato — both signals point at Vt. Lowering PEEP at fixed Vt drops Pplat by an equal amount but also lifts the FRC out from under recruited alveoli; not the first move. Raising rate doesn\'t help mechanics. Sedation doesn\'t help mechanics. Book Ch. 8.',
+        'Lower Vt by 50 mL. Plat at 32 is over the ceiling and DP at 17 is over Amato — both signals point at Vt. Lowering PEEP at fixed Vt drops Pplat by an equal amount but also lifts the FRC out from under recruited alveoli; not the first move. Raising rate doesn\'t help mechanics. Sedation doesn\'t help mechanics. TVB Ch. 8.',
     },
   ],
 
@@ -207,7 +207,7 @@ export const M15: ModuleConfig = {
         { label: 'Prone positioning', is_correct: false },
         { label: 'Neuromuscular blockade', is_correct: false },
       ],
-      explanation: 'ARMA 2000 — 9% absolute mortality reduction. Prone (PROSEVA) is important but second. Book Ch. 8.',
+      explanation: 'ARMA 2000 — 9% absolute mortality reduction. Prone (PROSEVA) is important but second. TVB Ch. 8.',
     },
     {
       id: 'M15-Q2',
@@ -218,7 +218,7 @@ export const M15: ModuleConfig = {
         { label: 'Sedate more', is_correct: false },
         { label: 'Switch to PCV', is_correct: false },
       ],
-      explanation: 'DP is over 15. Plateau is okay but DP is the better signal. Raising PEEP raises plat. Book Ch. 8.',
+      explanation: 'DP is over 15. Plateau is okay but DP is the better signal. Raising PEEP raises plat. TVB Ch. 8.',
     },
     {
       id: 'M15-Q3',
@@ -229,7 +229,7 @@ export const M15: ModuleConfig = {
         { label: 'Septic shock', is_correct: false },
         { label: 'Asthma exacerbation', is_correct: false },
       ],
-      explanation: 'Hypercapnia → cerebral vasodilation → worsens ICP. Book Ch. 6.',
+      explanation: 'Hypercapnia → cerebral vasodilation → worsens ICP. TVB Ch. 6.',
     },
     {
       id: 'M15-Q4',
@@ -240,7 +240,7 @@ export const M15: ModuleConfig = {
         { label: 'Plat >30', is_correct: false },
         { label: 'Auto-PEEP is present', is_correct: false },
       ],
-      explanation: 'PROSEVA trial criterion. 16–18 hours per day. Book Ch. 25.',
+      explanation: 'PROSEVA trial criterion. 16–18 hours per day. TVB Ch. 25.',
     },
     {
       id: 'M15-Q5',
@@ -251,7 +251,7 @@ export const M15: ModuleConfig = {
         { label: '8 mL/kg', is_correct: false },
         { label: '12 mL/kg', is_correct: false },
       ],
-      explanation: 'The same number as the elective protocol. The simplicity is the point. Book Ch. 25.',
+      explanation: 'The same number as the elective protocol. The simplicity is the point. TVB Ch. 25.',
     },
   ],
 
@@ -352,7 +352,7 @@ export const M16: ModuleConfig = {
       prompt: 'The strongest single lever for relieving auto-PEEP is:',
       options: [
         { label: 'Higher PEEP', is_correct: false, explanation: 'In asthma PEEP worsens trapping. In COPD it can help marginally, but the rate lever is bigger.' },
-        { label: 'Lower respiratory rate', is_correct: true, explanation: 'Longer expiratory time. The dominant variable. Book Ch. 15.' },
+        { label: 'Lower respiratory rate', is_correct: true, explanation: 'Longer expiratory time. The dominant variable. TVB Ch. 15.' },
         { label: 'Higher Vt', is_correct: false, explanation: 'Larger breath, more gas to exhale, worse trapping.' },
         { label: 'Higher FiO2', is_correct: false, explanation: 'FiO2 doesn\'t alter time constants.' },
       ],
@@ -363,7 +363,7 @@ export const M16: ModuleConfig = {
       options: [
         { label: 'PCV — decelerating flow is more comfortable', is_correct: false, explanation: 'PCV silently drops Vt as resistance rises. Dangerous in bronchospasm.' },
         { label: 'PRVC — adaptive', is_correct: false, explanation: 'Same problem — when resistance climbs, the adaptive logic pushes pressure up, which doesn\'t help with trapping.' },
-        { label: 'VCV — guaranteed Vt despite resistance change', is_correct: true, explanation: 'You see the resistance problem (rising PIP, stable plat) and act on it. Book Ch. 15.' },
+        { label: 'VCV — guaranteed Vt despite resistance change', is_correct: true, explanation: 'You see the resistance problem (rising PIP, stable plat) and act on it. TVB Ch. 15.' },
         { label: 'PSV — patient comfort', is_correct: false, explanation: 'Spontaneous mode in a patient who needs deep sedation.' },
       ],
     },
@@ -372,7 +372,7 @@ export const M16: ModuleConfig = {
       prompt: 'Applied PEEP in severe asthma:',
       options: [
         { label: 'Helps splint airways — analogous to COPD', is_correct: false, explanation: 'The pathology is different — asthmatic airways are inflamed, not floppy.' },
-        { label: 'Makes hyperinflation worse', is_correct: true, explanation: 'Adds to total PEEP without splinting anything. Book Ch. 1, Ch. 15.' },
+        { label: 'Makes hyperinflation worse', is_correct: true, explanation: 'Adds to total PEEP without splinting anything. TVB Ch. 1, Ch. 15.' },
         { label: 'Has no effect', is_correct: false, explanation: 'It has a clear effect — and it\'s the wrong direction.' },
         { label: 'Improves V/Q matching', is_correct: false, explanation: 'Not the relevant mechanism here.' },
       ],
@@ -561,7 +561,7 @@ export const M16: ModuleConfig = {
         { label: '7.10–7.15', is_correct: true },
         { label: '6.90', is_correct: false },
       ],
-      explanation: 'Book Ch. 6, Ch. 15. Lower than ARDS permissive (7.15–7.20) because the alternative is barotrauma and PEA arrest.',
+      explanation: 'TVB Ch. 6, Ch. 15. Lower than ARDS permissive (7.15–7.20) because the alternative is barotrauma and PEA arrest.',
     },
     {
       id: 'M16-Q2',
@@ -572,7 +572,7 @@ export const M16: ModuleConfig = {
         { label: '7–8 mL/kg', is_correct: true },
         { label: '12 mL/kg', is_correct: false },
       ],
-      explanation: 'Higher than ARDS because the lungs aren\'t the problem — the airways are. Book Ch. 1, Ch. 15.',
+      explanation: 'Higher than ARDS because the lungs aren\'t the problem — the airways are. TVB Ch. 1, Ch. 15.',
     },
     {
       id: 'M16-Q3',
@@ -583,7 +583,7 @@ export const M16: ModuleConfig = {
         { label: 'Auto-PEEP', is_correct: false },
         { label: 'Pneumothorax', is_correct: false },
       ],
-      explanation: 'PIP rises with resistance; plat with compliance. The gap is the resistance signal. Book Ch. 2.',
+      explanation: 'PIP rises with resistance; plat with compliance. The gap is the resistance signal. TVB Ch. 2.',
     },
     {
       id: 'M16-Q4',
@@ -594,7 +594,7 @@ export const M16: ModuleConfig = {
         { label: '15 cmH2O (above auto-PEEP)', is_correct: false },
         { label: '25 cmH2O', is_correct: false },
       ],
-      explanation: 'The waterfall analogy — splints open small airways without adding to trapping. Above auto-PEEP, you trap more. Book Ch. 15.',
+      explanation: 'The waterfall analogy — splints open small airways without adding to trapping. Above auto-PEEP, you trap more. TVB Ch. 15.',
     },
     {
       id: 'M16-Q5',
@@ -605,7 +605,7 @@ export const M16: ModuleConfig = {
         { label: 'Raise PEEP', is_correct: false },
         { label: 'Lower FiO2', is_correct: false },
       ],
-      explanation: 'Trapping is compressing venous return. Letting the chest fall is the immediate fix. Book Ch. 15.',
+      explanation: 'Trapping is compressing venous return. Letting the chest fall is the immediate fix. TVB Ch. 15.',
     },
   ],
 

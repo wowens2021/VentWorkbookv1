@@ -46,7 +46,7 @@ export const M7: ModuleConfig = {
       options: [
         { label: 'The peak airway pressure.', is_correct: false, explanation: 'PIP is determined by flow, resistance, compliance, and Vt; the vent makes whatever pressure it needs.' },
         { label: 'The plateau pressure.', is_correct: false, explanation: "Plat is determined by Vt/compliance + PEEP; the vent doesn't set it." },
-        { label: 'The tidal volume.', is_correct: true, explanation: 'Book Ch. 9. The vent opens its valve at a set flow until the set Vt has been delivered. The pressure is whatever it takes.' },
+        { label: 'The tidal volume.', is_correct: true, explanation: 'TVB Ch. 9. The vent opens its valve at a set flow until the set Vt has been delivered. The pressure is whatever it takes.' },
         { label: 'The respiratory rate, but not the volume.', is_correct: false, explanation: "It guarantees both rate and Vt; that's the whole point of A/C." },
       ],
     },
@@ -185,7 +185,7 @@ export const M7: ModuleConfig = {
       prompt: 'On VCV, peak pressure (PIP) rises sharply while plateau pressure is unchanged. The most likely cause is:',
       options: [
         { label: 'Worsening ARDS', is_correct: false, explanation: 'That raises plat too.' },
-        { label: 'Increased airway resistance — mucus plug, kinked tube, bronchospasm', is_correct: true, explanation: 'Book Ch. 2. The PIP-plat gap *is* the resistance signal.' },
+        { label: 'Increased airway resistance — mucus plug, kinked tube, bronchospasm', is_correct: true, explanation: 'TVB Ch. 2. The PIP-plat gap *is* the resistance signal.' },
         { label: 'A pneumothorax', is_correct: false, explanation: 'Pneumo raises both.' },
         { label: 'Pulmonary edema', is_correct: false, explanation: 'Raises both.' },
       ],
@@ -196,7 +196,7 @@ export const M7: ModuleConfig = {
       options: [
         { label: 'Sedate more deeply', is_correct: false, explanation: "Doesn't address the lung problem." },
         { label: 'Increase PEEP', is_correct: false, explanation: 'That can raise plat further.' },
-        { label: 'Reduce the tidal volume', is_correct: true, explanation: 'Book Ch. 8, Amato 2015. DP >15 is the survival-relevant lever.' },
+        { label: 'Reduce the tidal volume', is_correct: true, explanation: 'TVB Ch. 8, Amato 2015. DP >15 is the survival-relevant lever.' },
         { label: 'Switch to PCV', is_correct: false, explanation: 'Tempting but does nothing physiologic — same lungs, same compliance.' },
       ],
     },
@@ -205,7 +205,7 @@ export const M7: ModuleConfig = {
       prompt: 'The advantage of VCV over PCV is:',
       options: [
         { label: 'Lower peak airway pressures', is_correct: false, explanation: 'PCV typically has lower PIP.' },
-        { label: 'Guaranteed minute ventilation, regardless of changes in compliance', is_correct: true, explanation: 'Book Ch. 9. The shocked patient with evolving lung injury needs a guaranteed Vt.' },
+        { label: 'Guaranteed minute ventilation, regardless of changes in compliance', is_correct: true, explanation: 'TVB Ch. 9. The shocked patient with evolving lung injury needs a guaranteed Vt.' },
         { label: 'Greater patient comfort with constant flow', is_correct: false, explanation: "Constant flow is generally less comfortable; that's a PCV advantage." },
         { label: 'No volutrauma risk', is_correct: false, explanation: 'VCV can absolutely cause volutrauma if Vt is set too high.' },
       ],
@@ -314,7 +314,7 @@ export const M8: ModuleConfig = {
       prompt: 'On PCV, what does the ventilator guarantee?',
       options: [
         { label: 'The tidal volume.', is_correct: false, explanation: 'Vt is the dependent variable, set by compliance and resistance.' },
-        { label: 'The inspiratory pressure and the I-time.', is_correct: true, explanation: 'Book Ch. 9. The vent rises to PINSP, holds for I-time, drops back to PEEP.' },
+        { label: 'The inspiratory pressure and the I-time.', is_correct: true, explanation: 'TVB Ch. 9. The vent rises to PINSP, holds for I-time, drops back to PEEP.' },
         { label: 'The plateau pressure.', is_correct: false, explanation: "Plat depends on whether inspiratory flow reaches zero; in most PCV settings it doesn't." },
         { label: 'The driving pressure.', is_correct: false, explanation: 'DP requires a measured plat, which is not what you set in PCV.' },
       ],
@@ -324,7 +324,7 @@ export const M8: ModuleConfig = {
       prompt: "A PCV patient's compliance improves overnight from 25 to 50 at a fixed PINSP. The most likely change is:",
       options: [
         { label: 'Vt is unchanged; only PIP rises.', is_correct: false, explanation: "PIP doesn't rise in PCV — it's *fixed*." },
-        { label: 'Vt approximately doubles.', is_correct: true, explanation: 'Book Ch. 9. Vt ≈ PINSP × C. This is why PCV needs daily attention — improving lungs lead to higher Vt unless you titrate down.' },
+        { label: 'Vt approximately doubles.', is_correct: true, explanation: 'TVB Ch. 9. Vt ≈ PINSP × C. This is why PCV needs daily attention — improving lungs lead to higher Vt unless you titrate down.' },
         { label: 'Vt halves.', is_correct: false, explanation: 'Direction is reversed.' },
         { label: 'The ventilator reduces PINSP to compensate.', is_correct: false, explanation: 'Dual-control modes do this. PCV does not.' },
       ],
@@ -428,7 +428,7 @@ export const M8: ModuleConfig = {
         { label: 'False — but only if compliance is normal', is_correct: false },
       ],
       answer:
-        'Book Ch. 9. An inspiratory hold equilibrates pressures throughout the airway tree, just as in VCV. You absolutely can — and should — measure plat in PCV. Common myth.',
+        'TVB Ch. 9. An inspiratory hold equilibrates pressures throughout the airway tree, just as in VCV. You absolutely can — and should — measure plat in PCV. Common myth.',
     },
     // Dual-control variants (PRVC, VC+, CMV-Autoflow) used to live
     // here as a 5-minute addendum but were pulled out per user
@@ -459,7 +459,7 @@ export const M8: ModuleConfig = {
       prompt: "A PCV patient's PIP alarm has never fired, but his Vt has dropped from 480 to 270 over six hours. The most likely cause is:",
       options: [
         { label: 'The vent is broken', is_correct: false, explanation: "Unlikely — PIP alarm wouldn't fire in PCV anyway." },
-        { label: 'Worsening compliance, increased resistance, or both', is_correct: true, explanation: 'Book Ch. 9. In PCV the PIP is fixed; Vt collapse is the only warning of worsening mechanics.' },
+        { label: 'Worsening compliance, increased resistance, or both', is_correct: true, explanation: 'TVB Ch. 9. In PCV the PIP is fixed; Vt collapse is the only warning of worsening mechanics.' },
         { label: 'The patient is over-sedated', is_correct: false, explanation: "Sedation doesn't change Vt at a fixed PINSP." },
         { label: 'Migrated endotracheal tube into the right mainstem', is_correct: false, explanation: 'Possible but would also raise plat dramatically; first instinct is mechanics.' },
       ],
@@ -469,7 +469,7 @@ export const M8: ModuleConfig = {
       prompt: 'Inverse-ratio ventilation (I:E ≥ 1:1) in PCV is:',
       options: [
         { label: 'Always required in severe ARDS', is_correct: false, explanation: 'A niche maneuver.' },
-        { label: 'Used occasionally for severe hypoxemia, but requires heavy sedation', is_correct: true, explanation: 'Book Ch. 9. Owens: "Try breathing in for two seconds and out for one — this is uncomfortable."' },
+        { label: 'Used occasionally for severe hypoxemia, but requires heavy sedation', is_correct: true, explanation: 'TVB Ch. 9. Owens: "Try breathing in for two seconds and out for one — this is uncomfortable."' },
         { label: 'Standard for all PCV settings', is_correct: false, explanation: 'Normal I:E is 1:2 to 1:4.' },
         { label: 'Used to reduce peak pressures', is_correct: false, explanation: 'It actually raises mean airway pressure.' },
       ],
@@ -479,7 +479,7 @@ export const M8: ModuleConfig = {
       prompt: 'Which is the WORST patient for PCV?',
       options: [
         { label: 'A stable ARDS patient on chronic vent', is_correct: false, explanation: 'PCV is fine here.' },
-        { label: 'A status asthmaticus patient with rising resistance', is_correct: true, explanation: 'Book Ch. 15. In severe bronchospasm, rising resistance silently drops Vt in PCV; VCV is the mode of choice.' },
+        { label: 'A status asthmaticus patient with rising resistance', is_correct: true, explanation: 'TVB Ch. 15. In severe bronchospasm, rising resistance silently drops Vt in PCV; VCV is the mode of choice.' },
         { label: 'A post-op patient with normal lungs', is_correct: false, explanation: 'PCV is fine.' },
         { label: 'A weaning candidate', is_correct: false, explanation: "PSV is the answer for a weaning candidate; PCV isn't *worse* than other A/C modes." },
       ],
@@ -489,7 +489,7 @@ export const M8: ModuleConfig = {
       prompt: 'Driving pressure in a PCV patient is measured by:',
       options: [
         { label: 'Reading the PINSP directly', is_correct: false, explanation: 'PINSP includes resistance.' },
-        { label: 'Performing an inspiratory hold to obtain plat, then subtracting PEEP', is_correct: true, explanation: 'Book Ch. 9. The hold equilibrates airway pressures; plat − PEEP is the DP regardless of mode.' },
+        { label: 'Performing an inspiratory hold to obtain plat, then subtracting PEEP', is_correct: true, explanation: 'TVB Ch. 9. The hold equilibrates airway pressures; plat − PEEP is the DP regardless of mode.' },
         { label: 'Looking at the peak inspiratory flow', is_correct: false, explanation: 'Unrelated.' },
         { label: 'It cannot be measured in PCV', is_correct: false, explanation: 'Common myth.' },
       ],

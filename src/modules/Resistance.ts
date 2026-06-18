@@ -77,35 +77,42 @@ export const Resistance: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
+  // Step-by-step flow so the learner SEES the change before any
+  // question. Previously the question fired the instant resistance
+  // crossed the threshold — before the waveform could be read. Now:
+  // (1) raise resistance and watch the peak climb, (2) press INSP HOLD
+  // to freeze the breath and read the plateau, and only then does the
+  // question appear (riding on the hold step, so the plateau and the
+  // wide gap are on screen). present_one_at_a_time gives the "Next →"
+  // beat between the knob change and the hold.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
     reset_between: false,
+    present_one_at_a_time: true,
+    observations: [
+      "Resistance is up and the **peak pressure climbed**. But peak alone can't tell you whether this is an airway problem or a lung problem — for that you need the plateau. Watch the trace, then continue. Next you'll press INSP HOLD.",
+      "There's the held plateau. The peak shot up, but the **plateau barely moved** — so the breath dropped a long way when flow stopped. That big gap between PIP and Pplat is the resistive pressure. (Further reading: TVB Ch. 2.)",
+    ],
     children: [
+      // Step 1 — raise resistance. No question yet — just watch the peak.
       {
         kind: 'manipulation',
         control: 'resistance',
         condition: { type: 'delta_pct', direction: 'increase', min_pct: 50 },
-        require_acknowledgment: {
-          question: 'What happened to peak pressure and plateau pressure?',
-          options: [
-            { label: 'Peak rose, plateau unchanged', is_correct: true, explanation: 'The resistance signature. Resistive pressure (flow × resistance) lives only during flow; when flow stops at the plateau hold, that component disappears.' },
-            { label: 'Both rose together', is_correct: false, explanation: 'Parallel rise is the compliance signature, not resistance.' },
-            { label: 'Peak unchanged, plateau rose', is_correct: false, explanation: 'Impossible — Ppeak ≥ Pplat always.' },
-            { label: 'Both fell', is_correct: false, explanation: 'Higher resistance needs more pressure, not less.' },
-          ],
-        },
       },
+      // Step 2 — press INSP HOLD; the question rides on the hold so the
+      // plateau and the widened gap are already on screen.
       {
         kind: 'manipulation',
-        control: 'resistance',
-        condition: { type: 'delta_pct', direction: 'increase', min_pct: 50 },
+        control: 'inspiratory_pause',
+        condition: { type: 'any_change' },
         require_acknowledgment: {
-          question: 'What happened to the peak-plateau gap?',
+          question: 'With the breath held, the trace dropped from PIP to the plateau. What did that reveal about the peak-plateau gap?',
           options: [
-            { label: 'Widened', is_correct: true, explanation: 'The gap IS the resistive component. Higher resistance → larger gap during flow.' },
-            { label: 'Narrowed', is_correct: false, explanation: 'A narrowing gap would mean resistance falling, not rising.' },
-            { label: 'Stayed the same', is_correct: false, explanation: 'A stable gap is the compliance signature.' },
+            { label: 'The gap widened — peak rose a lot, plateau barely moved', is_correct: true, explanation: 'Exactly. Resistive pressure is flow × resistance, and it only exists while gas is moving. When you press INSP HOLD the flow stops, that resistive pressure vanishes, and the trace drops to the plateau. The taller the drop, the higher the resistance. A widening peak-plateau gap with a steady plateau is the resistance signature. Further reading: TVB Ch. 2.' },
+            { label: 'The gap stayed the same', is_correct: false, explanation: 'A stable gap means the resistive term did not change — that is the compliance pattern, where both pressures move together. Here the peak climbed while the plateau held, so the gap opened up.' },
+            { label: 'The gap narrowed', is_correct: false, explanation: 'A narrowing gap would mean resistance falling. You raised it, so the resistive contribution — and the gap — grew.' },
           ],
         },
       },
@@ -136,9 +143,9 @@ export const Resistance: ModuleConfig = {
   ],
 
   hint_ladder: {
-    tier1: 'Raise the resistance slider. Watch both Ppeak and Pplat carefully. Which one moves?',
-    tier2: 'Resistance affects the pressure during flow. Once flow stops (plateau hold), resistance pressure disappears. So resistance changes Ppeak but not Pplat. The gap widens.',
-    tier3: { hint_text: 'Show me — demonstrates a resistance increase and the widening gap, then resets.', demonstration: { control: 'resistance', target_value: 25 } },
+    tier1: 'Step 1: raise the resistance knob (a 50%+ increase). Watch the peak pressure climb. Then click Next.',
+    tier2: 'Step 2: press the INSP HOLD button at the top of the controls. Flow stops, the trace drops to the plateau, and the wide gap appears — then the question shows up.',
+    tier3: { hint_text: 'Show me — raises resistance to 25 so you can watch the peak climb. You still press INSP HOLD to read the plateau.', demonstration: { control: 'resistance', target_value: 25 } },
   },
 
   summative_quiz: [
@@ -214,12 +221,11 @@ export const Resistance: ModuleConfig = {
   },
 
   user_facing_task:
-    'You are going to demonstrate the resistance signature to your senior. Increase resistance by at least 50% and identify what happened to peak pressure, plateau pressure, and the peak-plateau gap.',
+    'Demonstrate the resistance signature, one step at a time. First raise the resistance knob and watch the peak pressure climb. Then press INSP HOLD to freeze the breath and read the plateau. The question appears once the plateau and the wide gap are on screen.',
   success_criteria_display: [
-    'Raise resistance by at least 50% from baseline.',
-    'Identify what happened to Ppeak.',
-    'Identify what happened to Pplat.',
-    'Identify what happened to the peak-plateau gap.',
+    'Raise resistance by at least 50% and watch the peak pressure climb.',
+    'Press INSP HOLD to freeze the breath and read the plateau.',
+    'Answer: what happened to the peak-plateau gap?',
   ],
   task_framing_style: 'A',
 

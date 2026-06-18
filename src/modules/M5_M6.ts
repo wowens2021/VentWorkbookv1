@@ -86,7 +86,7 @@ export const M5: ModuleConfig = {
       prompt: "What does PEEP actually do at the alveolar level in an ARDS patient?",
       options: [
         { label: "It pushes oxygen across the alveolar membrane faster.", is_correct: false, explanation: "Diffusion isn't usually the rate-limiting step in ARDS. PEEP isn't a diffusion enhancer — it's a recruitment lever." },
-        { label: "It holds collapsed alveoli open at end-expiration so the blood passing them finally sees air.", is_correct: true, explanation: "PEEP keeps alveoli from collapsing each expiration. Recruited alveoli participate in gas exchange. Shunt fraction falls. SpO2 climbs. Book Ch. 12." },
+        { label: "It holds collapsed alveoli open at end-expiration so the blood passing them finally sees air.", is_correct: true, explanation: "PEEP keeps alveoli from collapsing each expiration. Recruited alveoli participate in gas exchange. Shunt fraction falls. SpO2 climbs. TVB Ch. 12." },
         { label: "It thins out pulmonary edema fluid.", is_correct: false, explanation: "PEEP can redistribute edema but it doesn't pull it out of the lung. Diuretics do that." },
         { label: "It increases cardiac output.", is_correct: false, explanation: "PEEP typically *reduces* cardiac output by raising intrathoracic pressure and lowering venous return. The reason it helps hypoxemia is recruitment, not hemodynamics." },
       ],
@@ -323,7 +323,7 @@ export const M5: ModuleConfig = {
       prompt: "The primary mechanism by which PEEP improves oxygenation in ARDS is:",
       options: [
         { label: "It enhances diffusion across the alveolar membrane.", is_correct: false, explanation: "Diffusion is rarely the rate-limiting step in ARDS. PEEP is not a diffusion enhancer." },
-        { label: "It recruits collapsed alveoli and keeps them open across the respiratory cycle.", is_correct: true, explanation: "PEEP at end-expiration prevents alveolar collapse and re-opens previously closed units. Recruited alveoli participate in gas exchange, the shunt fraction falls, and SpO2 climbs. Book Ch. 12." },
+        { label: "It recruits collapsed alveoli and keeps them open across the respiratory cycle.", is_correct: true, explanation: "PEEP at end-expiration prevents alveolar collapse and re-opens previously closed units. Recruited alveoli participate in gas exchange, the shunt fraction falls, and SpO2 climbs. TVB Ch. 12." },
         { label: "It reduces minute ventilation.", is_correct: false, explanation: "PEEP doesn't change minute ventilation — that's set by rate and tidal volume. PEEP affects end-expiratory lung volume, not minute ventilation." },
         { label: "It increases cardiac output.", is_correct: false, explanation: "PEEP usually *lowers* cardiac output by reducing venous return. Its benefit in ARDS is recruitment, not hemodynamics." },
       ],
@@ -445,7 +445,7 @@ export const M6: ModuleConfig = {
       prompt: 'Auto-PEEP is best defined as:',
       options: [
         { label: 'The PEEP setting you ordered.', is_correct: false, explanation: "That's set PEEP." },
-        { label: "End-expiratory alveolar pressure that is higher than the set PEEP — air trapped because the patient can't exhale completely.", is_correct: true, explanation: 'Book Ch. 17.' },
+        { label: "End-expiratory alveolar pressure that is higher than the set PEEP — air trapped because the patient can't exhale completely.", is_correct: true, explanation: "When each breath starts before the lung has fully emptied, gas stacks up and the alveolar pressure at end-expiration sits above the PEEP you set. That extra trapped pressure is auto-PEEP (intrinsic PEEP). Further reading: TVB Ch. 15." },
         { label: 'PEEP that increases on inspiration.', is_correct: false, explanation: 'PEEP is by definition end-*expiratory*.' },
         { label: 'PEEP measured during noninvasive ventilation.', is_correct: false, explanation: 'Not the definition.' },
       ],
@@ -455,7 +455,7 @@ export const M6: ModuleConfig = {
       prompt: 'The flow-waveform sign of auto-PEEP is:',
       options: [
         { label: 'The inspiratory flow has a square shape.', is_correct: false, explanation: "That's just constant flow in VCV." },
-        { label: "The expiratory flow doesn't return to zero before the next breath starts.", is_correct: true, explanation: 'Book Ch. 2. The patient is mid-exhale when the next vent breath fires.' },
+        { label: "The expiratory flow doesn't return to zero before the next breath starts.", is_correct: true, explanation: 'TVB Ch. 2. The patient is mid-exhale when the next vent breath fires.' },
         { label: 'The PIP waveform is double-humped.', is_correct: false, explanation: "That's double triggering." },
         { label: 'There is no flow waveform visible.', is_correct: false, explanation: 'Equipment failure.' },
       ],
@@ -465,7 +465,7 @@ export const M6: ModuleConfig = {
       prompt: 'The single most effective ventilator change to relieve dynamic hyperinflation is:',
       options: [
         { label: 'Increase PEEP.', is_correct: false, explanation: "In *asthma*, applied PEEP worsens trapping. In COPD, modest applied PEEP can splint airways open — but it's not the *most effective* lever." },
-        { label: 'Lower the respiratory rate.', is_correct: true, explanation: 'Book Ch. 2. Slower rate = longer expiratory time = air drains.' },
+        { label: 'Lower the respiratory rate.', is_correct: true, explanation: 'TVB Ch. 2. Slower rate = longer expiratory time = air drains.' },
         { label: 'Increase the FiO2.', is_correct: false, explanation: "Doesn't change mechanics." },
         { label: 'Switch to PCV.', is_correct: false, explanation: 'Risky in severe bronchospasm — Pplat can fall silently.' },
       ],
@@ -635,7 +635,7 @@ export const M6: ModuleConfig = {
         { label: 'Increase the rate.', is_correct: false },
       ],
       answer:
-        'Book Ch. 15. Trapped air is compressing his venous return. Disconnect from the vent, let him fully exhale, then resume with a lower rate. Fluids treat the symptom, not the cause. Raising PEEP or rate worsens trapping.',
+        'TVB Ch. 15. Trapped air is compressing his venous return. Disconnect from the vent, let him fully exhale, then resume with a lower rate. Fluids treat the symptom, not the cause. Raising PEEP or rate worsens trapping.',
     },
   ],
 
@@ -651,7 +651,7 @@ export const M6: ModuleConfig = {
       prompt: 'Auto-PEEP is most reliably measured by:',
       options: [
         { label: 'Looking at the PIP trend.', is_correct: false, explanation: "PIP doesn't reveal end-expiratory pressure." },
-        { label: 'An expiratory hold — the measured end-expiratory pressure minus set PEEP.', is_correct: true, explanation: 'Book Ch. 15.' },
+        { label: 'An expiratory hold — the measured end-expiratory pressure minus set PEEP.', is_correct: true, explanation: 'Closing the expiratory valve at end-expiration lets the pressure in the circuit equilibrate with the trapped alveolar gas. The number you read is total PEEP; subtract the set PEEP and the remainder is the auto-PEEP. It is the only direct measurement at the bedside. Further reading: TVB Ch. 15.' },
         { label: 'The PaCO2.', is_correct: false, explanation: "CO2 may rise but isn't the measurement." },
         { label: 'The set PEEP minus 1.', is_correct: false, explanation: 'No relationship.' },
       ],
@@ -661,7 +661,7 @@ export const M6: ModuleConfig = {
       prompt: 'In a patient with severe asthma and dynamic hyperinflation, the application of PEEP usually:',
       options: [
         { label: 'Helps — splints airways.', is_correct: false, explanation: "That's COPD." },
-        { label: 'Worsens trapping — the obstruction in asthma is fixed, so adding PEEP just adds pressure.', is_correct: true, explanation: 'Book Ch. 1, Ch. 15.' },
+        { label: 'Worsens trapping — the obstruction in asthma is fixed, so adding PEEP just adds pressure.', is_correct: true, explanation: 'The COPD "waterfall" benefit depends on collapsible airways: external PEEP props them open so trapped gas can escape. Asthmatic obstruction is intraluminal and largely fixed, so there is no collapse to splint — added PEEP simply stacks on top of the trapped pressure and worsens hyperinflation. The fix in asthma is a longer expiratory time, not PEEP. Further reading: TVB Ch. 15.' },
         { label: 'Has no effect.', is_correct: false, explanation: 'Wrong.' },
         { label: 'Lowers the PaCO2.', is_correct: false, explanation: 'Wrong.' },
       ],
@@ -681,7 +681,7 @@ export const M6: ModuleConfig = {
       prompt: 'In a hypotensive vented COPD patient with measured auto-PEEP of 14 cmH2O, the most important *first* action is:',
       options: [
         { label: 'Norepinephrine', is_correct: false, explanation: 'Treats the BP, not the cause.' },
-        { label: 'Disconnect from the vent, let the patient exhale for 10–15 seconds, then resume with a slower rate', is_correct: true, explanation: 'Book Ch. 15. Trapped air compresses venous return.' },
+        { label: 'Disconnect from the vent, let the patient exhale for 10–15 seconds, then resume with a slower rate', is_correct: true, explanation: 'TVB Ch. 15. Trapped air compresses venous return.' },
         { label: 'Lower the PEEP setting from 5 to 0', is_correct: false, explanation: "Wrong-ish. Modest applied PEEP doesn't drive the trapping in COPD; the rate does. Disconnect first." },
         { label: 'Increase FiO2 to 1.0', is_correct: false, explanation: "Doesn't address mechanics." },
       ],
@@ -691,7 +691,7 @@ export const M6: ModuleConfig = {
       prompt: 'Of the four levers to relieve dynamic hyperinflation, the most effective is:',
       options: [
         { label: 'Higher PEEP', is_correct: false, explanation: 'Counterintuitive — not the most effective, and harmful in asthma.' },
-        { label: 'Lower rate', is_correct: true, explanation: 'Book Ch. 2. Longer Te is the dominant fix.' },
+        { label: 'Lower rate', is_correct: true, explanation: 'TVB Ch. 2. Longer Te is the dominant fix.' },
         { label: 'Higher Vt', is_correct: false, explanation: 'Higher Vt extends Ti and worsens trapping.' },
         { label: 'Higher FiO2', is_correct: false, explanation: "Doesn't change mechanics." },
       ],

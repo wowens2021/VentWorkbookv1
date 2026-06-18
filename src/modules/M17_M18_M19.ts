@@ -48,7 +48,7 @@ export const M17: ModuleConfig = {
       options: [
         { label: 'FiO2 ≤50%', is_correct: false, explanation: 'A true criterion.' },
         { label: 'PEEP ≤8', is_correct: false, explanation: 'A true criterion.' },
-        { label: 'P/F ratio >300', is_correct: true, explanation: 'Not on Owens\'s pre-SBT list. That\'s an ARDS-resolution criterion. Book Ch. 22.' },
+        { label: 'P/F ratio >300', is_correct: true, explanation: 'Not on Owens\'s pre-SBT list. That\'s an ARDS-resolution criterion. TVB Ch. 22.' },
         { label: 'Hemodynamically stable, off pressors or low-dose', is_correct: false, explanation: 'A true criterion.' },
       ],
     },
@@ -57,7 +57,7 @@ export const M17: ModuleConfig = {
       prompt: 'An SBT on the vent is typically done with:',
       options: [
         { label: 'T-piece, no PEEP, no PS', is_correct: false, explanation: 'A valid alternative. Not the default.' },
-        { label: 'CPAP 5, PS 7, 30–60 min', is_correct: true, explanation: 'The standard SBT setup. Book Ch. 22.' },
+        { label: 'CPAP 5, PS 7, 30–60 min', is_correct: true, explanation: 'The standard SBT setup. TVB Ch. 22.' },
         { label: 'A/C with low Vt', is_correct: false, explanation: 'Not an SBT — that\'s controlled ventilation.' },
         { label: 'PRVC', is_correct: false, explanation: 'Not an SBT mode.' },
       ],
@@ -141,7 +141,7 @@ export const M17: ModuleConfig = {
           question: 'RSBI 69, comfortable, no abort criteria triggered. The next step is:',
           options: [
             { label: 'Repeat the SBT in 12 hours', is_correct: false, explanation: 'Repeating a passed SBT delays liberation without adding information.' },
-            { label: 'Extubate', is_correct: true, explanation: 'SBT pre-screen passed, RSBI well below threshold, no abort criteria. The bedside test agrees. Book Ch. 22.' },
+            { label: 'Extubate', is_correct: true, explanation: 'SBT pre-screen passed, RSBI well below threshold, no abort criteria. The bedside test agrees. TVB Ch. 22.' },
             { label: 'Reduce PS by 2 and try again', is_correct: false, explanation: 'The pressure-support ladder is the older gradual approach — not how Owens weans.' },
             { label: 'Get an ABG first', is_correct: false, explanation: 'Common practice. Not required by Owens before extubation.' },
           ],
@@ -216,7 +216,7 @@ export const M17: ModuleConfig = {
         { label: '<200', is_correct: false },
         { label: '<500', is_correct: false },
       ],
-      explanation: 'The original Yang–Tobin number. Book Ch. 22.',
+      explanation: 'The original Yang–Tobin number. TVB Ch. 22.',
     },
     {
       id: 'M17-Q2',
@@ -227,7 +227,7 @@ export const M17: ModuleConfig = {
         { label: '<80 is the original Yang–Tobin threshold', is_correct: false },
         { label: '<80 is the consensus 2020 guideline', is_correct: false },
       ],
-      explanation: 'The PS adds support — a stricter RSBI controls for that. Book Ch. 22.',
+      explanation: 'The PS adds support — a stricter RSBI controls for that. TVB Ch. 22.',
     },
     {
       id: 'M17-Q3',
@@ -238,7 +238,7 @@ export const M17: ModuleConfig = {
         { label: 'RR of 18', is_correct: false },
         { label: 'SpO2 of 94%', is_correct: false },
       ],
-      explanation: 'Tachycardia plus accessory muscle use is the patient telling you he\'s working too hard. Book Ch. 22.',
+      explanation: 'Tachycardia plus accessory muscle use is the patient telling you he\'s working too hard. TVB Ch. 22.',
     },
     {
       id: 'M17-Q4',
@@ -249,18 +249,18 @@ export const M17: ModuleConfig = {
         { label: 'Daily SBT is faster — shorter time on the vent and shorter ICU stay', is_correct: true },
         { label: 'Gradual is associated with better long-term function', is_correct: false },
       ],
-      explanation: 'Multiple RCTs. The daily check, not the slow taper, is what gets patients off the vent. Book Ch. 22.',
+      explanation: 'Multiple RCTs. The daily check, not the slow taper, is what gets patients off the vent. TVB Ch. 22.',
     },
     {
       id: 'M17-Q5',
       prompt: 'A patient passes the SBT pre-criteria, completes a 30-min SBT, with RSBI 70, comfortable, no accessory muscle use. The correct next step is:',
       options: [
         { label: 'Repeat SBT in 12 hours', is_correct: false, explanation: 'No reason to delay — the SBT result is in front of you.' },
-        { label: 'Extubate', is_correct: true, explanation: 'Pre-screen passed, trial passed, patient looks good. Extubate. Book Ch. 22.' },
+        { label: 'Extubate', is_correct: true, explanation: 'Pre-screen passed, trial passed, patient looks good. Extubate. TVB Ch. 22.' },
         { label: 'Reduce PS by 2 and try again', is_correct: false, explanation: 'Trial just passed — there is no second trial to run.' },
         { label: 'Get an ABG first', is_correct: false, explanation: 'Common practice but not required by Owens. The decision is primarily clinical; ABG is supportive, not gating.' },
       ],
-      explanation: 'Pre-screen passed, trial passed, patient looks good — extubate. Book Ch. 22.',
+      explanation: 'Pre-screen passed, trial passed, patient looks good — extubate. TVB Ch. 22.',
     },
   ],
 
@@ -340,7 +340,7 @@ export const M18: ModuleConfig = {
       id: 'M18-P1',
       prompt: 'The three pillars of extubation readiness beyond the SBT are:',
       options: [
-        { label: 'Reason resolved, gas exchange adequate, cardiovascular reserve adequate', is_correct: true, explanation: 'Owens\'s framework. All three independently. Book Ch. 22.' },
+        { label: 'Reason resolved, gas exchange adequate, cardiovascular reserve adequate', is_correct: true, explanation: 'Owens\'s framework. All three independently. TVB Ch. 22.' },
         { label: 'Reason resolved, mental status normal, GCS 15', is_correct: false, explanation: 'Mental status isn\'t strictly required — see the brain-injury data.' },
         { label: 'RSBI <80, PaO2 >100, normal Hb', is_correct: false, explanation: 'Mixing isolated numbers, not the framework.' },
         { label: 'Awake, alert, oriented, ambulating', is_correct: false, explanation: 'Ambulation isn\'t a vent-liberation criterion.' },
@@ -351,7 +351,7 @@ export const M18: ModuleConfig = {
       prompt: 'A cuff leak of <110 mL indicates:',
       options: [
         { label: 'The endotracheal tube cuff is overinflated', is_correct: false, explanation: 'Not the meaning of the test.' },
-        { label: 'Significant upper airway edema; high risk for post-extubation stridor', is_correct: true, explanation: 'The classic positive screen. Steroids 24 hours pre-extubation. Book Ch. 23.' },
+        { label: 'Significant upper airway edema; high risk for post-extubation stridor', is_correct: true, explanation: 'The classic positive screen. Steroids 24 hours pre-extubation. TVB Ch. 23.' },
         { label: 'The endotracheal tube is the wrong size', is_correct: false, explanation: 'Not what the test is for.' },
         { label: 'A normal finding', is_correct: false, explanation: 'It\'s a positive screen — concerning, not normal.' },
       ],
@@ -360,7 +360,7 @@ export const M18: ModuleConfig = {
       id: 'M18-P3',
       prompt: 'NIPPV after extubation in a high-risk patient (CHF, COPD) can:',
       options: [
-        { label: 'Prevent re-intubation in the first 48 hours', is_correct: true, explanation: 'Established evidence in the high-risk subgroup. Book Ch. 22.' },
+        { label: 'Prevent re-intubation in the first 48 hours', is_correct: true, explanation: 'Established evidence in the high-risk subgroup. TVB Ch. 22.' },
         { label: 'Substitute for a failed SBT', is_correct: false, explanation: 'A failed SBT means the patient isn\'t ready. NIPPV doesn\'t fix that.' },
         { label: 'Treat upper airway obstruction', is_correct: false, explanation: 'NIPPV pushes through obstruction; it doesn\'t open it.' },
         { label: 'Replace endotracheal intubation entirely in respiratory failure', is_correct: false, explanation: 'There are limits.' },
@@ -396,7 +396,7 @@ export const M18: ModuleConfig = {
           // learner trained on a different default knows what's being asked.
           question: '62 yo male, intubated 7 days for pneumonia. SBT passed. Cuff leak test shows 80 mL. Per Owens\'s framework, the best decision is:',
           options: [
-            { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: true, explanation: 'Cuff leak <110 mL is a positive screen for upper-airway edema. Steroids 24 hours, then recheck. Book Ch. 23.' },
+            { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: true, explanation: 'Cuff leak <110 mL is a positive screen for upper-airway edema. Steroids 24 hours, then recheck. TVB Ch. 23.' },
             { label: 'Extubate with NIPPV standby', is_correct: false, explanation: 'NIPPV doesn\'t treat upper-airway obstruction — it pushes air past obstruction, not through it.' },
             { label: 'Extubate per brain-injury data', is_correct: false, explanation: 'Wrong patient context — this is an upper-airway scenario, not a brain-injury one.' },
             { label: 'Back to A/C — not ready', is_correct: false, explanation: 'Wrong — the patient passed the SBT. The problem isn\'t readiness; it\'s post-extubation stridor risk.' },
@@ -469,7 +469,7 @@ export const M18: ModuleConfig = {
             { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: false, explanation: 'Cuff leak isn\'t the problem — pre-screen and SBT both fail.' },
             { label: 'Extubate with NIPPV standby', is_correct: false, explanation: 'Patient hasn\'t passed pre-screen or SBT. NIPPV after a failed SBT is rescue, not standby.' },
             { label: 'Extubate per brain-injury data', is_correct: false, explanation: 'Wrong patient context — this is a respiratory pre-screen failure.' },
-            { label: 'Back to A/C — not ready', is_correct: true, explanation: 'Pre-criteria fail (PEEP 10, FiO2 0.50), high RSBI 130. Not a candidate for an SBT today. Book Ch. 22.' },
+            { label: 'Back to A/C — not ready', is_correct: true, explanation: 'Pre-criteria fail (PEEP 10, FiO2 0.50), high RSBI 130. Not a candidate for an SBT today. TVB Ch. 22.' },
           ],
           max_attempts: 2,
         },
@@ -539,7 +539,7 @@ export const M18: ModuleConfig = {
         { label: 'Approximately doubled mortality', is_correct: true },
         { label: 'Lower ICU length of stay', is_correct: false },
       ],
-      explanation: 'Failed extubation is a strong independent predictor of worse outcomes. The bar is high. Book Ch. 22.',
+      explanation: 'Failed extubation is a strong independent predictor of worse outcomes. The bar is high. TVB Ch. 22.',
     },
     {
       id: 'M18-Q2',
@@ -550,7 +550,7 @@ export const M18: ModuleConfig = {
         { label: 'Extubate to high-flow nasal cannula', is_correct: false },
         { label: 'Tracheostomy', is_correct: false },
       ],
-      explanation: 'NIPPV doesn\'t treat upper-airway obstruction. Steroids 24 hours, then recheck. Book Ch. 23.',
+      explanation: 'NIPPV doesn\'t treat upper-airway obstruction. Steroids 24 hours, then recheck. TVB Ch. 23.',
     },
     {
       id: 'M18-Q3',
@@ -572,7 +572,7 @@ export const M18: ModuleConfig = {
         { label: 'Tracheostomy at day 7', is_correct: false },
         { label: 'Continue intubation indefinitely', is_correct: false },
       ],
-      explanation: 'GCS waiting in this population delays liberation without benefit. Book Ch. 22.',
+      explanation: 'GCS waiting in this population delays liberation without benefit. TVB Ch. 22.',
     },
     {
       id: 'M18-Q5',
@@ -665,7 +665,7 @@ export const M19: ModuleConfig = {
       prompt: 'The "D" in DOPES is:',
       options: [
         { label: 'Death', is_correct: false, explanation: 'Not in any textbook.' },
-        { label: 'Displacement of the endotracheal tube', is_correct: true, explanation: 'Esophageal, supraglottic, or mainstem. Book Ch. 14.' },
+        { label: 'Displacement of the endotracheal tube', is_correct: true, explanation: 'Esophageal, supraglottic, or mainstem. TVB Ch. 14.' },
         { label: 'Dyssynchrony', is_correct: false, explanation: 'A different bedside problem.' },
         { label: 'Diuresis', is_correct: false, explanation: 'Not in the mnemonic.' },
       ],
@@ -675,7 +675,7 @@ export const M19: ModuleConfig = {
       prompt: 'High PIP, normal plateau pressure indicates:',
       options: [
         { label: 'Worsening compliance', is_correct: false, explanation: 'Compliance would push plat up too.' },
-        { label: 'Increased airway resistance — mucus, kink, bronchospasm', is_correct: true, explanation: 'The PIP-plat gap is the resistance signal. Book Ch. 2.' },
+        { label: 'Increased airway resistance — mucus, kink, bronchospasm', is_correct: true, explanation: 'The PIP-plat gap is the resistance signal. TVB Ch. 2.' },
         { label: 'Pneumothorax', is_correct: false, explanation: 'Pneumothorax raises plat as well.' },
         { label: 'Pulmonary edema', is_correct: false, explanation: 'Compliance issue — plat would rise.' },
       ],
@@ -685,7 +685,7 @@ export const M19: ModuleConfig = {
       prompt: 'The first step when a vented patient decompensates is:',
       options: [
         { label: 'Increase FiO2 to 1.0', is_correct: false, explanation: 'A reflex, not a diagnostic step.' },
-        { label: 'Bag the patient off the ventilator', is_correct: true, explanation: 'Distinguishes vent / circuit problem from patient problem in seconds. Book Ch. 14.' },
+        { label: 'Bag the patient off the ventilator', is_correct: true, explanation: 'Distinguishes vent / circuit problem from patient problem in seconds. TVB Ch. 14.' },
         { label: 'Order a stat CXR', is_correct: false, explanation: 'Useful eventually. Not first.' },
         { label: 'Push sedation', is_correct: false, explanation: 'Sedation buries the diagnostic information.' },
       ],
@@ -884,7 +884,7 @@ export const M19: ModuleConfig = {
         { label: 'Stacked breaths', is_correct: false },
         { label: 'PEEP set too high', is_correct: false },
       ],
-      explanation: 'Lost ETCO2 + no chest rise = the tube is out (or in the esophagus). Capnography is the gold standard for tracheal placement. Book Ch. 7, Ch. 14.',
+      explanation: 'Lost ETCO2 + no chest rise = the tube is out (or in the esophagus). Capnography is the gold standard for tracheal placement. TVB Ch. 7, Ch. 14.',
     },
     {
       id: 'M19-Q2',
@@ -895,7 +895,7 @@ export const M19: ModuleConfig = {
         { label: 'The ventilator circuit', is_correct: false },
         { label: 'The PEEP setting', is_correct: false },
       ],
-      explanation: 'PIP rises with resistance; plat reflects compliance. Widening gap = resistance signal. Book Ch. 2.',
+      explanation: 'PIP rises with resistance; plat reflects compliance. Widening gap = resistance signal. TVB Ch. 2.',
     },
     {
       id: 'M19-Q3',
@@ -906,7 +906,7 @@ export const M19: ModuleConfig = {
         { label: 'Hyperventilation', is_correct: false },
         { label: 'Pneumothorax', is_correct: false },
       ],
-      explanation: 'Uneven alveolar emptying. The slope of phase III steepens. Book Ch. 7, Ch. 14.',
+      explanation: 'Uneven alveolar emptying. The slope of phase III steepens. TVB Ch. 7, Ch. 14.',
     },
     {
       id: 'M19-Q4',
@@ -917,7 +917,7 @@ export const M19: ModuleConfig = {
         { label: 'Raise PEEP', is_correct: false },
         { label: 'Push sedation', is_correct: false },
       ],
-      explanation: 'Trapping is compressing venous return. Letting the chest fall is the immediate fix. Then sort out rate / Te. Book Ch. 14, Ch. 15.',
+      explanation: 'Trapping is compressing venous return. Letting the chest fall is the immediate fix. Then sort out rate / Te. TVB Ch. 14, Ch. 15.',
     },
     {
       id: 'M19-Q5',
@@ -928,7 +928,7 @@ export const M19: ModuleConfig = {
         { label: 'Increase FiO2 to 1.0', is_correct: false },
         { label: 'Push more sedation', is_correct: false },
       ],
-      explanation: 'Time-critical. The X-ray confirms after. Book Ch. 14.',
+      explanation: 'Time-critical. The X-ray confirms after. TVB Ch. 14.',
     },
   ],
 

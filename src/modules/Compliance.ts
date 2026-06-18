@@ -78,35 +78,42 @@ export const Compliance: ModuleConfig = {
     visible_waveforms: ['pressure_time', 'flow_time'],
   },
 
+  // Step-by-step flow so the learner SEES the change before any
+  // question. Previously the question fired the instant compliance
+  // crossed the threshold — before the waveform could be read. Now:
+  // (1) drop compliance and watch both pressures rise, (2) press INSP
+  // HOLD to freeze the breath and read the plateau, and only then does
+  // the question appear (riding on the hold step, so the plateau is on
+  // screen). present_one_at_a_time gives the "Next →" beat between the
+  // knob change and the hold.
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
     reset_between: false,
+    present_one_at_a_time: true,
+    observations: [
+      "Compliance is down, and **both** pressures climbed — PIP and the plateau rose together. Watch the trace settle, then continue. Next you'll freeze the breath with an inspiratory hold to confirm the plateau.",
+      "There's the held plateau. Notice the gap between PIP and Pplat barely changed — both numbers moved up by about the same amount. That parallel rise with a stable gap is the compliance signature. (Further reading: TVB Ch. 2.)",
+    ],
     children: [
+      // Step 1 — drop compliance into the ARDS range. No question yet.
       {
         kind: 'manipulation',
         control: 'compliance',
         condition: { type: 'delta_pct', direction: 'decrease', min_pct: 30 },
-        require_acknowledgment: {
-          question: 'What happened to peak pressure and plateau pressure?',
-          options: [
-            { label: 'Both rose together', is_correct: true, explanation: 'Parallel-rise pattern — the compliance signature in volume control.' },
-            { label: 'Only peak rose', is_correct: false, explanation: 'Peak-only is the resistance pattern, not compliance.' },
-            { label: 'Only plateau rose', is_correct: false, explanation: 'Plateau cannot rise without Ppeak rising too (Ppeak ≥ Pplat always).' },
-            { label: 'Both fell', is_correct: false, explanation: 'Lower compliance needs more pressure, not less.' },
-          ],
-        },
       },
+      // Step 2 — press INSP HOLD; the question rides on the hold so the
+      // plateau is already on screen when it appears.
       {
         kind: 'manipulation',
-        control: 'compliance',
-        condition: { type: 'delta_pct', direction: 'decrease', min_pct: 30 },
+        control: 'inspiratory_pause',
+        condition: { type: 'any_change' },
         require_acknowledgment: {
-          question: 'What happened to the peak-plateau gap?',
+          question: 'With the breath held, you can read both PIP and the plateau. What happened to the peak-plateau gap when compliance dropped?',
           options: [
-            { label: 'Stayed roughly the same', is_correct: true, explanation: 'The gap reflects resistance, not compliance — resistance was unchanged, so the gap stayed.' },
-            { label: 'Widened significantly', is_correct: false, explanation: 'A widening gap is the resistance signature.' },
-            { label: 'Narrowed significantly', is_correct: false, explanation: 'Compliance does not change the resistive contribution; the gap is stable.' },
+            { label: 'It stayed about the same — PIP and plateau rose together', is_correct: true, explanation: 'Right. Compliance changes the elastic term (Vt / C), which lifts the plateau — and PIP rides up with it by the same amount. The gap (PIP − Pplat) is the resistive term, which compliance does not touch. Parallel rise, stable gap = the compliance signature. Further reading: TVB Ch. 2.' },
+            { label: 'It widened significantly', is_correct: false, explanation: 'A widening gap means the resistive term grew — that is the resistance signature, not compliance. Resistance was unchanged here, so the gap held steady.' },
+            { label: 'It narrowed significantly', is_correct: false, explanation: 'Compliance does not change the resistive contribution, so the gap cannot narrow. Both pressures rose together and the gap was preserved.' },
           ],
         },
       },
@@ -137,9 +144,9 @@ export const Compliance: ModuleConfig = {
   ],
 
   hint_ladder: {
-    tier1: 'Try lowering the compliance slider. Watch the pressure waveform.',
-    tier2: 'When you lower compliance, both Ppeak and Pplat should move. Pay attention to whether they move together or apart.',
-    tier3: { hint_text: 'Show me — demonstrates a compliance reduction, then resets.', demonstration: { control: 'compliance', target_value: 25 } },
+    tier1: 'Step 1: lower the compliance knob into the ARDS range (≤ 28). Watch both pressures rise. Then click Next.',
+    tier2: 'Step 2: press the INSP HOLD button at the top of the controls. That freezes the breath and shows the plateau — then the question appears.',
+    tier3: { hint_text: 'Show me — drops compliance to 25 so you can watch both pressures climb. You still press INSP HOLD to read the plateau.', demonstration: { control: 'compliance', target_value: 25 } },
   },
 
   summative_quiz: [
@@ -216,11 +223,11 @@ export const Compliance: ModuleConfig = {
   },
 
   user_facing_task:
-    'You are going to show your senior the compliance signature on the pressure waveform. Reduce the compliance by at least 30% and then answer what you observed.',
+    'Show the compliance signature on the pressure waveform, one step at a time. First drop the compliance knob into the ARDS range and watch both pressures rise. Then press INSP HOLD to read the plateau. The question appears once the plateau is on screen.',
   success_criteria_display: [
-    'Reduce compliance by at least 30% from baseline.',
-    'Identify what happened to peak pressure and plateau pressure.',
-    'Identify what happened to the peak-plateau gap.',
+    'Drop compliance into the ARDS range (≥ 30% reduction) and watch both pressures rise.',
+    'Press INSP HOLD to freeze the breath and read the plateau.',
+    'Answer: what happened to the peak-plateau gap?',
   ],
   task_framing_style: 'A',
 
