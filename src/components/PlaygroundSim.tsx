@@ -1081,6 +1081,35 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     harness?.emit({ type: 'control_changed', control: key as ControlName, old_value: old, new_value: newNum, timestamp: Date.now() });
   };
 
+  // "Show Me" drive channel — applies a control value to the real sim
+  // state so the demonstrated change is actually visible on the
+  // waveform (and a gated step advances), instead of only emitting a
+  // tracker event. Value controls route through the same handlers the
+  // knobs use (which setState + emit control_changed); the hold
+  // pseudo-controls trigger the maneuver exactly like the INSP/EXP
+  // HOLD buttons do. A latest-value ref keeps the closure fresh while
+  // the subscription is created once.
+  const driveControlRef = useRef<(control: ControlName, value: number) => void>(() => {});
+  driveControlRef.current = (control, value) => {
+    if (control === 'inspiratory_pause') {
+      if (isLocked('inspiratory_pause')) return;
+      pendingInspRef.current = true;
+      harness?.emit({ type: 'control_changed', control: 'inspiratory_pause' as any, old_value: 0, new_value: 1, timestamp: Date.now() });
+    } else if (control === 'expiratory_pause') {
+      if (isLocked('expiratory_pause')) return;
+      pendingExpRef.current = true;
+      harness?.emit({ type: 'control_changed', control: 'expiratory_pause' as any, old_value: 0, new_value: 1, timestamp: Date.now() });
+    } else if (control === 'compliance' || control === 'resistance' || control === 'spontaneousRate') {
+      handlePatientChange(control, value);
+    } else {
+      handleSettingChange(control, value);
+    }
+  };
+  useEffect(() => {
+    if (!harness) return;
+    return harness.onDriveControl((c, v) => driveControlRef.current(c, v));
+  }, [harness]);
+
   const handleHeightInput = (val: string) => {
     const n = parseFloat(val);
     if (isNaN(n)) return;

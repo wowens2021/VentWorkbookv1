@@ -111,6 +111,9 @@ export const Resistance: ModuleConfig = {
         // defined baseline, and inspiratory_pause has none. An absolute
         // >= 1 fires reliably. (Same fix applied to Compliance.ts.)
         condition: { type: 'absolute', operator: '>=', value: 1 },
+        // Per-step Show Me: performs the inspiratory hold rather than
+        // re-raising resistance (the module-level demo).
+        tier3_demonstration: { control: 'inspiratory_pause', target_value: 1, hint_text: 'Show me — performs the inspiratory hold so you can read the plateau.' },
         require_acknowledgment: {
           question: 'With the breath held, the trace dropped from PIP to the plateau. What did that reveal about the peak-plateau gap?',
           options: [

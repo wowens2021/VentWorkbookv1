@@ -118,6 +118,23 @@ export class ScenarioHarness {
     this.subscribers.forEach(s => s(ev));
   }
 
+  // ── Drive-control channel ──
+  // Lets the shell (specifically the "Show Me" hint) actually move a
+  // control on the sim, rather than only emitting a tracker event. The
+  // PlaygroundSim subscribes via `onDriveControl` and applies the value
+  // to its real settings/patient state (and, for the hold pseudo-
+  // controls, triggers the maneuver). Applying the value is what makes
+  // the demonstrated change visible on the waveform and what advances a
+  // gated step.
+  private driveListeners: ((control: ControlName, value: number) => void)[] = [];
+  driveControl(control: ControlName, value: number) {
+    this.driveListeners.forEach(l => l(control, value));
+  }
+  onDriveControl(fn: (control: ControlName, value: number) => void): () => void {
+    this.driveListeners.push(fn);
+    return () => { this.driveListeners = this.driveListeners.filter(l => l !== fn); };
+  }
+
   // ── Sim drivers register their snapshot/reset implementations ──
   registerSnapshotProvider(fn: () => any) { this.snapshotProvider = fn; }
   registerResetProvider(fn: () => void) { this.resetProvider = fn; }

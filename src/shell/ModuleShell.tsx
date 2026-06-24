@@ -638,19 +638,16 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
     const demo = stepTier3Demo ?? module.hint_ladder.tier3?.demonstration;
     if (demo) {
       harness.emit({ type: 'demonstration_played', control: demo.control, timestamp: Date.now() });
-      harness.emit({
-        type: 'control_changed',
-        control: demo.control,
-        old_value: harness.baseline_controls[demo.control],
-        new_value: demo.target_value,
-        timestamp: Date.now(),
-      });
-      // Do NOT reset to baseline here. The learner has typically already
-      // produced the demonstrated state on the sim (e.g. dropped
-      // compliance), and resetting would wipe the waveform they need to
-      // observe. Leave the demonstrated state on screen so they can see
-      // the effect; the TaskCard's "Reset to start" button is there if
-      // they want to return to baseline.
+      // Actually DRIVE the control on the sim so the demonstration is
+      // visible: a value control (compliance, Vt, …) lands its new
+      // value on the waveform, and a hold pseudo-control (inspiratory_
+      // pause / expiratory_pause) performs the maneuver. driveControl
+      // routes through PlaygroundSim's own handlers, which emit the
+      // control_changed the tracker needs — so the gated step also
+      // advances. No reset: the demonstrated state stays on screen for
+      // the learner to observe; the TaskCard "Reset to start" button is
+      // there to return to baseline.
+      harness.driveControl(demo.control, demo.target_value);
       return;
     }
 
@@ -800,6 +797,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
               onShowMe={onShowMe}
               onTierTriggered={onTierTriggered}
               suppressed={objectiveSatisfied}
+              tier3HintTextOverride={stepTier3Demo?.hint_text}
             />
           </div>
           <div className="flex-1 overflow-hidden flex flex-col min-h-0">

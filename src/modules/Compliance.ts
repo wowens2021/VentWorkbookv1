@@ -116,6 +116,10 @@ export const Compliance: ModuleConfig = {
         // defined baseline, and inspiratory_pause has none (it's not a
         // persistent setting). An absolute >= 1 fires reliably.
         condition: { type: 'absolute', operator: '>=', value: 1 },
+        // Per-step Show Me: on this step the learner needs to press
+        // INSP HOLD, so the demonstration performs the hold rather than
+        // re-dropping compliance (the module-level demo).
+        tier3_demonstration: { control: 'inspiratory_pause', target_value: 1, hint_text: 'Show me — performs the inspiratory hold so you can read the plateau.' },
         require_acknowledgment: {
           question: 'With the breath held, you can read both PIP and the plateau. What happened to the peak-plateau gap when compliance dropped?',
           options: [

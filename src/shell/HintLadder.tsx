@@ -24,9 +24,16 @@ interface Props {
   onTierTriggered?: (tier: 1 | 2 | 3) => void;
   /** When true, the ladder is fully suppressed. */
   suppressed?: boolean;
+  /**
+   * Overrides the tier-3 hint text for the active step. A
+   * present_one_at_a_time compound can carry a different Show Me per
+   * step (e.g. "performs the inspiratory hold"), so the tier-3 card
+   * text should match what the Show Me button will actually do.
+   */
+  tier3HintTextOverride?: string;
 }
 
-const HintLadder: React.FC<Props> = ({ hint, idleMs, changesSinceProgress = 0, onShowMe, onTierTriggered, suppressed }) => {
+const HintLadder: React.FC<Props> = ({ hint, idleMs, changesSinceProgress = 0, onShowMe, onTierTriggered, suppressed, tier3HintTextOverride }) => {
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
 
   // Fix 7: looser idle cadence (45/100/180 s). The idle path is meant for
@@ -57,7 +64,7 @@ const HintLadder: React.FC<Props> = ({ hint, idleMs, changesSinceProgress = 0, o
   const message =
     tier === 1 ? hint.tier1 :
     tier === 2 ? hint.tier2 :
-    hint.tier3?.hint_text ?? 'Stuck? Use "Show me" to see the answer played out.';
+    tier3HintTextOverride ?? hint.tier3?.hint_text ?? 'Stuck? Use "Show me" to see the answer played out.';
 
   // "Show me" is always available at tier 3 — either runs a demonstration if
   // one is configured, or simply nudges the learner with an emphatic re-state.
