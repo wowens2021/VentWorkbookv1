@@ -192,6 +192,13 @@ export interface Scenario {
   visible_readouts?: ReadoutName[];
   visible_waveforms?: WaveformName[];
   inline_prompts?: InlinePromptConfig[]; // recognition prompts driven by trigger
+  /**
+   * Suppress the general "Plateau Pressure > 30 cmH2O" safety alarm for
+   * this scenario. The alarm is pedagogically correct in most modules,
+   * but in the Compliance module the whole point is to drop compliance
+   * and watch the plateau climb — the alarm there is just noise.
+   */
+  suppress_pplat_alarm?: true;
 }
 
 // ── Tracker configurations ──

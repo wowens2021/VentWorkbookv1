@@ -106,7 +106,11 @@ export const Resistance: ModuleConfig = {
       {
         kind: 'manipulation',
         control: 'inspiratory_pause',
-        condition: { type: 'any_change' },
+        // The INSP HOLD button emits new_value: 1 on every press.
+        // `any_change` can't fire here because compareCondition needs a
+        // defined baseline, and inspiratory_pause has none. An absolute
+        // >= 1 fires reliably. (Same fix applied to Compliance.ts.)
+        condition: { type: 'absolute', operator: '>=', value: 1 },
         require_acknowledgment: {
           question: 'With the breath held, the trace dropped from PIP to the plateau. What did that reveal about the peak-plateau gap?',
           options: [

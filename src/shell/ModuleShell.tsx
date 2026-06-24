@@ -645,9 +645,12 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
         new_value: demo.target_value,
         timestamp: Date.now(),
       });
-      // Reset immediately — no timer-based delay. The learner sees the
-      // demonstrated value land and the sim return to baseline in one beat.
-      harness.resetToPreset();
+      // Do NOT reset to baseline here. The learner has typically already
+      // produced the demonstrated state on the sim (e.g. dropped
+      // compliance), and resetting would wipe the waveform they need to
+      // observe. Leave the demonstrated state on screen so they can see
+      // the effect; the TaskCard's "Reset to start" button is there if
+      // they want to return to baseline.
       return;
     }
 
@@ -813,13 +816,15 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
               onReset={onResetToStart}
               onContinueToDebrief={advanceFromTryIt}
               onShowHint={() => {
-                // Stuck-button: spike idleMs past the tier-1 threshold AND
-                // bump the HintLadder remount key so any previously-dismissed
-                // tier is cleared. Without the remount, a learner who had
-                // already dismissed tier 1 once would click Stuck and see
-                // nothing — the dismissed set persists in HintLadder's
-                // local state until it unmounts.
-                setLastInteractMs(Date.now() - 46_000);
+                // Stuck-button: spike idleMs past the TIER-3 threshold so
+                // clicking "Stuck?" goes straight to the most useful hint
+                // (Show Me), not just tier 1. Also bump the HintLadder
+                // remount key so any previously-dismissed tier is cleared —
+                // without the remount, a learner who had already dismissed
+                // tier 1 once would click Stuck and see nothing, since the
+                // dismissed set persists in HintLadder's local state until
+                // it unmounts.
+                setLastInteractMs(Date.now() - 200_000);
                 setHintRequestCounter(n => n + 1);
               }}
               progress={childStates.length > 0 ? childStates : undefined}

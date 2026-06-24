@@ -76,6 +76,10 @@ export const Compliance: ModuleConfig = {
     unlocked_controls: ['compliance', 'inspiratory_pause'],
     visible_readouts: ['pip', 'plat', 'drivingPressure'],
     visible_waveforms: ['pressure_time', 'flow_time'],
+    // The whole point of this module is that dropping compliance raises
+    // the plateau. The general "Pplat > 30" safety alarm is correct
+    // elsewhere but actively confusing here, so suppress it.
+    suppress_pplat_alarm: true,
   },
 
   // Step-by-step flow so the learner SEES the change before any
@@ -107,7 +111,11 @@ export const Compliance: ModuleConfig = {
       {
         kind: 'manipulation',
         control: 'inspiratory_pause',
-        condition: { type: 'any_change' },
+        // The INSP HOLD button emits new_value: 1 on every press.
+        // `any_change` can't fire here because compareCondition needs a
+        // defined baseline, and inspiratory_pause has none (it's not a
+        // persistent setting). An absolute >= 1 fires reliably.
+        condition: { type: 'absolute', operator: '>=', value: 1 },
         require_acknowledgment: {
           question: 'With the breath held, you can read both PIP and the plateau. What happened to the peak-plateau gap when compliance dropped?',
           options: [

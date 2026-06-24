@@ -981,6 +981,10 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
 
   useEffect(() => {
     if (isFrozen || !harness) return;
+    // Scenarios can opt out of the Pplat alarm (e.g. the Compliance
+    // module, whose entire lesson is that dropping compliance raises
+    // the plateau — the alarm there is just noise).
+    if (harness.scenario?.suppress_pplat_alarm === true) return;
     const id = 'sim-pplat-high';
     if (metrics.plat > 30 && metrics.plat > 0) {
       harness.notify({
