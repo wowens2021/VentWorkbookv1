@@ -18,7 +18,7 @@ export const M1: ModuleConfig = {
   briefing: {
     tagline: 'Name the indication. Read the display.',
     overview:
-      "Two foundations layered into one module. **Why** a patient gets a tube — the four primary indications for mechanical ventilation — and **how** to read what the vent is showing you once they're on it. By the end you'll be able to look at any ventilator display and name what every number means, separate what you ordered from what the patient is doing, and tell which indication is in play.",
+      "Two foundations layered into one module. **Why** a patient gets intubated — the four primary indications for mechanical ventilation — and **how** to read what the vent is showing you once they're on it. By the end you'll be able to look at any ventilator display and name what every number means, separate what you ordered from what the patient is doing, and tell which indication is in play.",
     what_youll_do: [
       'Match each ventilator indication to a recognizable clinical picture.',
       'Walk a live ventilator display and click each of the eight bedside terms by name.',
@@ -39,30 +39,30 @@ export const M1: ModuleConfig = {
       prompt:
         'A patient with a severe drug overdose is unconscious but breathing adequately — normal O2 sat and normal blood gas. The most appropriate indication for intubation is:',
       options: [
-        { label: 'Failure of oxygenation', is_correct: false, explanation: 'Normal sat; no oxygenation failure.' },
-        { label: 'Failure of ventilation', is_correct: false, explanation: 'Normal blood gas; CO2 clearance is adequate.' },
-        { label: 'Airway protection', is_correct: true, explanation: 'Unconscious patient cannot protect the airway from aspiration. Intubation is prophylactic.' },
-        { label: 'Decreased work of breathing', is_correct: false, explanation: 'Patient is breathing adequately and is unconscious — no WOB issue.' },
+        { label: 'Failure of oxygenation', is_correct: false, explanation: "The patient's oxygen saturation is normal, so oxygenation failure is not the indication here." },
+        { label: 'Failure of ventilation', is_correct: false, explanation: 'The blood gas is normal, which tells you CO2 clearance is adequate and ventilation is not failing.' },
+        { label: 'Airway protection', is_correct: true, explanation: 'An unconscious patient cannot protect the airway from aspiration, so intubation here is prophylactic.' },
+        { label: 'Decreased work of breathing', is_correct: false, explanation: 'The patient is breathing adequately and is unconscious, so excessive work of breathing is not the problem.' },
       ],
     },
     {
       id: 'M1-P2',
       prompt: "On a ventilator display, you see '450' next to 'Vt.' What does this most likely represent?",
       options: [
-        { label: 'Set inspiratory pressure', is_correct: false, explanation: 'Pinsp is in cmH2O, usually 10–30. 450 is implausible.' },
-        { label: 'Tidal volume in mL', is_correct: true, explanation: 'Vt = tidal volume. Typical adult 350–600 mL; 450 fits.' },
-        { label: 'Minute ventilation in L', is_correct: false, explanation: 'MV is in L/min (typical 6–10). 450 is impossible.' },
-        { label: 'PEEP in cmH2O', is_correct: false, explanation: 'PEEP is typically 5–15 cmH2O.' },
+        { label: 'Set inspiratory pressure', is_correct: false, explanation: 'Inspiratory pressure is measured in cmH2O and usually runs 10–30, so a value of 450 is implausible for it.' },
+        { label: 'Tidal volume in mL', is_correct: true, explanation: 'Vt stands for tidal volume, which is measured in mL and typically runs 350–600 in an adult, so 450 fits.' },
+        { label: 'Minute ventilation in L', is_correct: false, explanation: 'Minute ventilation is measured in L/min and typically runs 6–10, so a value of 450 is impossible for it.' },
+        { label: 'PEEP in cmH2O', is_correct: false, explanation: 'PEEP is measured in cmH2O and is typically 5–15, so it would not read 450.' },
       ],
     },
     {
       id: 'M1-P3',
       prompt: "What is the key difference between 'set rate' and 'measured rate' on the ventilator display?",
       options: [
-        { label: 'Same thing in different units', is_correct: false, explanation: 'Conceptually different values.' },
-        { label: 'Set = operator input; measured = what the patient is actually doing', is_correct: true, explanation: 'Gap = spontaneous breathing activity above the mandatory rate.' },
-        { label: 'Set applies only in VC; measured only in PC', is_correct: false, explanation: 'Both exist in every mode.' },
-        { label: 'Measured = only mandatory breaths', is_correct: false, explanation: 'Measured rate includes all breaths.' },
+        { label: 'Same thing in different units', is_correct: false, explanation: 'Set rate and measured rate are conceptually different values, not the same number expressed in different units.' },
+        { label: 'Set = operator input; measured = what the patient is actually doing', is_correct: true, explanation: 'The set rate is what you ordered, the measured rate is what the patient is actually doing, and the gap between them is the spontaneous breathing activity above the mandatory rate.' },
+        { label: 'Set applies only in VC; measured only in PC', is_correct: false, explanation: 'Both the set rate and the measured rate exist in every mode, not just in volume or pressure control.' },
+        { label: 'Measured = only mandatory breaths', is_correct: false, explanation: 'The measured rate counts all breaths, both mandatory and patient-triggered, not the mandatory ones alone.' },
       ],
     },
   ],
@@ -355,22 +355,24 @@ export const M1: ModuleConfig = {
     },
     {
       id: 'M1-Q4',
-      prompt: 'Ppeak 34, Pplat 22. Which statement is true?',
+      prompt:
+        'The four primary indications for mechanical ventilation are failure of oxygenation, failure of ventilation, airway protection, and excessive work of breathing. Which of the following is NOT, by itself, one of these indications?',
       options: [
-        { label: 'Peak-plateau gap of 12 suggests compliance problem', is_correct: false, explanation: 'Compliance moves peak and plateau together.' },
-        { label: 'Peak-plateau gap of 12 suggests resistance problem', is_correct: true, explanation: 'The gap IS the resistive component. Widening gap = rising resistance.' },
-        { label: 'Pplat > 20 means barotrauma', is_correct: false, explanation: 'ARDS target is Pplat ≤ 30. A Pplat of 22 is safe.' },
-        { label: 'Peak and plateau should be equal in healthy lung', is_correct: false, explanation: 'Normal airways always add some resistive pressure.' },
+        { label: 'An unconscious patient who cannot protect the airway from aspiration', is_correct: false, explanation: 'An inability to protect the airway is the airway-protection indication, so this is one of the four reasons to intubate.' },
+        { label: 'A rising PaCO2 with worsening acidemia', is_correct: false, explanation: 'A rising PaCO2 with acidemia is failure of ventilation, so this is one of the four indications.' },
+        { label: 'A respiratory rate of 32 in an otherwise stable, comfortable patient', is_correct: true, explanation: 'Tachypnea is a sign rather than an indication on its own, and a comfortable patient with adequate gas exchange does not need a tube just because the rate is fast.' },
+        { label: 'A shocked patient spending an unsustainable share of cardiac output on breathing', is_correct: false, explanation: 'A shocked patient whose breathing is consuming cardiac output is intubated for excessive work of breathing, so this is one of the four indications.' },
       ],
     },
     {
       id: 'M1-Q5',
-      prompt: 'Patient intubated for oxygenation failure from pneumonia. Initial strategy should prioritize:',
+      prompt:
+        'On the ventilator display, which of the following is a SET value (an order the clinician enters) rather than a MEASURED value the vent reports back?',
       options: [
-        { label: 'Raising MV to lower CO2', is_correct: false, explanation: 'CO2 was not the indication.' },
-        { label: 'Optimizing FiO2 and PEEP', is_correct: true, explanation: 'Indication drives strategy. Oxygenation failure requires FiO2 and PEEP optimization first.' },
-        { label: 'Reducing WOB only', is_correct: false, explanation: 'Not the primary goal here.' },
-        { label: 'Airway protection is sufficient', is_correct: false, explanation: 'Placing the tube addressed airway, not oxygenation.' },
+        { label: 'Ppeak (peak airway pressure)', is_correct: false, explanation: 'Ppeak is a measured value, because the vent reports whatever peak pressure it generates and it rises and falls with the patient\'s compliance and resistance.' },
+        { label: 'PEEP', is_correct: true, explanation: 'PEEP is a set value, because the clinician dials it in as an order and the ventilator maintains it.' },
+        { label: 'Vte (exhaled tidal volume)', is_correct: false, explanation: 'Vte is a measured value, because the flow sensor reports the volume that actually came back out on exhalation.' },
+        { label: 'Measured respiratory rate', is_correct: false, explanation: 'The measured rate is a reported value that counts every breath the patient takes, not an order the clinician enters.' },
       ],
     },
   ],

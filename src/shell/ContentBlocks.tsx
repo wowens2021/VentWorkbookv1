@@ -14,25 +14,74 @@ const LIVE_COMPONENTS: Record<string, React.FC<any>> = {
   DyssynchronyWaveform,
 };
 
+// Render the inline tokens (**bold**, `code`) of a single text run.
+// Factored out so both <p> and <li> content can reuse it.
+const renderTokens = (text: string, keyBase: string): React.ReactNode[] => {
+  const parts: React.ReactNode[] = [];
+  const re = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+  let m: RegExpExecArray | null;
+  let last = 0;
+  let key = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    const tok = m[0];
+    if (tok.startsWith('**')) {
+      parts.push(<strong key={`${keyBase}-${key++}`} className="text-zinc-900">{tok.slice(2, -2)}</strong>);
+    } else {
+      parts.push(<code key={`${keyBase}-${key++}`} className="bg-zinc-100 px-1.5 py-0.5 rounded text-[14px] font-mono text-zinc-800">{tok.slice(1, -1)}</code>);
+    }
+    last = m.index + tok.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+};
+
 const renderInline = (md: string): React.ReactNode => {
-  // Minimal markdown: **bold**, `code`, and newlines → <p>
+  // Minimal markdown: **bold**, `code`, blank-line paragraphs, and
+  // `- ` unordered lists. A blank-line-delimited block that contains
+  // any `- ` lines is split into <li> items (wrapped in a <ul>);
+  // non-list lines in the same block render as their own <p>. Blocks
+  // with no list lines render as a single <p>, identical to before.
   const paragraphs = md.split(/\n\n+/);
   return paragraphs.map((para, pi) => {
-    const parts: React.ReactNode[] = [];
-    let buf = para;
-    let key = 0;
-    const re = /(\*\*[^*]+\*\*|`[^`]+`)/g;
-    let m: RegExpExecArray | null;
-    let last = 0;
-    while ((m = re.exec(buf)) !== null) {
-      if (m.index > last) parts.push(buf.slice(last, m.index));
-      const tok = m[0];
-      if (tok.startsWith('**')) parts.push(<strong key={key++} className="text-zinc-900">{tok.slice(2, -2)}</strong>);
-      else parts.push(<code key={key++} className="bg-zinc-100 px-1.5 py-0.5 rounded text-[14px] font-mono text-zinc-800">{tok.slice(1, -1)}</code>);
-      last = m.index + tok.length;
+    const lines = para.split('\n');
+    const hasList = lines.some(l => /^\s*-\s+/.test(l));
+    if (!hasList) {
+      return (
+        <p key={pi} className="mb-3 last:mb-0 leading-relaxed text-zinc-700 text-[15px]">
+          {renderTokens(para, `p${pi}`)}
+        </p>
+      );
     }
-    if (last < buf.length) parts.push(buf.slice(last));
-    return <p key={pi} className="mb-3 last:mb-0 leading-relaxed text-zinc-700 text-[15px]">{parts}</p>;
+    const out: React.ReactNode[] = [];
+    let listItems: React.ReactNode[] = [];
+    const flushList = (k: string) => {
+      if (listItems.length > 0) {
+        out.push(
+          <ul key={k} className="list-disc pl-5 mb-3 space-y-1 leading-relaxed text-zinc-700 text-[15px]">
+            {listItems}
+          </ul>,
+        );
+        listItems = [];
+      }
+    };
+    lines.forEach((line, li) => {
+      const item = line.match(/^\s*-\s+(.*)$/);
+      if (item) {
+        listItems.push(
+          <li key={`li-${pi}-${li}`}>{renderTokens(item[1], `li${pi}-${li}`)}</li>,
+        );
+      } else if (line.trim() !== '') {
+        flushList(`ul-${pi}-${li}`);
+        out.push(
+          <p key={`pl-${pi}-${li}`} className="mb-3 leading-relaxed text-zinc-700 text-[15px]">
+            {renderTokens(line, `pl${pi}-${li}`)}
+          </p>,
+        );
+      }
+    });
+    flushList(`ul-${pi}-end`);
+    return <React.Fragment key={pi}>{out}</React.Fragment>;
   });
 };
 
