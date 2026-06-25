@@ -107,9 +107,10 @@ export const M5: ModuleConfig = {
     preset_id: 'M5_ards_shunt',
     preset: {
       mode: 'VCV',
-      // Already on max FiO2 with low PEEP — exactly the desperate
-      // pre-recruitment state the lesson dramatizes. SpO2 starts ~86%.
-      settings: { tidalVolume: 420, respiratoryRate: 18, peep: 5, fiO2: 100, iTime: 1.0 },
+      // ARDS shunt patient starting on a sub-maximal FiO2 of 60% so
+      // Step 1 (raise FiO2 to 100%) is a real action — and the lesson
+      // lands that maxing FiO2 still leaves the SpO2 stuck. SpO2 ~86%.
+      settings: { tidalVolume: 420, respiratoryRate: 18, peep: 5, fiO2: 60, iTime: 1.0 },
       patient: {
         compliance: 30,           // moderate-severe ARDS Crs
         resistance: 12,
@@ -123,93 +124,89 @@ export const M5: ModuleConfig = {
     unlocked_controls: ['fiO2', 'peep'],
     visible_readouts: ['pip', 'plat', 'drivingPressure', 'spo2', 'pao2', 'paco2', 'fio2', 'peep'],
     visible_waveforms: ['pressure_time', 'flow_time'],
+    // Recruiting the lung at high PEEP can push Pplat past 30 here; the
+    // general safety alarm is just noise in this recruitment lesson.
+    suppress_pplat_alarm: true,
   },
 
-  // Three-step strict compound, reset_between true.
-  //   Step 1: manipulation — push FiO2 to ≥ 90% + ack ("why didn't SpO2 move?").
-  //   Step 2: nested compound — outcome (PEEP ≥ 12 AND SpO2 ≥ 92, sustain 4)
-  //           followed by ack ("what just happened in the alveoli?").
-  //   Step 3: recognition — distinguish ASD anatomic shunt from physiologic shunt.
+  // Flat four-step strict compound, reset_between false.
+  //   1: manipulation — raise FiO2 to ≥ 90% + ack ("why didn't SpO2 move?").
+  //   2: outcome — PEEP ≥ 12 AND SpO2 ≥ 92, sustained 4 breaths.
+  //   3: recognition — what PEEP did in the alveoli (M5-recruit-ack).
+  //   4: recognition — anatomic vs physiologic shunt (M5-asd-shunt).
   hidden_objective: {
     kind: 'compound',
     sequence: 'strict',
-    reset_between: true,
+    reset_between: false,
     children: [
       {
         kind: 'manipulation',
         control: 'fiO2',
         condition: { type: 'absolute', operator: '>=', value: 90 },
         require_acknowledgment: {
-          question: "FiO2 is at 100%. SpO2 is 86%. What does this tell you?",
+          question: "FiO2 is now at 100%. SpO2 is still 86%. What does this tell you?",
           options: [
             {
               label: "Shunt — the blood is passing alveoli with no air in them. More FiO2 to the open alveoli doesn't reach the closed ones.",
               is_correct: true,
-              explanation: "FiO2-resistant hypoxemia is the textbook bedside signature of shunt. The collapsed/flooded alveoli can't be reached by the gas the rest of the lung is breathing — so adding more oxygen to that gas doesn't help. The fix is to re-open the alveoli.",
+              explanation: "When maximizing FiO2 fails to correct hypoxemia, it confirms shunt physiology. Shunted blood bypasses ventilated alveoli entirely, so enriching the gas in those alveoli has no effect on the desaturated blood.",
             },
             {
               label: "Hypoventilation — increase the rate.",
               is_correct: false,
-              explanation: "Hypoventilation raises PaCO2 with a normal A-a gradient. Here the PaCO2 is fine and the gradient is enormous. This is a shunt fingerprint, not a ventilation problem.",
+              explanation: "Hypoventilation would cause CO2 to rise and both PaO2 and ETCO2 to change together. The problem here is shunt, not inadequate ventilation.",
             },
             {
               label: "Sensor error — the SpO2 probe is wrong.",
               is_correct: false,
-              explanation: "Always worth considering, but in a patient with bilateral infiltrates on FiO2 1.0, refractory hypoxemia is the expected finding — not artifact. Treat the pattern, not the doubt.",
+              explanation: "In a patient with bilateral infiltrates and known ARDS, refractory hypoxemia on FiO2 1.0 is the expected finding — this is shunt physiology, not artifact.",
             },
             {
               label: "Anemia — needs blood.",
               is_correct: false,
-              explanation: "Anemia lowers oxygen content (CaO2) but not saturation. SpO2 86% means hemoglobin isn't being saturated — a gas-exchange problem, not a hemoglobin problem.",
+              explanation: "Anemia lowers oxygen content but not saturation. SpO2 86% reflects a gas-exchange problem, not a hemoglobin quantity problem.",
             },
           ],
         },
       },
       {
-        kind: 'compound',
-        sequence: 'strict',
-        reset_between: false,
-        children: [
-          {
-            kind: 'outcome',
-            readouts: {
-              peep: { operator: '>=', value: 12 },
-              spo2: { operator: '>=', value: 92 },
+        kind: 'outcome',
+        readouts: {
+          peep: { operator: '>=', value: 12 },
+          spo2: { operator: '>=', value: 92 },
+        },
+        sustain_breaths: 4,
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M5-recruit-ack',
+          trigger: { kind: 'on_load' },
+          question: "What just happened in the alveoli to make SpO2 climb from 86% to >92%?",
+          options: [
+            {
+              label: "PEEP recruited collapsed alveoli — they now participate in gas exchange, so the shunt fraction fell.",
+              is_correct: true,
+              explanation: "Exactly. PEEP at end-expiration holds alveoli open that would otherwise collapse. Recruited alveoli see the high FiO2 the rest of the lung is breathing, and the blood passing them finally oxygenates. The shunt fraction drops. The SpO2 climbs. This is the ARDS recruitment lesson in one sentence.",
             },
-            sustain_breaths: 4,
-          },
-          {
-            kind: 'recognition',
-            prompt: {
-              prompt_id: 'M5-recruit-ack',
-              trigger: { kind: 'on_load' },
-              question: "What just happened in the alveoli to make SpO2 climb from 86% to >92%?",
-              options: [
-                {
-                  label: "PEEP recruited collapsed alveoli — they now participate in gas exchange, so the shunt fraction fell.",
-                  is_correct: true,
-                  explanation: "Exactly. PEEP at end-expiration holds alveoli open that would otherwise collapse. Recruited alveoli see the high FiO2 the rest of the lung is breathing, and the blood passing them finally oxygenates. The shunt fraction drops. The SpO2 climbs. This is the ARDS recruitment lesson in one sentence.",
-                },
-                {
-                  label: "PEEP pushed more oxygen across the alveolar membrane.",
-                  is_correct: false,
-                  explanation: "Diffusion isn't usually the bottleneck in ARDS — collapsed alveoli are. PEEP isn't a diffusion enhancer; it's a recruitment lever. The mechanism is opening, not pushing.",
-                },
-                {
-                  label: "PEEP improved cardiac output.",
-                  is_correct: false,
-                  explanation: "Backwards — PEEP usually *lowers* cardiac output by reducing venous return. The SpO2 climb here is alveolar recruitment, not a hemodynamic effect.",
-                },
-                {
-                  label: "PEEP cleared edema fluid from the alveoli.",
-                  is_correct: false,
-                  explanation: "PEEP redistributes fluid (less in the air spaces, more in the interstitium) but doesn't remove it from the lung. The acute gain on the SpO2 is recruitment, not fluid clearance — diuretics do that, over hours.",
-                },
-              ],
-              max_attempts: 2,
+            {
+              label: "PEEP pushed more oxygen across the alveolar membrane.",
+              is_correct: false,
+              explanation: "Diffusion isn't usually the bottleneck in ARDS — collapsed alveoli are. PEEP isn't a diffusion enhancer; it's a recruitment lever. The mechanism is opening, not pushing.",
             },
-          },
-        ],
+            {
+              label: "PEEP improved cardiac output.",
+              is_correct: false,
+              explanation: "Backwards — PEEP usually *lowers* cardiac output by reducing venous return. The SpO2 climb here is alveolar recruitment, not a hemodynamic effect.",
+            },
+            {
+              label: "PEEP cleared edema fluid from the alveoli.",
+              is_correct: false,
+              explanation: "PEEP redistributes fluid (less in the air spaces, more in the interstitium) but doesn't remove it from the lung. The acute gain on the SpO2 is recruitment, not fluid clearance — diuretics do that, over hours.",
+            },
+          ],
+          max_attempts: 2,
+        },
       },
       {
         kind: 'recognition',
@@ -260,13 +257,7 @@ export const M5: ModuleConfig = {
       kind: 'callout',
       tone: 'info',
       markdown:
-        "**The bedside test for shunt:** put the patient on 100% FiO2. If the SpO2 doesn't climb to near-normal, it's shunt. The mathematical reason: shunted blood mixes back in without ever seeing the alveolar gas, no matter what's in that gas. Adding more oxygen to the alveoli the other blood is breathing doesn't change what the shunted blood looks like.",
-    },
-    {
-      kind: 'figure',
-      src: '/figures/m5_ards_xray.svg',
-      caption:
-        "ARDS chest X-ray pattern: bilateral, diffuse alveolar opacities with air bronchograms. The dark branching airways are visible *through* the white alveoli — the airways still contain air, but the alveoli around them are filled. Heart borders are preserved, which distinguishes this from cardiogenic pulmonary edema. Every white patch represents alveoli that have left the gas-exchange pool, and every drop of blood passing that region is a contribution to the shunt fraction.",
+        "**The bedside test for shunt:** put the patient on 100% FiO2. If the SpO2 doesn't climb to near-normal, it's shunt. Shunted blood bypasses ventilated alveoli entirely and returns to the systemic circulation still desaturated — adding more oxygen to the gas the other alveoli breathe has no effect on the portion that never reached them.",
     },
     {
       kind: 'prose',
@@ -277,7 +268,7 @@ export const M5: ModuleConfig = {
       kind: 'callout',
       tone: 'tip',
       markdown:
-        "**Owens's rule for ARDS hypoxemia:** open the lungs and keep them open. PEEP first, FiO2 second. White on the chest X-ray means alveoli to recruit, not oxygen to add.",
+        "**Open the lungs and keep them open.** PEEP first, FiO2 second. White on the chest X-ray means alveoli to recruit, not oxygen to add.",
     },
     {
       kind: 'prose',
@@ -299,7 +290,7 @@ export const M5: ModuleConfig = {
 
   hint_ladder: {
     intervals_seconds: [25, 75, 150],
-    tier1: "Step 1 is sitting right in front of you — the patient is already on 100% FiO2 and not responding. Just push the FiO2 knob to confirm, then answer the prompt about why nothing happened.",
+    tier1: "Step 1: raise the FiO2 knob to 100% and watch — the SpO2 won't budge. Then answer the prompt about why maxing the oxygen didn't help.",
     tier2: "Step 2: don't be timid with PEEP. From 5, try 12. Then watch SpO2 climb past 92% and hold for four breaths. Step 3 is a single recognition question about anatomic vs physiologic shunt.",
     tier3: {
       hint_text: 'Use "Show me" to push PEEP toward 12 — then let the SpO2 climb on its own.',
@@ -381,11 +372,11 @@ export const M5: ModuleConfig = {
   },
 
   user_facing_task:
-    "Your patient is on FiO2 100% and SpO2 is 86%. He has ARDS — bilateral infiltrates on chest X-ray, refractory hypoxemia despite max FiO2. Step 1: confirm the diagnosis at the bedside — push FiO2 to ≥ 90% and watch what happens (then tell us what the failure means). Step 2: now do the right thing — raise PEEP, recruit the lung, and hold SpO2 ≥ 92% for four breaths. Step 3: a different patient with the same SpO2 has an ASD instead of ARDS — decide whether PEEP will help.",
+    "Your patient has ARDS and is on FiO2 60%. Step 1: raise FiO2 to 100% and confirm that SpO2 does not correct — then answer why. Step 2: raise PEEP to at least 12 and hold SpO2 ≥ 92% for 4 breaths. Step 3: answer two recognition questions about what just happened and when PEEP cannot help.",
   success_criteria_display: [
-    "Push FiO2 to ≥ 90% — answer the prompt about why SpO2 didn't respond.",
-    "Raise PEEP to ≥ 12, hold SpO2 ≥ 92% for 4 breaths — answer the prompt about what just happened in the alveoli.",
-    "Answer the recognition question: does PEEP fix an ASD shunt?",
+    "Raise FiO2 to ≥ 90% and identify why SpO2 didn't respond.",
+    "Raise PEEP to ≥ 12 and hold SpO2 ≥ 92% for 4 consecutive breaths.",
+    "Answer the two recognition questions about shunt physiology and anatomic shunt.",
   ],
   task_framing_style: 'B',
 
