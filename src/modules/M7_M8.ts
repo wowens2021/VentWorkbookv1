@@ -151,6 +151,12 @@ export const M7: ModuleConfig = {
     },
     {
       kind: 'callout',
+      tone: 'tip',
+      markdown:
+        "**Contrast with SIMV.** In SIMV, only the *mandatory* breaths are guaranteed — spontaneous breaths between them get no support unless you add pressure support. A patient breathing fast over a low mandatory rate ends up pulling many tiny, ineffective breaths. Switch that patient to A/C and the problem disappears: every breath, triggered or mandatory, receives the full set volume. That's the move you'll make in the task.",
+    },
+    {
+      kind: 'callout',
       tone: 'info',
       markdown: "In VCV, the tidal volume is your variable. The pressure is whatever it needs to be. That's the deal.",
     },
@@ -175,9 +181,8 @@ export const M7: ModuleConfig = {
     },
     {
       kind: 'predict_mcq',
-      awaits_control: 'tidalVolume',
       predict:
-        "You're at Vt 500. You move it to 430 (6 mL/kg PBW for this patient). What happens to plat and driving pressure?",
+        "Once you're in A/C at Vt 450, you trim it to 430 (6 mL/kg PBW for this patient). What happens to plat and driving pressure?",
       options: [
         { label: 'Both fall by the same amount.', is_correct: true },
         { label: 'Plat falls, but driving pressure stays the same.', is_correct: false, explanation: 'Driving pressure = Pplat − PEEP. PEEP didn\'t change, so DP moves by the same amount as Pplat.' },
@@ -255,22 +260,24 @@ export const M7: ModuleConfig = {
   ],
 
   explore_card: {
-    patient_context: '70 kg male, post-laparotomy for perforated diverticulitis. Septic, intubated for refractory hypoxemia. Compliance 40 (sepsis pattern).',
+    patient_context: '70-inch male, compliance 55. He starts in SIMV with no pressure support: mandatory rate 8, but he is triggering ~18 breaths a minute — so the measured rate sits around 26 and the spontaneous breaths between mandatory ones come in tiny. Your move is to switch him to A/C so every breath is supported.',
     unlocked_controls_description: [
-      { name: 'Vt · 350–600', description: 'the volume you order each breath.' },
-      { name: 'Rate · 8–30', description: 'minimum rate.' },
+      { name: 'Mode', description: 'the mode selector. Switch from SIMV to A/C (the leftmost button) so triggered breaths get the full set volume.' },
+      { name: 'Vt · 350–600', description: 'the volume you order each breath (in A/C, every breath gets it).' },
+      { name: 'Rate · 8–30', description: 'the mandatory (minimum) rate. The patient can trigger above it.' },
       { name: 'PEEP · 0–15', description: 'end-expiratory floor.' },
       { name: 'FiO2 · 30–80%', description: 'inspired oxygen.' },
-      { name: 'I-time · 0.6–1.5', description: 'length of each inspiration.' },
     ],
     readouts_description: [
-      { name: 'Plat, driving pressure, PIP, MVe', description: 'the four numbers to land in the safe zone.' },
+      { name: 'Vte', description: 'delivered volume each breath. In SIMV it swings between full mandatory breaths and tiny spontaneous ones; in A/C it settles at the set Vt.' },
+      { name: 'Measured rate (RR)', description: 'mandatory + triggered breaths. Starts ~26 because the patient is breathing over the rate-8 floor.' },
+      { name: 'MVe', description: 'minute ventilation — total air per minute.' },
     ],
     suggestions: [
-      'Push Vt to 600. Watch plat and driving pressure climb past safety.',
-      'Pull Vt to 350. Plat falls but is the MVe still adequate?',
-      'Raise rate from 14 to 22 at Vt 500. MVe scales linearly.',
-      'Drop PEEP from 5 to 0. Plat falls; driving pressure unchanged.',
+      'In SIMV, watch the Vte readout jump between the full mandatory breath and the tiny spontaneous ones.',
+      'Switch the mode to A/C and watch every breath settle to the full set Vt.',
+      'In A/C, trim Vt toward 6 mL/kg PBW (~440 mL) and watch the delivered Vte follow.',
+      'Raise the rate from 8 to 14 and watch MVe climb.',
     ],
   },
 
@@ -379,44 +386,97 @@ export const M8: ModuleConfig = {
   ],
 
   scenario: {
-    preset_id: 'M8_pcv_baseline',
+    preset_id: 'M8_vcv_to_pcv',
     preset: {
-      // Moderate ARDS, on PCV by clinician choice. PINSP 18 + PEEP 8
-      // gives total peak ~26 (under 30). At C=35, delivered Vt ≈ 430.
-      // PIN: compliance 35 — DO NOT CHANGE.
-      mode: 'PCV',
-      settings: { pInsp: 18, respiratoryRate: 14, peep: 8, fiO2: 50, iTime: 1.0 },
-      patient: { compliance: 35, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
+      // Patient starts in VCV; the task is to switch to PCV and compare
+      // the waveforms (square vs decelerating flow). pInsp is carried in
+      // the preset so it's ready when the learner switches modes.
+      mode: 'VCV',
+      settings: { tidalVolume: 450, respiratoryRate: 14, peep: 5, fiO2: 40, iTime: 1.0, pInsp: 18 },
+      patient: { compliance: 55, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
-    // Per spec §5 v3.1: compliance is locked for Try-It (the task is PINSP
-    // titration, not physiology). The Read-phase predict-observe block
-    // below uses `awaits_control: 'compliance'`, which momentarily allows
-    // a single adjustment for the demonstration without exposing the
-    // slider for the whole task. TODO(M8-temp-unlock): cleaner gating
-    // — `predict_observe.requires_temp_unlock: ['compliance']` — would
-    // be more explicit if/when the engine gains that field.
-    unlocked_controls: ['pInsp', 'respiratoryRate', 'peep', 'fiO2', 'iTime'],
+    // pInsp stays unlocked regardless of the active mode so the learner
+    // can adjust the inspiratory pressure after switching to PCV. mode
+    // is unlocked for the switch itself.
+    unlocked_controls: ['mode', 'pInsp', 'tidalVolume', 'peep', 'fiO2', 'iTime'],
     visible_readouts: ['pip', 'plat', 'drivingPressure', 'vte', 'mve'],
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
+    // The waveform-comparison lesson doesn't need the Pplat>30 safety
+    // alarm; suppress it so it doesn't distract.
+    suppress_pplat_alarm: true,
   },
 
-  // Bug fix — the task framing says "Vt 410–470 mL" but the tracker
-  // previously checked only the upper bound. A learner stuck at Vt 348
-  // saw all three chips green ("vte 348 ≤ 470 ✓") and the counter
-  // "Holding 3 of 5" froze. With the new array-of-conditions form for
-  // ReadoutCondition, Vte gets both bounds and both render as
-  // distinct cards in the per-criterion strip.
+  // Two-step task: (1) switch VCV → PCV and acknowledge the flow-
+  // waveform change (square → decelerating), then (2) recognize that
+  // in PCV the tidal volume is the dependent variable, set by
+  // compliance and the pressure gradient.
   hidden_objective: {
-    kind: 'outcome',
-    readouts: {
-      vte: [
-        { operator: '>=', value: 410 },
-        { operator: '<=', value: 470 },
-      ],
-      pip: { operator: '<=', value: 30 },
-      drivingPressure: { operator: '<=', value: 15 },
-    },
-    sustain_breaths: 5,
+    kind: 'compound',
+    sequence: 'strict',
+    reset_between: false,
+    children: [
+      {
+        kind: 'manipulation',
+        control: 'mode',
+        condition: { type: 'equals', value: 'PCV' },
+        require_acknowledgment: {
+          question: "You've switched from VCV to PCV. Look at the flow waveform. What changed?",
+          options: [
+            {
+              label: "The flow waveform changed from square (constant) to decelerating — high at the start, tapering as the lungs fill.",
+              is_correct: true,
+              explanation: "In VCV, flow is constant and square because the ventilator delivers gas at a fixed rate until the volume target is met. In PCV, the ventilator holds a set pressure and flow starts high then decelerates as the pressure gradient between the circuit and the alveolus narrows.",
+            },
+            {
+              label: "The flow waveform did not change — both modes deliver the same flow pattern.",
+              is_correct: false,
+              explanation: "Flow pattern is one of the most visible differences between modes. VCV produces square (constant) flow; PCV produces decelerating flow.",
+            },
+            {
+              label: "The flow became square in PCV because pressure is fixed.",
+              is_correct: false,
+              explanation: "Fixed pressure produces decelerating flow as the lung fills and the driving gradient narrows. Square flow is the VCV pattern, not the PCV pattern.",
+            },
+            {
+              label: "The pressure waveform changed from square to ramped.",
+              is_correct: false,
+              explanation: "The pressure waveform goes the other direction: VCV produces a ramping pressure trace; PCV produces a square (held) pressure. The question is about the flow waveform.",
+            },
+          ],
+        },
+      },
+      {
+        kind: 'recognition',
+        prompt: {
+          prompt_id: 'M8-vt-response',
+          trigger: { kind: 'on_load' },
+          question: "Now look at the Vte readout. In PCV, what determines how much volume is delivered each breath?",
+          options: [
+            {
+              label: "The patient's compliance and the pressure gradient above PEEP — stiffer lungs receive less volume at the same pressure.",
+              is_correct: true,
+              explanation: "In PCV, tidal volume is the dependent variable. It equals approximately (Pinsp − PEEP) × compliance. If compliance falls, Vt drops silently without triggering a high-pressure alarm — the opposite of what happens in VCV.",
+            },
+            {
+              label: "The set tidal volume control, just as in VCV.",
+              is_correct: false,
+              explanation: "There is no set tidal volume in pure PCV. You set the inspiratory pressure, and the lung accepts whatever volume the mechanics allow at that pressure.",
+            },
+            {
+              label: "The inspiratory flow rate, which you set separately in PCV.",
+              is_correct: false,
+              explanation: "PCV does not have a separate flow-rate control. Flow is determined automatically by the pressure gradient and the patient's lung mechanics.",
+            },
+            {
+              label: "The I:E ratio, which directly sets the tidal volume in PCV.",
+              is_correct: false,
+              explanation: "I-time affects how long the inspiratory pressure is held, which can influence Vt slightly, but compliance and pressure gradient are the primary determinants.",
+            },
+          ],
+          max_attempts: 2,
+        },
+      },
+    ],
   },
 
   content_blocks: [
@@ -471,9 +531,9 @@ export const M8: ModuleConfig = {
   ],
 
   hint_ladder: {
-    tier1: 'At PINSP 18 and C=35, Vt is in the right range. Have you held it for 5 breaths?',
-    tier2: "If the chip won't lock green, check driving pressure. It's plat − PEEP. With this PINSP, you should be at ~12. If you're over 15, lower PINSP.",
-    tier3: { hint_text: 'Use "Show me" to move PINSP to 17 and verify the chip is green.', demonstration: { control: 'pInsp', target_value: 17 } },
+    tier1: "Switch the mode selector from A/C to PCV. Then look at the flow-time waveform — does the shape change?",
+    tier2: "In VCV, flow is square (constant). In PCV, flow is decelerating — it starts high and tapers as the lung fills. After you see the difference, answer the question about what controls tidal volume.",
+    tier3: { hint_text: "Switch to PCV and compare the flow waveform to what it looked like in VCV. Key differences: flow shape (square in VCV vs decelerating in PCV), and tidal volume is now determined by compliance rather than a set target. Once you see it, answer both recognition questions." },
   },
 
   summative_quiz: [
@@ -554,14 +614,13 @@ export const M8: ModuleConfig = {
   },
 
   user_facing_task:
-    'Titrate PINSP to a lung-protective Vt. Your patient is on PCV with PINSP 18 and PEEP 8. The compliance is ~35. Adjust the PINSP so the delivered Vt lands at 6 mL/kg PBW (~430 mL for this patient), with total peak pressure ≤30 and driving pressure ≤15. Hold for 5 breaths.',
+    'This patient is on VCV. Switch to PCV and watch how the waveforms change — then answer two questions about what you see. Pay attention to the flow waveform and the Vte readout.',
   success_criteria_display: [
-    'Tidal volume 410–470 mL.',
-    'Total peak pressure ≤ 30 cmH2O.',
-    'Driving pressure ≤ 15 cmH2O.',
-    'Sustained for 5 consecutive breaths.',
+    'Switch the mode from VCV to PCV.',
+    'Identify what changed about the flow waveform.',
+    'Identify what determines tidal volume in PCV.',
   ],
-  task_framing_style: 'B',
+  task_framing_style: 'C',
 
   key_points: [
     'PCV guarantees PINSP and I-time. Vt is the dependent variable.',
