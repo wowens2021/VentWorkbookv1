@@ -455,7 +455,7 @@ export const M6: ModuleConfig = {
       id: 'M6-P3',
       prompt: 'The single most effective ventilator change to relieve dynamic hyperinflation is:',
       options: [
-        { label: 'Increase PEEP.', is_correct: false, explanation: "In *asthma*, applied PEEP worsens trapping. In COPD, modest applied PEEP can splint airways open — but it's not the *most effective* lever." },
+        { label: 'Increase PEEP.', is_correct: false, explanation: "In *asthma*, applied PEEP worsens trapping. In COPD, extrinsic PEEP helps only the narrow case of auto-PEEP-driven ineffective triggering — it does not relieve the trapping itself. Lowering the rate does." },
         { label: 'Lower the respiratory rate.', is_correct: true, explanation: 'TVB Ch. 2. Slower rate = longer expiratory time = air drains.' },
         { label: 'Increase the FiO2.', is_correct: false, explanation: "Doesn't change mechanics." },
         { label: 'Switch to PCV.', is_correct: false, explanation: 'Risky in severe bronchospasm — Pplat can fall silently.' },
@@ -566,13 +566,13 @@ export const M6: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "**COPD:** the obstruction is *floppy-airway* disease — small airways collapse during expiration like a wet straw closing on itself. A small amount of applied PEEP can *splint them open*, letting more air out. Imagine a 70-year-old COPD exacerbation on the vent with auto-PEEP 10. You set applied PEEP to 7–8 (about 75% of auto-PEEP). The airways stay open longer in expiration. Trapping eases. *Takeaway: in COPD, modest PEEP at 75–85% of measured auto-PEEP can help — but never exceed the auto-PEEP number.*",
+        "**COPD:** the obstruction is *floppy-airway* disease — small airways collapse during expiration like a wet straw closing on itself. Extrinsic PEEP is sometimes useful here, but only in one specific situation: when the patient has **both significant auto-PEEP AND ineffective triggering** — visible inspiratory efforts that fail to deliver a breath because the trigger threshold sits below the trapped auto-PEEP level. In that case, setting extrinsic PEEP at roughly **75–85% of the measured auto-PEEP** raises the baseline the patient triggers from, so it reduces the work of triggering without worsening hyperinflation — and you never exceed the auto-PEEP number. **In most COPD patients there is no triggering problem, and the first priority is to reduce the auto-PEEP itself by lowering the rate — not to add extrinsic PEEP.**",
     },
     {
       kind: 'callout',
       tone: 'warn',
       markdown:
-        "**One sentence to memorize:** asthma → no PEEP. COPD → modest PEEP. Don't apply PEEP without first deciding which one you have.",
+        "**One sentence to memorize:** asthma → no PEEP. COPD → lower the rate first to relieve trapping; reach for extrinsic PEEP only when auto-PEEP is causing ineffective triggering. Don't reflexively add PEEP in either one.",
     },
     // Novice-pass §6.2 — promote the counter-intuitive "raising the rate
     // makes CO2 worse" insight from buried summative explanation to a
@@ -597,7 +597,6 @@ export const M6: ModuleConfig = {
     },
     {
       kind: 'predict_mcq',
-      awaits_control: 'respiratoryRate',
       predict:
         'This patient is on rate 18 with mild resistance. You raise rate to 28. What happens to auto-PEEP?',
       options: [
@@ -611,7 +610,6 @@ export const M6: ModuleConfig = {
     },
     {
       kind: 'predict_mcq',
-      awaits_control: 'iTime',
       predict:
         'Now shorten I-time from 1.0 to 0.6 at the same rate. Auto-PEEP:',
       options: [
@@ -709,7 +707,7 @@ export const M6: ModuleConfig = {
       { name: 'Rate · 8–28', description: 'the most powerful lever. Lower rate = longer Te.' },
       { name: 'I-time · 0.5–1.5', description: 'shorter Ti gives more time for Te.' },
       { name: 'Vt · 350–600', description: 'higher Vt at the same rate also extends Ti.' },
-      { name: 'PEEP · 0–18', description: 'for COPD can splint airways; for asthma makes it worse.' },
+      { name: 'PEEP · 0–18', description: 'only helps in COPD when auto-PEEP is causing ineffective triggering; in asthma it just worsens trapping. Lower the rate first.' },
     ],
     readouts_description: [
       { name: 'Auto-PEEP, Total PEEP', description: 'the auto-PEEP readout is what the tracker watches.' },
@@ -719,7 +717,7 @@ export const M6: ModuleConfig = {
       "Push rate to 28. Watch auto-PEEP climb. The flow waveform won't return to zero.",
       'Now drop rate to 10. Auto-PEEP falls. Te is now ~5 seconds — plenty of time to exhale.',
       'Try shortening I-time from 1.0 to 0.5 instead of lowering rate. The I:E changes but the auto-PEEP relief is smaller. Rate is the bigger lever.',
-      "Raise PEEP from 5 to 12 (don't change rate). In real COPD this might splint airways open; in *asthma* it would worsen trapping.",
+      "Raise PEEP from 5 to 12 (don't change rate) and watch total PEEP just stack higher. Adding extrinsic PEEP only helps the narrow case of auto-PEEP-driven ineffective triggering — it is not a routine fix for trapping. Lowering the rate is.",
     ],
   },
 
@@ -735,7 +733,7 @@ export const M6: ModuleConfig = {
     'Auto-PEEP = end-expiratory alveolar pressure > set PEEP. Measure with an expiratory hold.',
     "Flow-waveform sign: expiratory flow doesn't return to zero before next breath.",
     'Rate is the strongest lever — lower it. I-time is the second lever — shorten it.',
-    'In asthma, applied PEEP worsens trapping. In COPD, modest applied PEEP can help splint.',
+    'In asthma, applied PEEP worsens trapping. In COPD, lower the rate first; add extrinsic PEEP only when auto-PEEP is causing ineffective triggering.',
     "Severe auto-PEEP + hypotension → disconnect from the vent. Don't waste time on pressors first.",
   ],
 };

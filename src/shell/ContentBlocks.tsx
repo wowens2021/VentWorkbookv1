@@ -381,10 +381,19 @@ interface Props {
   /** Called on every predict_mcq state change so the ReadPane can gate
    *  its bottom CTA on all-mcqs-satisfied. */
   onMcqStatusChange?: (s: PredictMcqStatus) => void;
+  /**
+   * Number of predict_mcq blocks that appeared on EARLIER pages. The
+   * ReadPane renders one page of blocks at a time, so without an offset
+   * the PM counter would restart at 1 on every page and two MCQs on
+   * different pages would collide on the same `{moduleId}-PM1` id. The
+   * offset keeps the ids globally unique across the module.
+   */
+  mcqIdOffset?: number;
 }
-const ContentBlocks: React.FC<Props> = ({ blocks, harness, moduleId, onMcqStatusChange }) => {
-  // Stable ids for predict_mcq blocks: 1-indexed by occurrence.
-  let mcqCounter = 0;
+const ContentBlocks: React.FC<Props> = ({ blocks, harness, moduleId, onMcqStatusChange, mcqIdOffset = 0 }) => {
+  // Stable ids for predict_mcq blocks: 1-indexed by GLOBAL occurrence
+  // across the module (offset by the blocks shown on earlier pages).
+  let mcqCounter = mcqIdOffset;
   return (
     <div className="space-y-1">
       {blocks.map((b, i) => {

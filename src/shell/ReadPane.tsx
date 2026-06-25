@@ -98,13 +98,30 @@ const ReadPane: React.FC<Props> = ({
     // Only run when the value changes — the parent compares and stores.
   }, [currentPageNeedsSim, onSimNeededChange]);
 
-  // Per v3.2 §0.3: gate the bottom CTA on every predict_mcq block being
-  // satisfied across the WHOLE module (any page), so the learner can't
-  // skip predictions by paging forward without answering them.
+  // The current page's blocks. Defined here (not at the bottom of the
+  // component) because the per-page MCQ gating below needs it.
+  const visibleBlocks = pages[currentPage] ?? [];
+
+  // Gate the page's advance button on the predict_mcq blocks ON THE
+  // CURRENT PAGE only. Counting across the WHOLE module froze the CTA:
+  // a predict_mcq on a not-yet-reached page kept the button disabled
+  // forever — and, because ContentBlocks restarts its PM counter per
+  // page, two MCQs on different pages collided on the same id, so the
+  // module-wide count could never be reached even after answering them.
   const expectedMcq = useMemo(
-    () => module.content_blocks.filter(b => b.kind === 'predict_mcq').length,
-    [module.content_blocks],
+    () => visibleBlocks.filter(b => b.kind === 'predict_mcq').length,
+    [visibleBlocks],
   );
+  // Number of predict_mcq blocks on all EARLIER pages — the offset that
+  // keeps ContentBlocks' PM ids globally unique so per-page gating
+  // doesn't collide across pages.
+  const mcqOffsetForPage = useMemo(() => {
+    let n = 0;
+    for (let p = 0; p < currentPage; p++) {
+      n += (pages[p] ?? []).filter(b => b.kind === 'predict_mcq').length;
+    }
+    return n;
+  }, [pages, currentPage]);
   const [mcqStatus, setMcqStatus] = useState<Record<string, boolean>>({});
   const handleMcqStatus = (s: PredictMcqStatus) => {
     setMcqStatus(prev => {
@@ -120,7 +137,14 @@ const ReadPane: React.FC<Props> = ({
     });
     onPredictMcqStatusChange?.(s);
   };
-  const satisfiedMcq = Object.values(mcqStatus).filter(Boolean).length;
+  // The global PM ids of the current page's predict_mcq blocks, matching
+  // ContentBlocks' offset counter (`{module.id}-PM{globalIndex}`). Only
+  // these ids count toward the current page's gate.
+  const currentPageMcqIds = useMemo(
+    () => Array.from({ length: expectedMcq }, (_, i) => `${module.id}-PM${mcqOffsetForPage + i + 1}`),
+    [expectedMcq, mcqOffsetForPage, module.id],
+  );
+  const satisfiedMcq = currentPageMcqIds.filter(id => mcqStatus[id]).length;
   const mcqsRemaining = Math.max(0, expectedMcq - satisfiedMcq);
   const ctaDisabled = mcqsRemaining > 0;
 
@@ -135,7 +159,6 @@ const ReadPane: React.FC<Props> = ({
 
   const onLastPage = currentPage >= pages.length - 1;
   const onFirstPage = currentPage === 0;
-  const visibleBlocks = pages[currentPage] ?? [];
 
   return (
     <div className="h-full flex flex-col relative">
@@ -163,11 +186,13 @@ const ReadPane: React.FC<Props> = ({
           </h1>
         </div>
 
-        {/* Render only the current page's blocks. */}
+        {/* Render only the current page's blocks. The MCQ id offset
+            keeps PM ids globally unique across pages. */}
         <ContentBlocks
           blocks={visibleBlocks}
           harness={harness}
           moduleId={module.id}
+          mcqIdOffset={mcqOffsetForPage}
           onMcqStatusChange={handleMcqStatus}
         />
 
@@ -179,11 +204,13 @@ const ReadPane: React.FC<Props> = ({
       {/* Sticky footer: Prev / Page indicator / Next or Continue. When
           there is only one slide, just the Continue CTA shows. */}
       <div className="absolute bottom-0 left-0 right-0 px-5 pb-3 pt-2 bg-gradient-to-t from-white via-white/95 to-white/0">
-        {ctaDisabled && onLastPage && (
+        {ctaDisabled && (
           <div className="mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
             <Lock size={12} className="text-amber-700 shrink-0" />
             <span className="text-[12px] font-semibold text-amber-900 leading-snug">
-              Answer {mcqsRemaining} more prediction{mcqsRemaining === 1 ? '' : 's'} above to continue.
+              {mcqsRemaining === 1
+                ? 'Answer the prediction above to continue.'
+                : `Answer ${mcqsRemaining} predictions above to continue.`}
             </span>
           </div>
         )}
@@ -217,7 +244,13 @@ const ReadPane: React.FC<Props> = ({
           ) : (
             <button
               onClick={() => setCurrentPage(p => Math.min(pages.length - 1, p + 1))}
-              className={`flex-1 px-4 py-2.5 ${bgClass} ${bgHoverClass} text-white shadow-lg text-sm font-bold rounded-lg transition flex items-center justify-center gap-1.5`}
+              disabled={ctaDisabled}
+              title={ctaDisabled ? 'Answer the predictions above to continue.' : undefined}
+              className={`flex-1 px-4 py-2.5 ${
+                ctaDisabled
+                  ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                  : `${bgClass} ${bgHoverClass} text-white shadow-lg`
+              } text-sm font-bold rounded-lg transition flex items-center justify-center gap-1.5`}
             >
               Next slide <ChevronRight size={14} />
             </button>
