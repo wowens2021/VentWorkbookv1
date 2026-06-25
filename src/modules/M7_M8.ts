@@ -76,39 +76,71 @@ export const M7: ModuleConfig = {
   ],
 
   scenario: {
-    preset_id: 'M7_vcv_baseline',
+    preset_id: 'M7_simv_to_ac',
     preset: {
-      // Post-laparotomy septic patient. Baseline compliance 40 keeps
-      // the math clean: at Vt 500 Pplat ≈ 17.5 + PEEP. At 6 mL/kg PBW
-      // (Vt 438) Pplat lands around 16 + PEEP.
-      // disable_peep_recruitment removes the PEEP-derecruitment factor
-      // for this scenario so the learner sees the textbook mechanical
-      // relationship: lower PEEP → lower Pplat. The recruitment model
-      // is still active for the Strategy-track modules where PEEP
-      // titration is the teaching point.
-      mode: 'VCV',
-      settings: { tidalVolume: 500, respiratoryRate: 14, peep: 5, fiO2: 40, iTime: 1.0 },
-      patient: { compliance: 40, resistance: 12, spontaneousRate: 0, gender: 'M', heightInches: 70, disable_peep_recruitment: true },
+      // "Bad" starting state: SIMV with no pressure support. Mandatory
+      // rate 8, but the patient is pulling 18 spontaneous breaths a
+      // minute — all unsupported, so they come in tiny. Measured rate
+      // ~26. The fix is to switch to VCV (A/C) so every breath gets the
+      // full set Vt, then set a lung-protective tidal volume.
+      mode: 'SIMV/PS',
+      settings: { tidalVolume: 450, respiratoryRate: 8, psLevel: 0, peep: 5, fiO2: 40, iTime: 1.0 },
+      patient: { compliance: 55, resistance: 10, spontaneousRate: 18, gender: 'M', heightInches: 70 },
     },
-    unlocked_controls: ['tidalVolume', 'respiratoryRate', 'peep', 'fiO2', 'iTime'],
-    visible_readouts: ['pip', 'plat', 'drivingPressure', 'vte', 'mve'],
+    unlocked_controls: ['mode', 'tidalVolume', 'respiratoryRate', 'peep', 'fiO2'],
+    visible_readouts: ['pip', 'plat', 'drivingPressure', 'vte', 'mve', 'actualRate'],
     visible_waveforms: ['pressure_time', 'flow_time', 'volume_time'],
   },
 
-  // Target-state outcome: Vt at 6 mL/kg PBW (~430 mL, with a ±5%
-  // band). Per user feedback the case-sim doesn't warn the learner
-  // about plateau or driving pressure here — those are watched, not
-  // graded. The criteria stay simple: a lung-protective tidal volume
-  // held for 5 breaths.
+  // Two-step task: (1) switch the mode to VCV (A/C) and acknowledge
+  // why that changes every breath, then (2) hold a lung-protective
+  // delivered Vt (6 mL/kg PBW, ±5%) for 5 breaths.
   hidden_objective: {
-    kind: 'outcome',
-    readouts: {
-      tidalVolumeSet: [
-        { operator: '>=', value: 410 },
-        { operator: '<=', value: 470 },
-      ],
-    },
-    sustain_breaths: 5,
+    kind: 'compound',
+    sequence: 'strict',
+    reset_between: false,
+    children: [
+      {
+        kind: 'manipulation',
+        control: 'mode',
+        condition: { type: 'equals', value: 'VCV' },
+        require_acknowledgment: {
+          question: "You've switched to VCV (A/C). What happens to every breath the patient takes now — including triggered breaths above the set rate?",
+          options: [
+            {
+              label: "Every breath — mandatory and patient-triggered — now receives the full set tidal volume.",
+              is_correct: true,
+              explanation: "In A/C, any breath the patient triggers gets the full set Vt delivered. This is the defining difference from SIMV without PS, where spontaneous breaths between mandatory ones are unsupported.",
+            },
+            {
+              label: "Only the mandatory breaths get the set tidal volume; triggered breaths remain unsupported.",
+              is_correct: false,
+              explanation: "That describes SIMV without pressure support. In A/C, all breaths — whether delivered at the mandatory rate or triggered by the patient — receive the full set tidal volume.",
+            },
+            {
+              label: "The patient's spontaneous rate will drop to zero because the ventilator takes over.",
+              is_correct: false,
+              explanation: "A/C does not eliminate spontaneous effort. The patient can still trigger additional breaths above the set rate, and each one will receive the full guaranteed volume.",
+            },
+            {
+              label: "The tidal volume will decrease because pressure is now limited.",
+              is_correct: false,
+              explanation: "VCV guarantees volume regardless of patient effort. Pressure is the dependent variable and may change, but the delivered volume is fixed by the set Vt.",
+            },
+          ],
+        },
+      },
+      {
+        kind: 'outcome',
+        readouts: {
+          vte: [
+            { operator: '>=', value: 410 },
+            { operator: '<=', value: 470 },
+          ],
+        },
+        sustain_breaths: 5,
+      },
+    ],
   },
 
   content_blocks: [
@@ -164,20 +196,20 @@ export const M7: ModuleConfig = {
   ],
 
   hint_ladder: {
-    tier1: "You're at 7 mL/kg. The book asks for 6.",
-    tier2: 'For this patient (73 kg PBW), 6 mL/kg is ~430 mL. Move Vt down toward 430 and watch the delivered Vte settle.',
-    tier3: { hint_text: 'Use "Show me" to move Vt to 430 and confirm the chip locks green.', demonstration: { control: 'tidalVolume', target_value: 430 } },
+    tier1: "The patient is in SIMV with no PS — spontaneous breaths are getting tiny, unsupported volumes. The fix is to change the mode.",
+    tier2: "Switch to VCV (the A/C button). Then set Vt to around 440 mL for this patient (6 mL/kg PBW).",
+    tier3: { hint_text: "Switch the mode selector to A/C (the leftmost mode button in the controls row). Then bring Vt down to approximately 440 mL." },
   },
 
   summative_quiz: [
     {
       id: 'M7-Q1',
-      prompt: 'A 65-year-old male, 175 cm tall, is intubated for ARDS. The first Vt you should select is approximately:',
+      prompt: 'In volume-control A/C ventilation, what does the ventilator guarantee with every breath?',
       options: [
-        { label: '350 mL', is_correct: false, explanation: "That's below 5 mL/kg; defensible only if plat is high, but not the first choice." },
-        { label: '430 mL', is_correct: true, explanation: 'PBW ~72 kg, 6 mL/kg = 432. ARDSnet starting target.' },
-        { label: '600 mL', is_correct: false, explanation: "That's 8.3 mL/kg — too high for ARDS." },
-        { label: '800 mL', is_correct: false, explanation: 'Pre-ARMA dosing, abandoned 25 years ago.' },
+        { label: 'The tidal volume.', is_correct: true, explanation: 'In VCV, the ventilator delivers the set tidal volume on every breath — mandatory or triggered — regardless of lung mechanics. Pressure is the dependent variable and will rise or fall as needed.' },
+        { label: 'The peak airway pressure.', is_correct: false, explanation: 'Pressure is the dependent variable in VCV. It rises when compliance falls or resistance increases, and you cannot set it directly.' },
+        { label: 'The plateau pressure.', is_correct: false, explanation: 'Plateau pressure is determined by tidal volume and compliance. It can be measured with an inspiratory hold, but it is not something you set in VCV.' },
+        { label: 'The minute ventilation.', is_correct: false, explanation: 'Minute ventilation equals Vt times rate. Both are set by the operator, but the ventilator guarantees them as separate inputs, not as a combined target.' },
       ],
     },
     {
@@ -212,7 +244,7 @@ export const M7: ModuleConfig = {
     },
     {
       id: 'M7-Q5',
-      prompt: "Owens's rule for the shocked patient with respect to mode choice is:",
+      prompt: "For the shocked patient, the preferred mode choice is:",
       options: [
         { label: 'PSV — least work for the patient', is_correct: false, explanation: 'PSV is a recovery mode. The shocked patient cannot afford to do the breathing work.' },
         { label: 'SIMV — best of both worlds', is_correct: false, explanation: 'SIMV in the shocked patient risks high work of breathing on the spontaneous breaths.' },
@@ -243,10 +275,11 @@ export const M7: ModuleConfig = {
   },
 
   user_facing_task:
-    "Set lung-protective volume A/C. Your patient is on Vt 500. Dial the tidal volume down to 6 mL/kg PBW — for this 73 kg patient that lands at ~430 mL (range 410–470). Hold the new setting for 5 breaths so the delivered Vt confirms.",
+    "Your patient is in SIMV with no pressure support. The mandatory rate is 8, but the patient is pulling 18 spontaneous breaths per minute — all of them unsupported and tiny. Switch the mode to VCV (A/C) and set the tidal volume to 6 mL/kg PBW. Every breath should now receive the full guaranteed volume.",
   success_criteria_display: [
-    'Tidal volume 410–470 mL (6 mL/kg PBW for this 73 kg patient).',
-    'Sustained for 5 consecutive breaths.',
+    'Switch mode to VCV (A/C).',
+    'Set tidal volume to 410–470 mL (6 mL/kg PBW for this patient).',
+    'Hold delivered Vt in that range for 5 consecutive breaths.',
   ],
   task_framing_style: 'B',
 
