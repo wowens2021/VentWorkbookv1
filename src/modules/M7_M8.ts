@@ -483,7 +483,7 @@ export const M8: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "**PCV reverses VCV's deal.** You set the *pressure* you want; the vent goes up to it, holds it, then releases. The tidal volume is whatever the patient's lungs and airway resistance permit. The waveform is decelerating — flow is high at the start and tapers off as the lungs fill, which most patients find more comfortable than VCV's square top.",
+        "**PCV reverses VCV's deal.** You set the *pressure* you want; the vent goes up to it, holds it, then releases. The tidal volume is whatever the patient's lungs and airway resistance permit. In the task you'll switch this patient from VCV to PCV and watch the change: the flow waveform goes from square (constant) to decelerating — high at the start and tapering off as the lungs fill, which most patients find more comfortable than VCV's square top.",
     },
     {
       kind: 'callout',
@@ -493,8 +493,7 @@ export const M8: ModuleConfig = {
     },
     {
       kind: 'predict_mcq',
-      awaits_control: 'compliance',
-      predict: "You drop compliance from 35 to 18 at constant PINSP. What happens to delivered Vt?",
+      predict: "Suppose this patient's compliance worsens (say it roughly halves) while you hold PINSP constant in PCV. What happens to the delivered Vt?",
       options: [
         { label: 'Vt falls roughly in proportion to the compliance drop.', is_correct: true },
         { label: 'Vt is unchanged — PCV guarantees the volume.', is_correct: false, explanation: 'PCV guarantees PRESSURE. Vt is the dependent variable. As compliance falls, the same pressure delivers less volume.' },
@@ -590,26 +589,26 @@ export const M8: ModuleConfig = {
   ],
 
   explore_card: {
-    // Novice-pass §8.1 — explicit sandbox-vs-task framing so a novice
-    // doesn't think tuning compliance is part of completing the task.
     patient_context:
-      "Same post-laparotomy septic patient as M7, but the attending placed him on PCV. Compliance 35.\n\n**Note on the compliance slider:** the compliance slider here is for exploration only — your task is to titrate PINSP. The slider lets you see how Vt responds when the lung changes (which it will, in real patients, hour by hour). You don't have to touch it to finish the module.",
+      "70-inch male, compliance 55. He starts in VCV at a set tidal volume of 450 mL. Your job is to switch him to PCV and compare the two modes side by side — the same patient, the same lungs, a different way of delivering the breath.",
     unlocked_controls_description: [
-      { name: 'PINSP · 8–30', description: 'the total inspiratory pressure target. Driving pressure = PINSP − PEEP. ← This is what your task wants you to titrate.' },
-      { name: 'Rate · 8–30', description: 'mandatory minimum.' },
+      { name: 'Mode', description: 'switch between VCV (A/C) and PCV. The whole point of the task — flip it and watch the flow waveform change.' },
+      { name: 'Vt · 350–600', description: 'the set tidal volume — shown in VCV. In VCV you set this and pressure follows.' },
+      { name: 'PINSP · 8–30', description: 'the inspiratory pressure target — shown in PCV. In PCV you set this and tidal volume follows (Vt ≈ (PINSP − PEEP) × compliance).' },
       { name: 'PEEP · 0–18', description: 'end-expiratory floor.' },
       { name: 'FiO2 · 30–80%', description: 'inspired oxygen.' },
-      { name: 'I-time · 0.6–1.5', description: 'how long the pressure is held.' },
-      { name: 'Compliance · 20–60', description: 'SANDBOX lever — explore-only. Drag it to see Vt swing; not part of the task.' },
+      { name: 'I-time · 0.6–1.5', description: 'how long each inspiration lasts (in PCV, how long the pressure is held).' },
     ],
     readouts_description: [
-      { name: 'Vt (delivered), plat (after hold), peak pressure, MVe', description: 'the four numbers PCV makes you watch.' },
+      { name: 'Flow waveform', description: 'square (constant) in VCV; decelerating (high then tapering) in PCV. This is the headline difference.' },
+      { name: 'Vte', description: 'delivered volume. In VCV it tracks your set Vt; in PCV it becomes the dependent variable, set by compliance and the pressure gradient.' },
+      { name: 'PIP, plat (after hold)', description: 'in VCV pressure follows your volume; in PCV peak is fixed at PINSP and Vt floats.' },
     ],
     suggestions: [
-      'Raise PINSP from 18 to 26. Vt climbs from ~430 to ~620.',
-      'Drop compliance to 20 at PINSP 18. Vt falls to ~245.',
-      'At PINSP 18, perform an inspiratory hold. Watch plat lag PIP by 1–2 cmH2O (low resistance).',
-      'Bump resistance to 25 at PINSP 18 — Vt drops, but plat is still measurable.',
+      'Switch from VCV to PCV and watch the flow-time waveform flip from square to decelerating.',
+      'In PCV, raise PINSP and watch Vte climb; lower it and watch Vte fall. Pressure is the order, volume is the response.',
+      'Perform an inspiratory hold in PCV — you can still read a plateau, just like in VCV.',
+      'Switch back to VCV and confirm the flow goes square again. Same lungs, different delivery.',
     ],
   },
 
