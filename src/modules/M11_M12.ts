@@ -34,7 +34,7 @@ export const M11: ModuleConfig = {
   estimated_minutes: 16,
   briefing: {
     tagline: 'The patient is telling you something. Don\'t silence them — read the waveform.',
-    overview: "When a ventilated patient looks uncomfortable, the reflex is to push the sedation dial. Resist. The patient is telling you something. Owens groups dyssynchronies into three buckets — bad triggering, bad assistance, bad termination — and within those, a handful of patterns recur in the ICU. The waveform tells you which one. Once you can name the pattern, the fix is mode-specific and pattern-specific.",
+    overview: "When a ventilated patient looks uncomfortable, the reflex is to push the sedation dial. Resist. The patient is telling you something. Dyssynchronies fall into three buckets — ineffective or inappropriate triggering, inadequate inspiratory assistance, and inappropriate termination of the breath — and within those, a handful of patterns recur in the ICU. The waveform tells you which one. Once you can name the pattern, the fix is mode-specific and pattern-specific.",
     what_youll_do: [
       'Three live waveform patterns: ineffective triggering, double triggering, flow starvation.',
       'Each pattern has one distinctive feature on the pressure waveform.',
@@ -139,7 +139,7 @@ export const M11: ModuleConfig = {
           question:
             '35 yo ARDS on VCV Vt 400 (6 mL/kg), strong respiratory drive. The waveform above is recorded over 6 seconds. What pattern is this?',
           options: [
-            { label: 'Double triggering', is_correct: true, explanation: 'A second breath stacked on top of an incompletely exhaled first breath. The peak pressure of breath B is higher because the lung hadn\'t fully emptied. Common in low-Vt ARDS with strong drive.' },
+            { label: 'Double triggering', is_correct: true, explanation: 'A run of breaths stacked back-to-back: each is triggered before the lung has finished exhaling, so end-expiratory volume ratchets upward breath after breath. Common in low-Vt ARDS with strong drive.' },
             { label: 'Ineffective triggering', is_correct: false, explanation: 'Ineffective triggering would show patient pressure dips with NO delivered breath. Here breaths are clearly delivered — back-to-back.' },
             { label: 'Flow starvation', is_correct: false, explanation: 'Flow starvation scoops the pressure DOWN during a single breath. Here the issue is two breaths fused together, not a pulled-down profile.' },
             { label: 'Auto-cycling from a circuit leak', is_correct: false, explanation: 'Auto-cycling produces many machine breaths from circuit noise without patient effort. Here the stacked pair follows visible spontaneous drive.' },
@@ -171,7 +171,7 @@ export const M11: ModuleConfig = {
   content_blocks: [
     {
       kind: 'prose',
-      markdown: '**The patient is telling you something.** Owens groups dyssynchronies into three buckets — bad triggering, bad assistance, bad termination — and within those, five common patterns recur in the ICU. The waveform tells you which one.',
+      markdown: '**The patient is telling you something.** Dyssynchronies fall into three buckets — *ineffective or inappropriate triggering*, *inadequate inspiratory assistance*, and *inappropriate termination of the breath* — and within those, five common patterns recur in the ICU. The waveform tells you which one.',
     },
     { kind: 'callout', tone: 'tip', markdown: 'The DOPES rule-out comes first. Then read the waveform.' },
     {
@@ -197,7 +197,7 @@ export const M11: ModuleConfig = {
     },
     {
       kind: 'prose',
-      markdown: '**Double triggering.** One Vt delivered, no exhalation, a second Vt stacked on top. Peak pressure on the second breath is higher because the lung never emptied. The root cause: the patient\'s neural inspiratory time is longer than the ventilator\'s set Ti — the drive continues into what the vent calls expiration, and that ongoing effort triggers a second breath before the first has fully exited. Classic in lung-protective Vt with strong respiratory drive. The fix addresses the mismatch: raise Vt to satisfy demand, or switch to PCV so the patient\'s own neural Ti sets when the breath cycles off.',
+      markdown: '**Double triggering.** A breath is triggered before the previous one has exhaled — and then another. Breaths stack two, three, or more in a row with no full exhalation between them, so end-expiratory volume ratchets upward with each one. The root cause: the patient\'s neural inspiratory time is longer than the ventilator\'s set Ti — the drive continues into what the vent calls expiration, and that ongoing effort triggers the next breath before the last has fully exited. Classic in lung-protective Vt with strong respiratory drive. The fix addresses the mismatch: raise Vt to satisfy demand, or switch to PCV so the patient\'s own neural Ti sets when the breath cycles off.',
     },
     {
       kind: 'prose',
@@ -279,7 +279,7 @@ export const M11: ModuleConfig = {
     },
     {
       id: 'M11-Q5',
-      prompt: 'The reflexive response to "patient fighting the vent" is sedation. Owens\'s preferred sequence is:',
+      prompt: 'The reflexive response to "patient fighting the vent" is sedation. The preferred sequence is:',
       options: [
         { label: 'Sedate first, troubleshoot later', is_correct: false },
         { label: 'Bag off the vent → DOPES rule-out → assess waveforms → match the fix to the pattern', is_correct: true },

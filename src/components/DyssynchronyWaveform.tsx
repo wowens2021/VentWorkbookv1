@@ -103,6 +103,30 @@ const _VendA  = _C * _Pi * (1 - Math.exp(-_Ti / _tau_i));
 const _Veq    = _PEEP * _C;
 const _VtrapB = Math.max(0, _Veq + (_VendA - _Veq) * Math.exp(-0.75 / _tau_e));
 
+// Build a run of `n` stacked breaths for the double-triggering pattern.
+// Each breath inspires for `Ti` then exhales only `teShort` (an
+// INCOMPLETE exhalation) before the next breath fires, so residual lung
+// volume ratchets upward breath-over-breath — the unmistakable volume
+// signature of breath stacking. The last breath in the run is given a
+// long tail so it exhales fully back to baseline. The trapped-volume
+// chain is computed with the same single-compartment formulas the engine
+// uses, so the rendered volume trace is physically self-consistent.
+function stackedTrain(n: number, Ti: number, teShort: number): BreathSpec[] {
+  const tau_iL = _R_lo * _C;
+  const tau_eL = _R_lo * _C * 1.5;
+  const Veq = _PEEP * _C;
+  const dV = _C * _Pi * (1 - Math.exp(-Ti / tau_iL));
+  const specs: BreathSpec[] = [];
+  let trap = 0;
+  for (let k = 0; k < n; k++) {
+    const dur = k === n - 1 ? Ti + 0.7 : Ti + teShort;
+    specs.push({ duration: dur, C: _C, R: _R_lo, PEEP: _PEEP, Pi: _Pi, Ti, mode: 'psv', trapVol: trap });
+    const Vend = trap + dV;
+    trap = Math.max(0, Veq + (Vend - Veq) * Math.exp(-teShort / tau_eL));
+  }
+  return specs;
+}
+
 interface PatternDef {
   label: string; badge: string; badgeColor: string;
   description: string; fix: string;
@@ -115,7 +139,7 @@ interface PatternDef {
 
 const PATTERNS: Record<string, PatternDef> = {
   ineffective: {
-    label: 'Ineffective triggering', badge: 'bad triggering', badgeColor: '#dc2626',
+    label: 'Ineffective triggering', badge: 'ineffective / inappropriate triggering', badgeColor: '#dc2626',
     description: 'Patient effort (↓ pressure dip + negative flow blip) with no delivered breath. Auto-PEEP forces the patient to overcome a higher threshold than the trigger is set for.',
     fix: 'Lower RR to clear auto-PEEP; add extrinsic PEEP at ~80% of measured auto-PEEP in COPD.',
     peep: _PEEP,
@@ -137,20 +161,19 @@ const PATTERNS: Record<string, PatternDef> = {
     description: 'A second breath fires before the first has fully expired. Peak of breath B is higher because the lung never emptied. Expiratory flow never returns to zero between A and B.',
     fix: "Raise Vt to match patient demand, or switch to PCV so the patient's neural Ti sets the cycle.",
     peep: _PEEP,
-    annotationLabel: 'breath B peak > breath A — lung not empty',
-    recognitionLabel: 'two pressure events at ~4.0–5.8 s',
-    highlightWindow: [3.8, 6.0],
+    annotationLabel: 'breaths stack before the lung empties — volume ratchets up',
+    recognitionLabel: 'a run of stacked breaths at ~1.7–4.6 s',
+    highlightWindow: [1.6, 4.0],
     breathSpecs: [
-      { duration: 1.5,  C: _C, R: _R_lo, PEEP: _PEEP, Pi: _Pi, Ti: _Ti, mode: 'psv' },
-      { duration: 1.5,  C: _C, R: _R_lo, PEEP: _PEEP, Pi: _Pi, Ti: _Ti, mode: 'psv' },
-      { duration: 1.0,  C: _C, R: _R_lo, PEEP: _PEEP, Pi: _Pi, Ti: _Ti, mode: 'psv' },
-      { duration: 0.75, C: _C, R: _R_lo, PEEP: _PEEP, Pi: 0,   Ti: 0,   mode: 'psv', trapVol: _VendA },
-      { duration: 1.0,  C: _C, R: _R_lo, PEEP: _PEEP, Pi: _Pi, Ti: _Ti, mode: 'psv', trapVol: _VtrapB },
-      { duration: 0.25, C: _C, R: _R_lo, PEEP: _PEEP, Pi: 0,   Ti: 0,   mode: 'psv', trapVol: 0 },
+      // One normal, fully-exhaled reference breath...
+      { duration: 1.7, C: _C, R: _R_lo, PEEP: _PEEP, Pi: _Pi, Ti: _Ti, mode: 'psv' },
+      // ...then a run of three breaths stacked back-to-back, each
+      // triggered before the previous has finished exhaling.
+      ...stackedTrain(3, 0.7, 0.28),
     ],
   },
   starvation: {
-    label: 'Flow starvation', badge: 'bad assistance', badgeColor: '#7c3aed',
+    label: 'Flow starvation', badge: 'inadequate inspiratory assistance', badgeColor: '#7c3aed',
     description: "In VCV, the set flow can't keep up with the patient's demand. Pressure scoops downward during inspiration while flow stays perfectly square — the patient is actively pulling against the vent.",
     fix: 'Increase peak inspiratory flow, shorten inspiratory time, or switch to a pressure-based mode.',
     peep: _PEEP,
@@ -287,7 +310,8 @@ function PatternCard({
 
   return (
     <div style={{ background: '#18181b', borderRadius: 12, border: '1px solid #3f3f46',
-                  overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                  overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                  width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(90deg,rgba(71,113,62,.15),rgba(71,113,62,.05))',
@@ -391,14 +415,16 @@ export default function DyssynchronyWaveform({
 
   if (pattern && !isAtlas) {
     return (
-      <div style={{ fontFamily: 'ui-sans-serif,system-ui,-apple-system,Inter,sans-serif', marginBottom: 12 }}>
+      <div style={{ fontFamily: 'ui-sans-serif,system-ui,-apple-system,Inter,sans-serif', marginBottom: 12,
+                    width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
         <PatternCard patternKey={pattern} recognitionMode={true} />
       </div>
     );
   }
 
   return (
-    <div style={{ fontFamily: 'ui-sans-serif,system-ui,-apple-system,Inter,sans-serif' }}>
+    <div style={{ fontFamily: 'ui-sans-serif,system-ui,-apple-system,Inter,sans-serif',
+                  width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
       <div style={{ display: 'flex', gap: 3, marginBottom: 10,
                     background: '#27272a', borderRadius: 8, padding: 3 }}>
         {keys.map(k => (
