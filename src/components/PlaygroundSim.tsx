@@ -1038,6 +1038,23 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     if (key === 'peep') {
       setMetrics(m => ({ ...m, totalPeep: val }));
     }
+    // Inverse Vt↔RR coupling for spontaneous / pressure-support breaths.
+    // In PSV (and the spontaneous breaths of SIMV/PS) the patient owns the
+    // rate, and the rate defends minute ventilation: lower the pressure
+    // boost and each delivered breath shrinks, so the patient breathes
+    // FASTER (the rapid-shallow pattern of under-support); raise PS and the
+    // breaths deepen, so the rate FALLS. Without this, spontaneousRate sat
+    // pinned at its preset value while the learner titrated PS, so the RR
+    // readout never moved and an `actualRate` outcome gate could never be
+    // satisfied (the workbook could not advance). ~1.25 bpm per cmH2O of PS.
+    // CLAUDE.md §12.5 (spontaneous-mode coupling), §13.7.
+    if (key === 'psLevel' && (mode === 'PSV' || mode === 'SIMV/PS')) {
+      const dPs = val - old;
+      setPatient(p => ({
+        ...p,
+        spontaneousRate: Math.max(6, Math.min(40, Math.round(p.spontaneousRate - 1.25 * dPs))),
+      }));
+    }
     harness?.emit({ type: 'control_changed', control: key as ControlName, old_value: old, new_value: val, timestamp: Date.now() });
   };
 

@@ -146,9 +146,8 @@ export const M9: ModuleConfig = {
     {
       // v3.2 §2.5 — predict_mcq covers the correct algorithm behavior.
       kind: 'predict_mcq',
-      awaits_control: 'compliance',
       predict:
-        "You drop this patient's compliance from 30 to 18 — a sudden ARDS-like worsening. Over the next several breaths the vent will:",
+        "This patient's compliance suddenly worsens — an ARDS-like deterioration. Over the next several breaths the vent will:",
       options: [
         { label: 'Hold PIP constant; Vt will fall.', is_correct: false, explanation: "That's PCV. PRVC adjusts pressure to keep volume on target." },
         { label: 'Hold Vt constant; PIP will rise breath by breath.', is_correct: true },
@@ -177,8 +176,8 @@ export const M9: ModuleConfig = {
 
   hint_ladder: {
     tier1: 'Watch the PINSP / PIP trace, not the Vt trace. PRVC keeps Vt constant by *changing* pressure.',
-    tier2: 'Drop compliance to ~18 and just wait. The vent ramps PIP up over 4–5 breaths. PIP halos flash each time it adapts.',
-    tier3: { hint_text: 'Use "Show me" to drop compliance for you, then wait and confirm.', demonstration: { control: 'compliance', target_value: 18 } },
+    tier2: 'Drag the compliance slider down to simulate a worsening lung, then just wait. The vent ramps PIP up over 4–5 breaths. PIP halos flash each time it adapts.',
+    tier3: { hint_text: 'Use "Show me" to worsen the compliance for you (drag it down), then wait and confirm.', demonstration: { control: 'compliance', target_value: 18 } },
   },
 
   summative_quiz: [
@@ -251,17 +250,17 @@ export const M9: ModuleConfig = {
     ],
     suggestions: [
       'At baseline, watch a few breaths. PIP and Vt are stable.',
-      'Drop compliance from 30 to 18. Watch PIP halos flash as the vent ramps up over the next 4–5 breaths.',
-      'Raise compliance back to 50. Watch PIP halos flash as the vent ticks DOWN — Vt would otherwise overshoot.',
+      'Drag the compliance slider down to simulate a worsening lung. Watch PIP halos flash as the vent ramps up over the next 4–5 breaths.',
+      'Drag it back up to simulate recovery. Watch PIP halos flash as the vent ticks DOWN — Vt would otherwise overshoot.',
       'This is the adaptive loop. In a stable patient, it just works.',
     ],
   },
 
   // v3.2 §2.6 — re-framed as "watch the algorithm." No recognition child.
   user_facing_task:
-    "Watch the algorithm. Drop this patient's compliance into the ARDS range and wait. Over four to five breaths the inspiratory pressure will climb as PRVC keeps Vt on target. You'll see the PIP halo flash each adaptive step. No other intervention needed — your job is to observe.",
+    "Watch the algorithm. Simulate a worsening lung — drag the compliance slider down into the ARDS range — and wait. Over four to five breaths the inspiratory pressure will climb as PRVC keeps Vt on target. You'll see the PIP halo flash each adaptive step. No other intervention needed — your job is to observe.",
   success_criteria_display: [
-    'Reduce compliance by at least 40%.',
+    'Drag the compliance slider down by at least 40% to simulate worsening.',
     'Wait for PIP to climb to ≥ 22 cmH2O, sustained 4 breaths.',
   ],
   task_framing_style: 'A',
@@ -339,7 +338,7 @@ export const M10: ModuleConfig = {
       id: 'M10-P2',
       prompt: 'A PSV patient has PEEP 5, PS 10, RR 38, Vt 220 mL. The correct interpretation is:',
       options: [
-        { label: 'Adequate support — leave as is', is_correct: false, explanation: "Owens's example: this patient is under-supported." },
+        { label: 'Adequate support — leave as is', is_correct: false, explanation: 'This patient is under-supported: a rate of 38 with a Vt of only 220 mL is the rapid, shallow pattern of too little pressure support.' },
         { label: 'Under-supported — the patient is taking shallow fast breaths. Raise PS.', is_correct: true, explanation: 'RR 38 with a Vt of only 220 mL is the classic under-support pattern: the boost is too small, so the patient compensates with rapid, shallow breaths. Raising PS deepens each breath and the rate falls as the patient rides bigger volumes. Further reading: TVB Ch. 11.' },
         { label: 'Over-supported — lower PS', is_correct: false, explanation: 'Over-support looks the opposite — large Vt with a slow rate. Here the breaths are small and fast, so PS is too low, not too high.' },
         { label: 'Switch to A/C', is_correct: false, explanation: "Defensible if PSV isn't working, but the first move is to raise PS." },
@@ -351,7 +350,7 @@ export const M10: ModuleConfig = {
       options: [
         { label: 'A 60-year-old with pneumonia, day 4, alert and following commands', is_correct: false, explanation: 'Good PSV candidate.' },
         { label: 'A 30-year-old post-operative awakening from anesthesia', is_correct: false, explanation: 'Good candidate as anesthesia clears.' },
-        { label: 'A 45-year-old in septic shock on norepinephrine 0.3 mcg/kg/min, intubated 1 hour ago', is_correct: true, explanation: 'Owens\'s rule for the shocked patient: don\'t let the diaphragm consume cardiac output. Shocked + fresh intubation = A/C, not PSV.' },
+        { label: 'A 45-year-old in septic shock on norepinephrine 0.3 mcg/kg/min, intubated 1 hour ago', is_correct: true, explanation: "In a shocked patient you don't want the diaphragm consuming cardiac output. Shocked plus a fresh intubation means A/C, not PSV." },
         { label: 'A 70-year-old extubation candidate', is_correct: false, explanation: 'Ideal PSV candidate.' },
       ],
     },
@@ -411,7 +410,7 @@ export const M10: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "PSV is the **recovery mode**. The patient has a working brain and a working diaphragm, but his lungs or his strength aren't quite back to baseline. You set a pressure boost — typically 10–15 cmH2O above PEEP — and the patient does the rest. He breathes when he wants to; he breathes as much as he wants. The vent just makes each breath a little easier.",
+        "PSV is a **recovery mode** — and the word *recovery* is the whole point. It is for the patient who is *through* the acute phase of his illness and on the way back: a working brain, a working diaphragm, lungs and strength not quite at baseline. You set a pressure boost — typically 10–15 cmH2O above PEEP — and the patient does the rest. He breathes when he wants to; he breathes as much as he wants. The vent just makes each breath a little easier.\n\nWhat PSV is **not** is a mode you reach for *after* a patient has decompensated. For shock, ARDS, high metabolic demand, or an unreliable respiratory drive, assist-control is the better choice — it guarantees the breaths that PSV leaves entirely to the patient.",
     },
     // Novice-pass §10.1 — promoted from buried footnote. The single most
     // dangerous thing about PSV is that it has NO SET RATE: an apneic
@@ -426,7 +425,7 @@ export const M10: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "**Concrete example:** imagine a post-op patient on PSV 10 / PEEP 5 / FiO2 40%. Comfortable, breathing 18/min, Vt 450. The team gives 4 mg of IV morphine for pain. Five minutes later the respiratory drive softens — he's now breathing 8/min with Vt 250. Ten minutes later he's apneic. The vent is set to PSV. **It is doing nothing.** He needs A/C, fast. If you'd put him on A/C from the start, the sedation would have been silently absorbed.",
+        "**Concrete example:** imagine a post-op patient on PSV 10 / PEEP 5 / FiO2 40%. Comfortable, breathing 18/min, Vt 450. The team gives 4 mg of IV morphine for pain. Five minutes later the respiratory drive softens — he's now breathing 8/min with Vt 250. Ten minutes later he's apneic. The vent is set to PSV. **It is doing nothing.** He needs A/C, fast. On A/C the machine delivers a guaranteed rate and volume no matter what his drive does, so the same dose of morphine would have passed without event. PSV sets only a fixed *pressure*; the *volume* each breath actually delivers rises and falls with his compliance and his effort — and as the morphine softens that effort, the delivered volume fades with it, all the way to zero.",
     },
     {
       kind: 'callout',
@@ -450,15 +449,17 @@ export const M10: ModuleConfig = {
       kind: 'callout',
       tone: 'tip',
       markdown:
-        'The **End-Insp %** setting on the vent is the flow-cycle threshold (the percent-of-peak-flow at which PSV decides the breath is over). 25–30 % is the standard. Lower it (10–15 %) for COPD patients with very long time constants; raise it (35–50 %) for stiff, fast-filling lungs.',
+        'The **End-Insp %** setting on the vent is the flow-cycle threshold (the percent-of-peak-flow at which PSV decides the breath is over). 25–30 % is the standard. **Stiff, low-compliance lungs need the breath to terminate *later*, not sooner — so *lower* the threshold (10–15 %).** Their flow-time curve is steep: inspiratory flow rockets up and falls away fast, so a standard cutoff clips the breath off prematurely and short-changes the delivered volume. Dropping the threshold lets inspiration run longer down that steep curve and fill the lung. The opposite holds for COPD and other long-time-constant lungs: *raise* the threshold (40–50 %) so the breath ends earlier and leaves more time to exhale.',
     },
     {
       // v3.2 §0.6 — legacy predict_observe conversion (the existing PS18→24
-      // exploration).
+      // exploration). M10 #4 — decoupled from the control: the learner
+      // answers the prediction by choosing; moving the PS slider no longer
+      // auto-satisfies it (no `awaits_control`), so the answer cannot
+      // pre-populate on a vent change.
       kind: 'predict_mcq',
-      awaits_control: 'psLevel',
       predict:
-        "Raise PS from 18 to 24. What happens to the patient's spontaneous Vt and RR?",
+        "You are about to raise PS from 18 to 24. First predict: what happens to the patient's spontaneous Vt and RR?",
       options: [
         { label: 'Vt rises, RR falls — bigger boosted breaths, less work between them.', is_correct: true },
         { label: 'Vt rises, RR rises too — more support drives more breaths.', is_correct: false, explanation: 'Backwards. More support per breath lets the patient slow down and ride bigger volumes.' },
@@ -532,7 +533,7 @@ export const M10: ModuleConfig = {
     },
     {
       id: 'M10-Q3',
-      prompt: 'Owens identifies the threshold PS for considering an SBT as:',
+      prompt: 'The threshold PS for considering an SBT is generally:',
       options: [
         { label: '<5 cmH2O', is_correct: false, explanation: 'Lower than needed — a patient comfortable at PS 5 has essentially already passed a spontaneous trial, but the threshold for *considering* an SBT is a bit higher.' },
         { label: '<10 cmH2O', is_correct: true, explanation: 'Once a patient is comfortable on PS below ~10 cmH2O, the machine is doing little of the work — that is the cue to run a formal spontaneous breathing trial. Above that, the support is still substantial and the patient is not yet trial-ready. Further reading: TVB Ch. 11.' },
