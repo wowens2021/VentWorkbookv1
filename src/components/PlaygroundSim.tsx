@@ -1390,7 +1390,25 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               : settings.pInsp;
             const riseProgress = Math.min(1, effT / 0.15);
             p = (activeTargetPi * riseProgress) + settings.peep;
-            f = (activeTargetPi / R_insp) * Math.exp(-Math.max(0, effT) / tau_insp);
+            // M10 #5 — physiologic peak inspiratory flow. The bare
+            // single-compartment response (Pi/R_insp) starts at its full
+            // peak instantly — e.g. 18/10 = 1.8 L/s ≈ 108 L/min — which
+            // reads as non-physiologic on the flow trace. Real pressure
+            // breaths pressurize over a finite rise time, so flow RAMPS up
+            // to a peak of ~40–60 L/min and then decays. We model that
+            // rise on the DISPLAYED flow with a (1 − e^(−t/FLOW_RISE_TAU))
+            // factor, area-normalized by (tau+FLOW_RISE_TAU)/tau so the
+            // integral over the breath is unchanged. Volume (and therefore
+            // Vte, PPLAT, dynamic compliance, flow-cycling, and every
+            // tracker that reads them) is deliberately left on the exact
+            // analytic formula below — the delivered tidal volume is
+            // identical; only the flow waveform's shape becomes realistic.
+            // CLAUDE.md §12.2 (equation of motion), §16 (volume = ∫flow,
+            // preserved at the breath level), §3 sample-rate realism.
+            const FLOW_RISE_TAU = 0.2; // s — pressure-rise time constant
+            const flowRise = 1 - Math.exp(-Math.max(0, effT) / FLOW_RISE_TAU);
+            const flowNorm = (tau_insp + FLOW_RISE_TAU) / tau_insp;
+            f = (activeTargetPi / R_insp) * flowNorm * flowRise * Math.exp(-Math.max(0, effT) / tau_insp);
             v = trappedVolumeAtBreathStartRef.current + (C * activeTargetPi * (1 - Math.exp(-Math.max(0, effT) / tau_insp)));
           }
         }

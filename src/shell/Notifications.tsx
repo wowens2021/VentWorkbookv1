@@ -55,6 +55,12 @@ const kindStyle: Record<ShellNotification['kind'], { bg: string; border: string;
  * alerts, ModuleShell step-level soft prompts and idle reminders)
  * pushes via `harness.notify` and the list rolls up here.
  */
+// Per user request, the consolidated "Hints & Alerts" surface is hidden
+// from the workbook UI. The harness still runs its notify/dismiss logic
+// (so nothing else breaks), but this panel renders nothing. Flip back to
+// `true` to restore the top-right toast stack.
+const SHOW_NOTIFICATIONS = false;
+
 const Notifications: React.FC<Props> = ({ harness }) => {
   const [items, setItems] = useState<ShellNotification[]>(() => harness?.getNotifications() ?? []);
   useEffect(() => {
@@ -63,7 +69,7 @@ const Notifications: React.FC<Props> = ({ harness }) => {
     return harness.onNotifications(setItems);
   }, [harness]);
 
-  if (items.length === 0) return null;
+  if (!SHOW_NOTIFICATIONS || items.length === 0) return null;
 
   return (
     <div className="fixed top-4 right-4 z-[300] flex flex-col gap-2 w-[22rem] max-w-[calc(100vw-2rem)] pointer-events-none">
