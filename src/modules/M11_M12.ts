@@ -430,8 +430,13 @@ export const M12: ModuleConfig = {
     { kind: 'prose', markdown: '**SIMV looks like A/C with extra rules.** The vent delivers a fixed number of mandatory breaths per minute — at the set Vt or PINSP. Between mandatory breaths, the patient can breathe spontaneously. But unlike A/C, those spontaneous breaths are not automatically supported. The patient pulls whatever volume he can pull, and that\'s what he gets.' },
     { kind: 'callout', tone: 'info', markdown: 'In SIMV, the mandatory breaths are A/C-like. The spontaneous breaths are PSV-like — but only if you\'ve set a PS.' },
     {
+      // M12 #1 — decoupled from the control: the learner answers by
+      // choosing, and moving the PS slider no longer auto-satisfies the
+      // prompt (no `awaits_control`), so the answer cannot pre-populate
+      // on a vent change. The learner predicts first, then performs the
+      // titration in the try-it.
       kind: 'predict_mcq',
-      predict: 'You\'re about to add PS 12 to a patient pulling 160 mL spontaneous breaths between mandatory breaths. What happens to the spontaneous Vt?',
+      predict: 'You\'re about to add PS 12 to a patient pulling 160 mL spontaneous breaths between mandatory breaths. First predict: what happens to the spontaneous Vt?',
       options: [
         { label: 'Climbs into the 400s — PS makes the spontaneous breaths effective.', is_correct: true },
         { label: 'Unchanged — PS only affects mandatory breaths in SIMV.', is_correct: false, explanation: 'Backwards. In SIMV, the MANDATORY breaths are fully set (Vt and rate); PS is added to the SPONTANEOUS ones.' },
@@ -439,7 +444,6 @@ export const M12: ModuleConfig = {
         { label: 'Falls because mandatory breaths now dominate.', is_correct: false, explanation: 'Mandatory rate is unchanged. The spontaneous breaths get bigger; the mandatory breaths stay the same size.' },
       ],
       observe: 'Spontaneous Vt climbs into the 400s. The patient was working, just not effectively. Now the breaths actually move air.',
-      awaits_control: 'psLevel',
     },
     // v3.2 §0.7 — new predict_mcq grounding the SIMV failure mode.
     {
@@ -511,14 +515,14 @@ export const M12: ModuleConfig = {
     },
     {
       id: 'M12-Q5',
-      prompt: 'The advantage Owens identifies for SIMV in clinical practice is:',
+      prompt: 'The pragmatic advantage of SIMV in clinical practice is:',
       options: [
         { label: 'It\'s the fastest weaning mode', is_correct: false },
         { label: 'It prevents diaphragmatic atrophy', is_correct: false },
         { label: 'It is institutionally familiar and works fine as long as the work of breathing is monitored', is_correct: true },
         { label: 'It is the only mode that allows spontaneous breathing', is_correct: false },
       ],
-      explanation: '"There is nothing wrong with SIMV as long as you pay attention to the work of breathing." Owens\'s pragmatic answer. TVB Ch. 10.',
+      explanation: '"There is nothing wrong with SIMV as long as you pay attention to the work of breathing" — the pragmatic answer. TVB Ch. 10.',
     },
   ],
 
