@@ -1502,6 +1502,17 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
             </WorkbookErrorBoundary>
           }
           inlinePromptOverlay={inlinePromptOverlay}
+          // When the active Quick-check prompt carries its OWN waveform
+          // clip (M11/M13 recognition), the prompt is self-contained and
+          // covering the sim is fine. When it has NO clip (e.g. the
+          // Compliance/Resistance INSP-HOLD acknowledgment, which asks
+          // about the live trace and readouts behind it), keep the sim
+          // visible so the learner can read the plateau / PIP-Pplat tiles
+          // while answering.
+          inlinePromptKeepSimVisible={
+            !!activePrompt && !isClickTargetMode &&
+            !activePrompt.clip_component && !(activePrompt as any).clip_src
+          }
           simInteractivity={simInteractivity}
           flashReadouts={flashReadouts}
           flashControls={flashControls}

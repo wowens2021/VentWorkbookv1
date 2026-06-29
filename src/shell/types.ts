@@ -222,6 +222,13 @@ export interface ManipulationTrackerConfig {
     question: string;
     options: QuizOption[];
     annotation_on_correct?: string;
+    /**
+     * Delay (ms) between this manipulation being satisfied and the
+     * acknowledgment ("Quick check") prompt appearing. Lets the learner
+     * watch the result of their action — e.g. the held plateau after an
+     * INSP HOLD — before the question is presented. Defaults to 1500.
+     */
+    present_delay_ms?: number;
   };
   /**
    * v3 Troubleshooting spec — sim state override applied when this

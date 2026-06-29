@@ -28,6 +28,14 @@ interface PlaygroundSimProps {
   workbookContent?: React.ReactNode;
   /** Optional overlay for inline recognition prompts. */
   inlinePromptOverlay?: React.ReactNode;
+  /**
+   * When true, the inline prompt is anchored to the bottom of the
+   * waveform card with no blur backdrop, so the live trace and readouts
+   * stay visible behind it (used for acknowledgment prompts that ask
+   * about the sim itself). When false/undefined, the prompt covers the
+   * waveforms with a blur backdrop (the prompt carries its own clip).
+   */
+  inlinePromptKeepSimVisible?: boolean;
   /** Hide the header (when embedded inside a shell that has its own header). */
   hideHeader?: boolean;
   /** Per-phase interactivity. Default 'live'. */
@@ -428,6 +436,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   unlockedControls,
   workbookContent,
   inlinePromptOverlay,
+  inlinePromptKeepSimVisible,
   hideHeader,
   simInteractivity = 'live',
   playgroundMode = false,
@@ -1721,11 +1730,24 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
             <WaveformPanel title="Airway Pressure" dataKey="pressure" unit="cmH2O" segmentedPaths={pressurePaths} bounds={pressureBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} isHoldActive={!!activeHoldType} showZeroLine isFrozen={isFrozen} peepValue={settings.peep} />
             <WaveformPanel title="Flow Rate" dataKey="flow" unit="L/min" segmentedPaths={flowPaths} bounds={flowBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} showZeroLine isFrozen={isFrozen} />
             <WaveformPanel title="Volume" dataKey="volume" unit="mL" segmentedPaths={volumePaths} bounds={volumeBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} showZeroLine isFrozen={isFrozen} />
-            {/* Inline recognition prompt overlay */}
+            {/* Inline recognition prompt overlay. Two layouts:
+                - keepSimVisible: anchor to the bottom with no backdrop so
+                  the live trace + PIP/Pplat tiles stay readable behind the
+                  card (acknowledgment prompts that ask about the sim).
+                - default: cover the waveforms with a blur backdrop (the
+                  prompt carries its own clip and is the focus). */}
             {inlinePromptOverlay && (
-              <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/80 backdrop-blur-sm p-4">
-                {inlinePromptOverlay}
-              </div>
+              inlinePromptKeepSimVisible ? (
+                <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center p-3 pointer-events-none">
+                  <div className="pointer-events-auto w-full flex justify-center">
+                    {inlinePromptOverlay}
+                  </div>
+                </div>
+              ) : (
+                <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/80 backdrop-blur-sm p-4">
+                  {inlinePromptOverlay}
+                </div>
+              )
             )}
             {/* v3 Troubleshooting spec — Auscultate / Examine findings
                 modal. Pops on button click; click anywhere or press

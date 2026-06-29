@@ -161,19 +161,39 @@ export class ManipulationTracker implements Tracker {
       return;
     }
 
+    // While an acknowledgment is pending (delayed prompt scheduled or on
+    // screen), ignore further control changes so a second INSP HOLD press
+    // doesn't schedule a duplicate prompt or reset the one being answered.
+    if (this.awaitingAck) return;
+
     if (ev.type === 'control_changed' && ev.control === this.cfg.control) {
       const baseline = this.ctx?.baseline_controls[this.cfg.control];
       if (compareCondition(ev.new_value, baseline, this.cfg.condition)) {
         if (this.cfg.require_acknowledgment) {
           this.ackPromptId = `${this.cfg.control}_ack`;
           this.awaitingAck = true;
-          this.ctx?.presentPrompt({
-            prompt_id: this.ackPromptId,
-            trigger: { kind: 'on_load' },
-            question: this.cfg.require_acknowledgment.question,
-            options: this.cfg.require_acknowledgment.options,
-            annotation_on_correct: this.cfg.require_acknowledgment.annotation_on_correct,
-          });
+          const ack = this.cfg.require_acknowledgment;
+          const promptId = this.ackPromptId;
+          // Delay the "Quick check" so the learner can actually SEE the
+          // result of the action they were told to take before the
+          // question appears. An INSP HOLD, for example, freezes the
+          // breath for ~0.5 s to reveal the plateau; firing the prompt the
+          // instant the control event lands hid that moment behind the
+          // overlay ("the screen vanishes and I didn't have time to see
+          // what happened"). awaitingAck is set immediately so a second
+          // press can't double-fire; only the visual presentation waits.
+          const delayMs = ack.present_delay_ms ?? 1500;
+          setTimeout(() => {
+            // Guard against teardown/reset/answer in the interim.
+            if (!this.ctx || this.satisfied || !this.awaitingAck || this.ackPromptId !== promptId) return;
+            this.ctx.presentPrompt({
+              prompt_id: promptId,
+              trigger: { kind: 'on_load' },
+              question: ack.question,
+              options: ack.options,
+              annotation_on_correct: ack.annotation_on_correct,
+            });
+          }, delayMs);
         } else {
           this.fire();
         }
