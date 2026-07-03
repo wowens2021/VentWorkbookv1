@@ -4,6 +4,7 @@ import type { ContentBlock, ControlName } from './types';
 import type { ScenarioHarness } from '../harness/ScenarioHarness';
 import PBWWidget from './PBWWidget';
 import DyssynchronyWaveform from '../components/DyssynchronyWaveform';
+import { formatClinicalText } from './formatClinicalText';
 
 /**
  * Registry of live React components that can be embedded inline via the
@@ -23,16 +24,17 @@ const renderTokens = (text: string, keyBase: string): React.ReactNode[] => {
   let last = 0;
   let key = 0;
   while ((m = re.exec(text)) !== null) {
-    if (m.index > last) parts.push(text.slice(last, m.index));
+    if (m.index > last) parts.push(...formatClinicalText(text.slice(last, m.index), `${keyBase}-t${key++}`));
     const tok = m[0];
     if (tok.startsWith('**')) {
-      parts.push(<strong key={`${keyBase}-${key++}`} className="text-zinc-900">{tok.slice(2, -2)}</strong>);
+      // Bold prose still gets unit/operator typography; code stays verbatim.
+      parts.push(<strong key={`${keyBase}-${key++}`} className="text-zinc-900">{formatClinicalText(tok.slice(2, -2), `${keyBase}-b${key}`)}</strong>);
     } else {
       parts.push(<code key={`${keyBase}-${key++}`} className="bg-zinc-100 px-1.5 py-0.5 rounded text-[14px] font-mono text-zinc-800">{tok.slice(1, -1)}</code>);
     }
     last = m.index + tok.length;
   }
-  if (last < text.length) parts.push(text.slice(last));
+  if (last < text.length) parts.push(...formatClinicalText(text.slice(last), `${keyBase}-t${key++}`));
   return parts;
 };
 
@@ -48,7 +50,7 @@ const renderInline = (md: string): React.ReactNode => {
     const hasList = lines.some(l => /^\s*-\s+/.test(l));
     if (!hasList) {
       return (
-        <p key={pi} className="mb-3 last:mb-0 leading-relaxed text-zinc-700 text-[15px]">
+        <p key={pi} className="mb-4 last:mb-0 leading-[1.75] text-zinc-700 text-[16px]">
           {renderTokens(para, `p${pi}`)}
         </p>
       );
@@ -58,7 +60,7 @@ const renderInline = (md: string): React.ReactNode => {
     const flushList = (k: string) => {
       if (listItems.length > 0) {
         out.push(
-          <ul key={k} className="list-disc pl-5 mb-3 space-y-1 leading-relaxed text-zinc-700 text-[15px]">
+          <ul key={k} className="list-disc pl-5 mb-4 space-y-2 leading-[1.75] text-zinc-700 text-[16px] marker:text-zinc-400">
             {listItems}
           </ul>,
         );
@@ -74,7 +76,7 @@ const renderInline = (md: string): React.ReactNode => {
       } else if (line.trim() !== '') {
         flushList(`ul-${pi}-${li}`);
         out.push(
-          <p key={`pl-${pi}-${li}`} className="mb-3 leading-relaxed text-zinc-700 text-[15px]">
+          <p key={`pl-${pi}-${li}`} className="mb-4 leading-[1.75] text-zinc-700 text-[16px]">
             {renderTokens(line, `pl${pi}-${li}`)}
           </p>,
         );
@@ -110,7 +112,7 @@ const Block: React.FC<{
       <figure className="bg-zinc-50 border border-zinc-200 rounded-lg p-3 my-3">
         {block.ascii && <pre className="text-[12px] font-mono text-zinc-600 overflow-x-auto whitespace-pre">{block.ascii}</pre>}
         {block.src && <img src={block.src} alt={block.caption ?? ''} className="w-full rounded" />}
-        {block.caption && <figcaption className="text-[12px] text-zinc-500 mt-2 italic">{block.caption}</figcaption>}
+        {block.caption && <figcaption className="text-[12.5px] text-zinc-500 mt-2 italic">{formatClinicalText(block.caption, 'figcap')}</figcaption>}
       </figure>
     );
   }
@@ -133,11 +135,11 @@ const Block: React.FC<{
     return (
       <div className="my-4">
         <div className="overflow-x-auto rounded-lg border border-zinc-300 bg-white shadow-sm">
-          <table className="w-full text-[13.5px]">
+          <table className="w-full text-[14px] tabular-nums">
             <thead className="bg-zinc-100 border-b border-zinc-300">
               <tr>
                 {block.headers.map((h, i) => (
-                  <th key={i} className="px-3 py-2 text-left font-bold text-zinc-800 whitespace-nowrap">{h}</th>
+                  <th key={i} className="px-3 py-2.5 text-left font-bold text-zinc-800 whitespace-nowrap">{formatClinicalText(h, `th${i}`)}</th>
                 ))}
               </tr>
             </thead>
@@ -145,7 +147,7 @@ const Block: React.FC<{
               {block.rows.map((row, ri) => (
                 <tr key={ri} className={ri % 2 === 1 ? 'bg-zinc-50' : ''}>
                   {row.map((cell, ci) => (
-                    <td key={ci} className="px-3 py-2 align-top text-zinc-700 border-t border-zinc-200">{cell}</td>
+                    <td key={ci} className="px-3 py-2.5 align-top text-zinc-700 border-t border-zinc-200 leading-relaxed">{formatClinicalText(cell, `td${ri}-${ci}`)}</td>
                   ))}
                 </tr>
               ))}
@@ -166,9 +168,9 @@ const Block: React.FC<{
           ? 'border-sky-300 bg-sky-50 text-sky-800'
           : 'border-zinc-300 bg-white text-zinc-700';
     return (
-      <div className={`border rounded-lg p-3.5 my-3 flex gap-2.5 ${tone}`}>
+      <div className={`border rounded-lg p-4 my-4 flex gap-2.5 ${tone}`}>
         <Icon size={18} className="shrink-0 mt-0.5" />
-        <div className="text-[14px] leading-relaxed">{renderInline(block.markdown)}</div>
+        <div className="text-[15px] leading-[1.7]">{renderInline(block.markdown)}</div>
       </div>
     );
   }
@@ -202,7 +204,7 @@ const Block: React.FC<{
       <div className="my-4">
         <Comp {...(block.props ?? {})} />
         {block.caption && (
-          <div className="text-[12px] text-zinc-500 mt-2 italic">{block.caption}</div>
+          <div className="text-[12.5px] text-zinc-500 mt-2 italic">{formatClinicalText(block.caption, 'lccap')}</div>
         )}
       </div>
     );
@@ -256,7 +258,7 @@ const PredictObserve: React.FC<{
           </span>
         )}
       </div>
-      <p className="text-[14px] text-zinc-900 leading-relaxed mb-2">{block.predict}</p>
+      <p className="text-[15px] text-zinc-900 leading-[1.7] mb-2">{formatClinicalText(block.predict, 'po-p')}</p>
       {!revealed ? (
         <button onClick={() => setRevealed(true)} className="text-[13px] font-bold text-violet-600 hover:text-violet-700">
           {ctaLabel}
@@ -264,7 +266,7 @@ const PredictObserve: React.FC<{
       ) : (
         <div className="mt-2 pt-2 border-t border-violet-200 animate-in fade-in slide-in-from-bottom-1 duration-500">
           <div className="text-[11px] font-black uppercase tracking-widest text-violet-700 mb-1">Observe</div>
-          <p className="text-[14px] text-zinc-900 leading-relaxed">{block.observe}</p>
+          <p className="text-[15px] text-zinc-900 leading-[1.7]">{formatClinicalText(block.observe, 'po-o')}</p>
         </div>
       )}
     </div>
@@ -330,7 +332,7 @@ const PredictMcq: React.FC<{
           </span>
         )}
       </div>
-      <p className="text-[14px] text-zinc-900 leading-relaxed mb-3">{block.predict}</p>
+      <p className="text-[15px] text-zinc-900 leading-[1.7] mb-3">{formatClinicalText(block.predict, 'pm-p')}</p>
       <div className="space-y-1.5">
         {block.options.map((opt, i) => {
           const picked = selected.includes(i);
@@ -345,16 +347,16 @@ const PredictMcq: React.FC<{
                 type="button"
                 onClick={() => pick(i)}
                 disabled={satisfied}
-                className={`w-full text-left text-[13.5px] leading-snug px-3 py-2 rounded-md border transition ${cls} ${
+                className={`w-full text-left text-[14px] leading-snug px-3 py-2 rounded-md border transition ${cls} ${
                   satisfied ? 'cursor-default' : 'cursor-pointer'
                 }`}
               >
                 <span className="font-semibold text-zinc-500 mr-1.5">{String.fromCharCode(65 + i)}.</span>
-                <span className="text-zinc-800">{opt.label}</span>
+                <span className="text-zinc-800">{formatClinicalText(opt.label, `pm-opt${i}`)}</span>
               </button>
               {picked && !isCorrect && opt.explanation && (
-                <p className="text-[12.5px] text-rose-800 mt-1 ml-2.5 leading-snug">
-                  {opt.explanation}
+                <p className="text-[13px] text-rose-800 mt-1 ml-2.5 leading-snug">
+                  {formatClinicalText(opt.explanation, `pm-exp${i}`)}
                 </p>
               )}
             </div>
@@ -364,7 +366,7 @@ const PredictMcq: React.FC<{
       {satisfied && (
         <div className="mt-3 pt-3 border-t border-violet-200 animate-in fade-in slide-in-from-bottom-1 duration-500">
           <div className="text-[11px] font-black uppercase tracking-widest text-violet-700 mb-1">Observe</div>
-          <p className="text-[14px] text-zinc-900 leading-relaxed">{block.observe}</p>
+          <p className="text-[15px] text-zinc-900 leading-[1.7]">{formatClinicalText(block.observe, 'pm-obs')}</p>
         </div>
       )}
     </div>
@@ -395,7 +397,7 @@ const ContentBlocks: React.FC<Props> = ({ blocks, harness, moduleId, onMcqStatus
   // across the module (offset by the blocks shown on earlier pages).
   let mcqCounter = mcqIdOffset;
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       {blocks.map((b, i) => {
         const mcqId =
           b.kind === 'predict_mcq'
