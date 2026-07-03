@@ -1055,17 +1055,21 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     if (key === 'peep') {
       setMetrics(m => ({ ...m, totalPeep: val }));
     }
-    // Inverse Vt↔RR coupling for spontaneous / pressure-support breaths.
-    // In PSV (and the spontaneous breaths of SIMV/PS) the patient owns the
-    // rate, and the rate defends minute ventilation: lower the pressure
-    // boost and each delivered breath shrinks, so the patient breathes
-    // FASTER (the rapid-shallow pattern of under-support); raise PS and the
-    // breaths deepen, so the rate FALLS. Without this, spontaneousRate sat
-    // pinned at its preset value while the learner titrated PS, so the RR
-    // readout never moved and an `actualRate` outcome gate could never be
-    // satisfied (the workbook could not advance). ~1.25 bpm per cmH2O of PS.
+    // Inverse Vt↔RR coupling for PRESSURE-SUPPORT (PSV) breaths. In PSV the
+    // patient owns the rate, and the rate defends minute ventilation: lower
+    // the pressure boost and each delivered breath shrinks, so the patient
+    // breathes FASTER (rapid-shallow, the pattern of under-support); raise
+    // PS and the breaths deepen, so the rate FALLS. Without this the RR
+    // readout sat pinned while the learner titrated PS and an `actualRate`
+    // gate could never be satisfied. ~1.25 bpm per cmH2O of PS.
     // CLAUDE.md §12.5 (spontaneous-mode coupling), §13.7.
-    if (key === 'psLevel' && (mode === 'PSV' || mode === 'SIMV/PS')) {
+    //
+    // Deliberately NOT applied in SIMV/PS: there the mandatory rate anchors
+    // the picture and the lesson is that PS makes the *spontaneous* breaths
+    // effective without the patient's rate collapsing. Coupling it made the
+    // spontaneous rate lurch when PS changed, which destabilized the Vte /
+    // VE readouts and the sustain-based success criteria.
+    if (key === 'psLevel' && mode === 'PSV') {
       const dPs = val - old;
       setPatient(p => ({
         ...p,
@@ -1243,7 +1247,11 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
 
       if (startNewBreath) {
         trappedVolumeAtBreathStartRef.current = lastVolumeRef.current;
-        const isMandatoryAdaptive = mode === 'PRVC' || (mode === 'SIMV/PS' && !triggeredByPatient);
+        // Only PRVC still adapts inspiratory pressure to hit a volume
+        // target. SIMV mandatory breaths are now volume-controlled (they
+        // deliver the set Vt directly), so they no longer need — or use —
+        // the pressure-adaptation loop.
+        const isMandatoryAdaptive = mode === 'PRVC';
         if (isMandatoryAdaptive && metrics.vte > 10) {
           const vtErr = settings.tidalVolume - metrics.vte;
           if (Math.abs(vtErr) > 5) {
@@ -1414,7 +1422,17 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           f = -(3 / 60) * Math.sin((tCycle / triggerDelay) * Math.PI);
           v = trappedVolumeAtBreathStartRef.current;
         } else {
-          if (mode === 'VCV') {
+          // VCV — and the MANDATORY breaths of SIMV/PS — are volume-
+          // controlled: the vent delivers exactly the set tidal volume, so
+          // Vte matches the set Vt (this is what "the mandatory breaths are
+          // A/C-like" means in SIMV). Previously SIMV mandatory breaths were
+          // pressure-adaptive (prvcAdaptivePi), which only approximated the
+          // set Vt and left the readout drifting off the control. Spontaneous
+          // SIMV breaths stay pressure-supported (PS) in the else branch.
+          const isVolumeControlled =
+            mode === 'VCV' ||
+            (mode === 'SIMV/PS' && !isCurrentBreathSpontaneousRef.current);
+          if (isVolumeControlled) {
             const vDot = Vt_s / (isPatientTriggeredRef.current ? iT - triggerDelay : iT);
             const delivered = Math.min(Vt_s, vDot * Math.max(0, effT));
             v = trappedVolumeAtBreathStartRef.current + delivered;
@@ -1716,13 +1734,29 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               <NumericCard label="RR" value={metrics.actualRate} unit="bpm" color="text-zinc-900" flash={flashSet.has('actualRate')} {...recogPropsForReadout('actualRate', 'RR')} />
               <NumericCard label="I:E" value={currentIERatio} unit="" color="text-amber-700" flash={flashSet.has('ieRatio')} {...recogPropsForReadout('ieRatio', 'I:E')} />
               <NumericCard label="PIP" value={metrics.pip} unit="cmH2O" color="text-emerald-600" flash={flashSet.has('pip')} {...recogPropsForReadout('pip', 'PIP')} />
-              <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} flash={flashSet.has('plat')} {...recogPropsForReadout('plat', 'Pplat')} />
-              <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color="text-violet-600" flash={flashSet.has('drivingPressure')} {...recogPropsForReadout('drivingPressure', 'DP')} />
+              {/* Maneuver-derived readouts — Pplat and Driving Pressure require
+                  an inspiratory hold; tPEEP and autoPEEP require an expiratory
+                  hold. They only display in modules that teach them (i.e. that
+                  list them in visible_readouts). In modes where no hold is done
+                  — e.g. the SIMV/PS module — showing a live plateau or auto-PEEP
+                  is misleading, so they're hidden. Gating is display-only; the
+                  underlying metrics.plat / autoPeep are still computed so any
+                  tracker that grades on them continues to work. */}
+              {showsReadout('plat') && (
+                <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} flash={flashSet.has('plat')} {...recogPropsForReadout('plat', 'Pplat')} />
+              )}
+              {showsReadout('drivingPressure') && (
+                <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color="text-violet-600" flash={flashSet.has('drivingPressure')} {...recogPropsForReadout('drivingPressure', 'DP')} />
+              )}
               <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" flash={flashSet.has('mve')} {...recogPropsForReadout('mve', 'VE')} />
               <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vte')} />
               <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-600" flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vt/PBW')} />
-              <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" flash={flashSet.has('totalPeep')} {...recogPropsForReadout('totalPeep', 'tPEEP')} />
-              <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" flash={flashSet.has('autoPeep')} {...recogPropsForReadout('autoPeep', 'autoPEEP')} />
+              {showsReadout('totalPeep') && (
+                <NumericCard label="tPEEP" value={metrics.totalPeep} unit="cmH2O" color="text-amber-600" flash={flashSet.has('totalPeep')} {...recogPropsForReadout('totalPeep', 'tPEEP')} />
+              )}
+              {showsReadout('autoPeep') && (
+                <NumericCard label="autoPEEP" value={String(autoPeepValue.toFixed(1))} unit="cmH2O" color="text-rose-600" flash={flashSet.has('autoPeep')} {...recogPropsForReadout('autoPeep', 'autoPEEP')} />
+              )}
               {/* Specialty readouts — opt-in per module via visible_readouts.
                   RSBI is load-bearing in M17/M18 (weaning calc); SBP in M13
                   (PEEP-overshoot guardrail) and M19 (pneumothorax signature);
