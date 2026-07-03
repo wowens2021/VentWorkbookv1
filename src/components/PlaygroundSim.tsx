@@ -36,6 +36,13 @@ interface PlaygroundSimProps {
    * waveforms with a blur backdrop (the prompt carries its own clip).
    */
   inlinePromptKeepSimVisible?: boolean;
+  /**
+   * Per-module override for the mode-selector button labels, keyed by
+   * mode key (e.g. { VCV: 'VCV' } to show the volume-A/C button as
+   * "VCV" in a module that contrasts it with PCV). Falls back to the
+   * default clinical labels when a key is absent.
+   */
+  modeLabelOverrides?: Record<string, string>;
   /** Hide the header (when embedded inside a shell that has its own header). */
   hideHeader?: boolean;
   /** Per-phase interactivity. Default 'live'. */
@@ -437,6 +444,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   workbookContent,
   inlinePromptOverlay,
   inlinePromptKeepSimVisible,
+  modeLabelOverrides,
   hideHeader,
   simInteractivity = 'live',
   playgroundMode = false,
@@ -1521,8 +1529,13 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     if (dataPoints.length === 0) return { min: -flowAbsCeilRef.current, max: flowAbsCeilRef.current };
     const vals = dataPoints.map(d => d.flow);
     const maxAbs = Math.max(Math.abs(Math.min(...vals)), Math.max(...vals));
-    const target = Math.max(40, Math.ceil((maxAbs * 1.2) / 10) * 10);
-    const candidate = pickCeil(target, [40, 60, 90, 120, 150, 180, 240]);
+    const target = Math.max(40, Math.ceil((maxAbs * 1.15) / 10) * 10);
+    // Flow axis is capped at a physiologic 100 L/min — real ventilator
+    // flows sit well under this, and the old ladder (up to 240) let a
+    // transient spike label the axis 150–180 L/min, which reads as
+    // unrealistic and shrinks every normal breath to a sliver. With a
+    // 100 ceiling a ~90 L/min flow fills ~90 % of the panel.
+    const candidate = pickCeil(target, [40, 60, 80, 100]);
     if (candidate < flowAbsCeilRef.current && maxAbs + 8 > candidate) {
       // hold
     } else {
@@ -1832,7 +1845,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                       isLocked('mode') ? 'text-zinc-400 cursor-not-allowed' :
                       mode === m ? 'bg-sky-600 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
                     } ${mode === m && isLocked('mode') ? 'bg-zinc-100' : ''}`}
-                  >{label}</button>
+                  >{modeLabelOverrides?.[m] ?? label}</button>
                 ))}
               </div>
               <div className="flex items-center gap-1 ml-auto">

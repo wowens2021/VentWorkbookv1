@@ -404,6 +404,10 @@ export const M8: ModuleConfig = {
     // The waveform-comparison lesson doesn't need the Pplat>30 safety
     // alarm; suppress it so it doesn't distract.
     suppress_pplat_alarm: true,
+    // M8 contrasts volume control with pressure control, so label the
+    // volume-A/C button "VCV" here (not the default "A/C") to make the
+    // VCV-vs-PCV comparison explicit. This override is scoped to M8 only.
+    mode_labels: { VCV: 'VCV' },
   },
 
   // Two-step task: (1) switch VCV → PCV and acknowledge the flow-

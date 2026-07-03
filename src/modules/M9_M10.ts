@@ -67,12 +67,12 @@ export const M9: ModuleConfig = {
     },
     {
       id: 'M9-P2',
-      prompt: 'In PRVC, the ventilator adjusts the inspiratory pressure when:',
+      prompt: 'PRVC adjusts the inspiratory pressure in response to several things. Which of the following is NOT a reason it adjusts?',
       options: [
-        { label: "The patient's compliance changes.", is_correct: false, explanation: "True — but it's the cause. The vent senses it through the tidal volume." },
-        { label: "The measured tidal volume drifts away from the target.", is_correct: true, explanation: 'TVB Ch. 9. The vent measures the resulting Vt and adjusts PINSP to keep it at the target. Compliance changes are the most common cause of the Vt drift.' },
-        { label: 'The clinician changes the target Vt.', is_correct: false, explanation: 'True but trivial.' },
-        { label: 'The patient triggers a breath.', is_correct: false, explanation: 'Triggering does not, by itself, change the adaptive logic.' },
+        { label: "The patient's compliance changes.", is_correct: false, explanation: "This IS a reason (indirectly): a compliance change shows up as a drift in the delivered tidal volume, and the vent corrects PINSP to bring the volume back to target. So it is a valid trigger for adjustment — not the exception." },
+        { label: "The measured tidal volume drifts away from the target.", is_correct: false, explanation: 'This IS the core trigger: PRVC watches the delivered Vt breath-to-breath and nudges PINSP to keep it on target. Not the exception.' },
+        { label: 'The clinician changes the target Vt.', is_correct: false, explanation: 'This IS a reason: a new target Vt makes the vent recompute the PINSP needed to reach it. Not the exception.' },
+        { label: 'The patient initiates (triggers) a breath.', is_correct: true, explanation: 'Correct — triggering a breath does not, by itself, change the adaptive PINSP logic. PRVC adjusts based on the delivered volume versus the target, not on who started the breath.' },
       ],
     },
     {

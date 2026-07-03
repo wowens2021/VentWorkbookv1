@@ -1513,6 +1513,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
             !!activePrompt && !isClickTargetMode &&
             !activePrompt.clip_component && !(activePrompt as any).clip_src
           }
+          modeLabelOverrides={module.scenario.mode_labels}
           simInteractivity={simInteractivity}
           flashReadouts={flashReadouts}
           flashControls={flashControls}

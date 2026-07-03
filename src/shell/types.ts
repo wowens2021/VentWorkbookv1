@@ -199,6 +199,13 @@ export interface Scenario {
    * and watch the plateau climb — the alarm there is just noise.
    */
   suppress_pplat_alarm?: true;
+  /**
+   * Per-module override for the mode-selector button labels, keyed by
+   * mode key. E.g. { VCV: 'VCV' } shows the volume-A/C button as "VCV"
+   * in a module that contrasts VCV with PCV. Absent keys keep the
+   * default clinical labels ("A/C" for VCV, etc.).
+   */
+  mode_labels?: Record<string, string>;
 }
 
 // ── Tracker configurations ──
