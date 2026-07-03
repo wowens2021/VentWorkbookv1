@@ -1257,18 +1257,38 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
         peakExpiratoryFlowRef.current = 0;
         if (triggeredByPatient) {
           nextSpontaneousTimeRef.current = elapsedInSim + (60 / (patient.spontaneousRate || 0.1) * (0.8 + Math.random() * 0.4));
-          // Per user feedback — the previous "SIMV synchronization" fix
-          // pushed nextMandatoryTimeRef out by a full ventInterval
-          // whenever a spontaneous breath fired. When patient rate >
-          // set rate (the common SIMV failure case the module teaches),
-          // the patient was resetting the timer on every breath and
-          // mandatory breaths NEVER fired — the sim showed only the
-          // spontaneous train. SIMV mandatory breaths must fire on
-          // schedule regardless of spontaneous activity. The
-          // flow-sync gate (above) already prevents back-to-back
-          // overlap if a mandatory window arrives mid-spontaneous.
+          // Assist-control (VCV / PCV / PRVC): the set rate is a BACKUP
+          // FLOOR, not an additive mandatory train. Every patient-
+          // triggered breath is fully assisted, so it resets the
+          // backup-rate timer — a mandatory breath fires only when the
+          // patient fails to trigger within the interval. Without this,
+          // A/C stacked mandatory breaths on top of the spontaneous
+          // train (e.g. set 8 + spont 18 = 26 colliding breaths),
+          // reading as double-stacked, dyssynchronous waveforms.
+          //
+          // SIMV is deliberately the EXCEPTION: it delivers a fixed
+          // number of mandatory breaths on schedule regardless of
+          // spontaneous rate, so its backup timer is left alone here.
+          // (Resetting it on every spontaneous breath — as an earlier
+          // build did — made mandatory breaths never fire whenever the
+          // patient rate exceeded the set rate, which is the exact
+          // failure case M12 teaches.)
+          if (mode !== 'SIMV/PS') {
+            nextMandatoryTimeRef.current = elapsedInSim + ventInterval;
+          }
         } else {
           nextMandatoryTimeRef.current = elapsedInSim + ventInterval;
+          // SIMV synchronization: this mandatory breath fills the current
+          // slot, so fold in any spontaneous effort that was about to fire
+          // right on its heels — otherwise a tiny spontaneous breath
+          // stacks immediately behind the mandatory one. Pushing the next
+          // spontaneous trigger out by ~a spontaneous interval keeps the
+          // mandatory + spontaneous breaths from colliding while still
+          // showing the interspersed spontaneous breaths between slots.
+          if (mode === 'SIMV/PS' && patient.spontaneousRate > 0 &&
+              nextSpontaneousTimeRef.current <= elapsedInSim + 0.4) {
+            nextSpontaneousTimeRef.current = elapsedInSim + (60 / patient.spontaneousRate) * 0.8;
+          }
         }
         currentBreathPeakPressureRef.current = 0;
 
