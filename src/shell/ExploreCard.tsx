@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, RotateCcw, ChevronRight, Sliders, Activity } from 'lucide-react';
 import type { ExploreCardConfig } from './types';
+import { formatClinicalText } from './formatClinicalText';
 
 interface Props {
   config: ExploreCardConfig;
@@ -25,7 +26,7 @@ const ExploreCard: React.FC<Props> = ({ config, onReset, onStartTask }) => {
 
       {config.patient_context && (
         <p className="text-[14px] text-zinc-700 leading-relaxed mb-4 pb-3 border-b border-zinc-200">
-          {config.patient_context}
+          {formatClinicalText(config.patient_context, 'ec-patient-context')}
         </p>
       )}
 
@@ -39,8 +40,8 @@ const ExploreCard: React.FC<Props> = ({ config, onReset, onStartTask }) => {
           <ul className="space-y-1.5">
             {config.unlocked_controls_description.map((c, i) => (
               <li key={i} className="text-[13px] leading-snug">
-                <strong className="text-zinc-900">{c.name}</strong>
-                <span className="text-zinc-600"> — {c.description}</span>
+                <strong className="text-zinc-900">{formatClinicalText(c.name, `ec-ctrl-name${i}`)}</strong>
+                <span className="text-zinc-600"> — {formatClinicalText(c.description, `ec-ctrl-desc${i}`)}</span>
               </li>
             ))}
           </ul>
@@ -57,8 +58,8 @@ const ExploreCard: React.FC<Props> = ({ config, onReset, onStartTask }) => {
           <ul className="space-y-1.5">
             {config.readouts_description.map((r, i) => (
               <li key={i} className="text-[13px] leading-snug">
-                <strong className="text-zinc-900">{r.name}</strong>
-                <span className="text-zinc-600"> — {r.description}</span>
+                <strong className="text-zinc-900">{formatClinicalText(r.name, `ec-readout-name${i}`)}</strong>
+                <span className="text-zinc-600"> — {formatClinicalText(r.description, `ec-readout-desc${i}`)}</span>
               </li>
             ))}
           </ul>
@@ -75,7 +76,7 @@ const ExploreCard: React.FC<Props> = ({ config, onReset, onStartTask }) => {
             {config.suggestions.map((s, i) => (
               <li key={i} className="text-[13px] text-zinc-700 leading-snug flex items-start gap-1.5">
                 <span className="text-brand-olive mt-0.5">•</span>
-                <span>{s}</span>
+                <span>{formatClinicalText(s, `ec-suggestion${i}`)}</span>
               </li>
             ))}
           </ul>

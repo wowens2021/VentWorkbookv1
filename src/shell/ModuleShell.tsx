@@ -39,6 +39,7 @@ interface Props {
 // is testable and prevents anti-pattern A10 (drift between debrief renders).
 import { computeTotalScore, isPassing, PASSING_THRESHOLD } from './scoring';
 import { READOUT_DESC, CONTROL_DESC } from './glossary';
+import { formatClinicalText } from './formatClinicalText';
 
 /**
  * C1: small RAF-driven count-up hook so the debrief score animates from 0
@@ -1463,7 +1464,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
             </div>
             <div className="hidden md:flex items-center gap-1.5 text-[11px] italic text-white/80 min-w-0 max-w-[280px]">
               <span className="font-bold uppercase tracking-widest text-[9px] not-italic text-white/60 shrink-0">Goal</span>
-              <span className="truncate">{tagline}</span>
+              <span className="truncate">{formatClinicalText(tagline, 'nav-tagline')}</span>
             </div>
           </div>
         );

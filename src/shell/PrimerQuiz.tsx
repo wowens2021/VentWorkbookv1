@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2, XCircle, ChevronRight, RotateCcw } from 'lucide-react';
 import type { QuizQuestion } from './types';
+import { formatClinicalText } from './formatClinicalText';
 
 interface Props {
   questions: QuizQuestion[];
@@ -93,7 +94,7 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
 
       <div className="flex flex-col flex-1 px-6 py-6">
         <div className="rounded-xl border-2 border-brand-olive/20 bg-white shadow-sm p-5 mb-4">
-          <h3 className="font-display text-xl font-semibold text-stone-900 leading-snug">{q.prompt}</h3>
+          <h3 className="font-display text-xl font-semibold text-stone-900 leading-snug">{formatClinicalText(q.prompt, 'pq-prompt')}</h3>
         </div>
 
         <div className="flex flex-col gap-2 mb-5">
@@ -142,7 +143,7 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
                 <span className={`w-7 h-7 rounded-md border-2 font-black text-[12px] flex items-center justify-center shrink-0 transition-all ${letterCls}`}>
                   {String.fromCharCode(65 + i)}
                 </span>
-                <span className="flex-1">{opt.label}</span>
+                <span className="flex-1">{formatClinicalText(opt.label, `pq-opt${i}`)}</span>
                 {showResult && lastWasCorrect && opt.is_correct && <CheckCircle2 size={18} className="text-emerald-600 shrink-0" strokeWidth={2.5} />}
                 {showResult && !lastWasCorrect && !opt.is_correct && isSel && <XCircle size={18} className="text-rose-600 shrink-0" strokeWidth={2.5} />}
               </button>
@@ -168,8 +169,8 @@ const PrimerQuiz: React.FC<Props> = ({ questions, onComplete }) => {
               >
                 {isCorrect ? 'Why this is right' : 'Why this is not it'}
               </span>
-              <div className="text-[13.5px] text-stone-800 leading-relaxed">
-                {opt.explanation ?? (isCorrect ? 'Correct.' : 'Incorrect.')}
+              <div className="text-[14px] text-stone-800 leading-relaxed">
+                {formatClinicalText(opt.explanation ?? (isCorrect ? 'Correct.' : 'Incorrect.'), 'pq-exp')}
               </div>
             </div>
           );

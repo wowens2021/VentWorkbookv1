@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowLeft, BookOpen, Clock, ChevronRight, Compass, Target } from 'lucide-react';
 import type { ModuleConfig } from './types';
 import { trackTone } from './trackColors';
+import { formatClinicalText } from './formatClinicalText';
 
 interface Props {
   module: ModuleConfig;
@@ -80,7 +81,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
                 What's this about
               </span>
             </div>
-            <p className="font-serif text-[16px] text-zinc-700 leading-relaxed">{overview}</p>
+            <p className="font-serif text-[16px] text-zinc-700 leading-relaxed">{formatClinicalText(overview, 'ib-overview')}</p>
           </section>
 
           {/* What you'll do */}
@@ -96,7 +97,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
                 {bullets.map((b, i) => (
                   <li key={i} className="text-[14px] text-zinc-700 leading-snug flex items-start gap-2">
                     <span className={`${tone.accentText} font-bold mt-0.5`}>{i + 1}.</span>
-                    <span>{b}</span>
+                    <span>{formatClinicalText(b, `ib-bullet${i}`)}</span>
                   </li>
                 ))}
               </ul>

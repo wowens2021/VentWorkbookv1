@@ -1,6 +1,7 @@
 import React from 'react';
 import { Target, RotateCcw, ChevronRight, Lightbulb, Check, Circle, Activity, X } from 'lucide-react';
 import type { TaskFramingStyle } from './types';
+import { formatClinicalText } from './formatClinicalText';
 
 /**
  * Friendly display labels for readout keys, used in the TaskCard's
@@ -130,7 +131,7 @@ const TaskCard: React.FC<Props> = ({
 
         <div className="text-[12px] text-zinc-500 leading-relaxed mb-1">Your task was:</div>
         <p className="text-[13px] text-zinc-700 leading-relaxed mb-4 pb-3 border-b border-zinc-200">
-          {userFacingTask}
+          {formatClinicalText(userFacingTask, 'tc-task-done')}
         </p>
 
         <button
@@ -171,7 +172,7 @@ const TaskCard: React.FC<Props> = ({
       </div>
 
       <p className="text-[15px] text-zinc-900 leading-relaxed mb-4 font-medium">
-        {userFacingTask}
+        {formatClinicalText(userFacingTask, 'tc-task')}
       </p>
 
       {/* A6: sequential one-step-at-a-time mode. Shows the active step
@@ -186,7 +187,7 @@ const TaskCard: React.FC<Props> = ({
             </span>
           </div>
           <p className="text-[14px] font-semibold text-stone-900 leading-snug mb-2">
-            {successCriteria[sequential.activeIndex] ?? ''}
+            {formatClinicalText(successCriteria[sequential.activeIndex] ?? '', 'tc-seq-crit')}
           </p>
           {sequential.observation && (
             <>
@@ -195,7 +196,7 @@ const TaskCard: React.FC<Props> = ({
                   What just happened
                 </span>
                 <p className="text-[13px] text-stone-700 leading-snug">
-                  {sequential.observation}
+                  {formatClinicalText(sequential.observation, 'tc-seq-obs')}
                 </p>
               </div>
               {/* Novice-pass §3.2 — dominant forward CTA. Full-width, large,
@@ -217,7 +218,7 @@ const TaskCard: React.FC<Props> = ({
             Direction
           </span>
           <p className="text-[14px] font-semibold text-sky-900 leading-snug">
-            {activeDirection}
+            {formatClinicalText(activeDirection, 'tc-direction')}
           </p>
           {onShowMeAnswer && (
             <button
@@ -279,7 +280,7 @@ const TaskCard: React.FC<Props> = ({
                           : 'text-zinc-700 font-medium'
                     }
                   >
-                    {c}
+                    {formatClinicalText(c, `tc-crit${i}`)}
                   </span>
                 </li>
               );

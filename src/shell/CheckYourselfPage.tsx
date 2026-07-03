@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Check, X, ChevronRight, HelpCircle } from 'lucide-react';
 import type { ContentBlock } from './types';
 import { successPhrase, wrongPhrase, continueCTA } from './microcopy';
+import { formatClinicalText } from './formatClinicalText';
 
 type FormativeBlock = Extract<ContentBlock, { kind: 'formative' }>;
 
@@ -110,7 +111,7 @@ const CheckYourselfQuestion: React.FC<{
           </span>
         </div>
         <p className="text-[14px] font-bold text-stone-900 leading-snug pt-0.5">
-          {block.question}
+          {formatClinicalText(block.question, 'cy-q')}
         </p>
         {total > 1 && (
           <span className="ml-auto text-[10px] font-mono font-bold text-brand-olive/60 shrink-0 self-center">
@@ -144,14 +145,14 @@ const CheckYourselfQuestion: React.FC<{
                   key={i}
                   disabled={submitted}
                   onClick={() => handlePick(i)}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg border-2 text-[13.5px] font-medium transition-all flex items-center gap-3 ${cls} ${
+                  className={`w-full text-left px-3 py-2.5 rounded-lg border-2 text-[14px] font-medium transition-all flex items-center gap-3 ${cls} ${
                     submitted ? 'cursor-default' : 'cursor-pointer'
                   }`}
                 >
                   <span className={`w-6 h-6 rounded-md border-2 font-black text-[11px] flex items-center justify-center shrink-0 transition-all ${letterCls}`}>
                     {String.fromCharCode(65 + i)}
                   </span>
-                  <span className="flex-1 leading-snug">{opt.label}</span>
+                  <span className="flex-1 leading-snug">{formatClinicalText(opt.label, `cy-opt${i}`)}</span>
                   {submitted && isThisCorrect && (
                     <Check size={16} className="text-emerald-600 shrink-0" strokeWidth={3} />
                   )}
@@ -169,7 +170,7 @@ const CheckYourselfQuestion: React.FC<{
 
         {hasOptions && submitted && (
           <div
-            className={`mt-3 border-l-4 rounded-r-lg p-3 text-[13.5px] leading-relaxed ${
+            className={`mt-3 border-l-4 rounded-r-lg p-3 text-[14px] leading-relaxed ${
               isCorrect
                 ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900'
                 : 'border-rose-500 bg-rose-50/70 text-rose-900'
@@ -184,7 +185,7 @@ const CheckYourselfQuestion: React.FC<{
                 ? `${successPhrase(questionId).replace(/[.!]$/, '')} — here's the why`
                 : `${wrongPhrase(questionId).replace(/[.!]$/, '')} — here's the why`}
             </div>
-            {block.answer}
+            {formatClinicalText(block.answer, 'cy-ans')}
           </div>
         )}
       </div>
@@ -205,7 +206,7 @@ const FormativeLegacy: React.FC<{ block: FormativeBlock }> = ({ block }) => {
         </button>
       ) : (
         <div className="mt-2 pt-2 border-t border-zinc-200 text-[14px] text-emerald-700 leading-relaxed">
-          {block.answer}
+          {formatClinicalText(block.answer, 'cy-ans-legacy')}
         </div>
       )}
     </div>

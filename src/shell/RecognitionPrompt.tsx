@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
 import type { InlinePromptConfig } from './types';
 import { successPhrase, wrongPhrase, continueCTA } from './microcopy';
+import { formatClinicalText } from './formatClinicalText';
 import DyssynchronyWaveform from '../components/DyssynchronyWaveform';
 
 /**
@@ -127,7 +128,7 @@ const RecognitionPrompt: React.FC<Props> = ({ prompt, onResponse, onContinue, on
           </div>
         );
       })()}
-      <p className="text-sm font-bold text-zinc-900 mb-3 leading-snug">{prompt.question}</p>
+      <p className="text-sm font-bold text-zinc-900 mb-3 leading-snug">{formatClinicalText(prompt.question, 'rp-question')}</p>
       <div className="space-y-1.5">
         {prompt.options.map((opt, i) => {
           const isSel = selected === i;
@@ -149,7 +150,7 @@ const RecognitionPrompt: React.FC<Props> = ({ prompt, onResponse, onContinue, on
               className={`w-full text-left px-3 py-1.5 rounded border text-[12px] flex items-start gap-2 transition ${cls}`}
             >
               <span className="font-black text-[10px] pt-0.5">{String.fromCharCode(65 + i)}.</span>
-              <span className="flex-1">{opt.label}</span>
+              <span className="flex-1">{formatClinicalText(opt.label, `rp-opt${i}`)}</span>
               {show && opt.is_correct && <CheckCircle2 size={12} className="text-emerald-600 mt-0.5" />}
               {show && !opt.is_correct && isSel && <XCircle size={12} className="text-rose-600 mt-0.5" />}
             </button>
@@ -176,10 +177,10 @@ const RecognitionPrompt: React.FC<Props> = ({ prompt, onResponse, onContinue, on
           </div>
           {!isCorrect && correctOpt && !canRetry && (
             <div className="mb-1">
-              <span className="font-bold">Correct answer:</span> {correctOpt.label}
+              <span className="font-bold">Correct answer:</span> {formatClinicalText(correctOpt.label, 'rp-correct')}
             </div>
           )}
-          {explanation && <div>{explanation}</div>}
+          {explanation && <div>{formatClinicalText(explanation, 'rp-explanation')}</div>}
           {canRetry && (
             <div className="mt-1.5 text-[11px] font-bold opacity-80">
               {attemptsLeft} {attemptsLeft === 1 ? 'attempt' : 'attempts'} remaining.

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2, XCircle, BookOpen } from 'lucide-react';
 import type { QuizQuestion } from './types';
+import { formatClinicalText } from './formatClinicalText';
 
 interface Props {
   questions: QuizQuestion[];
@@ -69,7 +70,7 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
                   </span>
                 </div>
                 <h3 className="text-[14px] font-bold text-stone-900 leading-snug pt-0.5">
-                  {q.prompt}
+                  {formatClinicalText(q.prompt, 'sq-prompt')}
                 </h3>
               </div>
 
@@ -108,7 +109,7 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
                           return next;
                         });
                       }}
-                      className={`w-full text-left px-3 py-2.5 rounded-lg border-2 text-[13.5px] flex items-center gap-3 transition-all ${cls} ${
+                      className={`w-full text-left px-3 py-2.5 rounded-lg border-2 text-[14px] flex items-center gap-3 transition-all ${cls} ${
                         submitted ? 'cursor-default' : 'cursor-pointer'
                       }`}
                     >
@@ -117,7 +118,7 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
                       >
                         {String.fromCharCode(65 + oi)}
                       </span>
-                      <span className="flex-1 font-medium leading-snug">{opt.label}</span>
+                      <span className="flex-1 font-medium leading-snug">{formatClinicalText(opt.label, `sq-opt${oi}`)}</span>
                       {showResult && isCorrect && (
                         <CheckCircle2 size={18} className="text-emerald-600 shrink-0" strokeWidth={2.5} />
                       )}
@@ -137,7 +138,7 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
                 if (!text) return null;
                 return (
                   <div
-                    className={`mx-4 mb-4 px-3.5 py-2.5 border-l-4 rounded-r-lg text-[13px] leading-relaxed ${
+                    className={`mx-4 mb-4 px-3.5 py-2.5 border-l-4 rounded-r-lg text-[13.5px] leading-relaxed ${
                       isCorrect
                         ? 'bg-emerald-50/70 border-emerald-500 text-emerald-900'
                         : 'bg-rose-50/70 border-rose-500 text-rose-900'
@@ -150,7 +151,7 @@ const SummativeQuiz: React.FC<Props> = ({ questions, onSubmit }) => {
                     >
                       {isCorrect ? 'Why this is right:' : 'Why this is not it:'}
                     </span>
-                    {text}
+                    {formatClinicalText(text, 'sq-exp')}
                   </div>
                 );
               })()}

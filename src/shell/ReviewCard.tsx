@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { formatClinicalText } from './formatClinicalText';
 
 interface Props {
   keyPoints: string[];
@@ -23,7 +24,7 @@ const ReviewCard: React.FC<Props> = ({ keyPoints, onReopenReplay }) => {
             {keyPoints.map((pt, i) => (
               <li key={i} className="font-serif text-[14px] text-zinc-700 leading-relaxed flex items-start gap-2">
                 <span className="text-brand-olive font-black">•</span>
-                <span>{pt}</span>
+                <span>{formatClinicalText(pt, `rvc-keypoint${i}`)}</span>
               </li>
             ))}
           </ul>

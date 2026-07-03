@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lightbulb, Eye, X } from 'lucide-react';
 import type { HintConfig } from './types';
+import { formatClinicalText } from './formatClinicalText';
 
 interface Props {
   hint: HintConfig;
@@ -74,7 +75,7 @@ const HintLadder: React.FC<Props> = ({ hint, idleMs, changesSinceProgress = 0, o
     <div className="bg-amber-50 border border-amber-300 rounded-lg px-3.5 py-2.5 flex items-start gap-2 mb-3 shadow-sm">
       <Lightbulb size={16} className="text-amber-600 shrink-0 mt-0.5" />
       <div className="flex-1 text-[13px] font-semibold text-amber-900 leading-snug">
-        {message}
+        {formatClinicalText(message, `hint-tier${tier}`)}
         {showMeAvailable && (
           <button
             onClick={() => {
