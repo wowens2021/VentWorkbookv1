@@ -123,7 +123,7 @@ export const M11: ModuleConfig = {
           options: [
             { label: 'Ineffective triggering', is_correct: true, explanation: 'Two small pressure dips between mandatory breaths with no delivered tidal volume — the patient is pulling but can\'t overcome auto-PEEP plus the trigger threshold.' },
             { label: 'Double triggering', is_correct: false, explanation: 'Double triggering shows two breaths stacked back-to-back with no expiration between them — not present here.' },
-            { label: 'Flow starvation', is_correct: false, explanation: 'Flow starvation scoops the inspiratory pressure DOWN during a delivered breath. Here the dips are between mandatory breaths, with no inspiratory flow.' },
+            { label: 'Flow starvation', is_correct: false, explanation: 'Flow starvation scoops the inspiratory pressure DOWN during a delivered breath. Here the dips are between mandatory breaths, with no breath delivered.' },
             { label: 'Normal breathing with sigh breaths', is_correct: false, explanation: 'Sigh breaths are larger volumes intentionally delivered by the vent, not failed trigger attempts.' },
           ],
           max_attempts: 2,
@@ -139,7 +139,7 @@ export const M11: ModuleConfig = {
           question:
             '35 yo ARDS on VCV Vt 400 (6 mL/kg), strong respiratory drive. The waveform above is recorded over 6 seconds. What pattern is this?',
           options: [
-            { label: 'Double triggering', is_correct: true, explanation: 'A run of breaths stacked back-to-back: each is triggered before the lung has finished exhaling, so end-expiratory volume ratchets upward breath after breath. Common in low-Vt ARDS with strong drive.' },
+            { label: 'Double triggering', is_correct: true, explanation: 'A run of breaths stacked back-to-back: each is triggered before the lung has finished exhaling, so each breath peaks higher than the last on the pressure trace and the pressure never falls back to PEEP between them. Common in low-Vt ARDS with strong drive.' },
             { label: 'Ineffective triggering', is_correct: false, explanation: 'Ineffective triggering would show patient pressure dips with NO delivered breath. Here breaths are clearly delivered — back-to-back.' },
             { label: 'Flow starvation', is_correct: false, explanation: 'Flow starvation scoops the pressure DOWN during a single breath. Here the issue is two breaths fused together, not a pulled-down profile.' },
             { label: 'Auto-cycling from a circuit leak', is_correct: false, explanation: 'Auto-cycling produces many machine breaths from circuit noise without patient effort. Here the stacked pair follows visible spontaneous drive.' },
@@ -157,7 +157,7 @@ export const M11: ModuleConfig = {
           question:
             '50 yo asthma on VCV with visible air hunger. The waveform above is recorded over 6 seconds. What pattern is this?',
           options: [
-            { label: 'Flow starvation', is_correct: true, explanation: 'The pressure trace scoops downward early in inspiration on breaths 2 and 3 — the patient is pulling harder than the set flow can supply. The flow stays constant (no compensation in VCV); that contrast is the diagnostic.' },
+            { label: 'Flow starvation', is_correct: true, explanation: 'The pressure trace scoops downward early in inspiration on breaths 2 and 3 — the patient is pulling harder than the set flow can supply, so the airway pressure sags instead of rising smoothly. That concave, pulled-down inspiratory profile is the diagnostic.' },
             { label: 'Bronchospasm raising resistance', is_correct: false, explanation: 'Bronchospasm would push PIP UP, not scoop it down. The PIP-plateau gap would widen on every breath.' },
             { label: 'Ineffective triggering', is_correct: false, explanation: 'Ineffective triggering happens between mandatory breaths, not during them. This is happening WITHIN delivered breaths.' },
             { label: 'Too-long I-time', is_correct: false, explanation: 'A too-long I-time would extend the inspiratory plateau but not scoop the pressure down.' },
@@ -185,7 +185,7 @@ export const M11: ModuleConfig = {
         { label: 'The patient is breathing too fast for the vent to keep up — rate limiting.', is_correct: false, explanation: 'Modern ICU vents don\'t rate-limit like this. Every trigger attempt either fires a breath or doesn\'t — one-for-one.' },
       ],
       observe:
-        'Seven efforts per minute disappearing without a breath. That\'s ineffective triggering at an asynchrony index of 7/35 = 20% — clinically significant. The waveform will show small pressure dips between delivered breaths with no corresponding rise in flow. Now you know what to look for.',
+        'Seven efforts per minute disappearing without a breath. That\'s ineffective triggering at an asynchrony index of 7/35 = 20% — clinically significant. The pressure waveform will show small downward dips between delivered breaths with no breath behind them. Now you know what to look for.',
     },
 
     // Pattern descriptions come BEFORE the labeled atlas so the learner builds
@@ -197,11 +197,11 @@ export const M11: ModuleConfig = {
     },
     {
       kind: 'prose',
-      markdown: '**Double triggering.** A breath is triggered before the previous one has exhaled — and then another. Breaths stack two, three, or more in a row with no full exhalation between them, so end-expiratory volume ratchets upward with each one. The root cause: the patient\'s neural inspiratory time is longer than the ventilator\'s set Ti — the drive continues into what the vent calls expiration, and that ongoing effort triggers the next breath before the last has fully exited. Classic in lung-protective Vt with strong respiratory drive. The fix addresses the mismatch: raise Vt to satisfy demand, or switch to PCV so the patient\'s own neural Ti sets when the breath cycles off.',
+      markdown: '**Double triggering.** A breath is triggered before the previous one has exhaled — and then another. Breaths stack two, three, or more in a row with no full exhalation between them, so each breath sits on top of the last and its peak airway pressure climbs higher than the one before — a rising staircase on the pressure trace. The root cause: the patient\'s neural inspiratory time is longer than the ventilator\'s set Ti — the drive continues into what the vent calls expiration, and that ongoing effort triggers the next breath before the last has fully exited. Classic in lung-protective Vt with strong respiratory drive. The fix addresses the mismatch: raise Vt to satisfy demand, or switch to PCV so the patient\'s own neural Ti sets when the breath cycles off.',
     },
     {
       kind: 'prose',
-      markdown: '**Flow starvation.** During inspiration the pressure waveform scoops downward while flow stays constant and square. The patient is pulling harder than the set flow can supply. VC-specific. Either raise the inspiratory flow or switch to a flow-variable mode.',
+      markdown: '**Flow starvation.** During inspiration the pressure waveform scoops downward — a concave, pulled-down profile instead of a smooth rise — because the patient is pulling harder than the set flow can supply. VC-specific. Either raise the inspiratory flow or switch to a flow-variable mode.',
     },
     {
       kind: 'callout',
@@ -304,6 +304,10 @@ export const M11: ModuleConfig = {
 
   user_facing_task: 'Recognize the dyssynchrony pattern. Three live waveforms, one patient context per waveform. For each, watch the waveform and read the bedside vignette, then pick the pattern. You must get all three correct — wrong answers explain what that pattern would have shown instead. Note: the playground sim to the left shows a synchronised PSV patient as your reference for normal. Two of the three try-it waveforms are VCV patients — the mode is given in the vignette and changes what the waveforms look like.',
   task_framing_style: 'C',
+  // Pure-recognition module: the "Success criteria" checklist would just
+  // restate the three Quick-check questions already shown in each prompt,
+  // so suppress it.
+  hide_success_criteria: true,
 
   key_points: [
     'Sedation is not the first answer when the patient is fighting the vent.',

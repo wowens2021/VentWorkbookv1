@@ -42,10 +42,32 @@ function runScenario(breathSpecs: BreathSpec[], totalSec = 6, fps = 200) {
     if (mode === 'flat') {
       p = PEEP; f = 0; v = trapVol;
     } else if (mode === 'effort') {
+      // Ineffective triggering: the patient's effort shows ONLY as a
+      // pressure dip. Flow stays flat — the whole point is that the effort
+      // fails to open the valve, so no gas moves. (The atlas shows only the
+      // pressure trace anyway.)
       const bell = tl < effortDur ? Math.sin((tl / effortDur) * Math.PI) : 0;
       p = PEEP - effortAmp * bell;
-      f = -effortAmp * bell * 5;
+      f = 0;
       v = trapVol;
+    } else if (mode === 'stack') {
+      // Breath-stacking (double / triple triggering), volume-control flavor.
+      // Each breath in the stack starts from the trapped volume left by the
+      // previous one (incomplete exhalation), and — crucially — that trapped
+      // volume is REFLECTED in the pressure, so each stacked breath peaks
+      // PROGRESSIVELY HIGHER than the last. Volume decays toward zero on the
+      // final (long) breath so the trace returns to PEEP.
+      if (tl <= Ti) {
+        v = trapVol + flowLps * tl;
+        p = PEEP + v / C + flowLps * R;
+        f = flowLps * 60;
+      } else {
+        const te = tl - Ti;
+        const Vend = trapVol + flowLps * Ti;
+        v = Vend * Math.exp(-te / tau_e);
+        p = PEEP + v / C;
+        f = -(Vend / tau_e) * Math.exp(-te / tau_e) * 60;
+      }
     } else if (mode === 'psv') {
       if (tl <= Ti) {
         // v computed analytically — correctly includes trapVol as baseline
@@ -90,7 +112,7 @@ function runScenario(breathSpecs: BreathSpec[], totalSec = 6, fps = 200) {
 interface BreathSpec {
   duration: number;
   C?: number; R?: number; PEEP?: number; Pi?: number; Ti?: number;
-  mode?: 'psv' | 'vcv' | 'flat' | 'effort';
+  mode?: 'psv' | 'vcv' | 'flat' | 'effort' | 'stack';
   flowLps?: number; trapVol?: number;
   effortAmp?: number; effortDur?: number;
   scoopAmp?: number; scoopFrac?: number;
@@ -103,26 +125,21 @@ const _VendA  = _C * _Pi * (1 - Math.exp(-_Ti / _tau_i));
 const _Veq    = _PEEP * _C;
 const _VtrapB = Math.max(0, _Veq + (_VendA - _Veq) * Math.exp(-0.75 / _tau_e));
 
-// Build a run of `n` stacked breaths for the double-triggering pattern.
-// Each breath inspires for `Ti` then exhales only `teShort` (an
-// INCOMPLETE exhalation) before the next breath fires, so residual lung
-// volume ratchets upward breath-over-breath — the unmistakable volume
-// signature of breath stacking. The last breath in the run is given a
-// long tail so it exhales fully back to baseline. The trapped-volume
-// chain is computed with the same single-compartment formulas the engine
-// uses, so the rendered volume trace is physically self-consistent.
-function stackedTrain(n: number, Ti: number, teShort: number): BreathSpec[] {
-  const tau_iL = _R_lo * _C;
+// Build a run of `n` stacked breaths for the double-/triple-triggering
+// pattern. Each breath inspires for `Ti` then exhales only `teShort` (an
+// INCOMPLETE exhalation) before the next one fires, so the trapped volume
+// ratchets upward and — via the 'stack' mode — each successive breath
+// peaks PROGRESSIVELY HIGHER on the pressure trace. The last breath gets a
+// long tail so it exhales fully back to PEEP.
+function stackedTrain(n: number, Ti: number, teShort: number, flowLps: number): BreathSpec[] {
   const tau_eL = _R_lo * _C * 1.5;
-  const Veq = _PEEP * _C;
-  const dV = _C * _Pi * (1 - Math.exp(-Ti / tau_iL));
   const specs: BreathSpec[] = [];
   let trap = 0;
   for (let k = 0; k < n; k++) {
-    const dur = k === n - 1 ? Ti + 0.7 : Ti + teShort;
-    specs.push({ duration: dur, C: _C, R: _R_lo, PEEP: _PEEP, Pi: _Pi, Ti, mode: 'psv', trapVol: trap });
-    const Vend = trap + dV;
-    trap = Math.max(0, Veq + (Vend - Veq) * Math.exp(-teShort / tau_eL));
+    const dur = k === n - 1 ? Ti + 2.0 : Ti + teShort;
+    specs.push({ duration: dur, C: _C, R: _R_lo, PEEP: _PEEP, Ti, mode: 'stack', flowLps, trapVol: trap });
+    const Vend = trap + flowLps * Ti;
+    trap = Vend * Math.exp(-teShort / tau_eL); // residual carried into the next breath
   }
   return specs;
 }
@@ -140,7 +157,7 @@ interface PatternDef {
 const PATTERNS: Record<string, PatternDef> = {
   ineffective: {
     label: 'Ineffective triggering', badge: 'ineffective / inappropriate triggering', badgeColor: '#dc2626',
-    description: 'Patient effort (↓ pressure dip + negative flow blip) with no delivered breath. Auto-PEEP forces the patient to overcome a higher threshold than the trigger is set for.',
+    description: "A downward dip in the pressure trace with no delivered breath — the patient tried to trigger, but the effort never opened the valve. Auto-PEEP forces the patient to overcome a higher threshold than the trigger is set for.",
     fix: 'Lower RR to clear auto-PEEP; add extrinsic PEEP at ~80% of measured auto-PEEP in COPD.',
     peep: _PEEP,
     annotationLabel: 'effort — no breath delivered',
@@ -158,26 +175,28 @@ const PATTERNS: Record<string, PatternDef> = {
   },
   double: {
     label: 'Double triggering', badge: 'breath stacking', badgeColor: '#d97706',
-    description: 'A second breath fires before the first has fully expired. Peak of breath B is higher because the lung never emptied. Expiratory flow never returns to zero between A and B.',
+    description: "Breaths fire back-to-back before the lung can empty. Each one stacks on the volume left by the last, so its peak airway pressure climbs higher than the breath before — a rising staircase — and the pressure never falls back to PEEP between them.",
     fix: "Raise Vt to match patient demand, or switch to PCV so the patient's neural Ti sets the cycle.",
     peep: _PEEP,
-    annotationLabel: 'breaths stack before the lung empties — volume ratchets up',
-    recognitionLabel: 'a run of stacked breaths at ~1.7–4.6 s',
-    highlightWindow: [1.6, 4.0],
+    annotationLabel: 'stacked breaths — each peak higher than the last',
+    recognitionLabel: 'stacked breaths at ~2–5.5 s',
+    highlightWindow: [2.0, 4.6],
     breathSpecs: [
-      // One normal, fully-exhaled reference breath...
-      { duration: 1.7, C: _C, R: _R_lo, PEEP: _PEEP, Pi: _Pi, Ti: _Ti, mode: 'psv' },
+      // A quiet baseline at PEEP...
+      { duration: 0.9, C: _C, R: _R_lo, PEEP: _PEEP, mode: 'flat' },
       // ...then a run of three breaths stacked back-to-back, each
-      // triggered before the previous has finished exhaling.
-      ...stackedTrain(3, 0.7, 0.28),
+      // triggered before the previous has exhaled, so the peak airway
+      // pressure ratchets UP with every stacked breath (a rising
+      // staircase) before finally settling back to PEEP.
+      ...stackedTrain(3, 0.65, 0.3, 0.5),
     ],
   },
   starvation: {
     label: 'Flow starvation', badge: 'inadequate inspiratory assistance', badgeColor: '#7c3aed',
-    description: "In VCV, the set flow can't keep up with the patient's demand. Pressure scoops downward during inspiration while flow stays perfectly square — the patient is actively pulling against the vent.",
+    description: "In VCV the set flow can't keep up with the patient's demand, so the pressure trace scoops downward during inspiration — the patient is actively pulling against the vent instead of riding a smooth rise.",
     fix: 'Increase peak inspiratory flow, shorten inspiratory time, or switch to a pressure-based mode.',
     peep: _PEEP,
-    annotationLabel: 'pressure scoops down while flow stays square',
+    annotationLabel: 'pressure scoops down during inspiration',
     recognitionLabel: 'inspiratory phase at ~2.1–5.9 s',
     highlightWindow: [2.0, 4.2],
     breathSpecs: [
@@ -348,16 +367,14 @@ function PatternCard({
         </button>
       </div>
 
-      {/* Waveform panels */}
+      {/* Waveform panel — airway PRESSURE only. Flow and volume traces
+          were removed: every dyssynchrony in this atlas is diagnosed from
+          the pressure waveform, and the extra panels shrank the pressure
+          trace and (for ineffective triggering) implied flow movement that
+          shouldn't be there. */}
       <div style={{ padding: '8px 8px 4px', display: 'flex', flexDirection: 'column', gap: 5 }}>
         <WaveformPanel title="Airway Pressure" unit="cmH2O"
-          data={data.pressureData} peepValue={pattern.peep} sweepPct={sweepPct} height={110} />
-        <WaveformPanel title="Flow Rate" unit="L/min"
-          data={data.flowData} showZero sweepPct={sweepPct} height={90} />
-        {patternKey === 'double' && data.volumeData.length > 0 && (
-          <WaveformPanel title="Tidal Volume" unit="mL"
-            data={data.volumeData} sweepPct={sweepPct} height={80} />
-        )}
+          data={data.pressureData} peepValue={pattern.peep} sweepPct={sweepPct} height={150} />
       </div>
 
       {/* Annotation chip */}

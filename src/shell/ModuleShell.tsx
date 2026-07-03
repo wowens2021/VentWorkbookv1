@@ -808,7 +808,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                 place to look for alerts and hints. */}
             <TaskCard
               userFacingTask={module.user_facing_task ?? 'Continue using the simulator to complete this module.'}
-              successCriteria={deriveSuccessCriteria(module)}
+              successCriteria={module.hide_success_criteria ? [] : deriveSuccessCriteria(module)}
               framingStyle={module.task_framing_style}
               objectiveSatisfied={objectiveSatisfied}
               onReset={onResetToStart}

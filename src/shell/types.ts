@@ -514,6 +514,12 @@ export interface ModuleConfig {
   user_facing_task?: string;
   /** Phase 4 — plain-language bullets under the task framing. */
   success_criteria_display?: string[];
+  /**
+   * Phase 4 — hide the "Success criteria" checklist on the TaskCard.
+   * Useful for pure-recognition modules where the criteria would just
+   * restate the Quick-check questions already shown in the prompt.
+   */
+  hide_success_criteria?: boolean;
   /** Phase 4 — A/B/C framing style. Determines tone but not behavior. */
   task_framing_style?: TaskFramingStyle;
 
