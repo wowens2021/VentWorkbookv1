@@ -206,7 +206,11 @@ const ContinueRow: React.FC<{ mod: ModuleConfig; percent: number; onClick: () =>
         In progress
       </span>
     </div>
-    <div className="shrink-0 text-[11px] font-mono text-stone-500 w-12">{mod.id}</div>
+    {/* Use the sequential curriculum number (M1…M19) to match the label
+        shown in the module picker and inside each module — not the raw
+        internal id, which is an ugly long string for some modules
+        (e.g. M_TROUBLESHOOT). */}
+    <div className="shrink-0 text-[11px] font-mono text-stone-500 w-12">M{mod.number}</div>
     <div className="flex-1 min-w-0">
       <h3 className="font-display text-base font-semibold text-stone-900 leading-tight truncate">
         {mod.title}
