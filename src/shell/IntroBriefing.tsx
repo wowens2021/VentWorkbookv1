@@ -95,7 +95,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
                 What's this about
               </span>
             </div>
-            <div className="font-serif text-[17px] text-zinc-700 leading-[1.7] space-y-3">
+            <div className={`rounded-xl ${tone.chipBg} border ${tone.chipBorder} px-5 py-4 font-serif text-[17px] text-zinc-700 leading-[1.7] space-y-3`}>
               {splitOverview(overview).map((para, i) => (
                 <p key={i}>{renderTokens(para, `ib-overview${i}`)}</p>
               ))}
@@ -111,7 +111,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
                   What you'll do
                 </span>
               </div>
-              <ul className="space-y-2.5">
+              <ul className={`rounded-xl ${tone.chipBg} border ${tone.chipBorder} px-5 py-4 space-y-2.5`}>
                 {bullets.map((b, i) => (
                   <li key={i} className="text-[15px] text-zinc-700 leading-relaxed flex items-start gap-2.5">
                     <span className={`${tone.accentText} font-bold mt-0.5`}>{i + 1}.</span>
