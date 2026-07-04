@@ -92,7 +92,7 @@ export const Resistance: ModuleConfig = {
     present_one_at_a_time: true,
     observations: [
       "Resistance is up and the **peak pressure climbed**. But peak alone can't tell you whether this is an airway problem or a lung problem — for that you need the plateau. Watch the trace, then continue. Next you'll press INSP HOLD.",
-      "There's the held plateau. The peak shot up, but the **plateau barely moved** — so the breath dropped a long way when flow stopped. That big gap between PIP and Pplat is the resistive pressure. (Further reading: TVB Ch. 2.)",
+      "There's the held plateau. The peak shot up, but the **plateau barely moved** — so the breath dropped a long way when flow stopped. That big gap between PIP and Pplat is the resistive pressure.",
     ],
     children: [
       // Step 1 — raise resistance. No question yet — just watch the peak.
@@ -117,7 +117,7 @@ export const Resistance: ModuleConfig = {
         require_acknowledgment: {
           question: 'With the breath held, the trace dropped from PIP to the plateau. What did that reveal about the peak-plateau gap?',
           options: [
-            { label: 'The gap widened — peak rose a lot, plateau barely moved', is_correct: true, explanation: 'Exactly. Resistive pressure is flow × resistance, and it only exists while gas is moving. When you press INSP HOLD the flow stops, that resistive pressure vanishes, and the trace drops to the plateau. The taller the drop, the higher the resistance. A widening peak-plateau gap with a steady plateau is the resistance signature. Further reading: TVB Ch. 2.' },
+            { label: 'The gap widened — peak rose a lot, plateau barely moved', is_correct: true, explanation: 'Exactly. Resistive pressure is flow × resistance, and it only exists while gas is moving. When you press INSP HOLD the flow stops, that resistive pressure vanishes, and the trace drops to the plateau. The taller the drop, the higher the resistance. A widening peak-plateau gap with a steady plateau is the resistance signature.' },
             { label: 'The gap stayed the same', is_correct: false, explanation: 'A stable gap means the resistive term did not change — that is the compliance pattern, where both pressures move together. Here the peak climbed while the plateau held, so the gap opened up.' },
             { label: 'The gap narrowed', is_correct: false, explanation: 'A narrowing gap would mean resistance falling. You raised it, so the resistive contribution — and the gap — grew.' },
           ],

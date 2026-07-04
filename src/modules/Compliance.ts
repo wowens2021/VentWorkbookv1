@@ -97,7 +97,7 @@ export const Compliance: ModuleConfig = {
     present_one_at_a_time: true,
     observations: [
       "Compliance is down, and **both** pressures climbed — PIP and the plateau rose together. Watch the trace settle, then continue. Next you'll freeze the breath with an inspiratory hold to confirm the plateau.",
-      "There's the held plateau. Notice the gap between PIP and Pplat barely changed — both numbers moved up by about the same amount. That parallel rise with a stable gap is the compliance signature. (Further reading: TVB Ch. 2.)",
+      "There's the held plateau. Notice the gap between PIP and Pplat barely changed — both numbers moved up by about the same amount. That parallel rise with a stable gap is the compliance signature.",
     ],
     children: [
       // Step 1 — drop compliance into the ARDS range. No question yet.
@@ -123,7 +123,7 @@ export const Compliance: ModuleConfig = {
         require_acknowledgment: {
           question: 'With the breath held, you can read both PIP and the plateau. What happened to the peak-plateau gap when compliance dropped?',
           options: [
-            { label: 'It stayed about the same — PIP and plateau rose together', is_correct: true, explanation: 'Right. Compliance changes the elastic term (Vt / C), which lifts the plateau — and PIP rides up with it by the same amount. The gap (PIP − Pplat) is the resistive term, which compliance does not touch. Parallel rise, stable gap = the compliance signature. Further reading: TVB Ch. 2.' },
+            { label: 'It stayed about the same — PIP and plateau rose together', is_correct: true, explanation: 'Right. Compliance changes the elastic term (Vt / C), which lifts the plateau — and PIP rides up with it by the same amount. The gap (PIP − Pplat) is the resistive term, which compliance does not touch. Parallel rise, stable gap = the compliance signature.' },
             { label: 'It widened significantly', is_correct: false, explanation: 'A widening gap means the resistive term grew — that is the resistance signature, not compliance. Resistance was unchanged here, so the gap held steady.' },
             { label: 'It narrowed significantly', is_correct: false, explanation: 'Compliance does not change the resistive contribution, so the gap cannot narrow. Both pressures rose together and the gap was preserved.' },
           ],

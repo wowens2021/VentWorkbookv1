@@ -14,7 +14,6 @@ import type { ModuleConfig } from '../shell/types';
  * here so the decision isn't lost.
  *
  * Track: Modes · Archetype: outcome with sandbox exploration · 20 min
- * Anchor chapters: VB Ch. 9
  *
  * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
  *   - compliance: 30, resistance: 12 — adaptive PINSP cycle lands in expected band.
@@ -60,7 +59,7 @@ export const M9: ModuleConfig = {
       prompt: 'PRVC differs from PCV in that:',
       options: [
         { label: 'PRVC uses constant flow; PCV uses decelerating flow.', is_correct: false, explanation: 'Both deliver decelerating flow.' },
-        { label: 'PRVC adjusts PINSP breath-by-breath to hit a target Vt; PCV does not.', is_correct: true, explanation: "TVB Ch. 9. That's the adaptive-control feature." },
+        { label: 'PRVC adjusts PINSP breath-by-breath to hit a target Vt; PCV does not.', is_correct: true, explanation: "That's the adaptive-control feature." },
         { label: 'PRVC has no I-time setting.', is_correct: false, explanation: 'PRVC requires Vt, rate, and I-time.' },
         { label: 'PRVC guarantees a constant peak pressure.', is_correct: false, explanation: 'The opposite — peak pressure changes as the vent adapts.' },
       ],
@@ -80,7 +79,7 @@ export const M9: ModuleConfig = {
       prompt: 'A patient on PRVC with target Vt 500 develops air hunger. Over 30 seconds, you watch his PINSP fall from 18 to 10, then climb back to 22, then fall again. The most likely interpretation is:',
       options: [
         { label: 'The vent is malfunctioning.', is_correct: false, explanation: 'This is normal PRVC behavior under heavy patient effort.' },
-        { label: 'The patient is yo-yoing the adaptive logic: he pulls a big breath, the vent reads "compliance improved" and lowers PINSP, then his next breaths are short and the vent compensates by raising PINSP.', is_correct: true, explanation: 'TVB Ch. 9, dual-control failure mode.' },
+        { label: 'The patient is yo-yoing the adaptive logic: he pulls a big breath, the vent reads "compliance improved" and lowers PINSP, then his next breaths are short and the vent compensates by raising PINSP.', is_correct: true, explanation: 'This is the dual-control failure mode.' },
         { label: 'The compliance is rapidly changing.', is_correct: false, explanation: 'Unlikely — physiology rarely oscillates at this frequency.' },
         { label: 'The PEEP is unstable.', is_correct: false, explanation: 'PEEP is fixed.' },
       ],
@@ -186,7 +185,7 @@ export const M9: ModuleConfig = {
       prompt: 'PRVC is best described as:',
       options: [
         { label: 'A constant-flow volume-control mode', is_correct: false, explanation: 'Decelerating flow.' },
-        { label: 'A pressure-control mode with a closed-loop volume target', is_correct: true, explanation: 'PRVC delivers a pressure-control breath (decelerating flow, set inspiratory time) but measures the resulting tidal volume each breath and nudges the inspiratory pressure up or down to keep that volume on the target you set. Pressure delivery, volume guarantee. Further reading: TVB Ch. 9.' },
+        { label: 'A pressure-control mode with a closed-loop volume target', is_correct: true, explanation: 'PRVC delivers a pressure-control breath (decelerating flow, set inspiratory time) but measures the resulting tidal volume each breath and nudges the inspiratory pressure up or down to keep that volume on the target you set. Pressure delivery, volume guarantee.' },
         { label: 'A spontaneous mode with no rate', is_correct: false, explanation: "That's PSV." },
         { label: 'A high-frequency mode', is_correct: false, explanation: 'Different concept entirely.' },
       ],
@@ -196,7 +195,7 @@ export const M9: ModuleConfig = {
       prompt: 'The adaptive PINSP logic in PRVC is most likely to be problematic in:',
       options: [
         { label: 'A heavily sedated post-cardiac arrest patient', is_correct: false, explanation: 'No drive; the adaptive logic is stable.' },
-        { label: 'A patient with strong respiratory drive and air hunger', is_correct: true, explanation: 'TVB Ch. 9. Drive perturbs the volume measurement, the vent over-corrects, and the loop oscillates.' },
+        { label: 'A patient with strong respiratory drive and air hunger', is_correct: true, explanation: 'Drive perturbs the volume measurement, the vent over-corrects, and the loop oscillates.' },
         { label: 'A patient with stable compliance and no drive', is_correct: false, explanation: 'PRVC is perfect here.' },
         { label: 'A weaning candidate', is_correct: false, explanation: 'Possibly — but PSV is the answer for weaning, not PRVC.' },
       ],
@@ -209,7 +208,7 @@ export const M9: ModuleConfig = {
       prompt: 'In PRVC, the vent automatically adjusts which setting breath-to-breath to keep the tidal volume on target?',
       options: [
         { label: 'PEEP', is_correct: false, explanation: 'PEEP is set by the clinician in PRVC, same as in any mode.' },
-        { label: 'Inspiratory pressure (PINSP).', is_correct: true, explanation: 'PRVC modulates inspiratory pressure breath-to-breath. As compliance worsens, PINSP climbs to keep Vt on target. As compliance improves, PINSP falls. TVB Ch. 9.' },
+        { label: 'Inspiratory pressure (PINSP).', is_correct: true, explanation: 'PRVC modulates inspiratory pressure breath-to-breath. As compliance worsens, PINSP climbs to keep Vt on target. As compliance improves, PINSP falls.' },
         { label: 'Respiratory rate.', is_correct: false, explanation: 'Set by the clinician in PRVC.' },
         { label: 'FiO2.', is_correct: false, explanation: 'Set by the clinician. PRVC adjusts pressure, not gas composition.' },
       ],
@@ -219,7 +218,7 @@ export const M9: ModuleConfig = {
       prompt: 'Which is TRUE about dual-control modes generally (PRVC, VC+, CMV-Autoflow)?',
       options: [
         { label: 'They eliminate the need to set a tidal volume', is_correct: false, explanation: 'The Vt is what you set.' },
-        { label: 'They deliver volume-targeted breaths with decelerating flow', is_correct: true, explanation: 'All the dual-control modes share the same idea: a pressure-delivered breath (so the flow decelerates as the lung fills) with a volume target the algorithm defends breath-to-breath. The vendor names differ; the behavior is the same. Further reading: TVB Ch. 9.' },
+        { label: 'They deliver volume-targeted breaths with decelerating flow', is_correct: true, explanation: 'All the dual-control modes share the same idea: a pressure-delivered breath (so the flow decelerates as the lung fills) with a volume target the algorithm defends breath-to-breath. The vendor names differ; the behavior is the same.' },
         { label: 'They use constant flow', is_correct: false, explanation: 'Wrong.' },
         { label: 'They are equivalent to SIMV', is_correct: false, explanation: 'Different concept entirely.' },
       ],
@@ -229,7 +228,7 @@ export const M9: ModuleConfig = {
       prompt: 'The peak airway pressure in a PRVC breath:',
       options: [
         { label: 'Is fixed by the clinician', is_correct: false, explanation: 'PINSP is set by the vent.' },
-        { label: 'Varies as the vent adapts to deliver the target Vt', is_correct: true, explanation: 'The whole point of PRVC is that the inspiratory pressure — and therefore the peak — floats. When compliance worsens the vent raises pressure to keep the volume on target, so the peak climbs; when compliance improves the peak falls. A rising peak in PRVC is the early warning that the lung is getting stiffer. Further reading: TVB Ch. 9.' },
+        { label: 'Varies as the vent adapts to deliver the target Vt', is_correct: true, explanation: 'The whole point of PRVC is that the inspiratory pressure — and therefore the peak — floats. When compliance worsens the vent raises pressure to keep the volume on target, so the peak climbs; when compliance improves the peak falls. A rising peak in PRVC is the early warning that the lung is getting stiffer.' },
         { label: 'Equals the plateau pressure exactly', is_correct: false, explanation: 'Wrong.' },
         { label: 'Is unrelated to compliance', is_correct: false, explanation: 'Wrong.' },
       ],
@@ -278,7 +277,6 @@ export const M9: ModuleConfig = {
  * MODULE M10 — Pressure Support Ventilation (PSV)
  *
  * Track: Modes · Archetype: outcome with patient-feedback loop · 18 min
- * Anchor chapters: VB Ch. 11, Ch. 13
  *
  * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
  *   - compliance: 55 — near-normal, recovering patient
@@ -329,7 +327,7 @@ export const M10: ModuleConfig = {
       prompt: 'In PSV, the set ventilator rate is:',
       options: [
         { label: '12 breaths per minute', is_correct: false, explanation: 'There is no set rate.' },
-        { label: "Determined by the patient's underlying drive — there is no set rate", is_correct: true, explanation: "TVB Ch. 11. That's the defining feature of PSV." },
+        { label: "Determined by the patient's underlying drive — there is no set rate", is_correct: true, explanation: "That's the defining feature of PSV." },
         { label: 'The same as in A/C', is_correct: false, explanation: 'A/C has a rate floor; PSV has none.' },
         { label: 'Calculated from the minute ventilation', is_correct: false, explanation: 'Wrong direction.' },
       ],
@@ -339,7 +337,7 @@ export const M10: ModuleConfig = {
       prompt: 'A PSV patient has PEEP 5, PS 10, RR 38, Vt 220 mL. The correct interpretation is:',
       options: [
         { label: 'Adequate support — leave as is', is_correct: false, explanation: 'This patient is under-supported: a rate of 38 with a Vt of only 220 mL is the rapid, shallow pattern of too little pressure support.' },
-        { label: 'Under-supported — the patient is taking shallow fast breaths. Raise PS.', is_correct: true, explanation: 'RR 38 with a Vt of only 220 mL is the classic under-support pattern: the boost is too small, so the patient compensates with rapid, shallow breaths. Raising PS deepens each breath and the rate falls as the patient rides bigger volumes. Further reading: TVB Ch. 11.' },
+        { label: 'Under-supported — the patient is taking shallow fast breaths. Raise PS.', is_correct: true, explanation: 'RR 38 with a Vt of only 220 mL is the classic under-support pattern: the boost is too small, so the patient compensates with rapid, shallow breaths. Raising PS deepens each breath and the rate falls as the patient rides bigger volumes.' },
         { label: 'Over-supported — lower PS', is_correct: false, explanation: 'Over-support looks the opposite — large Vt with a slow rate. Here the breaths are small and fast, so PS is too low, not too high.' },
         { label: 'Switch to A/C', is_correct: false, explanation: "Defensible if PSV isn't working, but the first move is to raise PS." },
       ],
@@ -517,7 +515,7 @@ export const M10: ModuleConfig = {
       options: [
         { label: '100% of peak flow', is_correct: false, explanation: 'Wrong.' },
         { label: '50% of peak flow', is_correct: false, explanation: 'Close but not standard.' },
-        { label: '25–30% of peak flow', is_correct: true, explanation: 'TVB Ch. 14. Below this, the vent recognizes the patient has finished inhaling.' },
+        { label: '25–30% of peak flow', is_correct: true, explanation: 'Below this, the vent recognizes the patient has finished inhaling.' },
         { label: 'Zero flow', is_correct: false, explanation: 'Wrong.' },
       ],
     },
@@ -536,7 +534,7 @@ export const M10: ModuleConfig = {
       prompt: 'The threshold PS for considering an SBT is generally:',
       options: [
         { label: '<5 cmH2O', is_correct: false, explanation: 'Lower than needed — a patient comfortable at PS 5 has essentially already passed a spontaneous trial, but the threshold for *considering* an SBT is a bit higher.' },
-        { label: '<10 cmH2O', is_correct: true, explanation: 'Once a patient is comfortable on PS below ~10 cmH2O, the machine is doing little of the work — that is the cue to run a formal spontaneous breathing trial. Above that, the support is still substantial and the patient is not yet trial-ready. Further reading: TVB Ch. 11.' },
+        { label: '<10 cmH2O', is_correct: true, explanation: 'Once a patient is comfortable on PS below ~10 cmH2O, the machine is doing little of the work — that is the cue to run a formal spontaneous breathing trial. Above that, the support is still substantial and the patient is not yet trial-ready.' },
         { label: '<20 cmH2O', is_correct: false, explanation: 'PS 20 is heavy support — the vent is doing most of the work. A patient needing that much is nowhere near ready for an SBT.' },
         { label: "There's no specific threshold", is_correct: false, explanation: 'There is a usable cutoff: comfortable on PS < ~10 is the practical trigger to consider an SBT.' },
       ],
@@ -546,7 +544,7 @@ export const M10: ModuleConfig = {
       prompt: 'Which is FALSE about PSV?',
       options: [
         { label: 'There is no set rate', is_correct: false, explanation: 'True.' },
-        { label: 'It is appropriate for paralyzed patients', is_correct: true, explanation: 'TVB Ch. 11. Paralyzed patients have no drive; they need A/C.' },
+        { label: 'It is appropriate for paralyzed patients', is_correct: true, explanation: 'Paralyzed patients have no drive; they need A/C.' },
         { label: 'Vt depends on PS, PEEP, compliance, and patient effort', is_correct: false, explanation: 'True.' },
         { label: 'It is flow-cycled', is_correct: false, explanation: 'True.' },
       ],
@@ -556,7 +554,7 @@ export const M10: ModuleConfig = {
       prompt: 'In PSV, the tidal volume tends to fall when:',
       options: [
         { label: 'PEEP is increased', is_correct: false, explanation: 'Indirectly possible, not the textbook answer.' },
-        { label: "The patient's compliance worsens or his effort weakens", is_correct: true, explanation: "TVB Ch. 11. PSV's variable Vt is the early-warning sign of fatigue." },
+        { label: "The patient's compliance worsens or his effort weakens", is_correct: true, explanation: "PSV's variable Vt is the early-warning sign of fatigue." },
         { label: 'The trigger is changed from pressure to flow', is_correct: false, explanation: 'Unrelated.' },
         { label: 'The flow-cycle threshold is changed from 25% to 50%', is_correct: false, explanation: 'Could affect timing but not the primary issue.' },
       ],

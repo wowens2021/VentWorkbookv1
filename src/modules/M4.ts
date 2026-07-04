@@ -4,7 +4,6 @@ import type { ModuleConfig } from '../shell/types';
  * MODULE M4 — Compliance and Resistance
  *
  * Track: Physiology · Archetype: concept demo (compound strict, reset_between) · 14 min
- * Anchor chapters: VB Ch. 1, Ch. 2, Ch. 8, Ch. 15
  *
  * PINNED PARAMETERS (do not change without re-tuning tracker thresholds):
  *   - tidalVolume: 480 — tracker math assumes baseline PIP ~22, Pplat ~16.
@@ -43,9 +42,9 @@ export const M4: ModuleConfig = {
       prompt: "A patient's PIP suddenly jumps from 25 to 42, but the Pplat goes from 18 to 22. The most useful first move is:",
       options: [
         { label: 'Increase PEEP.', is_correct: false, explanation: "Doesn't address the airway resistance problem." },
-        { label: 'Suction the patient and check the tube.', is_correct: true, explanation: 'Book Ch. 2. Wide gap = airway problem; mucus plug or kinked tube is the most common cause.' },
+        { label: 'Suction the patient and check the tube.', is_correct: true, explanation: 'Wide gap = airway problem; mucus plug or kinked tube is the most common cause.' },
         { label: 'Lower the tidal volume.', is_correct: false, explanation: 'That treats Pplat — and Pplat barely moved.' },
-        { label: 'Switch to pressure control.', is_correct: false, explanation: 'In severe airway resistance, PCV is *risky* — Pplat can crash silently (book Ch. 15).' },
+        { label: 'Switch to pressure control.', is_correct: false, explanation: 'In severe airway resistance, PCV is *risky* — Pplat can crash silently.' },
       ],
     },
     {
@@ -63,7 +62,7 @@ export const M4: ModuleConfig = {
       prompt: 'The "baby lung" concept means:',
       options: [
         { label: "Children's lungs handle the vent differently than adults'.", is_correct: false, explanation: 'Pediatric mechanics aside; the term is about adults.' },
-        { label: "In ARDS, the lungs aren't uniformly stiff — there are fewer healthy alveoli doing all the work, like a child's lungs in an adult's chest.", is_correct: true, explanation: 'Book Ch. 8. This is why Vt scales to *healthy* volume, not total.' },
+        { label: "In ARDS, the lungs aren't uniformly stiff — there are fewer healthy alveoli doing all the work, like a child's lungs in an adult's chest.", is_correct: true, explanation: 'This is why Vt scales to *healthy* volume, not total.' },
         { label: 'ARDS patients always need a smaller tube.', is_correct: false, explanation: 'Not what the concept means.' },
         { label: 'Compliance in ARDS is calculated differently.', is_correct: false, explanation: 'Same equation, just a much smaller number.' },
       ],
@@ -236,7 +235,7 @@ export const M4: ModuleConfig = {
       prompt: 'A patient with measured compliance of 20 mL/cmH2O and PBW 70 kg has, by the baby-lung concept:',
       options: [
         { label: 'The lungs of a healthy adult, just with a stiff chest wall.', is_correct: false, explanation: 'In ARDS the chest wall is usually OK; the lungs are smaller, not stiffer.' },
-        { label: 'The functional lung volume of a 20 kg child — the baby lung.', is_correct: true, explanation: 'Book Ch. 8. Vt scales to the baby lung, not the adult body.' },
+        { label: 'The functional lung volume of a 20 kg child — the baby lung.', is_correct: true, explanation: 'Vt scales to the baby lung, not the adult body.' },
         { label: 'Pulmonary fibrosis.', is_correct: false, explanation: 'Possible cause but the prompt is about what the *number* means.' },
         { label: 'Bronchospasm.', is_correct: false, explanation: "That's resistance, not compliance." },
       ],
@@ -247,7 +246,7 @@ export const M4: ModuleConfig = {
       id: 'M4-Q3',
       prompt: 'You do an inspiratory hold. PIP reads 42. Pplat reads 20. PEEP is 5. What does the gap tell you?',
       options: [
-        { label: 'Resistance is high — airway problem (mucus, bronchospasm, kinked tube).', is_correct: true, explanation: 'PIP – Pplat = 22, far above the normal < 5. The flow term (R × flow) is enormous; that\'s the resistance signature. Book Ch. 2.' },
+        { label: 'Resistance is high — airway problem (mucus, bronchospasm, kinked tube).', is_correct: true, explanation: 'PIP – Pplat = 22, far above the normal < 5. The flow term (R × flow) is enormous; that\'s the resistance signature.' },
         { label: 'Compliance is low — lung problem (ARDS, edema, pneumothorax).', is_correct: false, explanation: 'A compliance problem pushes Pplat UP. Pplat here is only 20 (driving pressure 15) — the lung itself looks acceptable.' },
         { label: 'Both — the gap is wide AND the plateau is high.', is_correct: false, explanation: 'Plateau is 20, not high. If the plateau were 30+ on top of the wide gap, it would be both.' },
         { label: 'Neither — those are normal numbers.', is_correct: false, explanation: 'Normal PIP–Pplat is < 5 cmH2O. A gap of 22 is a striking abnormality.' },
@@ -258,7 +257,7 @@ export const M4: ModuleConfig = {
       prompt: "You're called for a sudden PIP alarm. PIP 22 → 45. Pplat is 23. First move:",
       options: [
         { label: 'Increase PEEP.', is_correct: false, explanation: "Doesn't address airway resistance." },
-        { label: 'Disconnect, bag, suction. The gap is wide — airway problem.', is_correct: true, explanation: 'Book Ch. 2.' },
+        { label: 'Disconnect, bag, suction. The gap is wide — airway problem.', is_correct: true, explanation: 'A wide PIP–Pplat gap points to the airway; disconnect, bag, and suction first.' },
         { label: 'Get an arterial blood gas.', is_correct: false, explanation: 'Comes later — first fix the airway.' },
         { label: 'Lower Vt.', is_correct: false, explanation: "Pplat is fine; Vt isn't the issue." },
       ],

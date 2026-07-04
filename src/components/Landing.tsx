@@ -56,7 +56,7 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
             </h1>
             <div className="text-[16px] text-stone-700 leading-relaxed mb-7 max-w-xl space-y-3.5">
               <p>
-                <span className="font-semibold text-stone-900">Modules</span> are designed to help you learn mechanical ventilation, following the outline of <em>The Ventilator Book</em>. This course uses live waveforms and clinical scenarios to teach and reinforce key concepts.
+                <span className="font-semibold text-stone-900">Modules</span> are designed to help you learn mechanical ventilation, building from foundations to advanced management. This course uses live waveforms and clinical scenarios to teach and reinforce key concepts.
               </p>
               <p>
                 The <span className="font-semibold text-stone-900">Ventilator Playground</span> is like a real ventilator that allows you to adjust settings and examine waveforms. This is perfect for teaching or for familiarizing yourself with ventilator controls.

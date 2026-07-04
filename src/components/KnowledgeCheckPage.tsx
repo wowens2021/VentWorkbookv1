@@ -144,7 +144,7 @@ const StartScreen: React.FC<{
             Cross-module knowledge check
           </h1>
           <p className="text-[15px] text-stone-600 max-w-2xl leading-relaxed">
-            A {QUESTION_COUNT}-question mixed assessment drawn from <em>The Ventilator Book</em>.
+            A {QUESTION_COUNT}-question mixed assessment spanning mechanical ventilation.
             Questions are picked to match the difficulty of the modules you've completed —
             beginners get foundational items; as you progress, harder questions unlock.
             Each attempt cycles in new questions so you can take it as often as you like.
@@ -398,18 +398,15 @@ const QuizScreen: React.FC<{
                 {isCorrect ? 'Why this is right' : 'Why this is not it'}
               </span>
               <div className="text-[13px] text-stone-800 leading-relaxed">{q.rationale}</div>
-              <div className="mt-2 pt-2 border-t border-stone-200/50 text-[11px] text-stone-500">
-                {q.reference}
-                {q.tags.length > 0 && (
-                  <span className="ml-2">
-                    {q.tags.map(t => (
-                      <span key={t} className="inline-block bg-white border border-stone-200 text-stone-600 px-1.5 py-0.5 rounded text-[10px] mr-1">
-                        #{t}
-                      </span>
-                    ))}
-                  </span>
-                )}
-              </div>
+              {q.tags.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-stone-200/50 text-[11px] text-stone-500">
+                  {q.tags.map(t => (
+                    <span key={t} className="inline-block bg-white border border-stone-200 text-stone-600 px-1.5 py-0.5 rounded text-[10px] mr-1">
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

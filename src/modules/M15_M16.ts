@@ -12,7 +12,7 @@ import type { ModuleConfig } from '../shell/types';
  * Calibration:
  *   Vt 430, PEEP 10, C=32 → plat = 430/32 + 10 = 23.4; DP = 13.4. Lands in target.
  *   Vt 430, PEEP 5,  C=32 → plat = 18.4; DP = 13.4. DP still good.
- *   At Vt 600 (start),         DP = 600/32 = 18.75 — above the Amato threshold.
+ *   At Vt 600 (start),         DP = 600/32 = 18.75 — above the driving-pressure threshold.
  *
  * Pinned target row of ARDSnet table for FiO2 0.6 is PEEP 10.
  *
@@ -35,7 +35,7 @@ export const M15: ModuleConfig = {
   estimated_minutes: 25,
   briefing: {
     tagline: 'The recipe asks for numbers that look wrong. The recipe is right.',
-    overview: "ARDSnet is the most studied recipe in critical care. The components are simple and have not changed since 2000: VCV with 6 mL/kg predicted body weight, plateau ≤30, PEEP/FiO2 by the table, SpO2 88–94, permissive hypercapnia. The hard part is that the recipe insists on numbers that feel wrong — tidal volumes that look small, SpO2 that look low, PaCO2 that look high. The recipe is right. ARMA 2000 showed a 9% absolute mortality reduction — one of the largest effects in ICU medicine. Amato 2015 added that driving pressure ≤15 is independently linked to survival.",
+    overview: "ARDSnet is the most studied recipe in critical care. The components are simple and have not changed since 2000: VCV with 6 mL/kg predicted body weight, plateau ≤30, PEEP/FiO2 by the table, SpO2 88–94, permissive hypercapnia. The hard part is that the recipe insists on numbers that feel wrong — tidal volumes that look small, SpO2 that look low, PaCO2 that look high. The recipe is right. ARMA 2000 showed a 9% absolute mortality reduction — one of the largest effects in ICU medicine. Driving pressure ≤15 is independently linked to survival.",
     what_youll_do: [
       'Vt 6 mL/kg PBW — predicted body weight from height, not actual weight. The lung doesn\'t grow with obesity.',
       'Plateau ≤30, driving pressure ≤15. Both, every breath.',
@@ -47,7 +47,7 @@ export const M15: ModuleConfig = {
     'Apply the ARDSnet recipe from scratch: VCV, 6 mL/kg PBW, rate 14–18, PEEP per table, plat ≤30, DP ≤15.',
     'Titrate Vt down further if plateau exceeds 30; floor at 4 mL/kg PBW.',
     'Identify when to escalate to prone, paralytics, or rescue.',
-    'State the ARMA mortality reduction and the Amato driving-pressure threshold.',
+    'State the ARMA mortality reduction and the driving-pressure threshold.',
   ],
 
   primer_questions: [
@@ -56,7 +56,7 @@ export const M15: ModuleConfig = {
       prompt: 'The ARMA trial (NEJM 2000) compared 6 mL/kg PBW vs 12 mL/kg PBW in ARDS. The result was:',
       options: [
         { label: 'No difference in mortality', is_correct: false, explanation: 'There was a difference, and it was large.' },
-        { label: 'A 9% absolute mortality reduction with low Vt', is_correct: true, explanation: 'One of the largest effects in all of ICU medicine. TVB Ch. 8.' },
+        { label: 'A 9% absolute mortality reduction with low Vt', is_correct: true, explanation: 'One of the largest effects in all of ICU medicine.' },
         { label: 'Lower Vt caused more pneumothorax', is_correct: false, explanation: 'The opposite of what you\'d expect — and what was found.' },
         { label: 'Lower Vt required more sedation but had no mortality effect', is_correct: false, explanation: 'The mortality effect was the headline.' },
       ],
@@ -66,17 +66,17 @@ export const M15: ModuleConfig = {
       prompt: 'A 70-inch male in ARDS — his PBW is ~73 kg. The starting Vt is:',
       options: [
         { label: '350 mL', is_correct: false, explanation: 'That\'s 4.8 mL/kg — defensible only if plat is high.' },
-        { label: '430–440 mL', is_correct: true, explanation: '6 mL/kg of PBW. TVB Ch. 8.' },
+        { label: '430–440 mL', is_correct: true, explanation: '6 mL/kg of PBW.' },
         { label: '600 mL', is_correct: false, explanation: 'That\'s 8.2 mL/kg — pre-ARMA dosing.' },
         { label: '800 mL', is_correct: false, explanation: 'Reflects an older era of ventilation that increased mortality.' },
       ],
     },
     {
       id: 'M15-P3',
-      prompt: 'The Amato 2015 driving pressure analysis showed that:',
+      prompt: 'The driving pressure analysis showed that:',
       options: [
         { label: 'Plateau pressure was more important than driving pressure', is_correct: false, explanation: 'The opposite — DP outperformed plat in their model.' },
-        { label: 'Driving pressure ≤15 was independently linked to survival, even at low Vt and plateau', is_correct: true, explanation: 'A separate signal of lung-protection quality. TVB Ch. 8.' },
+        { label: 'Driving pressure ≤15 was independently linked to survival, even at low Vt and plateau', is_correct: true, explanation: 'A separate signal of lung-protection quality.' },
         { label: 'Driving pressure was unrelated to outcome', is_correct: false, explanation: 'Strongly related — across multiple ARDS trial datasets.' },
         { label: 'Higher driving pressure improved oxygenation', is_correct: false, explanation: 'Higher DP worsened outcomes.' },
       ],
@@ -91,7 +91,7 @@ export const M15: ModuleConfig = {
       // ⚠️  DO NOT CHANGE compliance (32), heightInches (70), or gender (M).
       // Per MODULE_SPECS_v3 §M15: PBW ≈ 73 kg, 6 mL/kg ≈ 438 mL.
       //   Vt 430, PEEP 10, compliance 32 → plat = 23.4, DP = 13.4 → passes.
-      //   Vt 600 (start) → DP = 18.75 → fails the Amato threshold.
+      //   Vt 600 (start) → DP = 18.75 → fails the driving-pressure threshold.
       // Other fields are free to change for other reasons; this trio is
       // load-bearing for the recipe math.
       // ─────────────────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ export const M15: ModuleConfig = {
       kind: 'callout',
       tone: 'tip',
       markdown:
-        "For this scenario's patient (70 inches, male): PBW ≈ 73 kg, 6 mL/kg ≈ **438 mL**. Compliance is 32. At Vt 600 (current), driving pressure ≈ 19 — over the Amato 15 ceiling. At Vt 430 with PEEP 10, plat ≈ 23 and DP ≈ 13. That's the recipe target.",
+        "For this scenario's patient (70 inches, male): PBW ≈ 73 kg, 6 mL/kg ≈ **438 mL**. Compliance is 32. At Vt 600 (current), driving pressure ≈ 19 — over the 15 ceiling. At Vt 430 with PEEP 10, plat ≈ 23 and DP ≈ 13. That's the recipe target.",
     },
     {
       kind: 'predict_mcq',
@@ -187,7 +187,7 @@ export const M15: ModuleConfig = {
         { label: 'Sedate more.', is_correct: false },
       ],
       answer:
-        'Lower Vt by 50 mL. Plat at 32 is over the ceiling and DP at 17 is over Amato — both signals point at Vt. Lowering PEEP at fixed Vt drops Pplat by an equal amount but also lifts the FRC out from under recruited alveoli; not the first move. Raising rate doesn\'t help mechanics. Sedation doesn\'t help mechanics. TVB Ch. 8.',
+        'Lower Vt by 50 mL. Plat at 32 is over the ceiling and DP at 17 is over the driving-pressure limit — both signals point at Vt. Lowering PEEP at fixed Vt drops Pplat by an equal amount but also lifts the FRC out from under recruited alveoli; not the first move. Raising rate doesn\'t help mechanics. Sedation doesn\'t help mechanics.',
     },
   ],
 
@@ -207,7 +207,7 @@ export const M15: ModuleConfig = {
         { label: 'Prone positioning', is_correct: false },
         { label: 'Neuromuscular blockade', is_correct: false },
       ],
-      explanation: 'ARMA 2000 — 9% absolute mortality reduction. Prone (PROSEVA) is important but second. TVB Ch. 8.',
+      explanation: 'ARMA 2000 — 9% absolute mortality reduction. Prone (PROSEVA) is important but second.',
     },
     {
       id: 'M15-Q2',
@@ -218,7 +218,7 @@ export const M15: ModuleConfig = {
         { label: 'Sedate more', is_correct: false },
         { label: 'Switch to PCV', is_correct: false },
       ],
-      explanation: 'DP is over 15. Plateau is okay but DP is the better signal. Raising PEEP raises plat. TVB Ch. 8.',
+      explanation: 'DP is over 15. Plateau is okay but DP is the better signal. Raising PEEP raises plat.',
     },
     {
       id: 'M15-Q3',
@@ -229,7 +229,7 @@ export const M15: ModuleConfig = {
         { label: 'Septic shock', is_correct: false },
         { label: 'Asthma exacerbation', is_correct: false },
       ],
-      explanation: 'Hypercapnia → cerebral vasodilation → worsens ICP. TVB Ch. 6.',
+      explanation: 'Hypercapnia → cerebral vasodilation → worsens ICP.',
     },
     {
       id: 'M15-Q4',
@@ -240,18 +240,18 @@ export const M15: ModuleConfig = {
         { label: 'Plat >30', is_correct: false },
         { label: 'Auto-PEEP is present', is_correct: false },
       ],
-      explanation: 'PROSEVA trial criterion. 16–18 hours per day. TVB Ch. 25.',
+      explanation: 'PROSEVA trial criterion. 16–18 hours per day.',
     },
     {
       id: 'M15-Q5',
-      prompt: 'Owens\'s pragmatic crisis protocol uses an initial Vt of:',
+      prompt: 'A pragmatic crisis protocol uses an initial Vt of:',
       options: [
         { label: '4 mL/kg', is_correct: false },
         { label: '6 mL/kg', is_correct: true },
         { label: '8 mL/kg', is_correct: false },
         { label: '12 mL/kg', is_correct: false },
       ],
-      explanation: 'The same number as the elective protocol. The simplicity is the point. TVB Ch. 25.',
+      explanation: 'The same number as the elective protocol. The simplicity is the point.',
     },
   ],
 
@@ -290,7 +290,7 @@ export const M15: ModuleConfig = {
   key_points: [
     'The ARDSnet recipe: VCV, 6 mL/kg PBW, plat ≤30, DP ≤15, PEEP per table, SpO2 88–94, permissive hypercapnia.',
     'ARMA 2000 = 9% absolute mortality reduction. Large and real.',
-    'Amato 2015: DP ≤15 independently predicts survival.',
+    'DP ≤15 independently predicts survival.',
     'Prone at P/F <150.',
     'The recipe asks for numbers that look wrong. The recipe is right.',
   ],
@@ -352,7 +352,7 @@ export const M16: ModuleConfig = {
       prompt: 'The strongest single lever for relieving auto-PEEP is:',
       options: [
         { label: 'Higher PEEP', is_correct: false, explanation: 'In asthma PEEP worsens trapping. In COPD it can help marginally, but the rate lever is bigger.' },
-        { label: 'Lower respiratory rate', is_correct: true, explanation: 'Longer expiratory time. The dominant variable. TVB Ch. 15.' },
+        { label: 'Lower respiratory rate', is_correct: true, explanation: 'Longer expiratory time. The dominant variable.' },
         { label: 'Higher Vt', is_correct: false, explanation: 'Larger breath, more gas to exhale, worse trapping.' },
         { label: 'Higher FiO2', is_correct: false, explanation: 'FiO2 doesn\'t alter time constants.' },
       ],
@@ -363,7 +363,7 @@ export const M16: ModuleConfig = {
       options: [
         { label: 'PCV — decelerating flow is more comfortable', is_correct: false, explanation: 'PCV silently drops Vt as resistance rises. Dangerous in bronchospasm.' },
         { label: 'PRVC — adaptive', is_correct: false, explanation: 'Same problem — when resistance climbs, the adaptive logic pushes pressure up, which doesn\'t help with trapping.' },
-        { label: 'VCV — guaranteed Vt despite resistance change', is_correct: true, explanation: 'You see the resistance problem (rising PIP, stable plat) and act on it. TVB Ch. 15.' },
+        { label: 'VCV — guaranteed Vt despite resistance change', is_correct: true, explanation: 'You see the resistance problem (rising PIP, stable plat) and act on it.' },
         { label: 'PSV — patient comfort', is_correct: false, explanation: 'Spontaneous mode in a patient who needs deep sedation.' },
       ],
     },
@@ -372,7 +372,7 @@ export const M16: ModuleConfig = {
       prompt: 'Applied PEEP in severe asthma:',
       options: [
         { label: 'Helps splint airways — analogous to COPD', is_correct: false, explanation: 'The pathology is different — asthmatic airways are inflamed, not floppy.' },
-        { label: 'Makes hyperinflation worse', is_correct: true, explanation: 'Adds to total PEEP without splinting anything. TVB Ch. 1, Ch. 15.' },
+        { label: 'Makes hyperinflation worse', is_correct: true, explanation: 'Adds to total PEEP without splinting anything.' },
         { label: 'Has no effect', is_correct: false, explanation: 'It has a clear effect — and it\'s the wrong direction.' },
         { label: 'Improves V/Q matching', is_correct: false, explanation: 'Not the relevant mechanism here.' },
       ],
@@ -561,7 +561,7 @@ export const M16: ModuleConfig = {
         { label: '7.10–7.15', is_correct: true },
         { label: '6.90', is_correct: false },
       ],
-      explanation: 'TVB Ch. 6, Ch. 15. Lower than ARDS permissive (7.15–7.20) because the alternative is barotrauma and PEA arrest.',
+      explanation: 'Lower than ARDS permissive (7.15–7.20) because the alternative is barotrauma and PEA arrest.',
     },
     {
       id: 'M16-Q2',
@@ -572,7 +572,7 @@ export const M16: ModuleConfig = {
         { label: '7–8 mL/kg', is_correct: true },
         { label: '12 mL/kg', is_correct: false },
       ],
-      explanation: 'Higher than ARDS because the lungs aren\'t the problem — the airways are. TVB Ch. 1, Ch. 15.',
+      explanation: 'Higher than ARDS because the lungs aren\'t the problem — the airways are.',
     },
     {
       id: 'M16-Q3',
@@ -583,7 +583,7 @@ export const M16: ModuleConfig = {
         { label: 'Auto-PEEP', is_correct: false },
         { label: 'Pneumothorax', is_correct: false },
       ],
-      explanation: 'PIP rises with resistance; plat with compliance. The gap is the resistance signal. TVB Ch. 2.',
+      explanation: 'PIP rises with resistance; plat with compliance. The gap is the resistance signal.',
     },
     {
       id: 'M16-Q4',
@@ -594,7 +594,7 @@ export const M16: ModuleConfig = {
         { label: '15 cmH2O (above auto-PEEP)', is_correct: false },
         { label: '25 cmH2O', is_correct: false },
       ],
-      explanation: 'The waterfall analogy — splints open small airways without adding to trapping. Above auto-PEEP, you trap more. TVB Ch. 15.',
+      explanation: 'The waterfall analogy — splints open small airways without adding to trapping. Above auto-PEEP, you trap more.',
     },
     {
       id: 'M16-Q5',
@@ -605,7 +605,7 @@ export const M16: ModuleConfig = {
         { label: 'Raise PEEP', is_correct: false },
         { label: 'Lower FiO2', is_correct: false },
       ],
-      explanation: 'Trapping is compressing venous return. Letting the chest fall is the immediate fix. TVB Ch. 15.',
+      explanation: 'Trapping is compressing venous return. Letting the chest fall is the immediate fix.',
     },
   ],
 

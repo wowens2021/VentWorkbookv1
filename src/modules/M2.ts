@@ -3,7 +3,6 @@ import type { ModuleConfig, TrackerConfig, ControlName, ReadoutName } from '../s
 /**
  * M2 — Vocabulary and the Vent Display
  * Track: Foundations · Archetype: vocabulary (click-target) · 13 min
- * Anchor chapters: VB Ch. 1, Ch. 3, Ch. 7
  *
  * Specced verbatim against docs/MODULE_SPECS_v3.md §M2.
  */
@@ -91,7 +90,7 @@ export const M2: ModuleConfig = {
       prompt: 'I:E ratio of 1:2 on the display means:',
       options: [
         { label: 'Inspiration takes twice as long as expiration.', is_correct: false, explanation: "That's 2:1 (inverse ratio)." },
-        { label: 'Expiration takes twice as long as inspiration.', is_correct: true, explanation: 'Normal-ish for adults at rest. Book Ch. 9.' },
+        { label: 'Expiration takes twice as long as inspiration.', is_correct: true, explanation: 'Normal-ish for adults at rest.' },
         { label: 'The set rate is 1, and the actual is 2.', is_correct: false, explanation: "I:E isn't about rate." },
         { label: "There's two seconds for inspiration and one for expiration.", is_correct: false, explanation: "That describes a 2:1 ratio — the inverse pattern. Obstructive patients especially would suffer from it. The display shows 1:2, which is the normal direction." },
       ],
@@ -258,7 +257,7 @@ export const M2: ModuleConfig = {
       id: 'M2-Q1',
       prompt: 'Minute ventilation (MVe) is best defined as:',
       options: [
-        { label: 'The total volume of air moved in and out of the lungs per minute.', is_correct: true, explanation: 'Specifically: Vte × measured rate. The "amount of air per minute" — what determines CO2 clearance. Book Ch. 1.' },
+        { label: 'The total volume of air moved in and out of the lungs per minute.', is_correct: true, explanation: 'Specifically: Vte × measured rate. The "amount of air per minute" — what determines CO2 clearance.' },
         { label: 'The pressure required to deliver one breath.', is_correct: false, explanation: "That's driving pressure, not a volume." },
         { label: 'The volume of one tidal breath.', is_correct: false, explanation: "That's tidal volume (Vt). MVe is volume PER MINUTE, not per breath." },
         { label: 'The oxygen concentration delivered to the patient.', is_correct: false, explanation: "That's FiO2 — gas composition, not air volume." },
@@ -269,7 +268,7 @@ export const M2: ModuleConfig = {
       prompt: 'PEEP refers to:',
       options: [
         { label: 'The peak pressure measured during inspiration.', is_correct: false, explanation: "That's PIP — peak inspiratory pressure. PEEP is end-EXPIRATORY pressure." },
-        { label: 'The pressure floor held at end-expiration — set by the clinician.', is_correct: true, explanation: 'Positive end-expiratory pressure. Keeps alveoli open between breaths. Book Ch. 1, Ch. 12.' },
+        { label: 'The pressure floor held at end-expiration — set by the clinician.', is_correct: true, explanation: 'Positive end-expiratory pressure. Keeps alveoli open between breaths.' },
         { label: 'The patient\'s own respiratory effort.', is_correct: false, explanation: "Patient effort is captured by trigger and spontaneous rate, not PEEP." },
         { label: 'The volume delivered each breath.', is_correct: false, explanation: "That's tidal volume." },
       ],
@@ -298,7 +297,7 @@ export const M2: ModuleConfig = {
       id: 'M2-Q5',
       prompt: 'PIP (peak inspiratory pressure) is best described as:',
       options: [
-        { label: 'The highest pressure measured in the airway during a delivered breath.', is_correct: true, explanation: 'You read PIP; you do not set it. It rises with higher Vt, lower compliance, or higher resistance. Book Ch. 1, Ch. 2.' },
+        { label: 'The highest pressure measured in the airway during a delivered breath.', is_correct: true, explanation: 'You read PIP; you do not set it. It rises with higher Vt, lower compliance, or higher resistance.' },
         { label: 'The pressure ordered by the clinician.', is_correct: false, explanation: 'You order Vt or PINSP — not PIP. PIP is a measurement the vent reports each breath.' },
         { label: 'The pressure at the end of inspiration once flow has stopped.', is_correct: false, explanation: "That's PLATEAU pressure (Pplat) — measured during an inspiratory hold, no flow." },
         { label: 'The end-expiratory baseline pressure.', is_correct: false, explanation: "That's PEEP — the bottom of the breath, not the top." },

@@ -55,7 +55,7 @@ export const M11: ModuleConfig = {
       options: [
         { label: 'Increase sedation', is_correct: false, explanation: 'That\'s the reflex answer. It\'s also often the wrong one — sedation buries the diagnostic information you need.' },
         { label: 'Increase neuromuscular blockade', is_correct: false, explanation: 'Paralyzing the patient buries the problem without fixing it.' },
-        { label: 'Bag the patient off the vent, then examine and check vent settings', is_correct: true, explanation: 'Bag off → run DOPES (Displacement, Obstruction, Pneumothorax, Equipment, Stacking) → then read the waveform. TVB Ch. 14.' },
+        { label: 'Bag the patient off the vent, then examine and check vent settings', is_correct: true, explanation: 'Bag off → run DOPES (Displacement, Obstruction, Pneumothorax, Equipment, Stacking) → then read the waveform.' },
         { label: 'Switch the mode to APRV', is_correct: false, explanation: 'Mode-switching without a diagnosis is gambling.' },
       ],
     },
@@ -65,7 +65,7 @@ export const M11: ModuleConfig = {
       prompt: 'A COPD patient on VCV has auto-PEEP of 10 cmH2O and a flow trigger set at −2 cmH2O. To trigger the vent, the patient must generate a negative airway pressure of at least:',
       options: [
         { label: '−2 cmH2O — the trigger threshold is what matters', is_correct: false, explanation: 'The trigger threshold is measured from airway opening pressure, not from alveolar pressure. With 10 cmH2O trapped, the patient starts from +10 and must first unload that before any negative swing reaches the trigger.' },
-        { label: '−12 cmH2O — the patient must overcome auto-PEEP first, then cross the trigger threshold', is_correct: true, explanation: 'Auto-PEEP raises the baseline the patient works against. 10 cmH2O auto-PEEP + 2 cmH2O trigger = 12 cmH2O of effort before the vent registers anything. TVB Ch. 13.' },
+        { label: '−12 cmH2O — the patient must overcome auto-PEEP first, then cross the trigger threshold', is_correct: true, explanation: 'Auto-PEEP raises the baseline the patient works against. 10 cmH2O auto-PEEP + 2 cmH2O trigger = 12 cmH2O of effort before the vent registers anything.' },
         { label: '−10 cmH2O — auto-PEEP is the only barrier', is_correct: false, explanation: 'Auto-PEEP is the larger barrier, but the trigger threshold adds on top of it.' },
         { label: '−5 cmH2O — the vent compensates for auto-PEEP automatically', is_correct: false, explanation: 'Standard triggers do not auto-compensate for air trapping. That\'s what extrinsic PEEP titration is for.' },
       ],
@@ -76,7 +76,7 @@ export const M11: ModuleConfig = {
       prompt: 'A nurse calls: "The patient looks like he\'s working hard to breathe but I\'m not seeing extra breaths on the vent display." Before you look at the waveform, what are you thinking?',
       options: [
         { label: 'The patient is anxious — push more sedation', is_correct: false, explanation: 'Visible work without counted breaths could mean the vent isn\'t seeing the efforts at all. Sedation before diagnosis buries the finding.' },
-        { label: 'The patient\'s efforts may not be crossing the trigger threshold — they work but nothing fires', is_correct: true, explanation: 'When you see effort but no delivered breath, the vent isn\'t detecting it. The waveform will show pressure deflections between mandatory breaths with no corresponding flow. TVB Ch. 14.' },
+        { label: 'The patient\'s efforts may not be crossing the trigger threshold — they work but nothing fires', is_correct: true, explanation: 'When you see effort but no delivered breath, the vent isn\'t detecting it. The waveform will show pressure deflections between mandatory breaths with no corresponding flow.' },
         { label: 'The rate is set too high — the patient can\'t exhale fully', is_correct: false, explanation: 'A rate too high produces air trapping, not visible effort without breath delivery.' },
         { label: 'The flow sensor is broken', is_correct: false, explanation: 'Equipment failure is possible but comes after you\'ve ruled out patient-vent mismatch.' },
       ],
@@ -242,7 +242,7 @@ export const M11: ModuleConfig = {
         { label: 'Excessive sedation', is_correct: false },
         { label: 'The endotracheal tube is too small', is_correct: false },
       ],
-      explanation: 'COPD patients trap air. Until they overcome the trapped PEEP, no inspiratory effort reaches the vent\'s trigger threshold. TVB Ch. 13, Ch. 14.',
+      explanation: 'COPD patients trap air. Until they overcome the trapped PEEP, no inspiratory effort reaches the vent\'s trigger threshold.',
     },
     {
       id: 'M11-Q2',
@@ -253,18 +253,18 @@ export const M11: ModuleConfig = {
         { label: 'Decreasing PEEP', is_correct: false },
         { label: 'Lowering the rate', is_correct: false },
       ],
-      explanation: 'Match the vent to the patient\'s demand. If the patient wants 500, giving 400 buys you a stacked breath. TVB Ch. 14.',
+      explanation: 'Match the vent to the patient\'s demand. If the patient wants 500, giving 400 buys you a stacked breath.',
     },
     {
       id: 'M11-Q3',
       prompt: 'Flow starvation in a patient on VCV is best addressed by:',
       options: [
         { label: 'Increasing PEEP', is_correct: false, explanation: 'PEEP affects oxygenation and end-expiratory volume, not inspiratory flow delivery. It won\'t resolve the flow-demand mismatch.' },
-        { label: 'Increasing peak inspiratory flow or switching to a pressure-based mode', is_correct: true, explanation: 'The patient is pulling faster than the set flow can supply. Higher peak flow closes the gap in VCV. A pressure-based mode (PCV, PSV, PRVC) lets flow vary to match demand — the scooping disappears. TVB Ch. 14.' },
+        { label: 'Increasing peak inspiratory flow or switching to a pressure-based mode', is_correct: true, explanation: 'The patient is pulling faster than the set flow can supply. Higher peak flow closes the gap in VCV. A pressure-based mode (PCV, PSV, PRVC) lets flow vary to match demand — the scooping disappears.' },
         { label: 'Adding paralytic', is_correct: false, explanation: 'Paralytics eliminate the patient\'s drive — silencing the problem rather than fixing it. The mismatch is between flow supply and demand; address the supply.' },
         { label: 'Increasing the set respiratory rate', is_correct: false, explanation: 'Rate doesn\'t affect peak flow or how quickly gas is delivered during inspiration. The scoop happens within each breath, not because of breath frequency.' },
       ],
-      explanation: 'The patient is pulling faster than the vent can supply. Higher peak flow or a mode that lets flow vary (PCV, PRVC, PSV) fixes the mismatch. TVB Ch. 14.',
+      explanation: 'The patient is pulling faster than the vent can supply. Higher peak flow or a mode that lets flow vary (PCV, PRVC, PSV) fixes the mismatch.',
     },
     {
       id: 'M11-Q4',
@@ -275,7 +275,7 @@ export const M11: ModuleConfig = {
         { label: 'Auto-cycling', is_correct: false },
         { label: 'Expiratory dyssynchrony', is_correct: false },
       ],
-      explanation: 'The patient is sucking against the vent. The pressure curve dips because the flow isn\'t keeping up. TVB Ch. 14.',
+      explanation: 'The patient is sucking against the vent. The pressure curve dips because the flow isn\'t keeping up.',
     },
     {
       id: 'M11-Q5',
@@ -286,7 +286,7 @@ export const M11: ModuleConfig = {
         { label: 'Switch to APRV', is_correct: false },
         { label: 'Call the attending', is_correct: false },
       ],
-      explanation: 'Recognize before sedating. Sedation buries the diagnostic information. TVB Ch. 14.',
+      explanation: 'Recognize before sedating. Sedation buries the diagnostic information.',
     },
   ],
 
@@ -364,7 +364,7 @@ export const M12: ModuleConfig = {
       prompt: 'In SIMV with no pressure support, a spontaneous breath delivers:',
       options: [
         { label: 'The set mandatory Vt', is_correct: false, explanation: 'That\'s A/C behavior.' },
-        { label: 'Whatever the patient can pull on his own', is_correct: true, explanation: 'The defining difference from A/C. TVB Ch. 10.' },
+        { label: 'Whatever the patient can pull on his own', is_correct: true, explanation: 'The defining difference from A/C.' },
         { label: 'A small boost equal to PS 5', is_correct: false, explanation: 'Only if PS is set. By default it\'s zero.' },
         { label: 'The same Vt as the previous mandatory breath', is_correct: false, explanation: 'There\'s no copy-the-last-breath rule.' },
       ],
@@ -374,7 +374,7 @@ export const M12: ModuleConfig = {
       prompt: 'A patient on SIMV (rate 10, Vt 450) has spontaneous Vt of 160 mL at rate 30. The most likely consequence over hours is:',
       options: [
         { label: 'Adequate gas exchange', is_correct: false, explanation: 'Spontaneous Vt is at anatomic dead space — those breaths don\'t clear CO2.' },
-        { label: 'Respiratory muscle fatigue and CO2 retention', is_correct: true, explanation: 'Wasted ventilation. The patient is working but not ventilating. TVB Ch. 10.' },
+        { label: 'Respiratory muscle fatigue and CO2 retention', is_correct: true, explanation: 'Wasted ventilation. The patient is working but not ventilating.' },
         { label: 'Improved weaning trajectory', is_correct: false, explanation: 'You\'re burning out the patient, not weaning them.' },
         { label: 'Reduced auto-PEEP', is_correct: false, explanation: 'High RR with short Te is more likely to produce auto-PEEP, not less.' },
       ],
@@ -384,7 +384,7 @@ export const M12: ModuleConfig = {
       prompt: 'SIMV has been studied for weaning. Compared to daily SBTs, SIMV-based weaning is:',
       options: [
         { label: 'Faster', is_correct: false, explanation: 'It isn\'t.' },
-        { label: 'Slower or no better', is_correct: true, explanation: 'Daily SBT is what gets patients off the vent. SIMV adds no proven benefit. TVB Ch. 10 — Brochard, Esteban.' },
+        { label: 'Slower or no better', is_correct: true, explanation: 'Daily SBT is what gets patients off the vent. SIMV adds no proven benefit.' },
         { label: 'Equivalent', is_correct: false, explanation: 'Studies actually showed SIMV was slower in several trials.' },
         { label: 'Superior in COPD', is_correct: false, explanation: 'Not supported.' },
       ],
@@ -482,7 +482,7 @@ export const M12: ModuleConfig = {
         { label: 'Supported', is_correct: false },
         { label: 'Static', is_correct: false },
       ],
-      explanation: 'The mandatory breath is delayed briefly to align with patient effort, avoiding breath stacking. TVB Ch. 10.',
+      explanation: 'The mandatory breath is delayed briefly to align with patient effort, avoiding breath stacking.',
     },
     {
       id: 'M12-Q2',
@@ -493,7 +493,7 @@ export const M12: ModuleConfig = {
         { label: 'Increase the mandatory rate to 20', is_correct: false },
         { label: 'Add sedation', is_correct: false },
       ],
-      explanation: 'A/C is defensible but PS solves the actual problem. Raising the rate eliminates the spontaneous breaths instead of supporting them. TVB Ch. 10.',
+      explanation: 'A/C is defensible but PS solves the actual problem. Raising the rate eliminates the spontaneous breaths instead of supporting them.',
     },
     {
       id: 'M12-Q3',
@@ -504,7 +504,7 @@ export const M12: ModuleConfig = {
         { label: 'No proven advantage; daily SBT is what works', is_correct: true },
         { label: 'Lower ICU mortality', is_correct: false },
       ],
-      explanation: 'Multiple trials including Brochard and Esteban show SIMV-based weaning is not faster than daily SBTs. TVB Ch. 10.',
+      explanation: 'Multiple trials show SIMV-based weaning is not faster than daily SBTs.',
     },
     {
       id: 'M12-Q4',
@@ -515,7 +515,7 @@ export const M12: ModuleConfig = {
         { label: 'Volume volutrauma risk', is_correct: false },
         { label: 'Auto-PEEP', is_correct: false },
       ],
-      explanation: 'Anatomic dead space is ~150–180 mL. A breath that size barely reaches alveolar gas. TVB Ch. 10.',
+      explanation: 'Anatomic dead space is ~150–180 mL. A breath that size barely reaches alveolar gas.',
     },
     {
       id: 'M12-Q5',
@@ -526,7 +526,7 @@ export const M12: ModuleConfig = {
         { label: 'It is institutionally familiar and works fine as long as the work of breathing is monitored', is_correct: true },
         { label: 'It is the only mode that allows spontaneous breathing', is_correct: false },
       ],
-      explanation: '"There is nothing wrong with SIMV as long as you pay attention to the work of breathing" — the pragmatic answer. TVB Ch. 10.',
+      explanation: 'There is nothing wrong with SIMV as long as you pay attention to the work of breathing — the pragmatic answer.',
     },
   ],
 

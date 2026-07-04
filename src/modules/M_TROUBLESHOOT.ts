@@ -68,7 +68,7 @@ const case1Steps: TrackerConfig[] = useScenarioA
           delay_ms: 30_000,
           text: 'The book says the first step for high pressure is the inspiratory pause.',
         },
-        tier3_demonstration: { control: 'inspiratory_pause', target_value: 1, hint_text: "Show me — fires the inspiratory pause (the book's first step for high-pressure alarms)." },
+        tier3_demonstration: { control: 'inspiratory_pause', target_value: 1, hint_text: "Show me — fires the inspiratory pause (the first step for high-pressure alarms)." },
       },
       {
         kind: 'recognition',
@@ -136,7 +136,7 @@ const case1Steps: TrackerConfig[] = useScenarioA
           delay_ms: 30_000,
           text: 'The book says the first step for high pressure is the inspiratory pause.',
         },
-        tier3_demonstration: { control: 'inspiratory_pause', target_value: 1, hint_text: "Show me — fires the inspiratory pause (the book's first step for high-pressure alarms)." },
+        tier3_demonstration: { control: 'inspiratory_pause', target_value: 1, hint_text: "Show me — fires the inspiratory pause (the first step for high-pressure alarms)." },
       },
       {
         kind: 'recognition',
@@ -162,7 +162,7 @@ const case1Steps: TrackerConfig[] = useScenarioA
           question: 'Pplat 40, SpO2 84, BP falling, LEFT breath sounds absent. Most likely diagnosis?',
           max_attempts: 2,
           options: [
-            { label: 'Left tension pneumothorax', is_correct: true, explanation: 'Absent unilateral breath sounds + rising Pplat + hemodynamic collapse = tension pneumothorax. Tracheal deviation and JVD are "supportive but not always seen" per the book — do not wait for them.' },
+            { label: 'Left tension pneumothorax', is_correct: true, explanation: 'Absent unilateral breath sounds + rising Pplat + hemodynamic collapse = tension pneumothorax. Tracheal deviation and JVD are supportive but not always seen — do not wait for them.' },
             { label: 'Mucus plug on the left', is_correct: false, explanation: 'A plug would widen the peak–plateau gap; Pplat would not be 40.' },
             { label: 'ARDS exacerbation', is_correct: false, explanation: 'Bilateral disease; would not give absent unilateral breath sounds acutely.' },
             { label: 'Pulmonary edema', is_correct: false, explanation: 'Edema is bilateral and presents with crackles, not absent breath sounds on one side.' },
@@ -197,7 +197,7 @@ export const M_TROUBLESHOOT: ModuleConfig = {
   briefing: {
     tagline: "It's 2:45 AM. Pick the right framework.",
     overview:
-      "The systematic approach to acute ventilator problems, built directly from Chapter 2 (Quick Adjustments and Troubleshooting), Chapter 3 (The Eleven Commandments), and Chapter 14 (Patient-Ventilator Dyssynchrony). Each problem type has its own first step — high pressure starts with an inspiratory pause; sudden SpO2 drop starts with disconnect-and-bag; fighting the vent starts with TSS and finding the mechanism; general acute deterioration runs through DOPES. Get the framework right and the rest follows. **Prerequisite: the Compliance and Resistance modules.** The plateau pressure maneuver and peak-plateau gap logic are used here without re-teaching. Soft prerequisite: M1 (the eight key readouts).",
+      "The systematic approach to acute ventilator problems. Each problem type has its own first step — high pressure starts with an inspiratory pause; sudden SpO2 drop starts with disconnect-and-bag; fighting the vent starts with TSS and finding the mechanism; general acute deterioration runs through DOPES. Get the framework right and the rest follows. **Prerequisite: the Compliance and Resistance modules.** The plateau pressure maneuver and peak-plateau gap logic are used here without re-teaching. Soft prerequisite: M1 (the eight key readouts).",
     what_youll_do: [
       'Use the four problem-specific first steps — inspiratory pause, disconnect-and-bag, TSS, DOPES — and learn which framework matches which call.',
       'Interpret an ABG and adjust the ventilator in the right order across all four modes (VC, PC, APRV, HFOV).',
@@ -209,7 +209,7 @@ export const M_TROUBLESHOOT: ModuleConfig = {
   },
 
   visible_learning_objectives: [
-    "Use the book's problem-specific first steps: inspiratory pause for high-pressure alarms; disconnect-and-bag for sudden SpO2 drop; TSS for fighting-the-vent; DOPES for general acute deterioration and dyssynchrony.",
+    "Use the problem-specific first steps: inspiratory pause for high-pressure alarms; disconnect-and-bag for sudden SpO2 drop; TSS for fighting-the-vent; DOPES for general acute deterioration and dyssynchrony.",
     'Interpret the ABG and adjust the ventilator in the correct order across all four modes (VC, PC, APRV, HFOV).',
     'Distinguish high-peak / low-plateau (resistance) from high-peak / high-plateau (compliance / alveolar) using a single inspiratory pause.',
     'Recognize dynamic hyperinflation on the expiratory flow waveform, confirm with an expiratory pause, and apply all six treatments.',
@@ -223,8 +223,8 @@ export const M_TROUBLESHOOT: ModuleConfig = {
       prompt: 'A patient on the ventilator acutely deteriorates overnight — new hypotension, SpO2 falling, nurse is alarmed. Before touching the ventilator, you run through:',
       options: [
         { label: 'The ARDSNet protocol', is_correct: false, explanation: 'ARDSNet governs tidal volume and PEEP settings in ARDS. It is not a diagnostic framework for acute deterioration.' },
-        { label: 'DOPES: Displacement, Obstruction, Pneumothorax, Equipment malfunction, Stacking', is_correct: true, explanation: "DOPES is the book's framework for any acute deterioration in a ventilated patient. It forces you to examine the five most dangerous causes in order before touching the vent. Each letter has a specific clinical sign: D = loss of ETCO2 waveform; O = high resistance or absent ETCO2; P = absent unilateral breath sounds; E = diagnosis of exclusion; S = expiratory flow that does not return to zero." },
-        { label: 'TSS: Tube, Sounds, Sats', is_correct: false, explanation: "TSS is the book's specific rapid check for 'fighting the ventilator' — it covers D, O, and part of P but it was never meant as the framework for all acute problems." },
+        { label: 'DOPES: Displacement, Obstruction, Pneumothorax, Equipment malfunction, Stacking', is_correct: true, explanation: "DOPES is the framework for any acute deterioration in a ventilated patient. It forces you to examine the five most dangerous causes in order before touching the vent. Each letter has a specific clinical sign: D = loss of ETCO2 waveform; O = high resistance or absent ETCO2; P = absent unilateral breath sounds; E = diagnosis of exclusion; S = expiratory flow that does not return to zero." },
+        { label: 'TSS: Tube, Sounds, Sats', is_correct: false, explanation: "TSS is a rapid check for 'fighting the ventilator' — it covers D, O, and part of P but it was never meant as the framework for all acute problems." },
         { label: 'DOPE: Displacement, Obstruction, Pneumothorax, Equipment', is_correct: false, explanation: 'This is missing the S. Stacking (auto-PEEP / dynamic hyperinflation) is a distinct and important cause of acute deterioration that can cause PEA arrest if missed. The S belongs.' },
       ],
     },
@@ -442,7 +442,7 @@ export const M_TROUBLESHOOT: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "**One rule before anything else.** The book opens Chapter 2 with one instruction: as always, the first thing you should do is **examine the patient**. Every ventilator problem starts there.\n\nFor general acute deterioration, the framework is **DOPES**:\n\n- **D — Displacement of the ETT.** Sign: loss of ETCO2 waveform. Immediately life-threatening.\n- **O — Obstruction.** Complete obstruction also loses the ETCO2 waveform. Partial obstruction: wide peak–plateau gap, possible wheezing, shark-fin ETCO2 pattern.\n- **P — Pneumothorax.** Sign: absent unilateral breath sounds, possible hypotension. Tension physiology: treat before imaging.\n- **E — Equipment malfunction.** Diagnosis of exclusion after D, O, P are cleared.\n- **S — Stacking (auto-PEEP).** Sign: expiratory flow does not return to zero. Confirm with an expiratory pause. Can cause PEA arrest if untreated.\n\nOnce DOPES is clear, the vent gives you specific information depending on the problem type. Each section below gives you the book's first-step instruction and the decision tree that follows.",
+        "**One rule before anything else.** As always, the first thing you should do is **examine the patient**. Every ventilator problem starts there.\n\nFor general acute deterioration, the framework is **DOPES**:\n\n- **D — Displacement of the ETT.** Sign: loss of ETCO2 waveform. Immediately life-threatening.\n- **O — Obstruction.** Complete obstruction also loses the ETCO2 waveform. Partial obstruction: wide peak–plateau gap, possible wheezing, shark-fin ETCO2 pattern.\n- **P — Pneumothorax.** Sign: absent unilateral breath sounds, possible hypotension. Tension physiology: treat before imaging.\n- **E — Equipment malfunction.** Diagnosis of exclusion after D, O, P are cleared.\n- **S — Stacking (auto-PEEP).** Sign: expiratory flow does not return to zero. Confirm with an expiratory pause. Can cause PEA arrest if untreated.\n\nOnce DOPES is clear, the vent gives you specific information depending on the problem type. Each section below gives you the first-step instruction and the decision tree that follows.",
     },
     // Block 2 — ABG adjustments as a real reference_table (UX-11).
     {
@@ -460,13 +460,13 @@ export const M_TROUBLESHOOT: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "**Block 3 — High peak pressure: inspiratory pause first.** The book's Chapter 2 instruction for high peak pressure: *Your first step should be to perform an inspiratory pause and measure the plateau pressure.*\n\nOne number — Pplat — splits every high-pressure problem into two categories:\n\n**High Ppeak, low Pplat (wide gap > 10–15 cmH2O): resistance problem.**\n- Airways between vent and alveoli are obstructed. Alveoli are safe.\n- Differential: kinked ETT, mucus plug, bronchospasm, too-narrow tube.\n- Actions: unkink tube, suction, inhaled bronchodilators, accept higher PAW if tube is appropriately sized.\n- Do NOT lower tidal volume — Pplat is safe.\n\n**High Ppeak, high Pplat (Pplat > 30 cmH2O): alveolar / compliance problem.**\n- Alveoli are under dangerous pressure.\n- Differential: mainstem intubation, atelectasis, pulmonary edema, ARDS, pneumothorax.\n- Actions: pull tube back for mainstem, chest tube for pneumothorax, diuretics/inotropes for edema, lower Vt for ARDS.\n- Do NOT ignore Pplat above 30 — alveolar injury is occurring.",
+        "**Block 3 — High peak pressure: inspiratory pause first.** The first step for high peak pressure: *perform an inspiratory pause and measure the plateau pressure.*\n\nOne number — Pplat — splits every high-pressure problem into two categories:\n\n**High Ppeak, low Pplat (wide gap > 10–15 cmH2O): resistance problem.**\n- Airways between vent and alveoli are obstructed. Alveoli are safe.\n- Differential: kinked ETT, mucus plug, bronchospasm, too-narrow tube.\n- Actions: unkink tube, suction, inhaled bronchodilators, accept higher PAW if tube is appropriately sized.\n- Do NOT lower tidal volume — Pplat is safe.\n\n**High Ppeak, high Pplat (Pplat > 30 cmH2O): alveolar / compliance problem.**\n- Alveoli are under dangerous pressure.\n- Differential: mainstem intubation, atelectasis, pulmonary edema, ARDS, pneumothorax.\n- Actions: pull tube back for mainstem, chest tube for pneumothorax, diuretics/inotropes for edema, lower Vt for ARDS.\n- Do NOT ignore Pplat above 30 — alveolar injury is occurring.",
     },
     // Block 4 — dynamic hyperinflation (auto-PEEP) + predict_prompt.
     {
       kind: 'prose',
       markdown:
-        "**Block 4 — Dynamic hyperinflation (auto-PEEP).** Auto-PEEP is gas trapped in the alveoli at end-expiration. If unchecked: hemodynamic compromise, ineffective triggering, hypercapnia, PEA arrest.\n\n**Physical exam (from the book):** abdominal muscles contracting forcefully during exhalation; neck veins may be distended; loud wheezing throughout the expiratory phase.\n\n**Recognize on the vent:**\n- Expiratory flow waveform does not return to zero before the next breath. The most reliable real-time sign.\n- Expiratory pause: equilibrated pressure exceeds set PEEP = auto-PEEP confirmed.\n- Commandment IX pearl: PaCO2 keeps rising as you increase the rate = hyperinflation is the culprit. More rate means less exhalation time.\n\n**Treat (all six from the book):**\n1. Lower rate to 10–14 — most effective. More time per cycle = more time to exhale.\n2. Shorten I-time to keep I:E at 1:3 to 1:5.\n3. Keep Vt at 6–8 mL/kg — higher Vt slows the patient's spontaneous rate.\n4. Increase inspiratory flow to 60–80 L/min if patient is air-hungry.\n5. Adequate sedation with narcotics to blunt tachypneic response.\n6. Bronchodilators and systemic steroids for underlying bronchospasm.\n\nCOPD: extrinsic PEEP at ~75–85% of measured auto-PEEP prevents dynamic airway collapse without worsening hyperinflation (the waterfall effect).",
+        "**Block 4 — Dynamic hyperinflation (auto-PEEP).** Auto-PEEP is gas trapped in the alveoli at end-expiration. If unchecked: hemodynamic compromise, ineffective triggering, hypercapnia, PEA arrest.\n\n**Physical exam:** abdominal muscles contracting forcefully during exhalation; neck veins may be distended; loud wheezing throughout the expiratory phase.\n\n**Recognize on the vent:**\n- Expiratory flow waveform does not return to zero before the next breath. The most reliable real-time sign.\n- Expiratory pause: equilibrated pressure exceeds set PEEP = auto-PEEP confirmed.\n- Pearl: PaCO2 keeps rising as you increase the rate = hyperinflation is the culprit. More rate means less exhalation time.\n\n**Treat:**\n1. Lower rate to 10–14 — most effective. More time per cycle = more time to exhale.\n2. Shorten I-time to keep I:E at 1:3 to 1:5.\n3. Keep Vt at 6–8 mL/kg — higher Vt slows the patient's spontaneous rate.\n4. Increase inspiratory flow to 60–80 L/min if patient is air-hungry.\n5. Adequate sedation with narcotics to blunt tachypneic response.\n6. Bronchodilators and systemic steroids for underlying bronchospasm.\n\nCOPD: extrinsic PEEP at ~75–85% of measured auto-PEEP prevents dynamic airway collapse without worsening hyperinflation (the waterfall effect).",
     },
     {
       kind: 'predict_prompt',
@@ -499,7 +499,7 @@ export const M_TROUBLESHOOT: ModuleConfig = {
   hint_ladder: {
     tier1: "Each case starts with a specific first step. Case 1: inspiratory pause. Case 2: disconnect and bag (then auscultate). Case 3: interpret the ETCO2–PaCO2 gradient.",
     tier2: 'Case 1: wide gap (>10–15) = resistance; high Pplat (>30) = alveolar. Case 2: unilateral absent sounds + stable BP + present ETCO2 → right mainstem; unilateral absent + falling BP → tension pneumothorax. Case 3: widened gradient with unchanged MV → dead space → PE in a bedridden patient.',
-    tier3: { hint_text: 'Show me — fires the inspiratory pause for Case 1 (the book\'s first step for high-pressure alarms). Case 2 and Case 3 carry their own Show-Me overrides.', demonstration: { control: 'inspiratory_pause', target_value: 1 } },
+    tier3: { hint_text: 'Show me — fires the inspiratory pause for Case 1 (the first step for high-pressure alarms). Case 2 and Case 3 carry their own Show-Me overrides.', demonstration: { control: 'inspiratory_pause', target_value: 1 } },
   },
 
   summative_quiz: [
@@ -508,7 +508,7 @@ export const M_TROUBLESHOOT: ModuleConfig = {
       prompt: 'Patient on VC: Ppeak 58, Pplat 26 (after inspiratory pause), PEEP 5. Equal bilateral breath sounds. SpO2 92% and falling. Most appropriate action:',
       options: [
         { label: 'Reduce tidal volume to lower Ppeak', is_correct: false, explanation: 'Pplat is 26 — well within the 30 cmH2O safety limit. The alveoli are fine. Reducing Vt addresses nothing.' },
-        { label: 'Suction and assess for bronchospasm', is_correct: true, explanation: 'Gap is 32 (58 − 26) — a resistance problem. Equal breath sounds make mainstem intubation less likely. Book differential for wide gap: mucus plug, bronchospasm, kinked tube.' },
+        { label: 'Suction and assess for bronchospasm', is_correct: true, explanation: 'Gap is 32 (58 − 26) — a resistance problem. Equal breath sounds make mainstem intubation less likely. Differential for wide gap: mucus plug, bronchospasm, kinked tube.' },
         { label: 'Needle decompression right chest', is_correct: false, explanation: 'Pneumothorax raises Pplat. Wide gap + normal Pplat = airways, not alveoli.' },
         { label: 'Increase PEEP to 12', is_correct: false, explanation: 'PEEP is the alveolar recruitment lever. It has no effect on airway resistance.' },
       ],
@@ -569,7 +569,7 @@ export const M_TROUBLESHOOT: ModuleConfig = {
     patient_context:
       "It is 2:45 AM. You are covering a busy ICU. The Explore phase is a quiet warmup — get familiar with the buttons and readouts you will use during the three calls. The actual case perturbations (resistance fault, mainstem migration, PE-pattern dead-space) fire in Try-It; this preset is the calm before. Nothing counts yet.",
     unlocked_controls_description: [
-      { name: 'Inspiratory pause (INSP HOLD)', description: '1-second hold; surfaces live Pplat. This is the book\'s first step for any high-pressure alarm — you\'ll use it in Case 1.' },
+      { name: 'Inspiratory pause (INSP HOLD)', description: '1-second hold; surfaces live Pplat. This is the first step for any high-pressure alarm — you\'ll use it in Case 1.' },
       { name: 'Expiratory pause (EXP HOLD)', description: '1-second hold; shows measured auto-PEEP vs set PEEP. The confirmation step for dynamic hyperinflation if you ever suspect it.' },
       { name: 'Auscultate / Examine', description: 'Action buttons that report the active case\'s clinical findings. They live next to the hold buttons and become useful in Try-It; pressing them now will just say "no new findings at this step."' },
       { name: 'Rate, I-time, PEEP, FiO2, Vt', description: 'Standard ventilator knobs. Move them and watch which readouts respond — same mental model you built in M3 and M4.' },
@@ -589,7 +589,7 @@ export const M_TROUBLESHOOT: ModuleConfig = {
   },
 
   user_facing_task:
-    "It is 2:45 AM. You are covering the ICU. Three calls in a row. Work each one through the right framework — the book gives you a specific first step for each type of problem.",
+    "It is 2:45 AM. You are covering the ICU. Three calls in a row. Work each one through the right framework — there is a specific first step for each type of problem.",
   success_criteria_display: [
     'Case 1 (high peak pressure): perform an inspiratory pause, identify the problem type from Ppeak / Pplat, and choose the correct first action.',
     'Case 2 (sudden SpO2 drop): disconnect and bag, interpret the unilateral breath-sound finding, and pick the right treatment.',

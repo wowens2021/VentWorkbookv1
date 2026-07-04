@@ -9,7 +9,6 @@ import type { ModuleConfig } from '../shell/types';
  * Physiology after Compliance/Resistance (M4) and Gas Exchange Basics (M5).
  *
  * Track: Physiology · Archetype: concept demo (compound, reset_between) · 15 min
- * Anchor chapters: VB Ch. 3 (Commandments I, V, VI), Ch. 8, Ch. 13
  */
 export const M_EOM: ModuleConfig = {
   id: 'M-EOM',
@@ -53,7 +52,7 @@ export const M_EOM: ModuleConfig = {
       prompt: 'You see PIP 38, Pplat 22, PEEP 5. The driving pressure is:',
       options: [
         { label: '16', is_correct: false, explanation: "That's PIP − Pplat — the resistance contribution, not the driving pressure." },
-        { label: '17', is_correct: true, explanation: 'Driving pressure = Pplat − PEEP = 22 − 5 = 17. Book Ch. 8.' },
+        { label: '17', is_correct: true, explanation: 'Driving pressure = Pplat − PEEP = 22 − 5 = 17.' },
         { label: '22', is_correct: false, explanation: "That's Pplat alone." },
         { label: '38', is_correct: false, explanation: "That's PIP alone." },
       ],
@@ -63,7 +62,7 @@ export const M_EOM: ModuleConfig = {
       prompt: 'A high PIP with a normal Pplat tells you:',
       options: [
         { label: 'Compliance is low — the lungs are stiff.', is_correct: false, explanation: 'That raises both pressures together.' },
-        { label: 'Resistance is high — something in the airways is the problem.', is_correct: true, explanation: 'Book Ch. 2: kinked tube, mucus, bronchospasm. Look upstream.' },
+        { label: 'Resistance is high — something in the airways is the problem.', is_correct: true, explanation: 'Kinked tube, mucus, bronchospasm. Look upstream.' },
         { label: 'PEEP is too high.', is_correct: false, explanation: 'PEEP raises both pressures.' },
         { label: 'The vent is broken.', is_correct: false, explanation: "You haven't ruled out the patient yet." },
       ],
@@ -260,7 +259,7 @@ export const M_EOM: ModuleConfig = {
       prompt: 'The driving pressure (Pplat − PEEP) is most directly an index of:',
       options: [
         { label: 'Resistance', is_correct: false, explanation: 'Resistance is PIP − Pplat.' },
-        { label: "Compliance — specifically, the cost of getting your Vt into the patient's lungs", is_correct: true, explanation: 'Amato 2015; book Ch. 8. It "indexes" Vt to the patient\'s actual compliance.' },
+        { label: "Compliance — specifically, the cost of getting your Vt into the patient's lungs", is_correct: true, explanation: 'It "indexes" Vt to the patient\'s actual compliance.' },
         { label: 'The set rate', is_correct: false, explanation: "Rate doesn't appear." },
         { label: 'FiO2', is_correct: false, explanation: "Doesn't appear either." },
       ],
@@ -275,14 +274,13 @@ export const M_EOM: ModuleConfig = {
         { label: 'Cannot calculate without PIP', is_correct: false, explanation: 'Static compliance uses Pplat by design — PIP is for *dynamic* compliance.' },
       ],
     },
-    // Novice-pass §EOM.3 — drop the attribution; novices don't yet know
-    // who Owens is. Test the concept directly.
+    // Novice-pass §EOM.3 — drop the attribution. Test the concept directly.
     {
       id: 'M-EOM-Q5',
       prompt: 'The bedside test for *is this a resistance problem or a lung problem?* is:',
       options: [
         { label: 'Get an arterial blood gas', is_correct: false, explanation: "Doesn't distinguish these." },
-        { label: 'Perform an inspiratory hold and look at the peak-plateau gap', is_correct: true, explanation: 'Book Ch. 2. Gap > 5 cmH2O → resistance is the problem. Gap normal but Pplat high → compliance (the lung) is the problem.' },
+        { label: 'Perform an inspiratory hold and look at the peak-plateau gap', is_correct: true, explanation: 'Gap > 5 cmH2O → resistance is the problem. Gap normal but Pplat high → compliance (the lung) is the problem.' },
         { label: 'Disconnect the patient from the vent', is_correct: false, explanation: "That's a different test (DOPES troubleshooting algorithm)." },
         { label: 'Raise the PEEP', is_correct: false, explanation: "Doesn't help diagnostically." },
       ],
