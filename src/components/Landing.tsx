@@ -24,9 +24,11 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
   }, []);
 
   /**
-   * Every module that has been started but not finished — sorted by recency
-   * so the most active sits at the top. Modules that have never been opened
-   * are intentionally excluded (the Simulations page is the place for those).
+   * Every module that has been started but not finished — sorted by
+   * completion (most complete first), with recency as a tiebreaker so
+   * equally-progressed modules keep the most-recently-touched on top.
+   * Modules that have never been opened are intentionally excluded (the
+   * Simulations page is the place for those).
    */
   const inProgressModules = useMemo(() => {
     const all = listAllProgress();
@@ -37,7 +39,10 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
         return mod ? { mod, progress: p } : null;
       })
       .filter((x): x is { mod: ModuleConfig; progress: ProgressRecord } => x !== null)
-      .sort((a, b) => recencyMs(b.progress) - recencyMs(a.progress));
+      .sort((a, b) =>
+        percentFromProgress(b.progress) - percentFromProgress(a.progress) ||
+        recencyMs(b.progress) - recencyMs(a.progress),
+      );
     return items;
   }, []);
 
