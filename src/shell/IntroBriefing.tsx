@@ -2,13 +2,27 @@ import React from 'react';
 import { ArrowLeft, BookOpen, Clock, ChevronRight, Compass, Target } from 'lucide-react';
 import type { ModuleConfig } from './types';
 import { trackTone } from './trackColors';
-import { formatClinicalText } from './formatClinicalText';
+import { renderTokens } from './ContentBlocks';
 
 interface Props {
   module: ModuleConfig;
   onBegin: () => void;
   onBack: () => void;
 }
+
+/**
+ * Break an overview blob into logical paragraphs for readability. Respects
+ * any authored blank-line breaks first, then splits each block at sentence
+ * boundaries (a period/question/exclamation followed by whitespace and a
+ * capital letter or opening quote). The lookbehind keeps decimals like
+ * "0.5" and mid-sentence abbreviations from splitting.
+ */
+const splitOverview = (text: string): string[] =>
+  text
+    .split(/\n\n+/)
+    .flatMap(block => block.split(/(?<=[.?!])\s+(?=[A-Z"'`])/))
+    .map(s => s.trim())
+    .filter(Boolean);
 
 /**
  * One-time intro splash shown when the learner enters a module. Paints the
@@ -54,7 +68,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
 
       {/* Centered briefing card */}
       <div className="flex-1 overflow-y-auto flex items-center justify-center px-6 py-10">
-        <div className="w-full max-w-2xl bg-white border border-stone-200 rounded-2xl shadow-sm p-8">
+        <div className="w-full max-w-3xl bg-white border border-stone-200 rounded-2xl shadow-sm p-9 sm:p-10">
           {/* Header */}
           <div className="flex items-center gap-2 mb-3">
             <span className={`text-[10px] font-black uppercase tracking-widest ${tone.chipText} ${tone.chipBg} border ${tone.chipBorder} px-2 py-0.5 rounded`}>
@@ -73,31 +87,35 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
             Module briefing
           </div>
 
-          {/* Overview */}
-          <section className="mb-6">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Compass size={13} className={tone.accentText} />
-              <span className={`text-[10px] font-black uppercase tracking-widest ${tone.accentText}`}>
+          {/* Overview — broken into one paragraph per logical sentence. */}
+          <section className="mb-7">
+            <div className="flex items-center gap-1.5 mb-3">
+              <Compass size={14} className={tone.accentText} />
+              <span className={`text-[11px] font-black uppercase tracking-widest ${tone.accentText}`}>
                 What's this about
               </span>
             </div>
-            <p className="font-serif text-[16px] text-zinc-700 leading-relaxed">{formatClinicalText(overview, 'ib-overview')}</p>
+            <div className="font-serif text-[17px] text-zinc-700 leading-[1.7] space-y-3">
+              {splitOverview(overview).map((para, i) => (
+                <p key={i}>{renderTokens(para, `ib-overview${i}`)}</p>
+              ))}
+            </div>
           </section>
 
           {/* What you'll do */}
           {bullets.length > 0 && (
             <section className="mb-7">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Target size={13} className={tone.accentText} />
-                <span className={`text-[10px] font-black uppercase tracking-widest ${tone.accentText}`}>
+              <div className="flex items-center gap-1.5 mb-3">
+                <Target size={14} className={tone.accentText} />
+                <span className={`text-[11px] font-black uppercase tracking-widest ${tone.accentText}`}>
                   What you'll do
                 </span>
               </div>
-              <ul className="space-y-1.5">
+              <ul className="space-y-2.5">
                 {bullets.map((b, i) => (
-                  <li key={i} className="text-[14px] text-zinc-700 leading-snug flex items-start gap-2">
+                  <li key={i} className="text-[15px] text-zinc-700 leading-relaxed flex items-start gap-2.5">
                     <span className={`${tone.accentText} font-bold mt-0.5`}>{i + 1}.</span>
-                    <span>{formatClinicalText(b, `ib-bullet${i}`)}</span>
+                    <span>{renderTokens(b, `ib-bullet${i}`)}</span>
                   </li>
                 ))}
               </ul>
@@ -105,7 +123,7 @@ const IntroBriefing: React.FC<Props> = ({ module, onBegin, onBack }) => {
           )}
 
           {/* Footnote about the 5-phase flow */}
-          <div className="text-[11.5px] text-zinc-500 italic mb-6 pb-5 border-b border-stone-100">
+          <div className="text-[12.5px] text-zinc-500 italic leading-relaxed mb-6 pb-5 border-b border-stone-100">
             The module walks you through five phases: a quick primer, a short
             reading, free exploration of the simulator, a clinical task, and
             a debrief with your score.

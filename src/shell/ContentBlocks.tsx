@@ -16,8 +16,10 @@ const LIVE_COMPONENTS: Record<string, React.FC<any>> = {
 };
 
 // Render the inline tokens (**bold**, `code`) of a single text run.
-// Factored out so both <p> and <li> content can reuse it.
-const renderTokens = (text: string, keyBase: string): React.ReactNode[] => {
+// Factored out so both <p> and <li> content can reuse it — and exported so
+// other panes (e.g. the module briefing) render the same inline markdown +
+// unit typography instead of showing literal ** / ` characters.
+export const renderTokens = (text: string, keyBase: string): React.ReactNode[] => {
   const parts: React.ReactNode[] = [];
   const re = /(\*\*[^*]+\*\*|`[^`]+`)/g;
   let m: RegExpExecArray | null;
