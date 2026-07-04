@@ -27,8 +27,9 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
    * Every module that has been started but not finished — sorted by
    * completion (most complete first), with recency as a tiebreaker so
    * equally-progressed modules keep the most-recently-touched on top.
-   * Modules that have never been opened are intentionally excluded (the
-   * Simulations page is the place for those).
+   * Modules under 20% complete, and modules never opened, are excluded
+   * (the Simulations page is the place for those); this keeps the list to
+   * work the learner has meaningfully invested in.
    */
   const inProgressModules = useMemo(() => {
     const all = listAllProgress();
@@ -39,6 +40,7 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
         return mod ? { mod, progress: p } : null;
       })
       .filter((x): x is { mod: ModuleConfig; progress: ProgressRecord } => x !== null)
+      .filter(x => percentFromProgress(x.progress) >= 20)
       .sort((a, b) =>
         percentFromProgress(b.progress) - percentFromProgress(a.progress) ||
         recencyMs(b.progress) - recencyMs(a.progress),
