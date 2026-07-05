@@ -45,6 +45,21 @@ export interface UserProfile {
   programId: string | null;
 }
 
+/**
+ * An invited student. The invite list is the authoritative allowlist: joining
+ * is HARD-GATED on a matching invite (see programService.joinByCode), so only
+ * emails an admin has added here can enroll, even with the correct key.
+ * Firestore path: programs/{programId}/invites/{emailId}, where emailId is the
+ * normalized (lowercased, trimmed) email — so a joining student can `get` their
+ * OWN invite doc by id to self-validate, without listing everyone else's.
+ */
+export interface InviteEntry {
+  /** Doc id = normalized email; this is the same value, kept for display. */
+  email: string;
+  invitedAt: Timestamp | null;
+  invitedBy: string;
+}
+
 export type ModuleStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'NEEDS_RETAKE';
 
 /** Per-module strengths/weaknesses snapshot the admin dashboard reads. */

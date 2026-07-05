@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Users, KeyRound, RefreshCw, Copy, Check, Mail, ChevronDown, ChevronRight,
   ShieldCheck, UserMinus, Pencil, Loader2, AlertTriangle,
@@ -6,11 +6,12 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { useProgram } from './ProgramContext';
 import {
-  listRoster, rotateEnrollmentCode, setSeatLimit, renameProgram, addAdmin, removeStudent,
-  programAccessState,
+  listRoster, listInvites, rotateEnrollmentCode, setSeatLimit, renameProgram, addAdmin, removeStudent,
+  programAccessState, normalizeEmail,
 } from './programService';
-import type { RosterEntry } from './types';
+import type { RosterEntry, InviteEntry } from './types';
 import { MODULES } from '../modules';
+import InviteManager from './InviteManager';
 
 /** Color a 0–100 mastery number: red weakness → amber → green strength. */
 const pctTone = (p: number): string =>
@@ -22,6 +23,8 @@ const AdminConsole: React.FC = () => {
   const { user } = useAuth();
   const { program, refresh } = useProgram();
   const [roster, setRoster] = useState<RosterEntry[] | null>(null);
+  const [invites, setInvites] = useState<InviteEntry[] | null>(null);
+  const [showInvites, setShowInvites] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [rotating, setRotating] = useState(false);
@@ -33,31 +36,32 @@ const AdminConsole: React.FC = () => {
     if (!program) return;
     try { setRoster(await listRoster(program.id)); } catch { setRoster([]); }
   };
-  useEffect(() => { void loadRoster(); /* eslint-disable-next-line */ }, [program?.id]);
+  const loadInvites = async () => {
+    if (!program) return;
+    try { setInvites(await listInvites(program.id)); } catch { setInvites([]); }
+  };
+  useEffect(() => { void loadRoster(); void loadInvites(); /* eslint-disable-next-line */ }, [program?.id]);
   useEffect(() => { setNameDraft(program?.name ?? ''); setSeatDraft(program?.seatLimit ?? 0); }, [program]);
 
-  const joinLink = useMemo(
-    () => program ? `${window.location.origin}/?join=${program.enrollmentCode}` : '',
-    [program],
-  );
-
   if (!program) return null;
+
+  if (showInvites) {
+    return (
+      <InviteManager
+        program={program}
+        roster={roster}
+        invites={invites}
+        invitedBy={user?.uid ?? ''}
+        reloadInvites={loadInvites}
+        onClose={() => setShowInvites(false)}
+      />
+    );
+  }
 
   const copy = (text: string, key: string) => {
     navigator.clipboard?.writeText(text);
     setCopied(key);
     setTimeout(() => setCopied(null), 1600);
-  };
-
-  const composeInvite = () => {
-    const subject = `Join ${program.name} on The Ventilator Workbook`;
-    const body =
-      `You've been enrolled in ${program.name} on The Ventilator Workbook.\n\n` +
-      `1. Open ${joinLink}\n` +
-      `2. Create your account (or sign in)\n` +
-      `3. Enter enrollment key: ${program.enrollmentCode}\n\n` +
-      `Your progress saves to your account automatically.`;
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   const doRotate = async () => {
@@ -85,6 +89,9 @@ const AdminConsole: React.FC = () => {
 
   const accessState = programAccessState(program);
   const seatsUsed = roster ? roster.length : program.seatsUsed;
+  const invitedTotal = invites?.length ?? 0;
+  const joinedEmailSet = new Set((roster ?? []).map(r => normalizeEmail(r.email)));
+  const invitedPending = (invites ?? []).filter(i => !joinedEmailSet.has(i.email)).length;
   const expiresLabel = program.expiresAt
     ? new Date(program.expiresAt.toMillis()).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
     : '—';
@@ -152,10 +159,10 @@ const AdminConsole: React.FC = () => {
         {/* Invite */}
         <div className="bg-white border border-stone-200 rounded-xl p-4">
           <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-stone-400 mb-2"><Mail size={13} /> Invite learners</div>
-          <button onClick={composeInvite} className="w-full py-2 bg-brand-olive hover:bg-brand-olive-hover text-white text-[13px] font-bold rounded-lg transition mb-2">Compose invite email</button>
-          <button onClick={() => copy(joinLink, 'link')} className="flex items-center gap-1 text-[12px] font-bold text-brand-olive">
-            {copied === 'link' ? <><Check size={12} /> Link copied</> : <><Copy size={12} /> Copy invite link</>}
-          </button>
+          <button onClick={() => setShowInvites(true)} className="w-full py-2 bg-brand-olive hover:bg-brand-olive-hover text-white text-[13px] font-bold rounded-lg transition mb-2">Manage invites</button>
+          <div className="text-[12px] text-stone-500">
+            {invites === null ? 'Loading…' : invitedTotal === 0 ? 'No one invited yet — add emails to let learners join' : `${invitedTotal} invited · ${invitedPending} pending`}
+          </div>
         </div>
       </div>
 
@@ -169,7 +176,7 @@ const AdminConsole: React.FC = () => {
         {roster === null ? (
           <div className="flex items-center justify-center gap-2 py-12 text-stone-400 text-[13px]"><Loader2 size={14} className="animate-spin" /> Loading roster…</div>
         ) : roster.length === 0 ? (
-          <div className="py-12 text-center text-stone-400 text-[13px]">No learners have joined yet. Share the enrollment key to get started.</div>
+          <div className="py-12 text-center text-stone-400 text-[13px]">No learners have joined yet. Add emails under <button onClick={() => setShowInvites(true)} className="font-semibold text-brand-olive underline">Manage invites</button>, then share the enrollment key.</div>
         ) : (
           <div className="divide-y divide-stone-100">
             {roster.slice().sort((a, b) => b.overallPercent - a.overallPercent).map(entry => {

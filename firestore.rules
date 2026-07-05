@@ -70,6 +70,20 @@ service cloud.firestore {
         allow write: if isMe(uid);          // student writes own summary
         allow delete: if isProgramAdmin(pid); // admin offboards a student
       }
+
+      // Invite allowlist (the hard gate on joining). Doc id = normalized
+      // (lowercased) email. The admin manages the whole list. A joining
+      // learner may `get` ONLY the doc whose id equals their own auth-token
+      // email — enough to self-validate at join time, but they can't `list`
+      // the collection to harvest classmates' emails. request.auth.token.email
+      // is set by Firebase Auth (not user-controllable), so this is safe.
+      match /invites/{emailId} {
+        allow list: if isProgramAdmin(pid);
+        allow get: if isProgramAdmin(pid)
+          || (signedIn() && request.auth.token.email != null
+              && request.auth.token.email.lower() == emailId);
+        allow create, update, delete: if isProgramAdmin(pid);
+      }
     }
 
     // ── Enrollment code lookup (code -> programId) ──

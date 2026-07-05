@@ -1,9 +1,9 @@
 import {
   doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
-  runTransaction, serverTimestamp, arrayUnion,
+  runTransaction, serverTimestamp, arrayUnion, writeBatch,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import type { Program, ProgramStatus, UserProfile, RosterEntry } from './types';
+import type { Program, ProgramStatus, UserProfile, RosterEntry, InviteEntry } from './types';
 
 // Unambiguous alphabet — no 0/O/1/I/L — for human-typable enrollment codes.
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -20,10 +20,22 @@ export function normalizeCode(raw: string): string {
   return raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
 
+/** Normalize an email for use as an invite doc id / allowlist key: trim +
+ *  lowercase. Firebase Auth tokens carry the email the user typed at signup,
+ *  so the invite match is exact against that (case-insensitive). */
+export function normalizeEmail(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+export function isValidEmail(raw: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw.trim());
+}
+
 function programRef(id: string) { return doc(db, 'programs', id); }
 function codeRef(code: string) { return doc(db, 'enrollmentCodes', code); }
 function userRef(uid: string) { return doc(db, 'users', uid); }
 function rosterRef(programId: string, uid: string) { return doc(db, 'programs', programId, 'roster', uid); }
+function inviteRef(programId: string, emailId: string) { return doc(db, 'programs', programId, 'invites', emailId); }
 
 /** Reserve a code that isn't already taken (best-effort; the create/rotate
  *  writes are transactional so a rare collision just fails and retries). */
@@ -82,6 +94,48 @@ export function isAccessBlocked(program: Program): boolean {
 export async function listRoster(programId: string): Promise<RosterEntry[]> {
   const snap = await getDocs(collection(db, 'programs', programId, 'roster'));
   return snap.docs.map(d => ({ uid: d.id, ...(d.data() as Omit<RosterEntry, 'uid'>) }));
+}
+
+// ── Admin: invite allowlist (the hard gate on joining) ──
+
+export async function listInvites(programId: string): Promise<InviteEntry[]> {
+  const snap = await getDocs(collection(db, 'programs', programId, 'invites'));
+  return snap.docs.map(d => ({ email: d.id, ...(d.data() as Omit<InviteEntry, 'email'>) }));
+}
+
+/** Add one or more emails to the invite allowlist. Invalid entries are
+ *  skipped; duplicates are idempotent (same normalized id). Returns the
+ *  normalized emails that were written. */
+export async function addInvites(
+  programId: string, invitedBy: string, rawEmails: string[],
+): Promise<string[]> {
+  const seen = new Set<string>();
+  const valid: string[] = [];
+  for (const raw of rawEmails) {
+    if (!isValidEmail(raw)) continue;
+    const id = normalizeEmail(raw);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    valid.push(id);
+  }
+  if (valid.length === 0) return [];
+  // Firestore batches cap at 500 writes; chunk to be safe for big pastes.
+  for (let i = 0; i < valid.length; i += 400) {
+    const batch = writeBatch(db);
+    for (const id of valid.slice(i, i + 400)) {
+      batch.set(inviteRef(programId, id), {
+        email: id,
+        invitedAt: serverTimestamp(),
+        invitedBy,
+      });
+    }
+    await batch.commit();
+  }
+  return valid;
+}
+
+export async function removeInvite(programId: string, emailId: string): Promise<void> {
+  await deleteDoc(inviteRef(programId, normalizeEmail(emailId)));
 }
 
 // ── Admin: create a program ──
@@ -154,6 +208,8 @@ export async function joinByCode(
   if (!codeSnap.exists()) throw new JoinError('That enrollment key isn\'t valid. Check with your program administrator.');
   const programId = (codeSnap.data() as { programId: string }).programId;
 
+  const emailId = normalizeEmail(learner.email);
+
   await runTransaction(db, async (tx) => {
     const pSnap = await tx.get(programRef(programId));
     if (!pSnap.exists()) throw new JoinError('That program no longer exists.');
@@ -165,6 +221,21 @@ export async function joinByCode(
     if (state === 'expired') throw new JoinError('This program\'s access period has ended.');
     const alreadyMember = program.adminUids.includes(learner.uid);
     const rosterSnap = await tx.get(rosterRef(programId, learner.uid));
+
+    // Hard gate: the learner's email must be on the program's invite allowlist.
+    // Admins (who created the program) and anyone already on the roster bypass
+    // it; a brand-new learner must have been invited by an admin first. Read
+    // is done before any write to satisfy the transaction read-before-write
+    // rule. (A learner may `get` only their OWN invite doc — see firestore.rules.)
+    if (!alreadyMember && !rosterSnap.exists()) {
+      const inviteSnap = await tx.get(inviteRef(programId, emailId));
+      if (!inviteSnap.exists()) {
+        throw new JoinError(
+          `${learner.email} isn't on the invite list for this program. ` +
+          `Ask your administrator to add your email, then try again.`,
+        );
+      }
+    }
     if (!alreadyMember && !rosterSnap.exists() && program.seatsUsed >= program.seatLimit) {
       throw new JoinError('This program is full — all seats are taken. Contact your administrator.');
     }
