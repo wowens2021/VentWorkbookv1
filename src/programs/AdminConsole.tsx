@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useProgram } from './ProgramContext';
 import {
   listRoster, rotateEnrollmentCode, setSeatLimit, renameProgram, addAdmin, removeStudent,
+  programAccessState,
 } from './programService';
 import type { RosterEntry } from './types';
 import { MODULES } from '../modules';
@@ -82,6 +83,7 @@ const AdminConsole: React.FC = () => {
     await removeStudent(program, entry.uid); await loadRoster(); await refresh();
   };
 
+  const accessState = programAccessState(program);
   const seatsUsed = roster ? roster.length : program.seatsUsed;
   const expiresLabel = program.expiresAt
     ? new Date(program.expiresAt.toMillis()).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
@@ -107,8 +109,8 @@ const AdminConsole: React.FC = () => {
           )}
         </div>
         <div className="text-right shrink-0">
-          <span className={`inline-block text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${program.status === 'active' ? 'bg-emerald-100 text-emerald-800' : program.status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
-            {program.status}
+          <span className={`inline-block text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${accessState === 'active' ? 'bg-emerald-100 text-emerald-800' : accessState === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
+            {accessState}
           </span>
           <div className="text-[12px] text-stone-500 mt-1.5">
             Expires {expiresLabel}{typeof daysLeft === 'number' && daysLeft >= 0 ? ` · ${daysLeft}d left` : ''}
@@ -116,7 +118,7 @@ const AdminConsole: React.FC = () => {
         </div>
       </div>
 
-      {program.status === 'pending' && (
+      {accessState === 'pending' && (
         <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-[13px] text-amber-900">
           <AlertTriangle size={15} className="shrink-0 mt-0.5" />
           <span>This program is awaiting activation. Learners can't access it yet — contact support to activate your contract.</span>

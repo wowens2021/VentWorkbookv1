@@ -51,16 +51,20 @@ export async function loadProgram(programId: string): Promise<Program | null> {
 }
 
 /** Whether the program currently grants access, and if not, why. There is no
- *  free trial: a program grants access ONLY while it is 'active' and its term
- *  hasn't passed. 'pending' (freshly self-created, awaiting the seller's
- *  activation) and 'suspended' both block everyone, admins included. */
+ *  free trial. Access is granted by a single lever — a future `expiresAt` —
+ *  so activation is one field to set (the contract end date). `status:
+ *  'suspended'` is an explicit kill-switch that revokes access regardless of
+ *  the term. States:
+ *    - 'suspended': status === 'suspended' (revoked),
+ *    - 'pending'  : no expiresAt yet (created, never activated),
+ *    - 'expired'  : expiresAt has passed,
+ *    - 'active'   : expiresAt is in the future. */
 export type AccessState = 'active' | 'pending' | 'expired' | 'suspended';
 
 export function programAccessState(program: Program): AccessState {
   if (program.status === 'suspended') return 'suspended';
-  if (program.status === 'pending') return 'pending';
-  // status === 'active'
-  if (program.expiresAt && program.expiresAt.toMillis() < Date.now()) return 'expired';
+  if (!program.expiresAt) return 'pending';
+  if (program.expiresAt.toMillis() < Date.now()) return 'expired';
   return 'active';
 }
 
@@ -85,25 +89,30 @@ export async function createProgram(
   // Created 'pending' with NO expiry — grants no access to anyone (including
   // the creating admin) until the seller activates it. Seats count students
   // only; the admin is staff, not a seat.
-  await runTransaction(db, async (tx) => {
-    tx.set(ref, {
-      name: opts.name.trim(),
-      enrollmentCode: code,
-      seatLimit: opts.seatLimit,
-      seatsUsed: 0,
-      adminUids: [admin.uid],
-      status: 'pending' satisfies ProgramStatus,
-      expiresAt: null,
-      createdAt: serverTimestamp(),
-      createdBy: admin.uid,
-    });
-    tx.set(codeRef(code), { programId: ref.id });
-    tx.set(userRef(admin.uid), {
-      email: admin.email,
-      displayName: admin.displayName,
-      role: 'admin',
-      programId: ref.id,
-    });
+  //
+  // Writes are SEQUENTIAL, not one transaction, and program-first on purpose:
+  // the enrollmentCodes create rule verifies the requester admins the program
+  // (isProgramAdmin), which reads the program doc — so the program must be
+  // committed before the code write, or the rule get() finds nothing and
+  // denies it. (A rare partial failure just leaves a program without its code
+  // lookup; rotating the key from the console/admin repairs it.)
+  await setDoc(ref, {
+    name: opts.name.trim(),
+    enrollmentCode: code,
+    seatLimit: opts.seatLimit,
+    seatsUsed: 0,
+    adminUids: [admin.uid],
+    status: 'pending' satisfies ProgramStatus,
+    expiresAt: null,
+    createdAt: serverTimestamp(),
+    createdBy: admin.uid,
+  });
+  await setDoc(codeRef(code), { programId: ref.id });
+  await setDoc(userRef(admin.uid), {
+    email: admin.email,
+    displayName: admin.displayName,
+    role: 'admin',
+    programId: ref.id,
   });
 
   const created = await loadProgram(ref.id);
