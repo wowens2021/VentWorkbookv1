@@ -10,6 +10,7 @@ import DebugDropOffPanel from './shell/DebugDropOffPanel';
 import { MODULES } from './modules';
 import type { ModuleConfig } from './shell/types';
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import { firebaseConfigured, missingFirebaseKeys } from './firebase/config';
 import LoginPage from './auth/LoginPage';
 import { setActiveUserId } from './persistence/progress';
 import { syncProgressFromCloud } from './persistence/firestoreSync';
@@ -251,16 +252,44 @@ const ProgramGateLayer: React.FC<{ children: React.ReactNode }> = ({ children })
   return <>{children}</>;
 };
 
-const App: React.FC = () => (
-  <AuthProvider>
-    <AuthGate>
-      <ProgramProvider>
-        <ProgramGateLayer>
-          <AppShell />
-        </ProgramGateLayer>
-      </ProgramProvider>
-    </AuthGate>
-  </AuthProvider>
+/**
+ * Shown when the VITE_FIREBASE_* env vars weren't present in the build (e.g.
+ * they weren't set on the host, or the site wasn't redeployed after adding
+ * them). Prevents the blank-page crash that would otherwise happen when
+ * Firebase initializes with an empty config, and names what's missing.
+ */
+const ConfigError: React.FC = () => (
+  <div className="min-h-screen flex items-center justify-center bg-brand-cream px-6 py-10">
+    <div className="w-full max-w-md bg-white border border-stone-200 rounded-2xl shadow-sm p-7 text-center">
+      <h1 className="font-display text-xl font-semibold text-zinc-900 mb-2">Configuration needed</h1>
+      <p className="text-[13.5px] text-stone-600 leading-relaxed mb-4">
+        This deployment is missing its Firebase configuration, so sign-in can't load.
+        Set these environment variables on the host and redeploy:
+      </p>
+      <ul className="text-left text-[12px] font-mono bg-stone-50 border border-stone-200 rounded-lg p-3 mb-4 space-y-0.5 text-stone-700">
+        {missingFirebaseKeys.map(k => <li key={k}>{k}</li>)}
+      </ul>
+      <p className="text-[11.5px] text-stone-400">
+        On Vercel: Settings → Environment Variables → add them → then redeploy
+        (env vars only apply to a new build).
+      </p>
+    </div>
+  </div>
 );
+
+const App: React.FC = () => {
+  if (!firebaseConfigured) return <ConfigError />;
+  return (
+    <AuthProvider>
+      <AuthGate>
+        <ProgramProvider>
+          <ProgramGateLayer>
+            <AppShell />
+          </ProgramGateLayer>
+        </ProgramProvider>
+      </AuthGate>
+    </AuthProvider>
+  );
+};
 
 export default App;
