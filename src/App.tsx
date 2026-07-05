@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Activity, Loader2 } from 'lucide-react';
 import PlaygroundSim from './components/PlaygroundSim';
 import ModulePicker from './components/ModulePicker';
 import Landing from './components/Landing';
@@ -8,6 +9,10 @@ import ModuleShell from './shell/ModuleShell';
 import DebugDropOffPanel from './shell/DebugDropOffPanel';
 import { MODULES } from './modules';
 import type { ModuleConfig } from './shell/types';
+import { AuthProvider, useAuth } from './auth/AuthContext';
+import LoginPage from './auth/LoginPage';
+import { setActiveUserId } from './persistence/progress';
+import { syncProgressFromCloud } from './persistence/firestoreSync';
 
 type View =
   | { kind: 'home' }
@@ -58,7 +63,14 @@ function viewFromKey(key: string | undefined): View | null {
   return null;
 }
 
-const App: React.FC = () => {
+/**
+ * The pre-existing app body — view routing, history integration, and the
+ * page shell. Unchanged apart from threading the signed-in learner's label
+ * and a sign-out handler into TopNav. Always rendered inside AuthGate, so a
+ * Firebase user is guaranteed to exist here.
+ */
+const AppShell: React.FC = () => {
+  const { user, signOutUser } = useAuth();
   const [view, setView] = useState<View>({ kind: 'home' });
 
   // Seed history.state on first mount so subsequent popstate events have
@@ -120,7 +132,12 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-cream">
-      <TopNav current={navTargetForView(view)} onNavigate={handleNav} />
+      <TopNav
+        current={navTargetForView(view)}
+        onNavigate={handleNav}
+        userLabel={user?.displayName || user?.email || undefined}
+        onSignOut={signOutUser}
+      />
       <main className="flex-1">
         {view.kind === 'home' && (
           <Landing
@@ -150,5 +167,67 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+/** Centered brand spinner shown while auth state resolves or progress is
+ *  being pulled down from Firestore — the two brief windows before the
+ *  app's normal views can safely assume localStorage is already populated. */
+const SplashScreen: React.FC<{ message: string }> = ({ message }) => (
+  <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-brand-cream">
+    <div className="w-12 h-12 rounded-full bg-brand-olive flex items-center justify-center">
+      <Activity size={22} className="text-white" />
+    </div>
+    <div className="flex items-center gap-2 text-stone-500 text-[13px] font-semibold">
+      <Loader2 size={14} className="animate-spin" /> {message}
+    </div>
+  </div>
+);
+
+/**
+ * Auth gate — sits between AuthProvider and AppShell. Renders, in order:
+ *   1. a splash while the initial Firebase auth check is in flight,
+ *   2. the login screen if there's no signed-in user,
+ *   3. a brief "syncing" splash while that user's Firestore progress is
+ *      pulled down into the local cache for the first time this session,
+ *   4. the real app.
+ * Step 3 exists because every read in the app (ModulePicker, Landing,
+ * TrackProgressStrip, etc.) reads progress synchronously from localStorage
+ * on mount — the same assumption that held before Firebase existed. Doing
+ * the pull-down BEFORE AppShell ever mounts preserves that assumption
+ * instead of requiring every one of those call sites to become async.
+ */
+const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
+  const [syncing, setSyncing] = useState(true);
+  const syncedForUid = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setActiveUserId(null);
+      syncedForUid.current = null;
+      setSyncing(false);
+      return;
+    }
+    if (syncedForUid.current === user.uid) return; // already synced this session
+    setActiveUserId(user.uid);
+    setSyncing(true);
+    syncProgressFromCloud(user.uid).finally(() => {
+      syncedForUid.current = user.uid;
+      setSyncing(false);
+    });
+  }, [user]);
+
+  if (loading) return <SplashScreen message="Loading…" />;
+  if (!user) return <LoginPage />;
+  if (syncing) return <SplashScreen message="Syncing your progress…" />;
+  return <>{children}</>;
+};
+
+const App: React.FC = () => (
+  <AuthProvider>
+    <AuthGate>
+      <AppShell />
+    </AuthGate>
+  </AuthProvider>
+);
 
 export default App;

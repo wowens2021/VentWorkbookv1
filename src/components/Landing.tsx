@@ -3,6 +3,7 @@ import { Play, ArrowRight, Trophy, BookOpen } from 'lucide-react';
 import { MODULES } from '../modules';
 import { listAllProgress, loadProgress } from '../persistence/progress';
 import type { ModuleConfig, ProgressRecord } from '../shell/types';
+import { useAuth } from '../auth/AuthContext';
 
 interface Props {
   onBrowseModules: () => void;
@@ -11,6 +12,11 @@ interface Props {
 }
 
 const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenModule }) => {
+  const { user } = useAuth();
+  // First name from the account's display name, else the email's local
+  // part, else a neutral fallback — never re-adds a "Dr." prefix the
+  // learner may or may not have typed into their own display name.
+  const firstName = (user?.displayName?.trim().split(/\s+/)[0]) || user?.email?.split('@')[0] || 'there';
   // Stats derived from localStorage progress
   const stats = useMemo(() => {
     const all = listAllProgress();
@@ -56,7 +62,7 @@ const Landing: React.FC<Props> = ({ onBrowseModules, onOpenPlayground, onOpenMod
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
           <div className="lg:col-span-7">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-stone-200 rounded-full text-[11px] font-bold uppercase tracking-widest text-brand-olive mb-5">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-olive" /> Welcome back, Dr.
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-olive" /> Welcome back, {firstName}
             </div>
             <h1 className="font-display text-5xl md:text-6xl font-bold text-stone-900 leading-[1.05] tracking-tight mb-5">
               Master mechanical<br />ventilation <span className="font-medium text-stone-600">— at your pace.</span>
