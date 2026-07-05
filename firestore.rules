@@ -32,16 +32,22 @@ service cloud.firestore {
     match /programs/{pid} {
       allow get: if signedIn();
 
-      // Anyone signed in may create a program and become its sole admin — but
-      // it is created 'pending' with NO expiry, which grants no access to
-      // anyone (there is no free trial). The seller activates it (status
-      // 'active' + a term) out-of-band — Firestore console today, billing
-      // webhook later — which is the only path to real access. The rules
-      // below forbid admins from setting status/expiresAt themselves.
+      // Anyone signed in may create a program and become its sole admin. It is
+      // created 'active' PROVISIONALLY — the real gate is Stripe, which sits in
+      // front of program creation (payment collected before you get here). No
+      // expiry (subscription model). The update rule below still forbids admins
+      // from changing status/expiresAt themselves, so they can't un-expire or
+      // lift a suspension — the term/kill-switch stay owner/webhook-controlled.
+      //
+      // TODO(stripe): billing is NOT wired yet, so this lets any bare signup
+      // self-provision a free active program. When Stripe lands, tighten this:
+      // require creation to be 'pending' (or require a verified-payment custom
+      // claim / move provisioning entirely behind the webhook) so access can't
+      // be minted without payment.
       allow create: if signedIn()
         && request.resource.data.adminUids == [request.auth.uid]
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.status == 'pending'
+        && request.resource.data.status == 'active'
         && request.resource.data.seatsUsed == 0
         && request.resource.data.expiresAt == null;
 

@@ -61,6 +61,10 @@ const ProgramGate: React.FC = () => {
     setBusy(true);
     try {
       await createProgram(identity, { name: programName, seatLimit });
+      // One-shot hint so the app lands the new admin straight on their program
+      // console (seats / enrollment key / invites) rather than the learner
+      // home — AppShell reads and clears this on its first mount.
+      try { sessionStorage.setItem('vw_land_admin', '1'); } catch { /* private mode */ }
       await refresh();
     } catch (err: any) {
       setError(err?.message ?? 'Could not create the program — please try again.');

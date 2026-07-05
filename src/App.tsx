@@ -82,7 +82,17 @@ function viewFromKey(key: string | undefined): View | null {
 const AppShell: React.FC = () => {
   const { user, signOutUser } = useAuth();
   const { isAdmin } = useProgram();
-  const [view, setView] = useState<View>({ kind: 'home' });
+  // A just-created admin is dropped straight onto their program console (the
+  // one-shot flag ProgramGate sets on create); everyone else starts at home.
+  const [view, setView] = useState<View>(() => {
+    try {
+      if (sessionStorage.getItem('vw_land_admin')) {
+        sessionStorage.removeItem('vw_land_admin');
+        return { kind: 'admin' };
+      }
+    } catch { /* private mode */ }
+    return { kind: 'home' };
+  });
 
   // Seed history.state on first mount so subsequent popstate events have
   // something to land on instead of `null`. We use replaceState (not push)
@@ -237,12 +247,14 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 /**
- * Standalone admin console for an administrator whose program is still
- * PENDING activation. They can't reach the learning app yet (no free trial —
- * students can't access until activated), but they DO need to get to their
- * console to set up seats, see/copy the enrollment key, and send invites.
- * A slim header (logo + sign out) wraps the same AdminConsole the active app
- * uses; the console renders its own "awaiting activation" banner.
+ * Standalone admin console for an administrator whose program is PENDING.
+ * With provisional activation on create (see programService.createProgram),
+ * a freshly made program is already 'active', so this is not hit on the happy
+ * path today — it's the fallback for the future Stripe flow, where a program
+ * can exist while payment is still pending. In that state the admin can't open
+ * the learning app yet, but still needs their console to set up seats, copy the
+ * enrollment key, and send invites. A slim header (logo + sign out) wraps the
+ * same AdminConsole the active app uses; it renders its own pending banner.
  */
 const PendingAdminView: React.FC = () => {
   const { user, signOutUser } = useAuth();

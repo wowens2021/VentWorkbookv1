@@ -50,22 +50,29 @@ export async function loadProgram(programId: string): Promise<Program | null> {
   return { id: programId, ...(snap.data() as Omit<Program, 'id'>) };
 }
 
-/** Whether the program currently grants access, and if not, why. There is no
- *  free trial. Access is granted by a single lever — a future `expiresAt` —
- *  so activation is one field to set (the contract end date). `status:
- *  'suspended'` is an explicit kill-switch that revokes access regardless of
- *  the term. States:
- *    - 'suspended': status === 'suspended' (revoked),
- *    - 'pending'  : no expiresAt yet (created, never activated),
- *    - 'expired'  : expiresAt has passed,
- *    - 'active'   : expiresAt is in the future. */
+/** Whether the program currently grants access, and if not, why.
+ *
+ *  Access is gated by ONE authoritative lever — `status` — which is exactly
+ *  what the Stripe billing webhook will flip: a successful payment sets
+ *  'active', a cancellation/kill sets 'suspended'. `expiresAt` is an OPTIONAL
+ *  secondary hard cutoff (a fixed contract end-date); when set and passed it
+ *  forces 'expired' even if status is still 'active'. A subscription with no
+ *  fixed end simply leaves `expiresAt` null and stays active until suspended.
+ *  Checking status (not two fields) avoids the old footgun where a program
+ *  had a term but the wrong status and silently stayed blocked.
+ *
+ *  States:
+ *    - 'suspended': status === 'suspended' (kill-switch / cancelled),
+ *    - 'expired'  : expiresAt set and in the past (contract lapsed),
+ *    - 'active'   : status === 'active' (paid / provisioned),
+ *    - 'pending'  : status === 'pending' (awaiting payment — Stripe path). */
 export type AccessState = 'active' | 'pending' | 'expired' | 'suspended';
 
 export function programAccessState(program: Program): AccessState {
   if (program.status === 'suspended') return 'suspended';
-  if (!program.expiresAt) return 'pending';
-  if (program.expiresAt.toMillis() < Date.now()) return 'expired';
-  return 'active';
+  if (program.expiresAt && program.expiresAt.toMillis() < Date.now()) return 'expired';
+  if (program.status === 'active') return 'active';
+  return 'pending';
 }
 
 export function isAccessBlocked(program: Program): boolean {
@@ -86,9 +93,21 @@ export async function createProgram(
   const code = await reserveUniqueCode();
   const ref = doc(collection(db, 'programs'));
 
-  // Created 'pending' with NO expiry — grants no access to anyone (including
-  // the creating admin) until the seller activates it. Seats count students
-  // only; the admin is staff, not a seat.
+  // Created 'active' — the admin lands on a live, ready-to-use console with a
+  // working enrollment key, because in the real flow Stripe is the gate that
+  // sits IN FRONT of program creation: by the time you're here, payment has
+  // been collected. Stripe is not wired yet, so creation grants access
+  // PROVISIONALLY as a stand-in for "already paid".
+  //
+  // TODO(stripe): when billing lands, program provisioning moves behind the
+  // Stripe checkout/webhook — create as 'pending' here and let the paid-event
+  // webhook flip it to 'active' (and set expiresAt to the paid term). The
+  // Firestore create rule must be tightened at the same time (see
+  // firestore.rules) so a bare signup can't self-provision a free active
+  // program. `expiresAt` stays null = no fixed end-date (subscription model);
+  // a fixed-term sale sets it to the contract end.
+  //
+  // Seats count students only; the admin is staff, not a seat.
   //
   // Writes are SEQUENTIAL, not one transaction, and program-first on purpose:
   // the enrollmentCodes create rule verifies the requester admins the program
@@ -102,7 +121,7 @@ export async function createProgram(
     seatLimit: opts.seatLimit,
     seatsUsed: 0,
     adminUids: [admin.uid],
-    status: 'pending' satisfies ProgramStatus,
+    status: 'active' satisfies ProgramStatus,
     expiresAt: null,
     createdAt: serverTimestamp(),
     createdBy: admin.uid,
