@@ -481,7 +481,7 @@ const ModulePicker: React.FC<Props> = ({ onPickModule }) => {
         </div>
 
         <footer className="text-[11px] text-stone-400 mt-12 text-center">
-          Progress is stored locally in your browser. Clear browser data to reset.
+          Progress is saved to your account and syncs across your devices.
         </footer>
       </div>
     </div>
