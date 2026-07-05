@@ -1,12 +1,100 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each learner's progress lives at users/{uid}/progress/{module_id}.
-    // Only that learner (their own Firebase Auth uid) may read or write it —
-    // no admin/shared access from the client. Everything else is denied by
-    // default (the implicit fallback when no other match applies).
-    match /users/{uid}/progress/{module_id} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+    // ── Helpers ──
+    function signedIn() { return request.auth != null; }
+    function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+
+    function program(pid) {
+      return get(/databases/$(database)/documents/programs/$(pid)).data;
+    }
+    function isProgramAdmin(pid) {
+      return signedIn() && request.auth.uid in program(pid).adminUids;
+    }
+    // The program a given user belongs to (reads that user's own doc).
+    function usersProgramId(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.programId;
+    }
+    function isAdminOfUsersProgram(uid) {
+      let pid = usersProgramId(uid);
+      return pid != null && isProgramAdmin(pid);
+    }
+
+    // ── Programs ──
+    // GET (single doc by id) is allowed for any signed-in user — a joining
+    // student must read the program to check seats/expiry before they're a
+    // member, and they reach it via the enrollment-code lookup. LIST is NOT
+    // allowed, so nobody can enumerate the programs collection and harvest
+    // other cohorts' enrollment codes (program ids are random 20-char
+    // auto-ids, so a get requires already knowing the id). Writes are tightly
+    // constrained below.
+    match /programs/{pid} {
+      allow get: if signedIn();
+
+      // Anyone signed in may create a program and become its sole admin — but
+      // only as a short 'trial'. The seller extends expiresAt / flips status
+      // to 'active' out-of-band (Firestore console today, billing webhook
+      // later); the +15d cap here stops a self-serve admin from granting
+      // themselves indefinite free access.
+      allow create: if signedIn()
+        && request.resource.data.adminUids == [request.auth.uid]
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == 'trial'
+        && request.resource.data.seatsUsed == 1
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt < request.time + duration.value(15, 'd');
+
+      // Program admins may edit program settings — but NOT expiresAt or
+      // status (the paid-access levers, changed only via the console/owner).
+      allow update: if isProgramAdmin(pid)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['expiresAt', 'status', 'createdBy', 'createdAt']);
+
+      // A joining student may bump seatsUsed by exactly 1, up to the limit,
+      // and touch nothing else — the only program write a non-admin can make.
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seatsUsed'])
+        && request.resource.data.seatsUsed == resource.data.seatsUsed + 1
+        && request.resource.data.seatsUsed <= resource.data.seatLimit;
+
+      // Roster — per-student rollup the admin dashboard reads.
+      match /roster/{uid} {
+        allow read: if isMe(uid) || isProgramAdmin(pid);
+        allow write: if isMe(uid);          // student writes own summary
+        allow delete: if isProgramAdmin(pid); // admin offboards a student
+      }
+    }
+
+    // ── Enrollment code lookup (code -> programId) ──
+    // GET is allowed (redeeming a code = reading the doc named by that code);
+    // LIST is not, so codes can't be enumerated. Written only by an admin of
+    // the program the code points to.
+    match /enrollmentCodes/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn() && isProgramAdmin(request.resource.data.programId);
+      allow delete: if signedIn() && isProgramAdmin(resource.data.programId);
+    }
+
+    // ── Users ──
+    match /users/{uid} {
+      // Own doc, or a doc of a student in a program you administer.
+      allow read: if isMe(uid)
+        || (resource.data.programId != null && isProgramAdmin(resource.data.programId));
+      // You own your profile.
+      allow write: if isMe(uid);
+      // A program admin may offboard a member of their program by clearing
+      // their programId (nothing else).
+      allow update: if isAdminOfUsersProgram(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['programId', 'role'])
+        && request.resource.data.programId == null;
+
+      // Per-module progress detail. Own it; a program admin may read (not
+      // write) the detail of a student in their program for drill-down.
+      match /progress/{module_id} {
+        allow read: if isMe(uid) || isAdminOfUsersProgram(uid);
+        allow write: if isMe(uid);
+      }
     }
   }
 }

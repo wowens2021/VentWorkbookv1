@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Activity, Home, BookOpen, Brain, Play, X, LogOut } from 'lucide-react';
+import { Activity, Home, BookOpen, Brain, Play, X, LogOut, Users } from 'lucide-react';
 
-export type NavTarget = 'home' | 'modules' | 'knowledge-check' | 'playground';
+export type NavTarget = 'home' | 'modules' | 'knowledge-check' | 'playground' | 'admin';
 
 interface Props {
   current: NavTarget;
@@ -11,6 +11,8 @@ interface Props {
    *  outside the auth gate. */
   userLabel?: string;
   onSignOut?: () => void;
+  /** Show the program-admin tab (only for administrators of a program). */
+  showAdmin?: boolean;
 }
 
 /** First-letter-of-each-word initials, capped at 2 characters, for the
@@ -28,15 +30,18 @@ interface TabDef {
   isAccent?: boolean;
 }
 
-const TABS: TabDef[] = [
+const BASE_TABS: TabDef[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'modules', label: 'Modules', icon: BookOpen },
   { id: 'playground', label: 'Ventilator Playground', icon: Play },
   { id: 'knowledge-check', label: 'Knowledge Check', icon: Brain },
 ];
 
-const TopNav: React.FC<Props> = ({ current, onNavigate, userLabel, onSignOut }) => {
+const TopNav: React.FC<Props> = ({ current, onNavigate, userLabel, onSignOut, showAdmin }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const TABS: TabDef[] = showAdmin
+    ? [...BASE_TABS, { id: 'admin', label: 'Program', icon: Users }]
+    : BASE_TABS;
   return (
     <header className="bg-brand-olive text-white shrink-0">
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center gap-4">

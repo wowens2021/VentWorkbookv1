@@ -13,12 +13,18 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import LoginPage from './auth/LoginPage';
 import { setActiveUserId } from './persistence/progress';
 import { syncProgressFromCloud } from './persistence/firestoreSync';
+import './persistence/rosterSync'; // registers the roster-write listener
+import { ProgramProvider, useProgram } from './programs/ProgramContext';
+import ProgramGate from './programs/ProgramGate';
+import ExpiryWall from './programs/ExpiryWall';
+import AdminConsole from './programs/AdminConsole';
 
 type View =
   | { kind: 'home' }
   | { kind: 'modules' }
   | { kind: 'knowledge-check' }
   | { kind: 'playground' }
+  | { kind: 'admin' }
   | { kind: 'module'; module: ModuleConfig };
 
 const navTargetForView = (view: View): NavTarget => {
@@ -27,6 +33,7 @@ const navTargetForView = (view: View): NavTarget => {
     case 'modules': return 'modules';
     case 'knowledge-check': return 'knowledge-check';
     case 'playground': return 'playground';
+    case 'admin': return 'admin';
     case 'module': return 'modules';
   }
 };
@@ -45,6 +52,7 @@ function viewToKey(view: View): string {
     case 'modules': return 'modules';
     case 'knowledge-check': return 'knowledge-check';
     case 'playground': return 'playground';
+    case 'admin': return 'admin';
     case 'module': return `module:${view.module.id}`;
   }
 }
@@ -54,6 +62,7 @@ function viewFromKey(key: string | undefined): View | null {
   if (key === 'modules') return { kind: 'modules' };
   if (key === 'knowledge-check') return { kind: 'knowledge-check' };
   if (key === 'playground') return { kind: 'playground' };
+  if (key === 'admin') return { kind: 'admin' };
   if (key.startsWith('module:')) {
     const id = key.slice('module:'.length);
     const mod = MODULES.find(m => m.id === id);
@@ -71,6 +80,7 @@ function viewFromKey(key: string | undefined): View | null {
  */
 const AppShell: React.FC = () => {
   const { user, signOutUser } = useAuth();
+  const { isAdmin } = useProgram();
   const [view, setView] = useState<View>({ kind: 'home' });
 
   // Seed history.state on first mount so subsequent popstate events have
@@ -111,6 +121,7 @@ const AppShell: React.FC = () => {
       case 'modules': return setView({ kind: 'modules' });
       case 'knowledge-check': return setView({ kind: 'knowledge-check' });
       case 'playground': return setView({ kind: 'playground' });
+      case 'admin': return setView({ kind: 'admin' });
     }
   };
 
@@ -137,6 +148,7 @@ const AppShell: React.FC = () => {
         onNavigate={handleNav}
         userLabel={user?.displayName || user?.email || undefined}
         onSignOut={signOutUser}
+        showAdmin={isAdmin}
       />
       <main className="flex-1">
         {view.kind === 'home' && (
@@ -163,6 +175,7 @@ const AppShell: React.FC = () => {
             <PlaygroundSim playgroundMode />
           </div>
         )}
+        {view.kind === 'admin' && isAdmin && <AdminConsole />}
       </main>
     </div>
   );
@@ -222,10 +235,30 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
+/**
+ * Program gate — sits between ProgramProvider and AppShell. Once auth +
+ * progress-sync are done, this resolves the learner's program membership:
+ *   - splash while profile/program load,
+ *   - the join/create onboarding gate if they belong to no program,
+ *   - the expiry wall if their program's access period has ended,
+ *   - otherwise the app.
+ */
+const ProgramGateLayer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { loading, needsOnboarding, expired } = useProgram();
+  if (loading) return <SplashScreen message="Loading your program…" />;
+  if (needsOnboarding) return <ProgramGate />;
+  if (expired) return <ExpiryWall />;
+  return <>{children}</>;
+};
+
 const App: React.FC = () => (
   <AuthProvider>
     <AuthGate>
-      <AppShell />
+      <ProgramProvider>
+        <ProgramGateLayer>
+          <AppShell />
+        </ProgramGateLayer>
+      </ProgramProvider>
     </AuthGate>
   </AuthProvider>
 );
