@@ -3,7 +3,10 @@ import type { Timestamp } from 'firebase/firestore';
 /** A learner's role within their program. */
 export type Role = 'student' | 'admin';
 
-export type ProgramStatus = 'trial' | 'active' | 'suspended';
+// 'pending'  — created but not yet activated by the seller; no access.
+// 'active'   — paid/active; access allowed until expiresAt.
+// 'suspended'— access revoked (non-payment, etc.).
+export type ProgramStatus = 'pending' | 'active' | 'suspended';
 
 /**
  * A program = one sold cohort (e.g. "UMich Pulm/CC 2026"). Bought by an
@@ -22,10 +25,11 @@ export interface Program {
   seatsUsed: number;
   adminUids: string[];
   status: ProgramStatus;
-  /** Access lifetime. When this passes, EVERY member (students + admins) is
-   *  locked out until it's extended — this is the contract-expiry gate, not
-   *  the enrollment code. New programs start as a short 'trial'; the seller
-   *  extends expiresAt (and flips status to 'active') on payment. */
+  /** Access lifetime once active. When this passes, EVERY member (students +
+   *  admins) is locked out until it's extended — this is the contract-expiry
+   *  gate, not the enrollment code. New programs are created 'pending' with
+   *  no expiry; the seller activates them (status 'active' + a term) on
+   *  payment, and bumps expiresAt on renewal. */
   expiresAt: Timestamp | null;
   createdAt: Timestamp | null;
   createdBy: string;

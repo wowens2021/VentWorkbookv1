@@ -107,7 +107,7 @@ const AdminConsole: React.FC = () => {
           )}
         </div>
         <div className="text-right shrink-0">
-          <span className={`inline-block text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${program.status === 'active' ? 'bg-emerald-100 text-emerald-800' : program.status === 'trial' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
+          <span className={`inline-block text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${program.status === 'active' ? 'bg-emerald-100 text-emerald-800' : program.status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
             {program.status}
           </span>
           <div className="text-[12px] text-stone-500 mt-1.5">
@@ -116,10 +116,10 @@ const AdminConsole: React.FC = () => {
         </div>
       </div>
 
-      {program.status === 'trial' && (
+      {program.status === 'pending' && (
         <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-[13px] text-amber-900">
           <AlertTriangle size={15} className="shrink-0 mt-0.5" />
-          <span>This program is on a free trial. Contact support to activate your contract and extend access for your learners.</span>
+          <span>This program is awaiting activation. Learners can't access it yet — contact support to activate your contract.</span>
         </div>
       )}
 

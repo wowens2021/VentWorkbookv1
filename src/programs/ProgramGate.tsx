@@ -156,7 +156,7 @@ const ProgramGate: React.FC = () => {
                   onChange={e => setSeatLimit(Math.max(1, parseInt(e.target.value) || 1))}
                   className="w-full px-3 py-2.5 border border-stone-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-brand-olive/30 focus:border-brand-olive"
                 />
-                <p className="text-[11.5px] text-stone-400 mt-1">You can change this later. New programs start on a {14}-day trial until activated.</p>
+                <p className="text-[11.5px] text-stone-400 mt-1">You can change this later. Your program is activated once your subscription is set up.</p>
               </div>
               {error && (
                 <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2.5 text-[12.5px] text-rose-800">

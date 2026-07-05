@@ -1,7 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { loadProgram, loadUserProfile } from './programService';
-import { isProgramExpired } from './programService';
+import { loadProgram, loadUserProfile, programAccessState, type AccessState } from './programService';
 import type { Program, UserProfile } from './types';
 import { setRosterContext } from '../persistence/rosterSync';
 
@@ -12,8 +11,10 @@ interface ProgramContextValue {
   /** True once profile + program are resolved and the learner belongs to no
    *  program — they must join with a code or create one. */
   needsOnboarding: boolean;
-  /** True when the learner's program's access period has ended / is suspended. */
-  expired: boolean;
+  /** 'active' grants access; 'pending' | 'expired' | 'suspended' block it. */
+  accessState: AccessState | null;
+  /** True when the learner's program does not currently grant access. */
+  blocked: boolean;
   /** Auth is driven by the program's adminUids, not the user doc's role field. */
   isAdmin: boolean;
   /** Re-fetch profile + program (call after join/create/admin changes). */
@@ -62,11 +63,12 @@ export const ProgramProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const isAdmin = !!(program && user && program.adminUids.includes(user.uid));
   const needsOnboarding = !loading && !!user && !program;
-  const expired = !!program && isProgramExpired(program);
+  const accessState = program ? programAccessState(program) : null;
+  const blocked = accessState !== null && accessState !== 'active';
 
   return (
     <ProgramContext.Provider
-      value={{ loading, profile, program, needsOnboarding, expired, isAdmin, refresh: load }}
+      value={{ loading, profile, program, needsOnboarding, accessState, blocked, isAdmin, refresh: load }}
     >
       {children}
     </ProgramContext.Provider>

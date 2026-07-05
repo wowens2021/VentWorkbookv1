@@ -1,16 +1,9 @@
 import {
   doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
-  runTransaction, serverTimestamp, arrayUnion, Timestamp,
+  runTransaction, serverTimestamp, arrayUnion,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import type { Program, UserProfile, RosterEntry } from './types';
-
-// New programs get a short free trial; the seller extends expiresAt (and
-// flips status to 'active') on payment — done from the Firestore console
-// today, or a Stripe webhook later. Firestore rules cap a self-created
-// program's expiresAt to just past this, so a self-serve admin can't grant
-// themselves an indefinite free program.
-const TRIAL_DAYS = 14;
+import type { Program, ProgramStatus, UserProfile, RosterEntry } from './types';
 
 // Unambiguous alphabet — no 0/O/1/I/L — for human-typable enrollment codes.
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -57,10 +50,22 @@ export async function loadProgram(programId: string): Promise<Program | null> {
   return { id: programId, ...(snap.data() as Omit<Program, 'id'>) };
 }
 
-export function isProgramExpired(program: Program): boolean {
-  if (program.status === 'suspended') return true;
-  if (!program.expiresAt) return false; // no expiry set = open (shouldn't happen post-create)
-  return program.expiresAt.toMillis() < Date.now();
+/** Whether the program currently grants access, and if not, why. There is no
+ *  free trial: a program grants access ONLY while it is 'active' and its term
+ *  hasn't passed. 'pending' (freshly self-created, awaiting the seller's
+ *  activation) and 'suspended' both block everyone, admins included. */
+export type AccessState = 'active' | 'pending' | 'expired' | 'suspended';
+
+export function programAccessState(program: Program): AccessState {
+  if (program.status === 'suspended') return 'suspended';
+  if (program.status === 'pending') return 'pending';
+  // status === 'active'
+  if (program.expiresAt && program.expiresAt.toMillis() < Date.now()) return 'expired';
+  return 'active';
+}
+
+export function isAccessBlocked(program: Program): boolean {
+  return programAccessState(program) !== 'active';
 }
 
 export async function listRoster(programId: string): Promise<RosterEntry[]> {
@@ -76,17 +81,19 @@ export async function createProgram(
 ): Promise<Program> {
   const code = await reserveUniqueCode();
   const ref = doc(collection(db, 'programs'));
-  const expiresAt = Timestamp.fromMillis(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
 
+  // Created 'pending' with NO expiry — grants no access to anyone (including
+  // the creating admin) until the seller activates it. Seats count students
+  // only; the admin is staff, not a seat.
   await runTransaction(db, async (tx) => {
     tx.set(ref, {
       name: opts.name.trim(),
       enrollmentCode: code,
       seatLimit: opts.seatLimit,
-      seatsUsed: 1, // the admin occupies a seat too
+      seatsUsed: 0,
       adminUids: [admin.uid],
-      status: 'trial',
-      expiresAt,
+      status: 'pending' satisfies ProgramStatus,
+      expiresAt: null,
       createdAt: serverTimestamp(),
       createdBy: admin.uid,
     });
@@ -124,10 +131,10 @@ export async function joinByCode(
     if (!pSnap.exists()) throw new JoinError('That program no longer exists.');
     const program = pSnap.data() as Omit<Program, 'id'>;
 
-    if (program.status === 'suspended') throw new JoinError('This program is not currently active.');
-    if (program.expiresAt && program.expiresAt.toMillis() < Date.now()) {
-      throw new JoinError('This program\'s access period has ended.');
-    }
+    const state = programAccessState({ ...program, id: programId } as Program);
+    if (state === 'pending') throw new JoinError('This program isn\'t active yet — check with your administrator.');
+    if (state === 'suspended') throw new JoinError('This program is not currently active.');
+    if (state === 'expired') throw new JoinError('This program\'s access period has ended.');
     const alreadyMember = program.adminUids.includes(learner.uid);
     const rosterSnap = await tx.get(rosterRef(programId, learner.uid));
     if (!alreadyMember && !rosterSnap.exists() && program.seatsUsed >= program.seatLimit) {

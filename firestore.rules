@@ -33,17 +33,17 @@ service cloud.firestore {
       allow get: if signedIn();
 
       // Anyone signed in may create a program and become its sole admin — but
-      // only as a short 'trial'. The seller extends expiresAt / flips status
-      // to 'active' out-of-band (Firestore console today, billing webhook
-      // later); the +15d cap here stops a self-serve admin from granting
-      // themselves indefinite free access.
+      // it is created 'pending' with NO expiry, which grants no access to
+      // anyone (there is no free trial). The seller activates it (status
+      // 'active' + a term) out-of-band — Firestore console today, billing
+      // webhook later — which is the only path to real access. The rules
+      // below forbid admins from setting status/expiresAt themselves.
       allow create: if signedIn()
         && request.resource.data.adminUids == [request.auth.uid]
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.status == 'trial'
-        && request.resource.data.seatsUsed == 1
-        && request.resource.data.expiresAt is timestamp
-        && request.resource.data.expiresAt < request.time + duration.value(15, 'd');
+        && request.resource.data.status == 'pending'
+        && request.resource.data.seatsUsed == 0
+        && request.resource.data.expiresAt == null;
 
       // Program admins may edit program settings — but NOT expiresAt or
       // status (the paid-access levers, changed only via the console/owner).

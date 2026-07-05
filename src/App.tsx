@@ -244,10 +244,10 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
  *   - otherwise the app.
  */
 const ProgramGateLayer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { loading, needsOnboarding, expired } = useProgram();
+  const { loading, needsOnboarding, blocked } = useProgram();
   if (loading) return <SplashScreen message="Loading your program…" />;
   if (needsOnboarding) return <ProgramGate />;
-  if (expired) return <ExpiryWall />;
+  if (blocked) return <ExpiryWall />;
   return <>{children}</>;
 };
 
