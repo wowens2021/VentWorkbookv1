@@ -237,18 +237,60 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 /**
+ * Standalone admin console for an administrator whose program is still
+ * PENDING activation. They can't reach the learning app yet (no free trial —
+ * students can't access until activated), but they DO need to get to their
+ * console to set up seats, see/copy the enrollment key, and send invites.
+ * A slim header (logo + sign out) wraps the same AdminConsole the active app
+ * uses; the console renders its own "awaiting activation" banner.
+ */
+const PendingAdminView: React.FC = () => {
+  const { user, signOutUser } = useAuth();
+  return (
+    <div className="min-h-screen flex flex-col bg-brand-cream">
+      <header className="bg-brand-olive text-white shrink-0">
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-3">
+          <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
+            <Activity size={15} className="text-white" />
+          </div>
+          <span className="font-display text-[16px] font-semibold tracking-wide">The Ventilator Workbook</span>
+          <span className="text-white/40">·</span>
+          <span className="text-[13px] text-white/80">Program setup</span>
+          <button
+            onClick={signOutUser}
+            className="ml-auto text-[12px] font-semibold text-white/80 hover:text-white transition"
+            title={user?.email ?? undefined}
+          >
+            Sign out
+          </button>
+        </div>
+      </header>
+      <main className="flex-1"><AdminConsole /></main>
+    </div>
+  );
+};
+
+/**
  * Program gate — sits between ProgramProvider and AppShell. Once auth +
  * progress-sync are done, this resolves the learner's program membership:
  *   - splash while profile/program load,
  *   - the join/create onboarding gate if they belong to no program,
- *   - the expiry wall if their program's access period has ended,
+ *   - a pending admin straight into their setup/invite console,
+ *   - the wall (awaiting activation / expired / suspended) for everyone else
+ *     blocked,
  *   - otherwise the app.
  */
 const ProgramGateLayer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { loading, needsOnboarding, blocked } = useProgram();
+  const { loading, needsOnboarding, blocked, accessState, isAdmin } = useProgram();
   if (loading) return <SplashScreen message="Loading your program…" />;
   if (needsOnboarding) return <ProgramGate />;
-  if (blocked) return <ExpiryWall />;
+  if (blocked) {
+    // A pending program's admin still gets their console (to invite / set up);
+    // everyone else blocked (students, or any expired/suspended member) hits
+    // the wall.
+    if (accessState === 'pending' && isAdmin) return <PendingAdminView />;
+    return <ExpiryWall />;
+  }
   return <>{children}</>;
 };
 
