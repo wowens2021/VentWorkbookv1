@@ -68,21 +68,33 @@ const InviteManager: React.FC<{
     finally { setBusy(false); }
   };
 
-  const composeToPending = () => {
+  const inviteSubject = `Join ${program.name} on The Ventilator Workbook`;
+  const inviteBody =
+    `You've been enrolled in ${program.name} on The Ventilator Workbook.\n\n` +
+    `1. Open ${joinLink}\n` +
+    `2. Create your account (or sign in) with THIS email address\n` +
+    `3. Enter enrollment key: ${program.enrollmentCode}\n\n` +
+    `Note: you must sign up with the email your administrator invited, or ` +
+    `you won't be able to join.\n\n` +
+    `Your progress saves to your account automatically.`;
+
+  // Compose to everyone not yet joined. BCC keeps the class list private from
+  // recipients. Gmail/Outlook open a pre-filled web compose window (so it
+  // doesn't depend on the OS default mail app); "Default mail app" uses the
+  // mailto: handler (Outlook desktop, Apple Mail, etc.).
+  const composeToPending = (target: 'gmail' | 'outlook' | 'mailto') => {
+    if (pending.length === 0) return;
     const recipients = pending.map(p => p.email).join(',');
-    const subject = `Join ${program.name} on The Ventilator Workbook`;
-    const body =
-      `You've been enrolled in ${program.name} on The Ventilator Workbook.\n\n` +
-      `1. Open ${joinLink}\n` +
-      `2. Create your account (or sign in) with THIS email address\n` +
-      `3. Enter enrollment key: ${program.enrollmentCode}\n\n` +
-      `Note: you must sign up with the email your administrator invited, or ` +
-      `you won't be able to join.\n\n` +
-      `Your progress saves to your account automatically.`;
-    // BCC keeps the class list private from recipients.
-    window.location.href =
-      `mailto:?bcc=${encodeURIComponent(recipients)}` +
-      `&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const bcc = encodeURIComponent(recipients);
+    const su = encodeURIComponent(inviteSubject);
+    const body = encodeURIComponent(inviteBody);
+    if (target === 'gmail') {
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&bcc=${bcc}&su=${su}&body=${body}`, '_blank', 'noopener');
+    } else if (target === 'outlook') {
+      window.open(`https://outlook.office.com/mail/deeplink/compose?bcc=${bcc}&subject=${su}&body=${body}`, '_blank', 'noopener');
+    } else {
+      window.location.href = `mailto:?bcc=${bcc}&subject=${su}&body=${body}`;
+    }
   };
 
   const copyLink = () => {
@@ -139,18 +151,39 @@ const InviteManager: React.FC<{
       </div>
 
       {/* Send + link */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <button
-          onClick={composeToPending}
-          disabled={pending.length === 0}
-          className="px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:opacity-50 text-white text-[13px] font-bold rounded-lg transition inline-flex items-center gap-2"
-        >
-          <Mail size={15} /> Compose invite email{pending.length > 0 ? ` (${pending.length})` : ''}
-        </button>
-        <button onClick={copyLink} className="flex items-center gap-1.5 text-[13px] font-bold text-brand-olive">
-          {copied ? <><Check size={14} /> Link copied</> : <><Copy size={14} /> Copy invite link</>}
-        </button>
-        <span className="text-[12px] text-stone-400 ml-auto">Opens your mail app with everyone not yet joined in BCC.</span>
+      <div className="mb-6">
+        <div className="flex items-center gap-2 text-[12px] font-bold text-stone-600 mb-2">
+          <Mail size={14} /> Send invite {pending.length > 0 ? `to ${pending.length} not yet joined` : '(everyone has joined)'} — pick your email:
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => composeToPending('gmail')}
+            disabled={pending.length === 0}
+            className="px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:opacity-50 text-white text-[13px] font-bold rounded-lg transition"
+          >
+            Gmail
+          </button>
+          <button
+            onClick={() => composeToPending('outlook')}
+            disabled={pending.length === 0}
+            className="px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:opacity-50 text-white text-[13px] font-bold rounded-lg transition"
+          >
+            Outlook
+          </button>
+          <button
+            onClick={() => composeToPending('mailto')}
+            disabled={pending.length === 0}
+            className="px-4 py-2.5 border border-stone-300 hover:border-brand-olive text-stone-700 disabled:opacity-50 text-[13px] font-bold rounded-lg transition"
+          >
+            Default mail app
+          </button>
+          <button onClick={copyLink} className="flex items-center gap-1.5 text-[13px] font-bold text-brand-olive ml-2">
+            {copied ? <><Check size={14} /> Link copied</> : <><Copy size={14} /> Copy invite link</>}
+          </button>
+        </div>
+        <p className="text-[12px] text-stone-400 mt-2">
+          Gmail and Outlook open a pre-filled web compose window; everyone is in BCC to keep the list private. You review and hit send.
+        </p>
       </div>
 
       {/* List */}
