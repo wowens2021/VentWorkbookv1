@@ -1134,7 +1134,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                 {isPassing(total.percent) && onNext && nextModule && (
                   <div className="mb-2 text-[12px] text-zinc-600">
                     <span className="font-bold text-zinc-500 uppercase tracking-wider text-[10px] mr-1.5">Up next ·</span>
-                    <span className="font-bold text-zinc-800">{nextModule.id} — {nextModule.title}</span>
+                    <span className="font-bold text-zinc-800">M{nextModule.number} — {nextModule.title}</span>
                     <span className="text-zinc-400"> · {nextModule.estimated_minutes} min</span>
                   </div>
                 )}
@@ -1157,7 +1157,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                     onClick={onNext}
                     className="w-full flex items-center justify-center gap-1.5 px-4 py-3 bg-brand-olive hover:bg-brand-olive-hover text-white rounded-lg text-[14px] font-bold transition shadow-sm"
                   >
-                    Continue to {nextModule?.id ?? 'the next module'} <ChevronRight size={14} />
+                    Continue to {nextModule ? `M${nextModule.number} (${nextModule.title})` : 'the next module'} <ChevronRight size={14} />
                   </button>
                 ) : (
                   <button
@@ -1176,7 +1176,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
                       onClick={onNext}
                       className="flex items-center gap-1 text-zinc-500 hover:text-zinc-800 font-bold transition"
                     >
-                      Move on anyway → {nextModule?.id}
+                      Move on anyway → {nextModule ? `M${nextModule.number}` : 'the next module'}
                     </button>
                   ) : (
                     onNext && (

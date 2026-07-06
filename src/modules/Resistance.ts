@@ -135,12 +135,12 @@ export const Resistance: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        '**Clinical causes of increased resistance.**\n\n- **Secretions / mucus plug**: the most common cause of an acute resistance rise in the ICU. Suction the airway. Bronchoscopy if the plug is not cleared.\n- **Bronchospasm**: treat with inhaled bronchodilators (albuterol, ipratropium). Heliox may reduce resistance in severe cases. Consider IV magnesium in status asthmaticus.\n- **Endotracheal tube obstruction**: kinking, biting, or partial occlusion by secretions or blood. Pass a suction catheter; if resistance is met, replace the tube. A bite block prevents biting.\n- **Right mainstem intubation**: the tube has advanced into the right mainstem bronchus, so the left lung is excluded. Unilateral breath sounds + rising pressure. Pull back to 21–23 cm at the lip and confirm with chest X-ray.\n- **Circuit obstruction**: water accumulation in ventilator tubing, kinked circuit. Drain the circuit; reposition tubing.',
+        '**Clinical causes of increased resistance.**\n\n- **Secretions / mucus plug**: the most common cause of an acute resistance rise in the ICU. Suction the airway. Bronchoscopy if the plug is not cleared.\n- **Bronchospasm**: treat with inhaled bronchodilators (albuterol, ipratropium). Heliox may reduce resistance in severe cases. Consider IV magnesium in status asthmaticus.\n- **Endotracheal tube obstruction**: kinking, biting, or partial occlusion by secretions or blood. Pass a suction catheter; if resistance is met, replace the tube. A bite block prevents biting.\n- **Circuit obstruction**: water accumulation in ventilator tubing, kinked circuit. Drain the circuit; reposition tubing.',
     },
     {
       kind: 'prose',
       markdown:
-        '**Resistance vs compliance: the diagnostic move.** When a high peak pressure alarm fires in volume control, the first question is: what is the plateau pressure?\n\nIf Pplat is also high (gap is normal): compliance problem. Both peak and plateau moved together. Think pneumothorax, worsening ARDS, new consolidation, pulmonary edema, patient fighting the vent.\n\nIf Pplat is unchanged (gap widened): resistance problem. Think secretions, bronchospasm, tube obstruction, right mainstem intubation.\n\nThis single measurement (the plateau, via an end-inspiratory hold) directs the entire clinical response. Without it, all high-peak alarms look the same.\n\nIn pressure control, the logic reverses: resistance changes affect peak, but the ventilator holds pressure constant, so the delivered tidal volume falls. A sudden drop in delivered Vt in pressure control with unchanged settings is the resistance alarm equivalent.',
+        '**Resistance vs compliance: the diagnostic move.** When a high peak pressure alarm fires in volume control, the first question is: what is the plateau pressure?\n\nIf Pplat is also high (gap is normal): compliance problem. Both peak and plateau moved together. Think pneumothorax, worsening ARDS, new consolidation, pulmonary edema, patient fighting the vent.\n\nIf Pplat is unchanged (gap widened): resistance problem. Think secretions, bronchospasm, tube obstruction.\n\nThis single measurement (the plateau, via an end-inspiratory hold) directs the entire clinical response. Without it, all high-peak alarms look the same.\n\nIn pressure control, the logic reverses: resistance changes affect peak, but the ventilator holds pressure constant, so the delivered tidal volume falls. A sudden drop in delivered Vt in pressure control with unchanged settings is the resistance alarm equivalent.',
     },
     {
       kind: 'prose',
@@ -241,7 +241,7 @@ export const Resistance: ModuleConfig = {
     'Resistance changes raise Ppeak while leaving Pplat unchanged. The gap widens.',
     'Compliance changes raise both Ppeak and Pplat together. The gap stays stable.',
     'The plateau pressure (end-inspiratory hold) is the single most important measurement to distinguish resistance from compliance problems.',
-    'Common acute resistance causes: secretions/mucus plug, bronchospasm, endotracheal tube obstruction (kinking, biting), right mainstem intubation, circuit obstruction.',
+    'Common acute resistance causes: secretions/mucus plug, bronchospasm, endotracheal tube obstruction (kinking, biting), circuit obstruction.',
     'In pressure control, a resistance increase causes Vt to fall silently (pressure waveform unchanged). Monitor delivered Vt closely in PC.',
     'Normal peak-plateau gap: 5–10 cmH2O. Gap > 15 cmH2O: investigate resistance.',
   ],

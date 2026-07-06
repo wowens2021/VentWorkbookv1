@@ -567,6 +567,18 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   const [activeHoldType, setActiveHoldType] = useState<'INSP' | 'EXP' | null>(null);
   const [prvcAdaptivePi, setPrvcAdaptivePi] = useState(15);
 
+  // Pplat / driving pressure are maneuver-derived — a real ventilator shows
+  // them only AFTER an inspiratory hold. When a scenario features the hold
+  // (unlocks 'inspiratory_pause') or in free play, the Pplat/DP readouts show
+  // a dash until the learner performs a hold, then this snapshot taken at that
+  // hold; changing a plat-affecting setting blanks it again so a fresh hold is
+  // required. metrics.plat / metrics.drivingPressure remain live every breath
+  // for the outcome-gate trackers, so this is display-only. Modules that show
+  // Pplat WITHOUT featuring the hold (e.g. M1 display-reading) are unaffected.
+  const requireHoldForPlat = playgroundMode || !!unlockedControls?.includes('inspiratory_pause');
+  const [heldPlat, setHeldPlat] = useState<number | null>(null);
+  const [heldDp, setHeldDp] = useState<number | null>(null);
+
   const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS, ...(initialPreset?.settings ?? {}) });
   const [patient, setPatient] = useState(() => {
     const demo = initialPreset?.patient?.gender && initialPreset?.patient?.heightInches
@@ -599,6 +611,8 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       setCursorIndex(null);
       setIsFrozen(false);
       setActiveHoldType(null);
+      setHeldPlat(null);
+      setHeldDp(null);
       breathNumRef.current = 0;
       startTimeRef.current = Date.now();
       totalFreezeOffsetRef.current = 0;
@@ -1391,6 +1405,9 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           setActiveHoldType(null);
           const platMeasured = (vAtEndOfInspRef.current / C) + settings.peep;
           setMetrics(m => ({ ...m, plat: Math.round(platMeasured), drivingPressure: Math.round(platMeasured - settings.peep) }));
+          // Snapshot for the hold-gated Pplat/DP display (see requireHoldForPlat).
+          setHeldPlat(Math.round(platMeasured));
+          setHeldDp(Math.round(platMeasured - settings.peep));
         }
       } else if (isExpHolding.current) {
         const dur = elapsedTotal - holdStartTimeRef.current;
@@ -1545,6 +1562,16 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     lastVolumeRef.current = 0;
     trappedVolumeAtBreathStartRef.current = 0;
   }, []); // once, on mount
+
+  // Blank the hold-gated Pplat/DP snapshot whenever a plat-affecting setting
+  // changes, so the learner must re-measure with a fresh inspiratory hold
+  // (matching a real ventilator, where the displayed plateau is stale until
+  // the next maneuver). Only meaningful when requireHoldForPlat; harmless
+  // otherwise since the snapshot isn't displayed then.
+  useEffect(() => {
+    setHeldPlat(null);
+    setHeldDp(null);
+  }, [settings.tidalVolume, settings.peep, settings.pInsp, settings.iTime, settings.respiratoryRate, patient.compliance, patient.resistance, mode]);
 
   // Freeze side-effects
   useEffect(() => {
@@ -1794,10 +1821,10 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                   underlying metrics.plat / autoPeep are still computed so any
                   tracker that grades on them continues to work. */}
               {showsReadout('plat') && (
-                <NumericCard label="Pplat" value={metrics.plat || '--'} unit="cmH2O" color={metrics.plat > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} flash={flashSet.has('plat')} {...recogPropsForReadout('plat', 'Pplat')} />
+                <NumericCard label="Pplat" value={requireHoldForPlat ? (heldPlat ?? '--') : (metrics.plat || '--')} unit="cmH2O" color={(requireHoldForPlat ? (heldPlat ?? 0) : metrics.plat) > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} flash={flashSet.has('plat')} {...recogPropsForReadout('plat', 'Pplat')} />
               )}
               {showsReadout('drivingPressure') && (
-                <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color="text-violet-600" flash={flashSet.has('drivingPressure')} {...recogPropsForReadout('drivingPressure', 'DP')} />
+                <NumericCard label="DP" value={requireHoldForPlat ? (heldDp ?? '--') : (metrics.drivingPressure || '--')} unit="cmH2O" color="text-violet-600" flash={flashSet.has('drivingPressure')} {...recogPropsForReadout('drivingPressure', 'DP')} />
               )}
               <NumericCard label="MVe" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" flash={flashSet.has('mve')} {...recogPropsForReadout('mve', 'MVe')} />
               <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vte')} />
