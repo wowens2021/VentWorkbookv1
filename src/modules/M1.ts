@@ -30,7 +30,7 @@ export const M1: ModuleConfig = {
     'Recognize the four primary indications for mechanical ventilation.',
     'Match ventilator terminology to display elements.',
     'Distinguish set values from measured values.',
-    'Read Ppeak, Pplat, PEEP, Vt, rate, MV, FiO2, and I:E ratio from a live display.',
+    'Read Ppeak, Pplat, PEEP, Vt, rate, MVe, FiO2, and I:E ratio from a live display.',
   ],
 
   primer_questions: [
@@ -80,8 +80,8 @@ export const M1: ModuleConfig = {
     // Note: Vt set, set rate, PEEP, and FiO2 live in the control row.
     // They're visible (even though unlocked_controls is empty, control
     // boxes still render — they're just non-interactive). The readout
-    // strip renders pip (PIP), plat (Pplat), totalPeep (tPEEP), mve (VE
-    // = MV), actualRate (RR = measured), ieRatio (I:E), and vte.
+    // strip renders pip (PIP), plat (Pplat), totalPeep (tPEEP), mve (MVe),
+    // actualRate (RR = measured), ieRatio (I:E), and vte.
     visible_readouts: [
       'pip', 'plat', 'totalPeep',
       'vte', 'mve', 'actualRate', 'ieRatio',
@@ -109,13 +109,13 @@ export const M1: ModuleConfig = {
             { label: 'Ppeak', is_correct: true, explanation: 'Ppeak (PIP) = peak inspiratory pressure. Top of the pressure waveform.' },
             { label: 'Pplat', is_correct: false, explanation: 'Pplat is the held pressure after an inspiratory pause — always ≤ Ppeak.' },
             { label: 'PEEP', is_correct: false, explanation: 'PEEP is the floor at end-expiration, not the peak.' },
-            { label: 'MV', is_correct: false, explanation: 'MV is minute ventilation — a volume per minute, not a pressure.' },
+            { label: 'MVe', is_correct: false, explanation: 'MVe is minute ventilation — a volume per minute, not a pressure.' },
           ],
           click_targets: [
             { element: { kind: 'readout', name: 'pip' }, label: 'Ppeak', is_correct: true, explanation: 'Ppeak — top of the pressure waveform; highest pressure each breath.' },
             { element: { kind: 'readout', name: 'plat' }, label: 'Pplat', is_correct: false, explanation: 'Pplat is the held alveolar pressure — always ≤ Ppeak.' },
             { element: { kind: 'readout', name: 'totalPeep' }, label: 'PEEP', is_correct: false, explanation: 'PEEP is the floor at end-expiration, not the peak.' },
-            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is minute ventilation in L/min — not a pressure.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MVe', is_correct: false, explanation: 'MVe is minute ventilation in L/min — not a pressure.' },
           ],
         },
       },
@@ -130,13 +130,13 @@ export const M1: ModuleConfig = {
           options: [
             { label: 'Vt set', is_correct: true, explanation: 'Set Vt is the order — the volume per breath the operator dialed in.' },
             { label: 'Vte (delivered)', is_correct: false, explanation: 'Vte is the measured exhaled volume — what came back out.' },
-            { label: 'MV', is_correct: false, explanation: 'MV is per minute, not per breath.' },
+            { label: 'MVe', is_correct: false, explanation: 'MVe is per minute, not per breath.' },
             { label: 'Ppeak', is_correct: false, explanation: 'Ppeak is a pressure, not a volume.' },
           ],
           click_targets: [
             { element: { kind: 'control', name: 'tidalVolume' }, label: 'Vt set', is_correct: true, explanation: 'Vt set — the volume per breath you ordered.' },
             { element: { kind: 'readout', name: 'vte' }, label: 'Vte (delivered)', is_correct: false, explanation: 'Vte is the measured exhaled volume — what came back out.' },
-            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is per minute, not per breath.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MVe', is_correct: false, explanation: 'MVe is per minute, not per breath.' },
             { element: { kind: 'readout', name: 'pip' }, label: 'Ppeak', is_correct: false, explanation: 'Ppeak is a pressure, not a volume.' },
           ],
         },
@@ -175,13 +175,13 @@ export const M1: ModuleConfig = {
             { label: 'Set rate', is_correct: true, explanation: 'Set rate is the minimum mandatory rate — the order.' },
             { label: 'Measured rate', is_correct: false, explanation: 'Measured rate is what the patient is actually doing — set + triggered.' },
             { label: 'I:E ratio', is_correct: false, explanation: 'I:E is a derived ratio, not a rate.' },
-            { label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a rate alone.' },
+            { label: 'MVe', is_correct: false, explanation: 'MVe is volume per minute, not a rate alone.' },
           ],
           click_targets: [
             { element: { kind: 'control', name: 'respiratoryRate' }, label: 'Set rate', is_correct: true, explanation: 'Set rate — the minimum mandatory rate you ordered.' },
             { element: { kind: 'readout', name: 'actualRate' }, label: 'Measured rate', is_correct: false, explanation: 'Measured rate is what the patient is actually doing — set + triggered.' },
             { element: { kind: 'readout', name: 'ieRatio' }, label: 'I:E ratio', is_correct: false, explanation: 'I:E is a derived ratio, not a rate.' },
-            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a rate alone.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MVe', is_correct: false, explanation: 'MVe is volume per minute, not a rate alone.' },
           ],
         },
       },
@@ -196,13 +196,13 @@ export const M1: ModuleConfig = {
           options: [
             { label: 'FiO2', is_correct: true, explanation: 'FiO2 — inspired oxygen fraction (0.21 room air, 1.0 = 100%).' },
             { label: 'PEEP', is_correct: false, explanation: 'PEEP is a pressure, not a gas fraction.' },
-            { label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a gas fraction.' },
+            { label: 'MVe', is_correct: false, explanation: 'MVe is volume per minute, not a gas fraction.' },
             { label: 'Ppeak', is_correct: false, explanation: 'Ppeak is a pressure, not a gas fraction.' },
           ],
           click_targets: [
             { element: { kind: 'control', name: 'fiO2' }, label: 'FiO2', is_correct: true, explanation: 'FiO2 — inspired oxygen fraction (the FiO2 control box).' },
             { element: { kind: 'readout', name: 'totalPeep' }, label: 'PEEP', is_correct: false, explanation: 'PEEP is pressure, not gas fraction.' },
-            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not gas fraction.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MVe', is_correct: false, explanation: 'MVe is volume per minute, not gas fraction.' },
             { element: { kind: 'readout', name: 'pip' }, label: 'Ppeak', is_correct: false, explanation: 'Ppeak is pressure, not gas fraction.' },
           ],
         },
@@ -214,15 +214,15 @@ export const M1: ModuleConfig = {
           trigger: { kind: 'on_load' },
           question: 'Click the minute ventilation reading.',
           max_attempts: 2,
-          annotation_on_correct: 'MV — total volume per minute; rate × Vt.',
+          annotation_on_correct: 'MVe — total volume per minute; rate × Vt.',
           options: [
-            { label: 'MV', is_correct: true, explanation: 'MV = rate × Vt; total volume per minute, in L/min.' },
+            { label: 'MVe', is_correct: true, explanation: 'MVe = rate × Vt; total volume per minute, in L/min.' },
             { label: 'Vt set', is_correct: false, explanation: 'Vt is per breath, not per minute.' },
             { label: 'Measured rate', is_correct: false, explanation: 'Measured rate is a frequency, not a volume.' },
             { label: 'I:E', is_correct: false, explanation: 'I:E is a ratio, not a volume.' },
           ],
           click_targets: [
-            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: true, explanation: 'MV — total volume per minute; rate × Vt.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MVe', is_correct: true, explanation: 'MVe — total volume per minute; rate × Vt.' },
             { element: { kind: 'control', name: 'tidalVolume' }, label: 'Vt set', is_correct: false, explanation: 'Vt is per breath, not per minute.' },
             { element: { kind: 'readout', name: 'actualRate' }, label: 'Measured rate', is_correct: false, explanation: 'Measured rate is a frequency, not a volume.' },
             { element: { kind: 'readout', name: 'ieRatio' }, label: 'I:E', is_correct: false, explanation: 'I:E is a ratio, not a volume.' },
@@ -241,13 +241,13 @@ export const M1: ModuleConfig = {
             { label: 'I:E', is_correct: true, explanation: 'I:E — ratio of inspiratory to expiratory time. Normal 1:2 or 1:3.' },
             { label: 'Measured rate', is_correct: false, explanation: 'Rate is a frequency; I:E is a ratio.' },
             { label: 'PEEP', is_correct: false, explanation: 'PEEP is a pressure, not a ratio.' },
-            { label: 'MV', is_correct: false, explanation: 'MV is a volume per minute, not a ratio.' },
+            { label: 'MVe', is_correct: false, explanation: 'MVe is a volume per minute, not a ratio.' },
           ],
           click_targets: [
             { element: { kind: 'readout', name: 'ieRatio' }, label: 'I:E', is_correct: true, explanation: 'I:E — inspiratory to expiratory time; normal 1:2 or 1:3.' },
             { element: { kind: 'readout', name: 'actualRate' }, label: 'Measured rate', is_correct: false, explanation: 'Rate is a frequency; I:E is a ratio.' },
             { element: { kind: 'readout', name: 'totalPeep' }, label: 'PEEP', is_correct: false, explanation: 'PEEP is a pressure, not a ratio.' },
-            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a ratio.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MVe', is_correct: false, explanation: 'MVe is volume per minute, not a ratio.' },
           ],
         },
       },
@@ -263,13 +263,13 @@ export const M1: ModuleConfig = {
             { label: 'Measured rate', is_correct: true, explanation: 'Measured rate counts every breath — mandatory + triggered.' },
             { label: 'Set rate', is_correct: false, explanation: 'Set rate is the order; measured is what the patient is doing.' },
             { label: 'I:E', is_correct: false, explanation: 'I:E is a ratio, not a count.' },
-            { label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a count.' },
+            { label: 'MVe', is_correct: false, explanation: 'MVe is volume per minute, not a count.' },
           ],
           click_targets: [
             { element: { kind: 'readout', name: 'actualRate' }, label: 'Measured rate', is_correct: true, explanation: 'Measured rate — every breath (mandatory + triggered).' },
             { element: { kind: 'control', name: 'respiratoryRate' }, label: 'Set rate', is_correct: false, explanation: 'Set rate is the order; measured is what the patient is doing.' },
             { element: { kind: 'readout', name: 'ieRatio' }, label: 'I:E', is_correct: false, explanation: 'I:E is a ratio, not a count.' },
-            { element: { kind: 'readout', name: 'mve' }, label: 'MV', is_correct: false, explanation: 'MV is volume per minute, not a count.' },
+            { element: { kind: 'readout', name: 'mve' }, label: 'MVe', is_correct: false, explanation: 'MVe is volume per minute, not a count.' },
           ],
         },
       },
@@ -297,7 +297,7 @@ export const M1: ModuleConfig = {
       markdown:
         '**Set values vs measured values.**\n\n' +
         '**Set values (operator inputs):** set Vt, set rate, PEEP, FiO2, set inspiratory pressure.\n\n' +
-        '**Measured values (what the system reports):** delivered Vt, measured rate, Ppeak, Pplat, MV.\n\n' +
+        '**Measured values (what the system reports):** delivered Vt, measured rate, Ppeak, Pplat, MVe.\n\n' +
         'Gaps between set and measured values are diagnostic. Set Vt 500 / delivered Vt 340 = circuit or cuff leak. Set rate 14 / measured rate 22 = patient triggering 8 extra breaths per minute.',
     },
     {
@@ -309,7 +309,7 @@ export const M1: ModuleConfig = {
         '- **PEEP**: pressure at end-expiration. The floor. Typical 5–15 cmH2O.\n' +
         '- **Vt**: volume per breath in mL. Set Vt and delivered Vt. Target 6 mL/kg PBW.\n' +
         '- **Set rate / measured rate**: set = what you ordered; measured = all breaths. Gap = spontaneous activity.\n' +
-        '- **MV**: rate × Vt. Total air per minute. Target 6–10 L/min.\n' +
+        '- **MVe**: rate × Vt. Total air per minute. Target 6–10 L/min.\n' +
         '- **FiO2**: inspired O2 fraction. 0.21 = room air; 1.0 = 100% O2.\n' +
         '- **I:E ratio**: inspiratory to expiratory time. Normal 1:2 or 1:3.\n\n' +
         '**Pressure hierarchy: Ppeak ≥ Pplat ≥ PEEP. Always.**',
@@ -348,9 +348,9 @@ export const M1: ModuleConfig = {
       prompt: 'Tidal volume 500 mL, respiratory rate 14. Minute ventilation:',
       options: [
         { label: '3.5 L/min', is_correct: false, explanation: 'Math error.' },
-        { label: '7 L/min', is_correct: true, explanation: 'MV = 0.5 L × 14 = 7 L/min.' },
+        { label: '7 L/min', is_correct: true, explanation: 'MVe = 0.5 L × 14 = 7 L/min.' },
         { label: '14 L/min', is_correct: false, explanation: 'Math error.' },
-        { label: '35 L/min', is_correct: false, explanation: 'Normal MV is 6–10 L/min.' },
+        { label: '35 L/min', is_correct: false, explanation: 'Normal MVe is 6–10 L/min.' },
       ],
     },
     {
@@ -387,7 +387,7 @@ export const M1: ModuleConfig = {
       { name: 'PEEP', description: 'floor; pressure at end-expiration.' },
       { name: 'Vt set and Vt delivered', description: 'gap signals a leak.' },
       { name: 'Set rate vs measured rate', description: 'gap = spontaneous breaths above the mandatory rate.' },
-      { name: 'MV', description: 'rate × Vt; target 6–10 L/min for most adults.' },
+      { name: 'MVe', description: 'rate × Vt; target 6–10 L/min for most adults.' },
       { name: 'FiO2', description: 'inspired oxygen fraction.' },
       { name: 'I:E ratio', description: 'inspiratory to expiratory time.' },
     ],
@@ -411,8 +411,8 @@ export const M1: ModuleConfig = {
     'Four indications: failure of oxygenation, failure of ventilation, airway protection, decreased work of breathing.',
     'Oxygenation failure (Type I) responds to FiO2 and PEEP. Ventilation failure (Type II) responds to minute ventilation.',
     'Set values = what you ordered. Measured values = what actually happened. Gaps are diagnostic.',
-    'Eight terms: Ppeak, Pplat, PEEP, Vt (set and delivered), rate (set and measured), MV, FiO2, I:E ratio.',
+    'Eight terms: Ppeak, Pplat, PEEP, Vt (set and delivered), rate (set and measured), MVe, FiO2, I:E ratio.',
     'Ppeak ≥ Pplat ≥ PEEP. The Ppeak–Pplat gap = airway resistance.',
-    'MV = rate × Vt. Target 6–10 L/min for most adults.',
+    'MVe = rate × Vt. Target 6–10 L/min for most adults.',
   ],
 };

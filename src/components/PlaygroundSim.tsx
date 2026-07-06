@@ -1068,7 +1068,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     // the picture and the lesson is that PS makes the *spontaneous* breaths
     // effective without the patient's rate collapsing. Coupling it made the
     // spontaneous rate lurch when PS changed, which destabilized the Vte /
-    // VE readouts and the sustain-based success criteria.
+    // MVe readouts and the sustain-based success criteria.
     if (key === 'psLevel' && mode === 'PSV') {
       const dPs = val - old;
       setPatient(p => ({
@@ -1799,7 +1799,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               {showsReadout('drivingPressure') && (
                 <NumericCard label="DP" value={metrics.drivingPressure || '--'} unit="cmH2O" color="text-violet-600" flash={flashSet.has('drivingPressure')} {...recogPropsForReadout('drivingPressure', 'DP')} />
               )}
-              <NumericCard label="VE" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" flash={flashSet.has('mve')} {...recogPropsForReadout('mve', 'VE')} />
+              <NumericCard label="MVe" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" flash={flashSet.has('mve')} {...recogPropsForReadout('mve', 'MVe')} />
               <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vte')} />
               <NumericCard label="Vt/PBW" value={(metrics.vte / (demographics.pbw || 1)).toFixed(1)} unit="mL/kg" color="text-emerald-600" flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vt/PBW')} />
               {showsReadout('totalPeep') && (
