@@ -3,6 +3,7 @@ import {
   ArrowLeft, Mail, Copy, Check, Trash2, UserCheck, Clock, Loader2, AlertCircle,
 } from 'lucide-react';
 import { addInvites, removeInvite, isValidEmail, normalizeEmail } from './programService';
+import { useAuth } from '../auth/AuthContext';
 import type { Program, RosterEntry, InviteEntry } from './types';
 
 /**
@@ -21,12 +22,16 @@ const InviteManager: React.FC<{
   reloadInvites: () => Promise<void>;
   onClose: () => void;
 }> = ({ program, roster, invites, invitedBy, reloadInvites, onClose }) => {
+  const { user } = useAuth();
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const joinLink = `${window.location.origin}/?join=${program.enrollmentCode}`;
+  // The invitation is addressed TO the admin sending it (so they get a copy /
+  // a clean sender-visible recipient); the learners go in BCC below.
+  const adminEmail = user?.email ?? '';
 
   // Which invited emails have actually joined (matched to a roster entry).
   const joinedEmails = useMemo(
@@ -78,22 +83,34 @@ const InviteManager: React.FC<{
     `you won't be able to join.\n\n` +
     `Your progress saves to your account automatically.`;
 
-  // Compose to everyone not yet joined. BCC keeps the class list private from
-  // recipients. Gmail/Outlook open a pre-filled web compose window (so it
-  // doesn't depend on the OS default mail app); "Default mail app" uses the
-  // mailto: handler (Outlook desktop, Apple Mail, etc.).
+  // Open a standalone popup WINDOW (not a browser tab) centered on screen.
+  const openComposeWindow = (url: string) => {
+    const w = 720, h = 840;
+    const left = window.screenX + Math.max(0, Math.round((window.outerWidth - w) / 2));
+    const top = window.screenY + Math.max(0, Math.round((window.outerHeight - h) / 2));
+    window.open(
+      url, '_blank',
+      `popup=yes,noopener,width=${w},height=${h},left=${left},top=${top}`,
+    );
+  };
+
+  // Compose to everyone not yet joined. The message is addressed TO the admin
+  // (adminEmail); learners go in BCC so the class list stays private. Gmail /
+  // Outlook open a pre-filled compose in a separate popup window (independent
+  // of the OS default mail app); "Default mail app" uses the mailto: handler
+  // (Outlook desktop, Apple Mail, etc.).
   const composeToPending = (target: 'gmail' | 'outlook' | 'mailto') => {
     if (pending.length === 0) return;
-    const recipients = pending.map(p => p.email).join(',');
-    const bcc = encodeURIComponent(recipients);
+    const to = encodeURIComponent(adminEmail);
+    const bcc = encodeURIComponent(pending.map(p => p.email).join(','));
     const su = encodeURIComponent(inviteSubject);
     const body = encodeURIComponent(inviteBody);
     if (target === 'gmail') {
-      window.open(`https://mail.google.com/mail/?view=cm&fs=1&bcc=${bcc}&su=${su}&body=${body}`, '_blank', 'noopener');
+      openComposeWindow(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&bcc=${bcc}&su=${su}&body=${body}`);
     } else if (target === 'outlook') {
-      window.open(`https://outlook.office.com/mail/deeplink/compose?bcc=${bcc}&subject=${su}&body=${body}`, '_blank', 'noopener');
+      openComposeWindow(`https://outlook.office.com/mail/deeplink/compose?to=${to}&bcc=${bcc}&subject=${su}&body=${body}`);
     } else {
-      window.location.href = `mailto:?bcc=${bcc}&subject=${su}&body=${body}`;
+      window.location.href = `mailto:${to}?bcc=${bcc}&subject=${su}&body=${body}`;
     }
   };
 
@@ -182,7 +199,8 @@ const InviteManager: React.FC<{
           </button>
         </div>
         <p className="text-[12px] text-stone-400 mt-2">
-          Gmail and Outlook open a pre-filled web compose window; everyone is in BCC to keep the list private. You review and hit send.
+          Gmail and Outlook open a pre-filled compose in a separate popup window. Addressed to you
+          {adminEmail ? ` (${adminEmail})` : ''}, with learners in BCC to keep the list private. You review and hit send.
         </p>
       </div>
 
