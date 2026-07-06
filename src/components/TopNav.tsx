@@ -15,6 +15,10 @@ interface Props {
   showAdmin?: boolean;
 }
 
+/** Author's book on Amazon — linked from the header (canonical product URL,
+ *  tracking params stripped). */
+const VENTILATOR_BOOK_URL = 'https://www.amazon.com/Ventilator-Book-William-Owens-MD/dp/0985296569';
+
 /** First-letter-of-each-word initials, capped at 2 characters, for the
  *  avatar chip — e.g. "Jane Smith" -> "JS", "jane@x.com" -> "J". */
 const initialsFrom = (label: string): string => {
@@ -80,8 +84,9 @@ const TopNav: React.FC<Props> = ({ current, onNavigate, userLabel, onSignOut, sh
           })}
         </nav>
 
-        {/* Right side: signed-in learner + sign out */}
-        <div className="ml-auto flex items-center gap-3 relative">
+        {/* Right side: signed-in learner + sign out, with the book link under
+            the account avatar. */}
+        <div className="ml-auto flex flex-col items-end gap-1.5 relative">
           <button
             onClick={() => setMenuOpen(v => !v)}
             className="w-9 h-9 rounded-full bg-white/15 text-white text-[11px] font-bold flex items-center justify-center border border-white/20 hover:bg-white/25 transition"
@@ -89,6 +94,14 @@ const TopNav: React.FC<Props> = ({ current, onNavigate, userLabel, onSignOut, sh
           >
             {initialsFrom(userLabel ?? '?')}
           </button>
+          <a
+            href={VENTILATOR_BOOK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-[10.5px] font-semibold text-white/85 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-2.5 py-1 whitespace-nowrap transition"
+          >
+            <BookOpen size={11} /> Read The Ventilator Book
+          </a>
           {menuOpen && (
             <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-zinc-300 rounded-xl shadow-2xl z-50 p-3 text-zinc-800">
               <div className="flex items-center justify-between border-b border-zinc-100 pb-2 mb-2">
