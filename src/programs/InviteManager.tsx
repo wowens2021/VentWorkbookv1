@@ -33,6 +33,24 @@ const InviteManager: React.FC<{
   // a clean sender-visible recipient); the learners go in BCC below.
   const adminEmail = user?.email ?? '';
 
+  // Default the compose provider to how the admin signed in — a Google login
+  // shouldn't dump them into Outlook. (Microsoft sign-in → Outlook once that
+  // provider is enabled; anything else → the OS default mail app.)
+  type ComposeTarget = 'gmail' | 'outlook' | 'mailto';
+  const providers = user?.providerData?.map(p => p.providerId) ?? [];
+  const recommended: ComposeTarget =
+    providers.includes('google.com') ? 'gmail'
+      : providers.includes('microsoft.com') ? 'outlook'
+        : 'mailto';
+  const targets: { key: ComposeTarget; label: string }[] = [
+    { key: 'gmail', label: 'Gmail' },
+    { key: 'outlook', label: 'Outlook' },
+    { key: 'mailto', label: 'Default mail app' },
+  ];
+  const orderedTargets = [...targets].sort(
+    (a, b) => (b.key === recommended ? 1 : 0) - (a.key === recommended ? 1 : 0),
+  );
+
   // Which invited emails have actually joined (matched to a roster entry).
   const joinedEmails = useMemo(
     () => new Set((roster ?? []).map(r => normalizeEmail(r.email))),
@@ -146,9 +164,9 @@ const InviteManager: React.FC<{
         <textarea
           value={draft}
           onChange={e => setDraft(e.target.value)}
-          rows={3}
-          placeholder="Paste emails — separated by commas, spaces, or new lines&#10;jane@hospital.org, john@hospital.org"
-          className="w-full px-3 py-2.5 border border-stone-300 rounded-lg text-[13.5px] focus:outline-none focus:ring-2 focus:ring-brand-olive/30 focus:border-brand-olive resize-y"
+          rows={2}
+          placeholder="Paste emails — commas, spaces, or new lines"
+          className="w-full max-w-md px-3 py-2 border border-stone-300 rounded-lg text-[13.5px] focus:outline-none focus:ring-2 focus:ring-brand-olive/30 focus:border-brand-olive resize-y"
         />
         <div className="flex items-center justify-between gap-3 mt-2">
           <div className="text-[12px] text-stone-500 min-h-[18px]">
@@ -173,34 +191,32 @@ const InviteManager: React.FC<{
           <Mail size={14} /> Send invite {pending.length > 0 ? `to ${pending.length} not yet joined` : '(everyone has joined)'} — pick your email:
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            onClick={() => composeToPending('gmail')}
-            disabled={pending.length === 0}
-            className="px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:opacity-50 text-white text-[13px] font-bold rounded-lg transition"
-          >
-            Gmail
-          </button>
-          <button
-            onClick={() => composeToPending('outlook')}
-            disabled={pending.length === 0}
-            className="px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:opacity-50 text-white text-[13px] font-bold rounded-lg transition"
-          >
-            Outlook
-          </button>
-          <button
-            onClick={() => composeToPending('mailto')}
-            disabled={pending.length === 0}
-            className="px-4 py-2.5 border border-stone-300 hover:border-brand-olive text-stone-700 disabled:opacity-50 text-[13px] font-bold rounded-lg transition"
-          >
-            Default mail app
-          </button>
+          {orderedTargets.map(t => {
+            const primary = t.key === recommended;
+            return (
+              <button
+                key={t.key}
+                onClick={() => composeToPending(t.key)}
+                disabled={pending.length === 0}
+                className={
+                  primary
+                    ? 'px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-hover disabled:opacity-50 text-white text-[13px] font-bold rounded-lg transition inline-flex items-center gap-2'
+                    : 'px-4 py-2.5 border border-stone-300 hover:border-brand-olive text-stone-700 disabled:opacity-50 text-[13px] font-bold rounded-lg transition'
+                }
+              >
+                {t.label}
+                {primary && <span className="text-[9px] font-black uppercase tracking-wide bg-white/20 px-1.5 py-0.5 rounded">Default</span>}
+              </button>
+            );
+          })}
           <button onClick={copyLink} className="flex items-center gap-1.5 text-[13px] font-bold text-brand-olive ml-2">
             {copied ? <><Check size={14} /> Link copied</> : <><Copy size={14} /> Copy invite link</>}
           </button>
         </div>
         <p className="text-[12px] text-stone-400 mt-2">
           Gmail and Outlook open a pre-filled compose in a separate popup window. Addressed to you
-          {adminEmail ? ` (${adminEmail})` : ''}, with learners in BCC to keep the list private. You review and hit send.
+          {adminEmail ? ` (${adminEmail})` : ''}, with learners in BCC to keep the list private. The
+          highlighted default matches how you signed in. You review and hit send.
         </p>
       </div>
 
