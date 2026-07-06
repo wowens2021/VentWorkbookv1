@@ -1845,7 +1845,9 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           {/* Waveforms — wrapped in an olive-trimmed card so the panel
               reads as a single instrument rather than three loose tiles. */}
           <div className="flex-1 flex flex-col gap-1.5 overflow-hidden relative min-h-0 bg-white rounded-xl border-2 border-brand-olive/25 p-2 shadow-md ring-1 ring-brand-olive/10">
-            <WaveformPanel title="Airway Pressure" dataKey="pressure" unit="cmH2O" segmentedPaths={pressurePaths} bounds={pressureBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} isHoldActive={!!activeHoldType} showZeroLine isFrozen={isFrozen} peepValue={settings.peep} />
+            {/* PEEP guideline is a module teaching aid; free play keeps the
+                pressure trace as a single clean line (peepValue omitted). */}
+            <WaveformPanel title="Airway Pressure" dataKey="pressure" unit="cmH2O" segmentedPaths={pressurePaths} bounds={pressureBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} isHoldActive={!!activeHoldType} showZeroLine isFrozen={isFrozen} peepValue={playgroundMode ? undefined : settings.peep} />
             <WaveformPanel title="Flow Rate" dataKey="flow" unit="L/min" segmentedPaths={flowPaths} bounds={flowBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} showZeroLine isFrozen={isFrozen} />
             <WaveformPanel title="Volume" dataKey="volume" unit="mL" segmentedPaths={volumePaths} bounds={volumeBounds} cursorIndex={cursorIndex} dataPoints={dataPoints} showZeroLine isFrozen={isFrozen} />
             {/* Inline recognition prompt overlay. Two layouts:
