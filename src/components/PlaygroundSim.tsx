@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Activity, User, Pause, Play, X, Plus, Minus, BookOpen, Lock,
 } from 'lucide-react';
@@ -1494,6 +1494,57 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     requestRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(requestRef.current);
   }, []);
+
+  // ── Free-play startup seeding (fixes the on-load waveform spike) ──
+  // In FREE PLAY there is no harness, so the harness-driven reset block
+  // (which zeroes/seeds every breath-cycle ref) never runs — the refs sit at
+  // their raw useRef() defaults. Two of those defaults caused a violent
+  // transient on the very first mount:
+  //   1. nextSpontaneousTimeRef = 0 → because elapsedInSim ≥ 0 on frame one,
+  //      a spurious PATIENT-TRIGGERED breath fired ~1 s after load (the red
+  //      diverging breath in the bug report).
+  //   2. prvcAdaptivePi = 15 (a fixed guess) → against the default mechanics
+  //      the first PRVC breath over-inflated (~2× the set Vt), and the large
+  //      end-inspiratory volume drove the expiratory flow/volume off-scale
+  //      before the adaptive loop converged.
+  // Seeding both to steady state makes the first breath a clean, on-target
+  // mandatory breath. Guarded to free-play only, so module scenarios (which
+  // seed through the harness reset) are completely unaffected.
+  // useLayoutEffect (not useEffect) so the seed lands BEFORE the animation
+  // loop's first requestAnimationFrame frame — a passive effect would run a
+  // frame late and the first breath would still use the un-seeded values.
+  useLayoutEffect(() => {
+    if (harness) return;
+    const s = settingsRef.current;
+    const p = patientRef.current;
+    const peepFactor = (initialPreset?.patient as any)?.disable_peep_recruitment
+      ? 1.0
+      : Math.min(1.0, Math.max(0.55, 0.55 + 0.05625 * s.peep));
+    const C = (p.compliance * peepFactor) / 1000;              // L/cmH2O
+    const tauInsp = Math.max(0.05, p.resistance * C);
+    const fill = Math.max(0.2, 1 - Math.exp(-(s.iTime || 1) / tauInsp));
+    // Pi that delivers ~the set Vt for these mechanics: Vt = C·Pi·fill.
+    const seedPi = Math.max(5, Math.min(30, (s.tidalVolume / 1000) / (C * fill)));
+    setPrvcAdaptivePi(seedPi);
+    prvcAdaptivePiRef.current = seedPi;
+    // Schedule the first mandatory breath one full interval out. It defaults
+    // to 0, which fired the first mandatory breath at t = I-time (~1 s) — right
+    // on top of the implicit breath that starts at t=0 (lastBreathStart=0), so
+    // two inspirations stacked and the volume summed to ~2× the set Vt. With
+    // lastBreathStartTimeRef=0 the implicit breath IS the first breath; the
+    // next one belongs one respiratory interval later.
+    nextMandatoryTimeRef.current = 60 / Math.max(1, s.respiratoryRate);
+    // Push the first spontaneous breath one full interval out instead of t=0.
+    if (p.spontaneousRate > 0) {
+      nextSpontaneousTimeRef.current = 60 / p.spontaneousRate;
+    }
+    // Clear the volume-integrator seeds so the first breath starts from an
+    // empty lung. vAtEndOfInspRef defaults to 0.45 L, which otherwise renders
+    // a phantom ~450 mL volume / expiratory flow on the very first frames.
+    vAtEndOfInspRef.current = 0;
+    lastVolumeRef.current = 0;
+    trappedVolumeAtBreathStartRef.current = 0;
+  }, []); // once, on mount
 
   // Freeze side-effects
   useEffect(() => {
