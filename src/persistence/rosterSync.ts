@@ -16,6 +16,7 @@ interface RosterContext {
   uid: string;
   email: string;
   displayName: string;
+  occupation?: string;
 }
 
 let ctx: RosterContext | null = null;
@@ -38,7 +39,7 @@ function scheduleRosterWrite() {
  *  after joining) can seed the roster without waiting for the debounce. */
 export async function writeRosterNow() {
   if (!ctx) return;
-  const { programId, uid, email, displayName } = ctx;
+  const { programId, uid, email, displayName, occupation } = ctx;
   const data = buildRosterModuleData(listAllProgress());
   try {
     await setDoc(
@@ -46,6 +47,7 @@ export async function writeRosterNow() {
       {
         email,
         displayName,
+        ...(occupation ? { occupation } : {}),
         updatedAt: serverTimestamp(),
         ...data,
       },

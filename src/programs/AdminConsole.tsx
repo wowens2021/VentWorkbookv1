@@ -195,6 +195,7 @@ const AdminConsole: React.FC = () => {
                         <span className="text-[14px] font-semibold text-zinc-900 truncate">{entry.displayName || entry.email}</span>
                         {isEntryAdmin && <span className="text-[9px] font-black uppercase tracking-widest text-brand-olive bg-brand-olive/10 px-1.5 py-0.5 rounded">Admin</span>}
                         {isMe && <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">You</span>}
+                        {entry.occupation && <span className="text-[10px] font-semibold text-stone-600 bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded truncate max-w-[200px] shrink-0">{entry.occupation}</span>}
                       </div>
                       <div className="text-[12px] text-stone-500 truncate">{entry.email}</div>
                     </div>

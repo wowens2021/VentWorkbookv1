@@ -43,6 +43,10 @@ export interface UserProfile {
   displayName: string;
   role: Role;
   programId: string | null;
+  /** Self-reported role/occupation captured at sign-up (free text allowed via
+   *  the "Other" option). Optional — Google sign-ups and pre-existing accounts
+   *  won't have it. */
+  occupation?: string;
 }
 
 /**
@@ -86,6 +90,9 @@ export interface RosterEntry {
   uid: string;
   email: string;
   displayName: string;
+  /** Self-reported occupation, mirrored from the learner's profile so the
+   *  admin roster can show who each learner is. Optional (older/Google accounts). */
+  occupation?: string;
   joinedAt: Timestamp | null;
   updatedAt: Timestamp | null;
   modulesCompleted: number;

@@ -186,7 +186,7 @@ export async function createProgram(
     displayName: admin.displayName,
     role: 'admin',
     programId: ref.id,
-  });
+  }, { merge: true }); // merge: preserve occupation seeded at sign-up
 
   const created = await loadProgram(ref.id);
   if (!created) throw new Error('Program creation failed.');
@@ -259,7 +259,7 @@ export async function joinByCode(
       displayName: learner.displayName,
       role: 'student',
       programId,
-    });
+    }, { merge: true }); // merge: preserve occupation seeded at sign-up
   });
 
   const joined = await loadProgram(programId);

@@ -10,7 +10,8 @@ import {
   sendEmailVerification,
   updateProfile,
 } from 'firebase/auth';
-import { auth, googleProvider } from '../firebase/config';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, googleProvider, db } from '../firebase/config';
 
 interface AuthContextValue {
   /** null while the initial auth check is in flight; undefined-like "no
@@ -18,7 +19,7 @@ interface AuthContextValue {
    *  `loading` to distinguish "still checking" from "signed out". */
   user: User | null;
   loading: boolean;
-  signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, displayName: string, occupation?: string) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -48,10 +49,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value: AuthContextValue = {
     user,
     loading,
-    signUpWithEmail: async (email, password, displayName) => {
+    signUpWithEmail: async (email, password, displayName, occupation) => {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (displayName.trim()) {
         await updateProfile(cred.user, { displayName: displayName.trim() });
+      }
+      // Seed the Firestore profile with what we know now (name/email +
+      // occupation). Written with merge so the later join/create-program
+      // step (which sets role + programId) doesn't clobber occupation, and
+      // vice-versa. Best-effort — never block sign-up on this write.
+      if (occupation?.trim()) {
+        try {
+          await setDoc(
+            doc(db, 'users', cred.user.uid),
+            { email: email.trim(), displayName: displayName.trim(), occupation: occupation.trim() },
+            { merge: true },
+          );
+        } catch {}
       }
       // Best-effort — a bounced/blocked verification email shouldn't stop
       // the learner from using the app.

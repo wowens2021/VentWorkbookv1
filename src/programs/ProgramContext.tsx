@@ -50,6 +50,7 @@ export const ProgramProvider: React.FC<{ children: React.ReactNode }> = ({ child
           uid: user.uid,
           email: user.email ?? prof.email ?? '',
           displayName: user.displayName ?? prof.displayName ?? '',
+          occupation: prof.occupation,
         });
       } else {
         setRosterContext(null);

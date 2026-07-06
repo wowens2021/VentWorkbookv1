@@ -1,8 +1,21 @@
 import React, { useState } from 'react';
-import { Activity, Mail, Lock, User as UserIcon, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Activity, Mail, Lock, User as UserIcon, Briefcase, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
 type Mode = 'signin' | 'signup';
+
+/** Grouped occupation options for the sign-up dropdown. Stored value is the
+ *  human-readable label; "Other" reveals a free-text field. */
+const OCCUPATION_GROUPS: { group: string; options: string[] }[] = [
+  { group: 'Respiratory Therapy', options: ['Respiratory Therapist (RT/RRT)', 'Respiratory Therapy Student'] },
+  { group: 'Nursing', options: ['ICU / Critical Care Nurse', 'Nursing Student', 'Patient Care Technician (PCT)'] },
+  { group: 'Physicians', options: ['Critical Care Physician / Intensivist', 'Pulmonary/Critical Care Fellow', 'Anesthesiologist', 'Emergency Medicine Physician', 'Medical Student', 'Resident (non-ICU specialty rotating through)'] },
+  { group: 'Advanced Practice', options: ['Nurse Practitioner', 'Physician Assistant', 'CRNA (Certified Registered Nurse Anesthetist)', 'PA/NP Student'] },
+  { group: 'Prehospital / Transport', options: ['Paramedic', 'Flight Paramedic / Critical Care Transport'] },
+  { group: 'Allied & Technical', options: ['Perfusionist', 'Biomedical / Clinical Engineer (services/configures ventilators)'] },
+  { group: 'Education & Training', options: ['Clinical Educator / Simulation Faculty', 'Nurse Educator'] },
+];
+const OCCUPATION_OTHER = 'Other';
 
 /** Inline Google "G" mark — lucide has no brand icons, and pulling in a
  *  whole icon-brand package for one glyph isn't worth the dependency. */
@@ -27,9 +40,14 @@ const LoginPage: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [occupation, setOccupation] = useState('');
+  const [occupationOther, setOccupationOther] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
+
+  // Effective occupation: the free-text value when "Other" is picked.
+  const effectiveOccupation = occupation === OCCUPATION_OTHER ? occupationOther.trim() : occupation;
 
   const friendlyError = (code: string): string => {
     switch (code) {
@@ -49,10 +67,14 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setError(null);
     setResetSent(false);
+    if (mode === 'signup' && !effectiveOccupation) {
+      setError(occupation === OCCUPATION_OTHER ? 'Tell us your role in the box.' : 'Select your role/occupation.');
+      return;
+    }
     setBusy(true);
     try {
       if (mode === 'signup') {
-        await signUpWithEmail(email.trim(), password, name);
+        await signUpWithEmail(email.trim(), password, name, effectiveOccupation);
       } else {
         await signInWithEmail(email.trim(), password);
       }
@@ -148,6 +170,40 @@ const LoginPage: React.FC = () => {
                     className="w-full pl-9 pr-3 py-2.5 border border-stone-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-brand-olive/30 focus:border-brand-olive"
                   />
                 </div>
+              </div>
+            )}
+
+            {mode === 'signup' && (
+              <div>
+                <label className="text-[12px] font-bold text-stone-600 mb-1 block">Role / occupation</label>
+                <div className="relative">
+                  <Briefcase size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+                  <select
+                    value={occupation}
+                    onChange={e => setOccupation(e.target.value)}
+                    className={`w-full pl-9 pr-3 py-2.5 border border-stone-300 rounded-lg text-[14px] bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-brand-olive/30 focus:border-brand-olive ${occupation ? 'text-zinc-900' : 'text-stone-400'}`}
+                  >
+                    <option value="" disabled>Select your role…</option>
+                    {OCCUPATION_GROUPS.map(g => (
+                      <optgroup key={g.group} label={g.group}>
+                        {g.options.map(o => <option key={o} value={o} className="text-zinc-900">{o}</option>)}
+                      </optgroup>
+                    ))}
+                    <optgroup label="Other">
+                      <option value={OCCUPATION_OTHER} className="text-zinc-900">Other (free text)</option>
+                    </optgroup>
+                  </select>
+                </div>
+                {occupation === OCCUPATION_OTHER && (
+                  <input
+                    type="text"
+                    value={occupationOther}
+                    onChange={e => setOccupationOther(e.target.value)}
+                    placeholder="Your role"
+                    autoFocus
+                    className="w-full mt-2 px-3 py-2.5 border border-stone-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-brand-olive/30 focus:border-brand-olive"
+                  />
+                )}
               </div>
             )}
 
