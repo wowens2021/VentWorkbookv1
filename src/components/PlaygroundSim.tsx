@@ -567,17 +567,22 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   const [activeHoldType, setActiveHoldType] = useState<'INSP' | 'EXP' | null>(null);
   const [prvcAdaptivePi, setPrvcAdaptivePi] = useState(15);
 
-  // Pplat / driving pressure are maneuver-derived — a real ventilator shows
-  // them only AFTER an inspiratory hold. When a scenario features the hold
-  // (unlocks 'inspiratory_pause') or in free play, the Pplat/DP readouts show
-  // a dash until the learner performs a hold, then this snapshot taken at that
-  // hold; changing a plat-affecting setting blanks it again so a fresh hold is
-  // required. metrics.plat / metrics.drivingPressure remain live every breath
-  // for the outcome-gate trackers, so this is display-only. Modules that show
-  // Pplat WITHOUT featuring the hold (e.g. M1 display-reading) are unaffected.
-  const requireHoldForPlat = playgroundMode || !!unlockedControls?.includes('inspiratory_pause');
+  // Pplat / driving pressure / static compliance are maneuver-derived — a real
+  // ventilator shows them only AFTER an inspiratory hold. So in EVERY module
+  // that displays them, the readout shows a dash until the learner clicks
+  // INSP HOLD; the value appears once the hold is processed (~0.5 s, well
+  // within 2–3 s), holds for 30 s, then clears (re-hold to re-measure). It also
+  // clears if a plat-affecting setting changes, so a stale plateau is never
+  // shown. metrics.plat / metrics.drivingPressure stay live EVERY breath for
+  // the outcome-gate trackers, so this is display-only and the modules that
+  // grade on a hold keep working exactly the same.
+  const PLAT_HOLD_MS = 30000; // how long a measured plateau stays on screen
   const [heldPlat, setHeldPlat] = useState<number | null>(null);
   const [heldDp, setHeldDp] = useState<number | null>(null);
+  const platExpiryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearPlatExpiry = useCallback(() => {
+    if (platExpiryRef.current) { clearTimeout(platExpiryRef.current); platExpiryRef.current = null; }
+  }, []);
 
   const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS, ...(initialPreset?.settings ?? {}) });
   const [patient, setPatient] = useState(() => {
@@ -613,6 +618,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       setActiveHoldType(null);
       setHeldPlat(null);
       setHeldDp(null);
+      clearPlatExpiry();
       breathNumRef.current = 0;
       startTimeRef.current = Date.now();
       totalFreezeOffsetRef.current = 0;
@@ -1405,9 +1411,13 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           setActiveHoldType(null);
           const platMeasured = (vAtEndOfInspRef.current / C) + settings.peep;
           setMetrics(m => ({ ...m, plat: Math.round(platMeasured), drivingPressure: Math.round(platMeasured - settings.peep) }));
-          // Snapshot for the hold-gated Pplat/DP display (see requireHoldForPlat).
+          // Snapshot the measured plateau for the hold-gated Pplat / DP / Cstat
+          // displays, then auto-clear it after PLAT_HOLD_MS so the learner must
+          // re-hold to re-measure.
           setHeldPlat(Math.round(platMeasured));
           setHeldDp(Math.round(platMeasured - settings.peep));
+          clearPlatExpiry();
+          platExpiryRef.current = setTimeout(() => { setHeldPlat(null); setHeldDp(null); }, PLAT_HOLD_MS);
         }
       } else if (isExpHolding.current) {
         const dur = elapsedTotal - holdStartTimeRef.current;
@@ -1563,15 +1573,18 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     trappedVolumeAtBreathStartRef.current = 0;
   }, []); // once, on mount
 
-  // Blank the hold-gated Pplat/DP snapshot whenever a plat-affecting setting
-  // changes, so the learner must re-measure with a fresh inspiratory hold
-  // (matching a real ventilator, where the displayed plateau is stale until
-  // the next maneuver). Only meaningful when requireHoldForPlat; harmless
-  // otherwise since the snapshot isn't displayed then.
+  // Blank the hold-gated Pplat/DP/Cstat snapshot whenever a plat-affecting
+  // setting changes, so the learner must re-measure with a fresh inspiratory
+  // hold (matching a real ventilator, where the displayed plateau is stale
+  // until the next maneuver). Also cancels the 30 s auto-clear timer.
   useEffect(() => {
     setHeldPlat(null);
     setHeldDp(null);
-  }, [settings.tidalVolume, settings.peep, settings.pInsp, settings.iTime, settings.respiratoryRate, patient.compliance, patient.resistance, mode]);
+    clearPlatExpiry();
+  }, [settings.tidalVolume, settings.peep, settings.pInsp, settings.iTime, settings.respiratoryRate, patient.compliance, patient.resistance, mode, clearPlatExpiry]);
+
+  // Clear the plateau-expiry timeout on unmount.
+  useEffect(() => () => clearPlatExpiry(), [clearPlatExpiry]);
 
   // Freeze side-effects
   useEffect(() => {
@@ -1821,10 +1834,10 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
                   underlying metrics.plat / autoPeep are still computed so any
                   tracker that grades on them continues to work. */}
               {showsReadout('plat') && (
-                <NumericCard label="Pplat" value={requireHoldForPlat ? (heldPlat ?? '--') : (metrics.plat || '--')} unit="cmH2O" color={(requireHoldForPlat ? (heldPlat ?? 0) : metrics.plat) > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} flash={flashSet.has('plat')} {...recogPropsForReadout('plat', 'Pplat')} />
+                <NumericCard label="Pplat" value={heldPlat ?? '--'} unit="cmH2O" color={(heldPlat ?? 0) > 30 ? 'text-rose-600 animate-pulse' : 'text-emerald-600'} flash={flashSet.has('plat')} {...recogPropsForReadout('plat', 'Pplat')} />
               )}
               {showsReadout('drivingPressure') && (
-                <NumericCard label="DP" value={requireHoldForPlat ? (heldDp ?? '--') : (metrics.drivingPressure || '--')} unit="cmH2O" color="text-violet-600" flash={flashSet.has('drivingPressure')} {...recogPropsForReadout('drivingPressure', 'DP')} />
+                <NumericCard label="DP" value={heldDp ?? '--'} unit="cmH2O" color="text-violet-600" flash={flashSet.has('drivingPressure')} {...recogPropsForReadout('drivingPressure', 'DP')} />
               )}
               <NumericCard label="MVe" value={metrics.mve.toFixed(1)} unit="L/min" color="text-sky-600" flash={flashSet.has('mve')} {...recogPropsForReadout('mve', 'MVe')} />
               <NumericCard label="Vte" value={metrics.vte} unit="mL" color={metrics.isLastSpont ? 'text-amber-600' : 'text-sky-600'} flash={flashSet.has('vte')} {...recogPropsForReadout('vte', 'Vte')} />
@@ -1857,8 +1870,8 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               {showsReadout('staticCompliance') && (
                 <NumericCard
                   label="Cstat"
-                  value={(metrics.plat && metrics.plat > settings.peep)
-                    ? Math.round(metrics.vte / Math.max(1, metrics.plat - settings.peep))
+                  value={(heldPlat && heldPlat > settings.peep)
+                    ? Math.round(metrics.vte / Math.max(1, heldPlat - settings.peep))
                     : '--'}
                   unit="mL/cmH2O"
                   color="text-violet-600"
