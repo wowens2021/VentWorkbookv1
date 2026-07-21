@@ -467,7 +467,7 @@ export const M18: ModuleConfig = {
             { label: 'Delay 24h; IV steroids; recheck cuff leak', is_correct: false, explanation: 'Cuff leak isn\'t the problem — pre-screen and SBT both fail.' },
             { label: 'Extubate with NIPPV standby', is_correct: false, explanation: 'Patient hasn\'t passed pre-screen or SBT. NIPPV after a failed SBT is rescue, not standby.' },
             { label: 'Extubate per brain-injury data', is_correct: false, explanation: 'Wrong patient context — this is a respiratory pre-screen failure.' },
-            { label: 'Back to A/C — not ready', is_correct: true, explanation: 'Pre-criteria fail (PEEP 10, FiO2 0.50), high RSBI 130. Not a candidate for an SBT today.' },
+            { label: 'Back to A/C — not ready', is_correct: true, explanation: 'Pre-criteria fail (PEEP 10, above the ≤ 8 threshold) plus a high RSBI 130. (FiO2 0.50 actually meets the ≤ 0.50 bar.) Not a candidate for an SBT today.' },
           ],
           max_attempts: 2,
         },

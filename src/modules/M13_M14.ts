@@ -131,13 +131,19 @@ export const M13: ModuleConfig = {
     sequence: 'strict',
     reset_between: false,
     present_one_at_a_time: true,
+    // Observation[i] is revealed AFTER child[i] fires, so each line describes
+    // the PEEP the learner just set to trigger it (not the one before). The
+    // sim models recruitment: compliance climbs from PEEP 5→8 and then
+    // PLATEAUS (it does not fall — no overdistension penalty is modeled), so
+    // the exercise is "recruit until Cstat stops rising," with the real-lung
+    // overdistension caveat noted at the end.
     observations: [
-      'PEEP 5 — baseline. Note the static compliance (Cstat) and the SpO2. Write the compliance number down.',
-      'PEEP 7 — wait five breaths. Cstat should have ticked up; the lung is just starting to recruit.',
-      'PEEP 9 — Cstat keeps rising. You\'re still on the recruitment side of the curve.',
-      'PEEP 11 — getting close. Cstat is high; SpO2 is improving.',
-      'PEEP 13 — Cstat should be at or near its peak for this patient. This is the "best PEEP" by the compliance-guided method.',
-      'PEEP 15 — push past the optimal point and you should see Cstat start to fall. That\'s overdistension. Driving pressure starts rising again. (This is the spec\'s teaching moment for "too much PEEP".)',
+      'PEEP 7 — Cstat has ticked up from its PEEP-5 baseline; the lung is starting to recruit. (Jot the PEEP-5 and PEEP-7 compliance numbers down.)',
+      'PEEP 9 — Cstat has climbed further and is near its plateau; most of the recruitable lung is now open.',
+      'PEEP 11 — Cstat has plateaued and SpO2 is improving. Extra PEEP is no longer buying you compliance.',
+      'PEEP 13 — Cstat is flat at its recruited maximum. You\'ve reached the fully-open plateau.',
+      'You\'ve walked PEEP up. Now identify where compliance stopped improving.',
+      'PEEP 15 — Cstat is unchanged from the plateau; no further recruitment. In a real lung, pushing PEEP past the recruited plateau would eventually overdistend and drop compliance — this sim models recruitment only, so watch for the plateau, and treat the rising intrathoracic pressure (SBP may fall) as the signal you\'ve gone far enough.',
     ],
     children: [
       { kind: 'manipulation', control: 'peep', condition: { type: 'absolute', operator: '>=', value: 7 } },
@@ -149,12 +155,12 @@ export const M13: ModuleConfig = {
         control: 'peep',
         condition: { type: 'absolute', operator: '>=', value: 13 },
         require_acknowledgment: {
-          question: 'Looking at the compliance values you recorded across the titration, which PEEP produced the highest static compliance for this patient?',
+          question: 'Looking at the compliance values you recorded across the titration, at what PEEP did static compliance stop improving — i.e. reach its recruited plateau?',
           options: [
             { label: 'PEEP 5', is_correct: false, explanation: 'Compliance is at its lowest here; the lung is underrecruited.' },
-            { label: 'PEEP 9', is_correct: false, explanation: 'Compliance is still rising at 9; the peak has not been reached. Stopping here leaves recruitable lung unopened.' },
-            { label: 'PEEP 13', is_correct: true, explanation: 'Compliance peaks at PEEP 13 for this patient. Below this, alveoli are still collapsing at end-expiration. Above this, open alveoli are being overdistended and compliance falls. PEEP 13 is where recruitment benefit is maximized before overdistension begins.' },
-            { label: 'PEEP 17', is_correct: false, explanation: 'Compliance has fallen here — overdistension range. Hemodynamic compromise is also more likely.' },
+            { label: 'PEEP 9', is_correct: true, explanation: 'Compliance climbs from PEEP 5 to about PEEP 8–9 and then plateaus — most of the recruitable lung is open by here. This is the compliance-guided best PEEP: the lowest PEEP that fully recruits. Going higher adds pressure without adding compliance.' },
+            { label: 'PEEP 13', is_correct: false, explanation: 'Compliance at 13 is the same as at 9 — it plateaued earlier. You\'ve added PEEP (and intrathoracic pressure) without a compliance gain.' },
+            { label: 'PEEP 17', is_correct: false, explanation: 'Same plateau compliance as 9, but the extra PEEP raises intrathoracic pressure and risks hemodynamic compromise for no recruitment benefit.' },
           ],
         },
       },
@@ -163,11 +169,11 @@ export const M13: ModuleConfig = {
         control: 'peep',
         condition: { type: 'absolute', operator: '>=', value: 15 },
         require_acknowledgment: {
-          question: 'You pushed PEEP above the compliance peak. Which of the following describes what you should expect on the readouts?',
+          question: 'You pushed PEEP past the recruited plateau. Which of the following describes what you should expect on the readouts?',
           options: [
-            { label: 'Cstat falls; driving pressure (Pplat − PEEP at the same Vt) rises again; SBP may drop.', is_correct: true, explanation: 'The overdistension signature. Open alveoli are being stretched, compliance falls, the same Vt now costs more pressure, and the rising intrathoracic pressure can drop venous return.' },
-            { label: 'Cstat keeps rising indefinitely — more PEEP is always better.', is_correct: false, explanation: 'There is a ceiling. Beyond the recruitable lung, more PEEP only overdistends.' },
-            { label: 'Cstat is unchanged because PEEP does not affect compliance.', is_correct: false, explanation: 'PEEP determines whether alveoli are open or collapsed, which directly drives compliance.' },
+            { label: 'Cstat is flat (no further recruitment); SBP may drop from the higher intrathoracic pressure.', is_correct: true, explanation: 'Once the recruitable lung is open, more PEEP adds no compliance — Cstat plateaus. The rising airway/intrathoracic pressure can still cut venous return and drop the blood pressure, which is your signal you\'ve gone far enough. (In a real lung, pushing further would eventually overdistend and make Cstat FALL — the danger this method protects against.)' },
+            { label: 'Cstat keeps rising indefinitely — more PEEP is always better.', is_correct: false, explanation: 'There is a ceiling. Once the recruitable lung is open, more PEEP adds no compliance and only raises pressure.' },
+            { label: 'Cstat is unchanged because PEEP does not affect compliance.', is_correct: false, explanation: 'PEEP does affect compliance below the plateau — it determines whether unstable alveoli are open or collapsed. Above the plateau it just stops helping.' },
           ],
         },
       },
@@ -205,12 +211,12 @@ export const M13: ModuleConfig = {
       kind: 'callout',
       tone: 'warn',
       markdown:
-        '**The trade-off you accept with high PEEP.** Driving pressure (Pplat − PEEP) is the pressure applied across the lung with each tidal breath. As PEEP rises, driving pressure falls (for the same Vt and compliance) — a good thing. But if PEEP overshoots the optimal point and overdistension begins, compliance falls, and driving pressure rises again at the same tidal volume. Hemodynamically, PEEP above 10–12 cmH2O can reduce venous return in hypovolemic patients and should always be paired with a check of blood pressure and heart rate after each step.',
+        '**The trade-off you accept with high PEEP.** Driving pressure (Pplat − PEEP = Vt ÷ compliance) is the pressure applied across the lung with each tidal breath. As PEEP **recruits lung and raises compliance**, driving pressure falls for the same Vt — a good thing. (Note: at a *fixed* compliance, driving pressure is independent of PEEP — it\'s the recruitment that lowers it.) But once PEEP passes the recruited plateau, compliance stops improving, so driving pressure stops falling — and in a real lung, overdistension would drop compliance and drive it back up. Hemodynamically, PEEP above 10–12 cmH2O can reduce venous return in hypovolemic patients and should always be paired with a check of blood pressure and heart rate after each step.',
     },
     {
       kind: 'prose',
       markdown:
-        '**Predict before you explore.** This patient is on PEEP 5 with an SpO2 of 88% and a static compliance of 18 mL/cmH2O. If you raise PEEP to 10, what do you expect will happen to:\n\n- (a) SpO2?\n- (b) static compliance?\n- (c) Ppeak?\n\nWrite down or mentally commit to an answer, then go to the Explore phase and try it.',
+        '**Predict before you explore.** This patient is on PEEP 5 with an SpO2 in the high 80s and a static compliance around 23 mL/cmH2O (moderate ARDS, partly derecruited at this low PEEP). If you raise PEEP to 10, what do you expect will happen to:\n\n- (a) SpO2?\n- (b) static compliance?\n- (c) Ppeak?\n\nWrite down or mentally commit to an answer, then go to the Explore phase and try it.',
     },
   ],
 
@@ -248,7 +254,7 @@ export const M13: ModuleConfig = {
         { label: 'Reduce FiO2 first to limit oxygen toxicity', is_correct: false, explanation: 'FiO2 is already very high (0.90). Reducing it further would worsen oxygenation. Oxygen toxicity is a concern with prolonged high FiO2, but the immediate problem is inadequate oxygenation, not excess.' },
         { label: 'Increase PEEP before increasing FiO2 further', is_correct: true, explanation: 'With FiO2 already at 0.90 and SpO2 not meeting target, the ARDSNet approach steps up PEEP next. PEEP recruits alveoli, reducing shunt. FiO2 can sometimes be weaned once PEEP improves the shunt fraction. Driving FiO2 to 1.0 first, without addressing the underlying shunt, risks prolonged hyperoxia without mechanism-based benefit.' },
         { label: 'Increase both FiO2 and PEEP simultaneously to maximum', is_correct: false, explanation: 'Maximum PEEP and FiO2 simultaneously is not a titration strategy; it removes the ability to know which lever is helping and exposes the patient to maximum hemodynamic and overdistension risk without diagnostic purpose.' },
-        { label: 'Add inhaled nitric oxide', is_correct: false, explanation: 'Inhaled nitric oxide is a rescue therapy for refractory hypoxemia (P/F < 55) or severe RV failure, not a first-line response to inadequate oxygenation on moderate settings.' },
+        { label: 'Add inhaled nitric oxide', is_correct: false, explanation: 'Inhaled nitric oxide is a rescue therapy for refractory hypoxemia (P/F < 100) or severe RV failure, not a first-line response to inadequate oxygenation on moderate settings.' },
       ],
     },
     {

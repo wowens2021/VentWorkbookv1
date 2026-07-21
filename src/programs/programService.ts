@@ -257,7 +257,11 @@ export async function joinByCode(
     tx.set(userRef(learner.uid), {
       email: learner.email,
       displayName: learner.displayName,
-      role: 'student',
+      // Don't overwrite role for someone who already admins this program
+      // (an admin redeeming their own code) — only set 'student' for a
+      // genuinely new joiner. isAdmin is derived from adminUids either way,
+      // but keep the persisted role honest.
+      ...(alreadyMember ? {} : { role: 'student' }),
       programId,
     }, { merge: true }); // merge: preserve occupation seeded at sign-up
   });

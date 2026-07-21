@@ -177,6 +177,14 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
 
   // ── Hint tier counter (read by HintLadder; written by onTierTriggered) ──
   const [hintTiersTriggered, setHintTiersTriggered] = useState(prior?.hint_tiers_triggered ?? 0);
+  // Mirror of the counter in a ref. The objective-completion persist below
+  // runs inside a harness callback whose closure captured hintTiersTriggered
+  // when the try-it effect mounted (value 0) — writing that stale state would
+  // clobber the correct count onTierTriggered persisted as hints were used
+  // (inflating the score's "no hints" bonus and zeroing the roster's
+  // hintsUsed). Reading the ref instead always sees the live count.
+  const hintTiersRef = useRef(hintTiersTriggered);
+  useEffect(() => { hintTiersRef.current = hintTiersTriggered; }, [hintTiersTriggered]);
   // Bumped each time the learner clicks the "Stuck? Show a hint" button.
   // Used as the React key on HintLadder so the component remounts on each
   // request — that clears HintLadder's local `dismissed` set and lets the
@@ -582,7 +590,7 @@ const ModuleShell: React.FC<Props> = ({ module, onBack, onNext, onHome, nextModu
         time_to_objective_sec: elapsedSec,
         task_control_changes: taskControlChangesRef.current,
         reset_to_start_clicks: resetClicksRef.current,
-        hint_tiers_triggered: hintTiersTriggered,
+        hint_tiers_triggered: hintTiersRef.current,
         replay_snapshot_ref: ref,
       });
     });

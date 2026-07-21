@@ -189,7 +189,7 @@ export const M7: ModuleConfig = {
         { label: 'Both rise — smaller breaths need more pressure.', is_correct: false, explanation: 'Backwards — smaller volume through the same compliance generates less pressure.' },
       ],
       observe:
-        "Plat falls by about 2; driving pressure falls by the same amount. Vt is the lever — for this patient's compliance, the lung-protective range comes free once you lower the order.",
+        "Plat falls slightly (by ΔVt ÷ compliance); driving pressure falls by the same amount. Vt is the lever — for this patient's compliance, the lung-protective range comes free once you lower the order.",
     },
     {
       kind: 'callout',
@@ -362,7 +362,7 @@ export const M8: ModuleConfig = {
       prompt: "A PCV patient's compliance improves overnight from 25 to 50 at a fixed PINSP. The most likely change is:",
       options: [
         { label: 'Vt is unchanged; only PIP rises.', is_correct: false, explanation: "PIP doesn't rise in PCV — it's *fixed*." },
-        { label: 'Vt approximately doubles.', is_correct: true, explanation: 'Vt ≈ PINSP × C. This is why PCV needs daily attention — improving lungs lead to higher Vt unless you titrate down.' },
+        { label: 'Vt approximately doubles.', is_correct: true, explanation: 'Vt ≈ (PINSP − PEEP) × C. This is why PCV needs daily attention — improving lungs lead to higher Vt unless you titrate down.' },
         { label: 'Vt halves.', is_correct: false, explanation: 'Direction is reversed.' },
         { label: 'The ventilator reduces PINSP to compensate.', is_correct: false, explanation: 'Dual-control modes do this. PCV does not.' },
       ],
@@ -491,7 +491,7 @@ export const M8: ModuleConfig = {
       kind: 'callout',
       tone: 'info',
       markdown:
-        'PINSP is the **total inspiratory pressure** the vent holds at the airway opening — not the rise above PEEP. The **driving pressure** is what actually inflates the lung: `DP = PINSP − PEEP`, and `Vt ≈ DP × compliance`. (Some vendors label the knob "Pcontrol" or "P above PEEP" instead — read your vent before you turn it.)',
+        'PINSP is the **total inspiratory pressure** the vent holds at the airway opening — not the rise above PEEP. The **driving pressure** is what actually inflates the lung: `DP = Pplat − PEEP`. In PCV, once inspiratory flow decelerates to zero the plateau equals PINSP, so `DP ≈ PINSP − PEEP` and `Vt ≈ (PINSP − PEEP) × compliance`. (Some vendors label the knob "Pcontrol" or "P above PEEP" instead — read your vent before you turn it.)',
     },
     {
       kind: 'predict_mcq',
@@ -625,7 +625,7 @@ export const M8: ModuleConfig = {
 
   key_points: [
     'PCV guarantees PINSP and I-time. Vt is the dependent variable.',
-    'Vt ≈ PINSP × Compliance. As compliance changes, Vt swings.',
+    'Vt ≈ (PINSP − PEEP) × Compliance. As compliance changes, Vt swings.',
     'The PIP alarm does not warn you in PCV — the low-Vt alarm does.',
     'PINSP is the rise above PEEP. Driving pressure is plat minus PEEP. Not the same.',
     'In severe bronchospasm, choose VCV — PCV will silently underventilate as resistance rises.',

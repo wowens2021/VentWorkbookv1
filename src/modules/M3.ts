@@ -81,7 +81,12 @@ export const M3: ModuleConfig = {
       // (this is a knob tour, not physiology).
       mode: 'VCV',
       settings: { tidalVolume: 400, respiratoryRate: 12, peep: 5, fiO2: 40, iTime: 1.0 },
-      patient: { compliance: 60, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
+      // disable_peep_recruitment: the module teaches PEEP as purely additive
+      // (raise PEEP 5→10 → PIP rises by exactly 5). With recruitment active the
+      // sim would recruit alveoli, raise compliance, and blunt that rise, so the
+      // live sim would contradict the lesson. Same opt-out M7 uses for its
+      // pure-mechanics tour.
+      patient: { compliance: 60, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70, disable_peep_recruitment: true },
     },
     unlocked_controls: ['tidalVolume', 'respiratoryRate', 'peep', 'fiO2'],
     visible_readouts: ['pip', 'plat', 'vte', 'mve', 'totalPeep', 'actualRate', 'ieRatio'],

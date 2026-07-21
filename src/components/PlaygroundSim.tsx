@@ -593,7 +593,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     return {
       ...DEFAULT_PATIENT,
       ...demo,
-      compliance: Math.min(100, Math.round(pbw)),
+      compliance: Math.max(10, Math.min(100, Math.round(pbw))),
       ...(initialPreset?.patient ?? {}),
     };
   });
@@ -915,6 +915,15 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     abgRef.current = abg;
   }, [abg]);
 
+  // Feed mean airway pressure into metrics.map so the "MAP / Mean Paw" readout
+  // (visible in the PEEP/oxygenation and troubleshooting modules) actually
+  // populates — it was initialized to 0 and never assigned, so the tile read
+  // '--' forever. Guarded to avoid a re-render loop.
+  useEffect(() => {
+    const mPaw = Math.round((abg.effectiveP_mean ?? 0) * 10) / 10;
+    setMetrics(prev => prev.map === mPaw ? prev : { ...prev, map: mPaw });
+  }, [abg.effectiveP_mean]);
+
   // ── Emit sim_tick on every completed breath ──
   const breathNumRef = useRef(0);
   useEffect(() => {
@@ -1044,21 +1053,28 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
   // drop. The Plateau > 30 safety alert stays — that one is a genuine
   // alveolar-injury floor, not a soft target.
 
-  // Spontaneous rate adapts gently to physiology
+  // Spontaneous rate adapts gently to physiology. Reads abg/patient from refs
+  // and uses empty deps so the 5 s interval is stable — previously the deps
+  // included `abg` (new identity every breath, ~3.75 s at RR 16), which tore
+  // the interval down and recreated it before it ever reached 5 s, so this
+  // adaptation never actually ran at normal rates.
   useEffect(() => {
     const interval = setInterval(() => {
       if (isFrozenRef.current) return;
-      const ph = parseFloat(abg.ph);
-      if (ph > 7.32 && abg.effectiveAutoPeep < 4) {
-        if (patient.spontaneousRate > 6 && Math.random() > 0.7)
+      const a = abgRef.current;
+      const pt = patientRef.current;
+      if (!a) return;
+      const ph = parseFloat(a.ph);
+      if (ph > 7.32 && a.effectiveAutoPeep < 4) {
+        if (pt.spontaneousRate > 6 && Math.random() > 0.7)
           setPatient(p => ({ ...p, spontaneousRate: Math.max(6, p.spontaneousRate - (Math.random() > 0.5 ? 1 : 0)) }));
-      } else if (ph < 7.28 || abg.effectiveAutoPeep > 8) {
-        if (patient.spontaneousRate < 28 && Math.random() > 0.7)
+      } else if (ph < 7.28 || a.effectiveAutoPeep > 8) {
+        if (pt.spontaneousRate < 28 && Math.random() > 0.7)
           setPatient(p => ({ ...p, spontaneousRate: Math.min(28, p.spontaneousRate + (Math.random() > 0.5 ? 1 : 0)) }));
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [abg, patient.spontaneousRate]);
+  }, []);
 
   // ── Handlers ──
   const handleSettingChange = (key: string, val: number) => {
@@ -1131,7 +1147,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       const next: any = { ...prev, [key]: (val === 'M' || val === 'F') ? val : parseFloat(val) };
       if (key === 'gender') {
         const base = val === 'M' ? 50 : 45.5;
-        next.compliance = Math.min(100, Math.round(base + 2.3 * (next.heightInches - 60)));
+        next.compliance = Math.max(10, Math.min(100, Math.round(base + 2.3 * (next.heightInches - 60))));
       }
       return next;
     });
@@ -1174,7 +1190,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     const newHeight = heightUnit === 'in' ? n : n / 2.54;
     setPatient(prev => {
       const base = prev.gender === 'M' ? 50 : 45.5;
-      return { ...prev, heightInches: newHeight, compliance: Math.min(100, Math.round(base + 2.3 * (newHeight - 60))) };
+      return { ...prev, heightInches: newHeight, compliance: Math.max(10, Math.min(100, Math.round(base + 2.3 * (newHeight - 60)))) };
     });
   };
 
@@ -1183,7 +1199,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
     const rect = waveformContainerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left - 48;
     const pct = Math.max(0, Math.min(1, x / (rect.width - 48)));
-    const index = Math.round(pct * 179);
+    const index = Math.round(pct * Math.max(0, dataPoints.length - 1));
     if (!isNaN(index) && dataPoints.length > 0) setCursorIndex(Math.min(index, dataPoints.length - 1));
   };
 
@@ -1707,7 +1723,7 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
           const rect = waveformContainerRef.current.getBoundingClientRect();
           const x = e.clientX - rect.left - 48;
           const pct = Math.max(0, Math.min(1, x / (rect.width - 48)));
-          const index = Math.round(pct * 179);
+          const index = Math.round(pct * Math.max(0, dataPoints.length - 1));
           if (!isNaN(index) && dataPoints.length > 0) setCursorIndex(Math.min(index, dataPoints.length - 1));
         }
       }}
@@ -1880,6 +1896,14 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               {showsReadout('etco2') && (
                 <NumericCard label="ETCO2" value={abg.etco2} unit="mmHg" color={abg.etco2 <= 0 ? 'text-rose-600 animate-pulse' : 'text-zinc-900'} flash={flashSet.has('etco2')} {...recogPropsForReadout('etco2', 'ETCO2')} />
               )}
+              {/* SpO2 / FiO2 — computed all along but previously never rendered,
+                  so oxygenation modules that listed them showed nothing. */}
+              {showsReadout('spo2') && (
+                <NumericCard label="SpO2" value={abg.spo2} unit="%" color={abg.spo2 < 88 ? 'text-rose-600 animate-pulse' : abg.spo2 < 92 ? 'text-amber-600' : 'text-emerald-600'} flash={flashSet.has('spo2')} {...recogPropsForReadout('spo2', 'SpO2')} />
+              )}
+              {showsReadout('fio2') && (
+                <NumericCard label="FiO2" value={settings.fiO2} unit="%" color="text-zinc-900" flash={flashSet.has('fio2')} {...recogPropsForReadout('fio2', 'FiO2')} />
+              )}
               {/* M13_M14_merged (PEEP and Oxygenation Strategies) opts in
                   to MAP and live static compliance via visible_readouts. */}
               {showsReadout('meanAirwayPressure') && (
@@ -1888,8 +1912,8 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
               {showsReadout('staticCompliance') && (
                 <NumericCard
                   label="Cstat"
-                  value={(heldPlat && heldPlat > settings.peep)
-                    ? Math.round(metrics.vte / Math.max(1, heldPlat - settings.peep))
+                  value={(metrics.plat && metrics.plat > settings.peep)
+                    ? Math.round(metrics.vte / Math.max(1, metrics.plat - settings.peep))
                     : '--'}
                   unit="mL/cmH2O"
                   color="text-violet-600"

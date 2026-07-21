@@ -119,7 +119,7 @@ export const M11: ModuleConfig = {
           clip_component: 'DyssynchronyWaveform',
           pattern: 'ineffective',
           question:
-            '65 yo on VCV. Auto-PEEP measured 9 cmH2O. The waveform above is recorded over 6 seconds. What pattern is this?',
+            '65 yo COPD on PSV. Auto-PEEP measured 9 cmH2O. The waveform above is recorded over 6 seconds. What pattern is this?',
           options: [
             { label: 'Ineffective triggering', is_correct: true, explanation: 'Two small pressure dips between mandatory breaths with no delivered tidal volume — the patient is pulling but can\'t overcome auto-PEEP plus the trigger threshold.' },
             { label: 'Double triggering', is_correct: false, explanation: 'Double triggering shows two breaths stacked back-to-back with no expiration between them — not present here.' },
@@ -291,7 +291,7 @@ export const M11: ModuleConfig = {
   ],
 
   explore_card: {
-    patient_context: 'The live sim on the left is your synchrony reference — a calm patient on PSV with smooth triggering, decelerating inspiratory flow, and expiratory flow returning to zero before the next breath. This is what synchrony looks like. The try-it waveforms include PSV and VCV patients; the mode is given in each vignette. Two of the three patterns (ineffective triggering, double triggering) are shown in PSV; one (flow starvation) is in VCV — note how the pressure and flow shapes differ by mode before you try to identify the dyssynchrony.',
+    patient_context: 'The live sim on the left is your synchrony reference — a calm patient on PSV with smooth triggering, decelerating inspiratory flow, and expiratory flow returning to zero before the next breath. This is what synchrony looks like. The try-it waveforms include PSV and VCV patients; the mode is given in each vignette. One pattern (ineffective triggering) is shown in PSV; the other two (double triggering, flow starvation) are in VCV — note how the pressure and flow shapes differ by mode before you try to identify the dyssynchrony.',
     unlocked_controls_description: [],
     readouts_description: [
       { name: 'Pressure and flow waveforms', description: 'smooth triggering, decelerating inspiratory flow, expiratory flow returning to zero before the next breath. This is synchrony.' },

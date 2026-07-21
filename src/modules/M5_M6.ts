@@ -56,7 +56,7 @@ export const M5: ModuleConfig = {
     overview:
       "ARDS, pneumonia, pulmonary edema — they all do the same thing to the lung: they fill alveoli with fluid, pus, or blood, and they collapse the rest. Blood still flows past those drowned units, picking up no oxygen on its way out. That's shunt. The defining feature is that cranking the FiO2 doesn't fix it. The fix is to re-open the alveoli so the gas and the blood can finally meet again. That's what PEEP does.",
     what_youll_do: [
-      "Meet a patient with refractory hypoxemia who's already on 100% FiO2 and still saturating at 86%.",
+      "Meet a patient with refractory hypoxemia still saturating at 86% despite a high FiO2 — and learn why more oxygen won't fix it.",
       "Watch FiO2 fail — then watch PEEP work — and feel the difference recruitment makes in real time.",
       "Tell the difference between an alveolar (physiologic) shunt that PEEP fixes and an anatomic shunt that it can't.",
     ],
@@ -245,7 +245,7 @@ export const M5: ModuleConfig = {
     {
       kind: 'prose',
       markdown:
-        "Your patient has ARDS. He's on FiO2 100%, PEEP 5, and his SpO2 is 86%. The respiratory therapist is asking what you want to do. The reflex answer — *more FiO2* — won't work, because he's already on as much as exists. The right answer is **PEEP**, and the reason is worth understanding before you reach for the knob.",
+        "Your patient has ARDS. He's on FiO2 60, PEEP 5, and his SpO2 is 86%. The respiratory therapist is asking what you want to do. The reflex answer — *more FiO2* — won't work: this is shunt, and even maxing the FiO2 to 100% barely lifts the sat. The right answer is **PEEP**, and the reason is worth understanding before you reach for the knob.",
     },
     {
       kind: 'prose',
@@ -352,7 +352,7 @@ export const M5: ModuleConfig = {
 
   explore_card: {
     patient_context:
-      "62-year-old with severe ARDS on day 2 — FiO2 100%, PEEP 5, SpO2 stuck at 86%. Compliance is 30 (moderate-severe). You have two knobs: FiO2 and PEEP. Try the wrong fix first, then the right one.",
+      "62-year-old with severe ARDS on day 2 — FiO2 60, PEEP 5, SpO2 stuck at 86%. Compliance is 30 (moderate-severe). You have two knobs: FiO2 and PEEP. Try the wrong fix first, then the right one.",
     unlocked_controls_description: [
       { name: 'FiO2 · 21–100%', description: "the obvious lever. Test it — confirm that even at 100% the SpO2 doesn't move appreciably. That's the shunt fingerprint." },
       { name: 'PEEP · 0–20', description: "the real lever for shunt. Try 8, then 12, then 14. Watch SpO2 climb as alveoli re-recruit. Notice that driving pressure (Pplat − PEEP) stays manageable as PEEP rises here because the lung was collapsed, not over-distended." },
@@ -363,7 +363,7 @@ export const M5: ModuleConfig = {
       { name: 'Pplat and Driving Pressure', description: "keep driving pressure (Pplat − PEEP) below 15. If PEEP raises both Pplat and DP without raising SpO2, you've over-distended rather than recruited." },
     ],
     suggestions: [
-      "Push FiO2 to 100% (it's already there) — confirm SpO2 doesn't move. That's shunt.",
+      "Push FiO2 up to 100% — confirm SpO2 barely moves. That's shunt.",
       "Now raise PEEP from 5 to 12. Watch SpO2 climb past 92% within a few breaths.",
       "Push further to PEEP 16. Notice SpO2 keeps climbing but driving pressure rises too — at some point you're over-distending instead of recruiting.",
       "Drop PEEP back to 5 and watch SpO2 collapse again. The recruitment is real-time and reversible.",
@@ -708,7 +708,7 @@ export const M6: ModuleConfig = {
       { name: 'PEEP · 0–18', description: 'only helps in COPD when auto-PEEP is causing ineffective triggering; in asthma it just worsens trapping. Lower the rate first.' },
     ],
     readouts_description: [
-      { name: 'Auto-PEEP, Total PEEP', description: 'the auto-PEEP readout is what the tracker watches.' },
+      { name: 'Auto-PEEP, Total PEEP', description: 'watch the live auto-PEEP estimate climb as you raise the rate and fall as you lower it — the task advances on the rate change.' },
       { name: 'Flow waveform (end-expiration)', description: 'does it return to zero before the next breath?' },
     ],
     suggestions: [

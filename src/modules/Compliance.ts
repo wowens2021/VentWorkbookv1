@@ -74,7 +74,7 @@ export const Compliance: ModuleConfig = {
       patient: { compliance: 50, resistance: 10, spontaneousRate: 0, gender: 'M', heightInches: 70 },
     },
     unlocked_controls: ['compliance', 'inspiratory_pause'],
-    visible_readouts: ['pip', 'plat', 'drivingPressure'],
+    visible_readouts: ['pip', 'plat', 'drivingPressure', 'staticCompliance'],
     visible_waveforms: ['pressure_time', 'flow_time'],
     // The whole point of this module is that dropping compliance raises
     // the plateau. The general "Pplat > 30" safety alarm is correct
