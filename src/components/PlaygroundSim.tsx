@@ -1397,13 +1397,31 @@ const PlaygroundSim: React.FC<PlaygroundSimProps> = ({
       }
       wasInInspirationRef.current = inInsp;
 
+      // Immediate inspiratory hold. A click during inspiration is caught by the
+      // end-of-inspiration branch above (fires within the remaining Ti). A click
+      // made mid-expiration / between breaths used to wait for the NEXT breath to
+      // reach end-inspiration — up to a full cycle (~5 s) — before the maneuver
+      // ran. Instead, start the hold right away using the last end-inspiratory
+      // plateau, so the reading responds within ~1–2 s wherever in the cycle the
+      // button was pressed.
+      if (pendingInspRef.current && !isHolding.current && !isExpHolding.current && !inInsp) {
+        isHolding.current = true;
+        setActiveHoldType('INSP');
+        holdStartTimeRef.current = elapsedTotal;
+        holdStartRealMsRef.current = Date.now();
+        pendingInspRef.current = false;
+      }
+
       let p = settings.peep, f = 0, v = 0;
 
       if (isHolding.current) {
-        // Release after exactly 500 ms real time (per spec: 0.5 s end-insp pause).
+        // Hold the plateau for ~1.5 s of real time — long enough to read as a
+        // deliberate end-inspiratory pause and to land the reading within the
+        // 2–3 s the maneuver should take.
+        const HOLD_MS = 1500;
         const holdElapsedMs = Date.now() - holdStartRealMsRef.current;
         const dur = elapsedTotal - holdStartTimeRef.current;
-        if (holdElapsedMs < 500) {
+        if (holdElapsedMs < HOLD_MS) {
           f = 0; v = vAtEndOfInspRef.current; p = (v / C) + settings.peep;
         } else {
           holdOffsetRef.current += dur;
